@@ -38,7 +38,7 @@ img { max-width: 100%; }
 
 /* 顶部 */
 .site-header { background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-.header-inner { display: flex; align-items: center; gap: 16px; height: 56px; flex-wrap: wrap; }
+.header-inner { display: flex; align-items: center; gap: 16px; min-height: 56px; }
 .site-title { font-size: 20px; font-weight: 700; color: var(--fg); }
 .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .nav-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 5px; cursor: pointer; font-size: 18px; padding: 4px 10px; color: var(--fg); }
@@ -54,13 +54,13 @@ img { max-width: 100%; }
 @media (max-width: 860px) {
   .layout { flex-direction: column; }
   .sidebar { width: 100%; }
-  .header-inner { height: auto; padding: 10px 0; align-items: center; }
-  .site-title { flex: 1; width: auto; }
-  .header-actions { margin-left: 0; }
+  .header-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; padding: 10px 0; }
+  .site-title { min-width: 0; width: auto; }
+  .header-actions { margin-left: 0; justify-self: end; }
   .nav-toggle { display: inline-block; }
-  .site-nav { width: 100%; order: 3; display: none; grid-template-columns: 1fr; gap: 8px; }
-  .site-nav.is-open { display: grid; }
-  .site-nav a { margin-right: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); text-align: center; }
+  .site-nav { grid-column: 1 / -1; width: 100%; display: none; flex-direction: column; gap: 8px; margin-top: 2px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .site-nav.is-open { display: flex; }
+  .site-nav a { display: block; margin-right: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); text-align: left; }
   .nav-search { width: 100%; order: 4; display: none; }
   .site-nav.is-open + .nav-search { display: block; }
   .nav-search input { width: 100%; }

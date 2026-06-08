@@ -13,11 +13,11 @@
 <header class="site-header">
   <div class="container header-inner">
     <a class="site-title" href="/">{{.SiteName}}</a>
-    <nav class="site-nav" data-nav-panel>
+    <nav id="site-nav-menu" class="site-nav" data-nav-panel>
       {{range .Menu}}<a href="{{pageURL .}}">{{.Title}}</a>{{end}}
     </nav>
     <div class="header-actions">
-      <button type="button" class="nav-toggle" data-nav-toggle aria-label="打开菜单" aria-expanded="false">☰</button>
+      <button type="button" class="nav-toggle" data-nav-toggle aria-label="打开菜单" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换主题">🌓</button>
     </div>
   </div>
