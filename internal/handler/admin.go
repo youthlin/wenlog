@@ -8,6 +8,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -33,18 +34,20 @@ import (
 	renderx "github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/blog/web"
 )
 
 // Admin 是后台处理器。
 type Admin struct {
-	st  *store.Store
-	cfg *config.Config
-	log *slog.Logger
+	st       *store.Store
+	cfg      *config.Config
+	log      *slog.Logger
+	renderer *renderx.Renderer
 }
 
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger) *Admin {
-	return &Admin{st: st, cfg: cfg, log: log}
+func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *renderx.Renderer) *Admin {
+	return &Admin{st: st, cfg: cfg, log: log, renderer: renderer}
 }
 
 const adminPageSize = 20
@@ -256,6 +259,17 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 	if strings.TrimSpace(settings[consts.SettingsSessionSecret]) != "" {
 		data["SessionSecretConfigured"] = true
 	}
+	data["TemplateHotReload"] = h.renderer != nil && h.renderer.Hot()
+	data["AssetHotReload"] = pathExists("web/assets")
+	if c != nil && c.Query("message") == "templates-reloaded" {
+		data["Notice"] = "模板已重新解析。"
+	}
+	if c != nil && c.Query("message") == "templates-released" {
+		data["Notice"] = "模板文件已释放到 web/templates，并已切换为 hot 模式。"
+	}
+	if c != nil && c.Query("message") == "assets-released" {
+		data["Notice"] = "资源文件已释放到 web/assets，并已切换为 hot 模式。"
+	}
 	if u := h.currentUser(c); u != nil {
 		data["CurrentUser"] = u
 	}
@@ -394,6 +408,95 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/admin/settings")
+}
+
+// ReloadTemplates 手动重新解析本地模板文件。仅热更新模式支持。
+func (h *Admin) ReloadTemplates(c *gin.Context) {
+	if h.renderer == nil || !h.renderer.Hot() {
+		data := h.settingsData(c)
+		data["Error"] = "当前不是热更新模式，不能重新解析模板。"
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	if err := h.renderer.Reload(); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = "重新解析模板失败: " + err.Error()
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-reloaded")
+}
+
+// ReleaseTemplates 把嵌入模板释放到本地目录,并切换为 hot 模式。
+func (h *Admin) ReleaseTemplates(c *gin.Context) {
+	if h.renderer == nil {
+		data := h.settingsData(c)
+		data["Error"] = "当前模板渲染器不可用。"
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if h.renderer.Hot() {
+		data := h.settingsData(c)
+		data["Error"] = "当前已经是 hot 模式，无需再次释放模板。"
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	if err := h.renderer.ReleaseToHotDir("web/templates"); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = "释放模板文件失败: " + err.Error()
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-released")
+}
+
+// ReleaseAssets 把嵌入资源释放到本地目录。释放完成后当前进程会自动优先读取该目录。
+func (h *Admin) ReleaseAssets(c *gin.Context) {
+	if pathExists("web/assets") {
+		data := h.settingsData(c)
+		data["Error"] = "当前已经是 hot 模式，无需再次释放资源文件。"
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	assetsFS, err := fs.Sub(web.Assets, "assets")
+	if err != nil {
+		data := h.settingsData(c)
+		data["Error"] = "读取嵌入资源失败: " + err.Error()
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if err := releaseDirFromFS(assetsFS, "web/assets"); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = "释放资源文件失败: " + err.Error()
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-released")
+}
+
+func releaseDirFromFS(src fs.FS, targetDir string) error {
+	if err := os.MkdirAll(targetDir, 0o755); err != nil {
+		return err
+	}
+	return fs.WalkDir(src, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(targetDir, path)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := fs.ReadFile(src, path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	})
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // DebugPage 是只读 SQL 调试页,以 JSON 展示结果集。

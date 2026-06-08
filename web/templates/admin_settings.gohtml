@@ -2,6 +2,7 @@
 {{template "admin_header" .}}
 <h1>设置</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
+{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
 <div class="cards settings-cards">
   <section class="card settings-card">
     <h3>站点设置</h3>
@@ -15,6 +16,38 @@
       </div>
       <p><button type="submit" class="btn">保存站点设置</button></p>
     </form>
+  </section>
+
+  <section class="card settings-card">
+    <h3>模板设置</h3>
+    <p class="tip">当前模板模式：{{if .TemplateHotReload}}hot（本地模板 + 手动重新解析）{{else}}static（embed 内置模板）{{end}}</p>
+    {{if .TemplateHotReload}}
+    <form class="edit-form" method="post" action="/admin/settings/templates/reload">
+      {{template "csrf_field" .}}
+      <p class="tip">检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生效。</p>
+      <p><button type="submit" class="btn-secondary">重新解析模板</button></p>
+    </form>
+    {{else}}
+    <form class="edit-form" method="post" action="/admin/settings/templates/release">
+      {{template "csrf_field" .}}
+      <p class="tip">当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式。</p>
+      <p><button type="submit" class="btn-secondary">释放出模板文件夹</button></p>
+    </form>
+    {{end}}
+  </section>
+
+  <section class="card settings-card">
+    <h3>资源文件设置</h3>
+    <p class="tip">当前资源模式：{{if .AssetHotReload}}hot（本地资源目录，修改后立即生效）{{else}}static（embed 内置资源）{{end}}</p>
+    {{if .AssetHotReload}}
+    <p class="tip">检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重新加载。</p>
+    {{else}}
+    <form class="edit-form" method="post" action="/admin/settings/assets/release">
+      {{template "csrf_field" .}}
+      <p class="tip">当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录。</p>
+      <p><button type="submit" class="btn-secondary">释放资源文件夹</button></p>
+    </form>
+    {{end}}
   </section>
 
   <section class="card settings-card">

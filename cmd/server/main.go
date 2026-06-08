@@ -169,12 +169,14 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	)
 
 	// 模板与前端资源
-	// 开发环境优先直接读磁盘。模板支持热更新,静态资源修改后立即生效;缺失时回退到 embed。
-	r.HTMLRender, err = templateRenderer()
+	// 开发环境优先直接读磁盘。若存在本地模板目录,后台会显示 hot 状态并允许手动重新解析;
+	// 静态资源仍然直接读磁盘即时生效。缺失时统一回退到 embed。
+	tplRenderer, err := templateRenderer()
 	if err != nil {
 		log.Error("load templates", slog.Any("error", err))
 		os.Exit(1)
 	}
+	r.HTMLRender = tplRenderer
 
 	// 静态资源
 	// 历史图片(原路径)+ css/js。开发环境优先直接读磁盘,避免每次改样式/JS 都重启。
@@ -191,7 +193,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	registerPublicRoutes(r, pub)
 
 	// 后台
-	adm := handler.NewAdmin(st, cfg, log)
+	adm := handler.NewAdmin(st, cfg, log, tplRenderer)
 	registerAdminRoutes(r, adm)
 	return r
 }
@@ -208,14 +210,26 @@ func templateRenderer() (*render.Renderer, error) {
 }
 
 func assetFS() http.FileSystem {
-	if _, err := os.Stat("web/assets"); err == nil {
-		return http.Dir("web/assets")
-	}
 	assetsFS, err := fs.Sub(web.Assets, "assets")
 	if err != nil {
 		panic(err)
 	}
-	return http.FS(assetsFS)
+	return localFirstFileSystem{
+		dir:      "web/assets",
+		fallback: http.FS(assetsFS),
+	}
+}
+
+type localFirstFileSystem struct {
+	dir      string
+	fallback http.FileSystem
+}
+
+func (fsys localFirstFileSystem) Open(name string) (http.File, error) {
+	if _, err := os.Stat(fsys.dir); err == nil {
+		return http.Dir(fsys.dir).Open(name)
+	}
+	return fsys.fallback.Open(name)
 }
 
 // registerPublicRoutes 注册前台路由。
@@ -269,6 +283,9 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.GET("/settings", adm.SettingsPage)
 	g.POST("/settings/site", adm.SaveSiteSettings)
 	g.POST("/settings/session", adm.SaveSessionSettings)
+	g.POST("/settings/assets/release", adm.ReleaseAssets)
+	g.POST("/settings/templates/release", adm.ReleaseTemplates)
+	g.POST("/settings/templates/reload", adm.ReloadTemplates)
 	g.POST("/settings/profile", adm.SaveProfileSettings)
 	g.POST("/settings/password", adm.SavePasswordSettings)
 	g.GET("/debug", adm.DebugPage)

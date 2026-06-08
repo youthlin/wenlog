@@ -1,7 +1,12 @@
 package main
 
 import (
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
+	"testing/fstest"
 
 	"github.com/youthlin/blog/internal/store"
 	"golang.org/x/crypto/bcrypt"
@@ -48,4 +53,39 @@ func TestEnsureInitialAdmin(t *testing.T) {
 	if n != 1 {
 		t.Fatalf("user count after second run = %d, want 1", n)
 	}
+}
+
+func TestLocalFirstFileSystemSwitchesToLocalDir(t *testing.T) {
+	localDir := filepath.Join(t.TempDir(), "assets")
+	fallback := http.FS(fstest.MapFS{
+		"style.css": &fstest.MapFile{Data: []byte("from-embed")},
+	})
+	fsys := localFirstFileSystem{dir: localDir, fallback: fallback}
+
+	if got := readFileFromHTTPFS(t, fsys, "style.css"); got != "from-embed" {
+		t.Fatalf("expected fallback content, got %q", got)
+	}
+	if err := os.MkdirAll(localDir, 0o755); err != nil {
+		t.Fatalf("mkdir local assets dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(localDir, "style.css"), []byte("from-local"), 0o644); err != nil {
+		t.Fatalf("write local asset: %v", err)
+	}
+	if got := readFileFromHTTPFS(t, fsys, "style.css"); got != "from-local" {
+		t.Fatalf("expected local content, got %q", got)
+	}
+}
+
+func readFileFromHTTPFS(t *testing.T, fsys http.FileSystem, name string) string {
+	t.Helper()
+	f, err := fsys.Open(name)
+	if err != nil {
+		t.Fatalf("open %q: %v", name, err)
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("read %q: %v", name, err)
+	}
+	return string(data)
 }

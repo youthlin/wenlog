@@ -8,8 +8,10 @@ import (
 	"html/template"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
@@ -25,6 +27,7 @@ import (
 
 // Renderer 持有模板配置,既支持静态模板,也支持开发期热更新。
 type Renderer struct {
+	mu      sync.RWMutex
 	tpl     *template.Template
 	fsys    fs.FS
 	pattern string
@@ -47,7 +50,7 @@ func New(fsys fs.FS) (*Renderer, error) {
 }
 
 // NewHot 从磁盘目录创建一个可热更新的模板渲染器。
-// 每次 Render 都会重新 Parse 目录下的 *.gohtml,适合开发时微调模板无需重启。
+// 启动时会先 Parse 一次模板,之后只有显式调用 Reload 才会重新解析。
 func NewHot(dir string) (*Renderer, error) {
 	fsys := os.DirFS(dir)
 	tpl, err := parseTemplates(fsys, pattern)
@@ -60,6 +63,65 @@ func NewHot(dir string) (*Renderer, error) {
 		pattern: pattern,
 		hot:     true,
 	}, nil
+}
+
+// Hot 返回当前渲染器是否处于本地模板热更新模式。
+func (r *Renderer) Hot() bool { return r != nil && r.hot }
+
+// Reload 重新解析模板并替换当前缓存。仅热更新模式支持该操作。
+func (r *Renderer) Reload() error {
+	if r == nil || !r.hot {
+		return nil
+	}
+	tpl, err := parseTemplates(r.fsys, r.pattern)
+	if err != nil {
+		return err
+	}
+	r.mu.Lock()
+	r.tpl = tpl
+	r.mu.Unlock()
+	return nil
+}
+
+// ReleaseToHotDir 把当前模板写入磁盘目录,并切换到该目录的 hot 模式。
+// 这样单二进制启动后也能在后台释放模板文件并启用手动热更新。
+func (r *Renderer) ReleaseToHotDir(dir string) error {
+	if r == nil {
+		return nil
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.hot {
+		return nil
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return errors.Wrap(err, "create template dir")
+	}
+	if err := fs.WalkDir(r.fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dir, path)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := fs.ReadFile(r.fsys, path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	}); err != nil {
+		return errors.Wrap(err, "write templates to disk")
+	}
+	fsys := os.DirFS(dir)
+	tpl, err := parseTemplates(fsys, r.pattern)
+	if err != nil {
+		return err
+	}
+	r.tpl = tpl
+	r.fsys = fsys
+	r.hot = true
+	return nil
 }
 
 func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
@@ -89,22 +151,18 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 	return tpl, nil
 }
 
-// Template 返回底层模板(仅静态模板模式可用;热更新模式下会返回 nil)。
-func (r *Renderer) Template() *template.Template { return r.tpl }
+// Template 返回当前缓存的底层模板。
+func (r *Renderer) Template() *template.Template {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.tpl
+}
 
-// Instance 实现 gin/render.HTMLRender。热更新模式下每次请求重新解析模板。
+// Instance 实现 gin/render.HTMLRender。它始终使用当前缓存的模板实例。
 func (r *Renderer) Instance(name string, data any) ginrender.Render {
+	r.mu.RLock()
 	tpl := r.tpl
-	if r.hot {
-		var err error
-		tpl, err = parseTemplates(r.fsys, r.pattern)
-		if err != nil {
-			return ginrender.String{
-				Format: "template parse error: %v",
-				Data:   []any{err},
-			}
-		}
-	}
+	r.mu.RUnlock()
 	return ginrender.HTML{Template: tpl, Name: name, Data: data}
 }
 
