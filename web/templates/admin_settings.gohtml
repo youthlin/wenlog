@@ -1,0 +1,49 @@
+{{define "admin_settings.gohtml"}}
+{{template "admin_header" .}}
+<h1>设置</h1>
+{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
+<div class="cards settings-cards">
+  <section class="card settings-card">
+    <h3>站点设置</h3>
+    <form class="edit-form" method="post" action="/admin/settings/site">
+      {{template "csrf_field" .}}
+      <label>站点名称<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
+      <label>站点描述<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
+      <div class="form-row">
+        <label>列表分页数量<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
+        <label>Feed 输出数量<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
+      </div>
+      <p><button type="submit" class="btn">保存站点设置</button></p>
+    </form>
+  </section>
+
+  <section class="card settings-card">
+    <h3>会话设置</h3>
+    <form class="edit-form" method="post" action="/admin/settings/session">
+      {{template "csrf_field" .}}
+      <label>新的 Session Secret<input type="text" name="session_secret" placeholder="请输入新的 Session Secret" required></label>
+      <p class="tip">{{if .SessionSecretConfigured}}已配置自定义 Session Secret。{{else}}当前仍在使用默认或环境变量提供的 Session Secret。{{end}}修改后所有登录用户都需要重新登录。</p>
+      <p><button type="submit" class="btn">更新 Session Secret</button></p>
+    </form>
+  </section>
+
+  <section class="card settings-card">
+    <h3>个人设置</h3>
+    <form class="edit-form" method="post" action="/admin/settings/profile">
+      {{template "csrf_field" .}}
+      <label>用户名<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
+      <label>显示名<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
+      <label>邮件<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
+      <p><button type="submit" class="btn">保存个人资料</button></p>
+    </form>
+    <form class="edit-form" method="post" action="/admin/settings/password">
+      {{template "csrf_field" .}}
+      <label>原密码<input type="password" name="current_password" required></label>
+      <label>新密码<input type="password" name="new_password" required></label>
+      <label>确认新密码<input type="password" name="confirm_password" required></label>
+      <p><button type="submit" class="btn">修改密码</button></p>
+    </form>
+  </section>
+</div>
+{{template "admin_footer" .}}
+{{end}}

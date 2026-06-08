@@ -1,0 +1,39 @@
+{{define "admin_posts.gohtml"}}
+{{template "admin_header" .}}
+<div class="page-head">
+  <h1>{{if eq .PostType "page"}}页面{{else}}文章{{end}}管理</h1>
+  <a class="btn" href="/admin/post/new?type={{.PostType}}">新建</a>
+</div>
+<table class="data-table">
+  <thead><tr><th>ID</th><th>标题</th><th>状态</th><th>发布时间</th><th>浏览</th><th>操作</th></tr></thead>
+  <tbody>
+  {{range .Posts}}
+  <tr>
+    <td>{{.ID}}</td>
+    <td>{{.Title}}</td>
+    <td>{{if eq .Status "published"}}已发布{{else}}草稿{{end}}</td>
+    <td>{{fmtDate .PublishedAt}}</td>
+    <td>{{.Views}}</td>
+    <td>
+      <a href="/admin/post/{{.ID}}">编辑</a>
+      <form class="inline" method="post" action="/admin/post/{{.ID}}/delete" onsubmit="return confirm('确认删除?')">
+        {{template "csrf_field" $}}
+        <button type="submit" class="link-danger">删除</button>
+      </form>
+    </td>
+  </tr>
+  {{else}}
+  <tr><td colspan="6">暂无内容</td></tr>
+  {{end}}
+  </tbody>
+</table>
+<p class="total">共 {{.Total}} 条</p>
+{{if gt .Pages 1}}
+<nav class="pagination">
+  {{if gt .Page 1}}<a href="/admin/posts?type={{.PostType}}&page={{sub .Page 1}}">上一页</a>{{end}}
+  <span class="page-info">{{.Page}} / {{.Pages}}</span>
+  {{if lt .Page .Pages}}<a href="/admin/posts?type={{.PostType}}&page={{add .Page 1}}">下一页</a>{{end}}
+</nav>
+{{end}}
+{{template "admin_footer" .}}
+{{end}}

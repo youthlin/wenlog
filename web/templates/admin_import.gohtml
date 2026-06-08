@@ -1,0 +1,81 @@
+{{define "admin_import.gohtml"}}
+{{template "admin_header" .}}
+<h1>WXR 导入 / 导出</h1>
+
+{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
+{{if .Success}}<p class="notice-banner">{{.Success}}</p>{{end}}
+
+<div class="cards settings-cards">
+  <section class="card settings-card">
+    <h3>导入 WordPress XML</h3>
+    <p class="tip">上传 WXR 导出 XML，并选择导入后文章/页面归属到哪个后台用户。</p>
+    <p class="warn-banner">注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖保存。</p>
+    {{if .Users}}
+    <form class="edit-form" method="post" action="/admin/import" enctype="multipart/form-data">
+      {{template "csrf_field" .}}
+      <label>XML 文件
+        <input type="file" name="xml_file" accept=".xml,text/xml,application/xml" required>
+      </label>
+      <label>导入归属用户
+        <select name="user_id" required>
+          <option value="">请选择用户</option>
+          {{range .Users}}
+          <option value="{{.ID}}" {{if eq $.SelectedUserID .ID}}selected{{end}}>{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Username}}{{end}}{{if .DisplayName}}（{{.Username}}）{{end}}</option>
+          {{end}}
+        </select>
+      </label>
+      <p><button type="submit" class="btn">开始导入</button></p>
+    </form>
+    {{else}}
+    <p class="err-banner">当前没有可选用户，请先创建管理员账号。</p>
+    {{end}}
+  </section>
+
+  <section class="card settings-card">
+    <h3>导入行为</h3>
+    <ul class="tip-list">
+      <li>分类、标签会按原始 ID upsert 保存。</li>
+      <li>文章、页面会按原始 WordPress `post_id` upsert 保存。</li>
+      <li>所有导入的文章/页面作者都会改为你在表单中选择的用户。</li>
+      <li>评论会保留原始评论作者信息，并按评论 ID upsert 保存。</li>
+      <li>非 `post` / `page` 类型内容不会导入。</li>
+    </ul>
+    {{if .ImportStats}}
+    <div class="import-result">
+      <h4>最近一次导入结果</h4>
+      <p class="tip">文件：{{.ImportedFileName}}</p>
+      <p class="tip">归属用户：{{if .TargetUser.DisplayName}}{{.TargetUser.DisplayName}}{{else}}{{.TargetUser.Username}}{{end}}</p>
+      <table class="data-table">
+        <tbody>
+          <tr><th>文章</th><td>{{.ImportStats.Posts}}</td></tr>
+          <tr><th>页面</th><td>{{.ImportStats.Pages}}</td></tr>
+          <tr><th>评论</th><td>{{.ImportStats.Comments}}</td></tr>
+          <tr><th>分类</th><td>{{.ImportStats.Categories}}</td></tr>
+          <tr><th>标签</th><td>{{.ImportStats.Tags}}</td></tr>
+          <tr><th>设置</th><td>{{.ImportStats.Settings}}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    {{end}}
+  </section>
+
+  <section class="card settings-card">
+    <h3>导出 XML</h3>
+    <p class="tip">导出后可直接在本页重新导入，用于迁移或备份。</p>
+    <p class="warn-banner">说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错误。</p>
+    <form class="edit-form" method="post" action="/admin/export">
+      {{template "csrf_field" .}}
+      <fieldset class="cat-field">
+        <legend>选择要导出的内容</legend>
+        <label class="cat-check"><input type="checkbox" name="include_posts" value="1" {{if .ExportPosts}}checked{{end}}> 文章</label>
+        <label class="cat-check"><input type="checkbox" name="include_pages" value="1" {{if .ExportPages}}checked{{end}}> 页面</label>
+        <label class="cat-check"><input type="checkbox" name="include_comments" value="1" {{if .ExportComments}}checked{{end}}> 评论</label>
+        <label class="cat-check"><input type="checkbox" name="include_settings" value="1" {{if .ExportSettings}}checked{{end}}> 设置</label>
+      </fieldset>
+      <p><button type="submit" class="btn">下载 XML</button></p>
+    </form>
+  </section>
+</div>
+
+{{template "admin_footer" .}}
+{{end}}

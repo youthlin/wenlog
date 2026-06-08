@@ -1,0 +1,39 @@
+{{define "admin_header"}}<!DOCTYPE html>
+<html lang="zh-Hans" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · {{.SiteName}} 后台</title>
+{{if .CSRFToken}}<meta name="csrf-token" content="{{.CSRFToken}}">{{end}}
+<link rel="stylesheet" href="/assets/admin.css">
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body class="admin">
+<header class="admin-header">
+  <div class="admin-bar">
+    <a class="brand" href="/admin/">{{.SiteName}} 后台</a>
+    <nav>
+      <a href="/admin/posts?type=post">文章</a>
+      <a href="/admin/posts?type=page">页面</a>
+      <a href="/admin/comments">评论{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}</a>
+      <a href="/admin/links">友链</a>
+      <a href="/admin/uploads">文件</a>
+      <a href="/admin/import">导入</a>
+      <a href="/admin/settings">设置</a>
+      <a href="/" target="_blank">查看站点</a>
+      <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">退出</button></form>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换主题">🌓</button>
+    </nav>
+  </div>
+</header>
+<main class="admin-main">
+{{end}}
+
+{{define "csrf_field"}}{{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}{{end}}
+
+{{define "admin_footer"}}
+</main>
+<script src="/assets/theme.js"></script>
+</body>
+</html>
+{{end}}
