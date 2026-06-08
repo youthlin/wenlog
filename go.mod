@@ -1,6 +1,6 @@
 module github.com/youthlin/blog
 
-go 1.26
+go 1.25.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.18.0
@@ -9,6 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df
+	github.com/gorilla/sessions v1.4.0
 	github.com/prometheus/client_golang v1.23.2
 	golang.org/x/crypto v0.52.0
 	gorm.io/gorm v1.31.1
@@ -38,7 +39,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
-	github.com/gorilla/sessions v1.4.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

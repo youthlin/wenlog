@@ -22,12 +22,22 @@
 body.admin { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--fg); background: var(--bg); font-size: 14px; }
 
 .admin-header { background: var(--header-bg); color: #fff; }
-.admin-bar { max-width: 1100px; margin: 0 auto; padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+.admin-bar { max-width: 1100px; margin: 0 auto; padding: 10px 20px; min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .admin-bar .brand { color: #fff; font-weight: 700; text-decoration: none; }
-.admin-bar nav { display: flex; align-items: center; }
+.admin-bar nav { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
 .admin-bar nav a { color: #cdd6e0; margin-left: 18px; text-decoration: none; }
 .admin-bar nav a:hover { color: #fff; }
 .admin-bar .theme-toggle { background: none; border: 1px solid rgba(255,255,255,.3); border-radius: 5px; color: #fff; cursor: pointer; margin-left: 18px; padding: 3px 8px; }
+.admin-bar .admin-nav > a,
+.admin-bar .admin-nav > form,
+.admin-bar .admin-nav > .theme-toggle { flex-shrink: 0; }
+.admin-bar .admin-nav > a,
+.admin-bar .admin-nav > .theme-toggle,
+.admin-bar .admin-nav > form.inline { margin-top: 14px; }
+.admin-bar .nav-group { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; padding-right: 6px; }
+.admin-bar .nav-group-title { color: #8fa2b6; font-size: 12px; line-height: 1; }
+.admin-bar .nav-group-links { display: flex; align-items: center; flex-wrap: wrap; }
+.admin-bar .nav-group-links a { margin-left: 0; margin-right: 14px; }
 .badge { background: #e74c3c; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 12px; }
 
 .admin-main { max-width: 1100px; margin: 24px auto; padding: 0 20px; }

@@ -39,6 +39,8 @@
     <legend>分类目录</legend>
     {{range .AllCategories}}
     <label class="cat-check"><input type="checkbox" name="category_ids" value="{{.ID}}" {{if index $.SelectedCats .ID}}checked{{end}}> {{.Name}}</label>
+    {{else}}
+    <p class="tip">还没有分类目录，可先去 <a href="/admin/terms">分类/标签管理</a> 新建分类。</p>
     {{end}}
   </fieldset>
   <label>标签(逗号分隔)<input type="text" name="tags" value="{{.TagsCSV}}" placeholder="如:Go, 教程, 随笔"></label>

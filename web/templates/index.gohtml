@@ -8,6 +8,7 @@
       <time>{{fmtDate .PublishedAt}}</time>
       {{if .Author.DisplayName}}<span class="author">{{.Author.DisplayName}}</span>{{end}}
       {{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+      {{range .Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
       <span class="views">{{.Views}} 阅读</span>
       {{if eq .CommentStatus "closed"}}<span class="comment-count">评论已关闭</span>
       {{else if eq .CommentCount 0}}<a class="comment-count" href="{{postURL .}}#comments">暂无评论</a>

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -73,6 +74,42 @@ func TestLocalFirstFileSystemSwitchesToLocalDir(t *testing.T) {
 	}
 	if got := readFileFromHTTPFS(t, fsys, "style.css"); got != "from-local" {
 		t.Fatalf("expected local content, got %q", got)
+	}
+}
+
+func TestEnsureInitialContent(t *testing.T) {
+	st := newTestStore(t)
+	if err := ensureInitialAdmin(st); err != nil {
+		t.Fatalf("ensure initial admin: %v", err)
+	}
+	if err := ensureInitialContent(st); err != nil {
+		t.Fatalf("ensure initial content: %v", err)
+	}
+	if err := ensureInitialContent(st); err != nil {
+		t.Fatalf("ensure initial content second run: %v", err)
+	}
+	var posts []model.Post
+	if err := st.DB().Order("id ASC").Find(&posts).Error; err != nil {
+		t.Fatalf("list posts: %v", err)
+	}
+	if len(posts) != 2 {
+		t.Fatalf("post count = %d, want 2", len(posts))
+	}
+	if posts[0].Title != "欢迎来到我的博客" || posts[0].PostType != model.PostTypePost {
+		t.Fatalf("first post = %+v", posts[0])
+	}
+	if posts[1].Slug != "about" || posts[1].MenuOrder != 1 || posts[1].PostType != model.PostTypePage {
+		t.Fatalf("about page = %+v", posts[1])
+	}
+	var comments []model.Comment
+	if err := st.DB().Order("id ASC").Find(&comments).Error; err != nil {
+		t.Fatalf("list comments: %v", err)
+	}
+	if len(comments) != 1 {
+		t.Fatalf("comment count = %d, want 1", len(comments))
+	}
+	if comments[0].Status != model.CommentApproved || comments[0].Author != "youthlin" {
+		t.Fatalf("comment = %+v", comments[0])
 	}
 }
 

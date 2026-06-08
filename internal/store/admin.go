@@ -177,6 +177,13 @@ func (s *Store) DebugQuery(sql string) ([]map[string]any, error) {
 
 // --- 文章/页面管理 ---
 
+// CountPosts 返回文章/页面总数,用于首次启动初始化内容判断。
+func (s *Store) CountPosts() (int64, error) {
+	var total int64
+	err := s.db.Model(&model.Post{}).Count(&total).Error
+	return total, errors.Wrap(err, "count posts")
+}
+
 // AdminListPosts 返回某类型的全部文章/页面(不限状态),用于后台列表。
 func (s *Store) AdminListPosts(postType string, page, pageSize int) ([]model.Post, int64, error) {
 	q := s.db.Model(&model.Post{}).Where("post_type = ?", postType)
@@ -287,6 +294,67 @@ func (s *Store) DeletePost(id uint) error {
 			return err
 		}
 		return tx.Delete(&model.Post{}, id).Error
+	})
+}
+
+// CategorySlugExists 检查分类 slug 是否已被其他分类占用。
+func (s *Store) CategorySlugExists(slug string, excludeID uint) (bool, error) {
+	var n int64
+	q := s.db.Model(&model.Category{}).Where("slug = ?", slug)
+	if excludeID > 0 {
+		q = q.Where("id <> ?", excludeID)
+	}
+	err := q.Count(&n).Error
+	return n > 0, errors.Wrap(err, "count category slug")
+}
+
+// TagSlugExists 检查标签 slug 是否已被其他标签占用。
+func (s *Store) TagSlugExists(slug string, excludeID uint) (bool, error) {
+	var n int64
+	q := s.db.Model(&model.Tag{}).Where("slug = ?", slug)
+	if excludeID > 0 {
+		q = q.Where("id <> ?", excludeID)
+	}
+	err := q.Count(&n).Error
+	return n > 0, errors.Wrap(err, "count tag slug")
+}
+
+// SaveCategory 创建或更新分类。
+func (s *Store) SaveCategory(cat *model.Category) error {
+	return errors.Wrap(s.db.Save(cat).Error, "save category")
+}
+
+// SaveTag 创建或更新标签。
+func (s *Store) SaveTag(tag *model.Tag) error {
+	return errors.Wrap(s.db.Save(tag).Error, "save tag")
+}
+
+// DeleteCategory 删除分类并清理关联与子分类父级。
+func (s *Store) DeleteCategory(id uint) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.Category{}).Where("parent_id = ?", id).Update("parent_id", 0).Error; err != nil {
+			return errors.Wrap(err, "detach child categories")
+		}
+		if err := tx.Exec("DELETE FROM post_categories WHERE category_id = ?", id).Error; err != nil {
+			return errors.Wrap(err, "delete category relations")
+		}
+		if err := tx.Delete(&model.Category{}, id).Error; err != nil {
+			return errors.Wrap(err, "delete category")
+		}
+		return nil
+	})
+}
+
+// DeleteTag 删除标签并清理文章关联。
+func (s *Store) DeleteTag(id uint) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("DELETE FROM post_tags WHERE tag_id = ?", id).Error; err != nil {
+			return errors.Wrap(err, "delete tag relations")
+		}
+		if err := tx.Delete(&model.Tag{}, id).Error; err != nil {
+			return errors.Wrap(err, "delete tag")
+		}
+		return nil
 	})
 }
 

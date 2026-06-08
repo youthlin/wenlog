@@ -75,3 +75,16 @@ func TestReleaseDirFromFS(t *testing.T) {
 		t.Fatalf("stat nested released file: %v", err)
 	}
 }
+
+func TestNormalizeTermSlug(t *testing.T) {
+	tests := map[string]string{
+		" Go 教程 ":       "go-教程",
+		"Hello, World!": "hello-world",
+		"中文 标签":         "中文-标签",
+	}
+	for in, want := range tests {
+		if got := normalizeTermSlug(in); got != want {
+			t.Fatalf("normalizeTermSlug(%q)=%q, want %q", in, got, want)
+		}
+	}
+}

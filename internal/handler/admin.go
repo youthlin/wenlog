@@ -737,6 +737,160 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_posts.gohtml", data)
 }
 
+// TermsPage 分类/标签管理页。
+func (h *Admin) TermsPage(c *gin.Context) {
+	data := h.base(c, "分类/标签")
+	cats := h.st.AllCategories()
+	tags := h.st.AllTags()
+	data["Categories"] = cats
+	data["Tags"] = tags
+	data["CategoryParents"] = categoryParentNames(cats)
+	data["CategoryParentOptions"] = cats
+	data["CategoryForm"] = model.Category{}
+	data["TagForm"] = model.Tag{}
+	if c.Query("message") == "category-saved" {
+		data["Notice"] = "分类已保存。"
+	}
+	if c.Query("message") == "category-deleted" {
+		data["Notice"] = "分类已删除。"
+	}
+	if c.Query("message") == "tag-saved" {
+		data["Notice"] = "标签已保存。"
+	}
+	if c.Query("message") == "tag-deleted" {
+		data["Notice"] = "标签已删除。"
+	}
+	if editID := atoiDefault(c.Query("edit_category"), 0); editID > 0 {
+		for _, cat := range cats {
+			if int(cat.ID) == editID {
+				data["CategoryForm"] = cat
+				data["EditingCategory"] = true
+				break
+			}
+		}
+	}
+	if editID := atoiDefault(c.Query("edit_tag"), 0); editID > 0 {
+		for _, tag := range tags {
+			if int(tag.ID) == editID {
+				data["TagForm"] = tag
+				data["EditingTag"] = true
+				break
+			}
+		}
+	}
+	c.HTML(http.StatusOK, "admin_terms.gohtml", data)
+}
+
+type categoryForm struct {
+	ID          uint   `form:"id"`
+	Name        string `form:"name"`
+	Slug        string `form:"slug"`
+	Description string `form:"description"`
+	ParentID    uint   `form:"parent_id"`
+}
+
+// SaveCategory 保存分类。
+func (h *Admin) SaveCategory(c *gin.Context) {
+	var f categoryForm
+	if err := c.ShouldBind(&f); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	name := strings.TrimSpace(f.Name)
+	if name == "" {
+		h.termsFormError(c, "分类名称不能为空。", model.Category{ID: f.ID, Name: f.Name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		return
+	}
+	slug := normalizeTermSlug(f.Slug)
+	if slug == "" {
+		slug = normalizeTermSlug(name)
+	}
+	if slug == "" {
+		h.termsFormError(c, "分类 slug 不能为空。", model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		return
+	}
+	exists, err := h.st.CategorySlugExists(slug, f.ID)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		h.termsFormError(c, fmt.Sprintf("分类 slug %q 已存在。", slug), model.Category{ID: f.ID, Name: name, Slug: slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		return
+	}
+	cat := &model.Category{ID: f.ID, Name: name, Slug: slug, Description: strings.TrimSpace(f.Description), ParentID: f.ParentID}
+	if f.ID > 0 && f.ParentID == f.ID {
+		cat.ParentID = 0
+	}
+	if err := h.st.SaveCategory(cat); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/terms?message=category-saved")
+}
+
+// DeleteCategory 删除分类。
+func (h *Admin) DeleteCategory(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := h.st.DeleteCategory(uint(id)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/terms?message=category-deleted")
+}
+
+type tagForm struct {
+	ID   uint   `form:"id"`
+	Name string `form:"name"`
+	Slug string `form:"slug"`
+}
+
+// SaveTag 保存标签。
+func (h *Admin) SaveTag(c *gin.Context) {
+	var f tagForm
+	if err := c.ShouldBind(&f); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	name := strings.TrimSpace(f.Name)
+	if name == "" {
+		h.termsFormError(c, "标签名称不能为空。", model.Category{}, model.Tag{ID: f.ID, Name: f.Name, Slug: f.Slug}, false, true)
+		return
+	}
+	slug := normalizeTermSlug(f.Slug)
+	if slug == "" {
+		slug = normalizeTermSlug(name)
+	}
+	if slug == "" {
+		h.termsFormError(c, "标签 slug 不能为空。", model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)
+		return
+	}
+	exists, err := h.st.TagSlugExists(slug, f.ID)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		h.termsFormError(c, fmt.Sprintf("标签 slug %q 已存在。", slug), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: slug}, false, true)
+		return
+	}
+	if err := h.st.SaveTag(&model.Tag{ID: f.ID, Name: name, Slug: slug}); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/terms?message=tag-saved")
+}
+
+// DeleteTag 删除标签。
+func (h *Admin) DeleteTag(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := h.st.DeleteTag(uint(id)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/terms?message=tag-deleted")
+}
+
 // EditPostForm 显示新建/编辑表单。id=0 或缺省为新建。
 func (h *Admin) EditPostForm(c *gin.Context) {
 	pt := c.DefaultQuery("type", model.PostTypePost)
@@ -900,6 +1054,43 @@ func parseTags(s string) []string {
 		out = append(out, name)
 	}
 	return out
+}
+
+func normalizeTermSlug(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r == ' ' || r == '\t':
+			b.WriteByte('-')
+		case r == '-' || r == '_' || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r > 127:
+			b.WriteRune(r)
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+func categoryParentNames(categories []model.Category) map[uint]string {
+	byID := make(map[uint]string, len(categories))
+	for _, cat := range categories {
+		byID[cat.ID] = cat.Name
+	}
+	return byID
+}
+
+func (h *Admin) termsFormError(c *gin.Context, msg string, cat model.Category, tag model.Tag, editingCategory, editingTag bool) {
+	data := h.base(c, "分类/标签")
+	cats := h.st.AllCategories()
+	data["Error"] = msg
+	data["Categories"] = cats
+	data["Tags"] = h.st.AllTags()
+	data["CategoryParents"] = categoryParentNames(cats)
+	data["CategoryParentOptions"] = cats
+	data["CategoryForm"] = cat
+	data["TagForm"] = tag
+	data["EditingCategory"] = editingCategory
+	data["EditingTag"] = editingTag
+	c.HTML(http.StatusBadRequest, "admin_terms.gohtml", data)
 }
 
 // Preview 渲染 Markdown 为 HTML 片段(后台编辑预览,Ajax)。

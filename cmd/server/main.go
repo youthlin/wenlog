@@ -17,12 +17,16 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/gomarkdown/markdown"
+	mhtml "github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/middleware"
+	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
@@ -57,6 +61,10 @@ func main() {
 	// 自动创建管理员
 	if err = ensureInitialAdmin(st); err != nil {
 		log.Error("ensure initial admin", slog.Any("error", err))
+		os.Exit(1)
+	}
+	if err = ensureInitialContent(st); err != nil {
+		log.Error("ensure initial content", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -142,6 +150,103 @@ func ensureInitialAdmin(st *store.Store) error {
 	}
 	fmt.Printf("已自动创建管理员, 用户名: admin 密码: %s\n", password)
 	return nil
+}
+
+// ensureInitialContent 启动时如果还没有任何内容, 自动插入欢迎文章、示例评论和关于页面。
+func ensureInitialContent(st *store.Store) error {
+	total, err := st.CountPosts()
+	if err != nil {
+		return err
+	}
+	if total > 0 {
+		return nil
+	}
+	author, err := st.GetUserByUsername("admin")
+	if err != nil {
+		users, listErr := st.ListUsers()
+		if listErr != nil {
+			return listErr
+		}
+		if len(users) == 0 {
+			return fmt.Errorf("初始化内容失败: 未找到可用作者")
+		}
+		author = &users[0]
+	}
+	now := time.Now()
+	postID, err := st.NextPostID()
+	if err != nil {
+		return err
+	}
+	welcomeMD := strings.TrimSpace(`欢迎使用这个独立博客程序。它专注于：
+
+- **简单部署**：单二进制 + SQLite，适合个人博客快速上线。
+- **内容优先**：支持 Markdown 写作，也兼容逐步整理已有内容。
+- **可持续维护**：后台可管理文章、页面、评论、资源与模板。
+
+你可以先到后台看看设置、写一篇文章、再把这里改成真正属于你自己的首页开场白。祝写作愉快。`)
+	welcome := &model.Post{
+		ID:            postID,
+		Title:         "欢迎来到我的博客",
+		ContentMD:     welcomeMD,
+		Content:       renderMarkdownForBootstrap(welcomeMD),
+		AuthorID:      author.ID,
+		Status:        model.StatusPublished,
+		PostType:      model.PostTypePost,
+		ContentFormat: model.FormatMarkdown,
+		CommentStatus: "open",
+		PublishedAt:   now,
+		ModifiedAt:    now,
+	}
+	if err := st.SavePost(welcome); err != nil {
+		return err
+	}
+	comment := &model.Comment{
+		PostID:    welcome.ID,
+		Author:    "youthlin",
+		Email:     "youthlinchen@outlook.com",
+		URL:       "https://github.com/youthlin/blog",
+		IP:        "127.0.0.1",
+		Content:   "欢迎使用这个博客程序，你可以在后台管理评论，快去看看吧。",
+		Status:    model.CommentApproved,
+		CreatedAt: now.Add(time.Minute),
+		ParentID:  0,
+	}
+	if err := st.CreateComment(comment); err != nil {
+		return err
+	}
+	aboutID, err := st.NextPostID()
+	if err != nil {
+		return err
+	}
+	aboutMD := strings.TrimSpace(`你好，欢迎来到这里。
+
+我是这个博客的作者，喜欢记录技术、写作、日常想法，也会把一些正在尝试和思考的东西慢慢整理出来。这里不会只放“结论”，也会保留过程、踩坑和一些还没完全想清楚的问题。
+
+如果你恰好读到某篇文章，希望它能给你一点启发；如果你也在做相似的事情，欢迎交流。`)
+	about := &model.Post{
+		ID:            aboutID,
+		Title:         "关于",
+		Slug:          "about",
+		ContentMD:     aboutMD,
+		Content:       renderMarkdownForBootstrap(aboutMD),
+		AuthorID:      author.ID,
+		Status:        model.StatusPublished,
+		PostType:      model.PostTypePage,
+		ContentFormat: model.FormatMarkdown,
+		CommentStatus: "closed",
+		MenuOrder:     1,
+		PublishedAt:   now,
+		ModifiedAt:    now,
+	}
+	return st.SavePost(about)
+}
+
+func renderMarkdownForBootstrap(md string) string {
+	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
+	doc := p.Parse([]byte(md))
+	rendererMD := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
+	out := string(markdown.Render(doc, rendererMD))
+	return render.HighlightCodeBlocks(out)
 }
 
 // createWebHandler 创建并注册路由
@@ -290,6 +395,11 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.POST("/settings/password", adm.SavePasswordSettings)
 	g.GET("/debug", adm.DebugPage)
 	g.POST("/debug", adm.DebugPage)
+	g.GET("/terms", adm.TermsPage)
+	g.POST("/category", adm.SaveCategory)
+	g.POST("/category/:id/delete", adm.DeleteCategory)
+	g.POST("/tag", adm.SaveTag)
+	g.POST("/tag/:id/delete", adm.DeleteTag)
 	g.GET("/uploads", adm.UploadsPage)
 	g.GET("/uploads.json", adm.UploadsJSON)
 	g.POST("/upload", adm.UploadFile)
