@@ -10,7 +10,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	blogi18n "github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
@@ -39,15 +39,16 @@ type commentReq struct {
 // SubmitComment 处理 POST /comment, 校验 + 防 spam + 存为 pending。
 // 支持 Ajax(返回 JSON)与普通表单(重定向)两种方式。
 func (h *Public) SubmitComment(c *gin.Context) {
+	tr := i18n.Get(c)
 	var req commentReq
 	if err := c.ShouldBind(&req); err != nil {
-		h.commentResp(c, false, blogi18n.T(c, "提交内容格式有误。"), req.PostID)
+		h.commentResp(c, false, tr.T("提交内容格式有误。"), req.PostID)
 		return
 	}
 
 	// 1. 蜜罐:website 字段被填说明是机器人。
 	if strings.TrimSpace(req.Website) != "" {
-		h.commentResp(c, false, blogi18n.T(c, "提交失败。"), req.PostID)
+		h.commentResp(c, false, tr.T("提交失败。"), req.PostID)
 		return
 	}
 
@@ -65,19 +66,19 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		req.URL = ""
 	}
 	if req.Author == "" || req.Content == "" {
-		h.commentResp(c, false, blogi18n.T(c, "昵称和内容不能为空。"), req.PostID)
+		h.commentResp(c, false, tr.T("昵称和内容不能为空。"), req.PostID)
 		return
 	}
 	if n := utf8.RuneCountInString(req.Content); n < commentMinLen || n > commentMaxLen {
-		h.commentResp(c, false, blogi18n.T(c, "评论长度不合适。"), req.PostID)
+		h.commentResp(c, false, tr.T("评论长度不合适。"), req.PostID)
 		return
 	}
 	if req.Email == "" {
-		h.commentResp(c, false, blogi18n.T(c, "邮箱不能为空。"), req.PostID)
+		h.commentResp(c, false, tr.T("邮箱不能为空。"), req.PostID)
 		return
 	}
 	if _, err := mail.ParseAddress(req.Email); err != nil {
-		h.commentResp(c, false, blogi18n.T(c, "邮箱格式不正确。"), req.PostID)
+		h.commentResp(c, false, tr.T("邮箱格式不正确。"), req.PostID)
 		return
 	}
 
@@ -87,13 +88,13 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		// 也可能是页面(saying/guestbook),用 PostMeta 兜底校验。
 		meta, err2 := h.st.PostMeta(req.PostID)
 		if err2 != nil || meta.Status != model.StatusPublished {
-			h.commentResp(c, false, blogi18n.T(c, "目标文章不存在。"), req.PostID)
+			h.commentResp(c, false, tr.T("目标文章不存在。"), req.PostID)
 			return
 		}
 		target = meta
 	}
 	if target.CommentStatus == "closed" {
-		h.commentResp(c, false, blogi18n.T(c, "该文章评论已关闭。"), req.PostID)
+		h.commentResp(c, false, tr.T("该文章评论已关闭。"), req.PostID)
 		return
 	}
 
@@ -101,7 +102,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	ip := c.ClientIP()
 	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
 	if cnt, _ := h.st.RecentCommentCountByIP(ip, since); cnt >= rateMaxInWindow {
-		h.commentResp(c, false, blogi18n.T(c, "评论太频繁,请稍后再试。"), req.PostID)
+		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), req.PostID)
 		return
 	}
 
@@ -122,7 +123,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	h.commentResp(c, true, blogi18n.T(c, "评论已提交,等待审核后显示。"), req.PostID)
+	h.commentResp(c, true, tr.T("评论已提交,等待审核后显示。"), req.PostID)
 }
 
 // commentResp 根据请求类型返回 JSON 或重定向。

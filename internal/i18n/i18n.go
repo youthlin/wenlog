@@ -74,7 +74,7 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 		"en_US": "?" + QueryParam + "=" + url.QueryEscape("en_US"),
 	}
 	if c != nil {
-		translator = gettext.WithContext(c.Request.Context())
+		translator = Get(c)
 		used = translator.UsedLocale()
 		switchURLs["zh_CN"] = switchURL(c, "zh_CN")
 		switchURLs["en_US"] = switchURL(c, "en_US")
@@ -95,16 +95,13 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 	return data
 }
 
-// T 用当前请求语言翻译字符串。
-func T(c *gin.Context, msgID string, args ...any) string {
-	if c == nil {
-		return gettext.T(msgID, args...)
+// Get 按请求返回适配的翻译实例。
+func Get(c *gin.Context) *gettext.Translations {
+	if c == nil || c.Request == nil {
+		return gettext.Global()
 	}
-	return gettext.WithContext(c.Request.Context()).T(msgID, args...)
+	return gettext.WithContext(c.Request.Context())
 }
-
-// Mark 仅用于标记需要被 xgettext 抽取的字符串，自身不做任何处理。
-func Mark(msgID string) string { return msgID }
 
 func requestedLocale(c *gin.Context) string {
 	if c == nil {

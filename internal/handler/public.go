@@ -15,7 +15,7 @@ import (
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/consts"
-	blogi18n "github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
@@ -57,7 +57,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 			csrfToken = token
 		}
 	}
-	return blogi18n.Inject(c, gin.H{
+	return i18n.Inject(c, gin.H{
 		"SiteName":           s.SiteName,
 		"Title":              title,
 		"Description":        desc,
@@ -147,8 +147,9 @@ func (h *Public) Search(c *gin.Context) {
 			return
 		}
 	}
-	data := h.base(c, blogi18n.T(c, "搜索:%s", kw), "", s)
-	data["Heading"] = blogi18n.T(c, "搜索「%s」", kw)
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("搜索:%s", kw), "", s)
+	data["Heading"] = tr.T("搜索「%s」", kw)
 	data["Keyword"] = kw
 	data["List"] = res
 	data["Pager"] = pager(res, "/search?q="+url.QueryEscape(kw))
@@ -305,13 +306,14 @@ func (h *Public) Category(c *gin.Context) {
 	slug := c.Param("slug")
 	page := atoiDefault(c.Query("page"), 1)
 	s := h.loadSettings()
+	tr := i18n.Get(c)
 	res, err := h.st.ListPosts(page, s.PageSize, slug, "")
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, blogi18n.T(c, "分类:%s", slug), "", s)
-	data["Heading"] = blogi18n.T(c, "分类:%s", slug)
+	data := h.base(c, tr.T("分类:%s", slug), "", s)
+	data["Heading"] = tr.T("分类:%s", slug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
 	c.HTML(http.StatusOK, "list.gohtml", data)
@@ -322,13 +324,14 @@ func (h *Public) Tag(c *gin.Context) {
 	slug := c.Param("slug")
 	page := atoiDefault(c.Query("page"), 1)
 	s := h.loadSettings()
+	tr := i18n.Get(c)
 	res, err := h.st.ListPosts(page, s.PageSize, "", slug)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, blogi18n.T(c, "标签:%s", slug), "", s)
-	data["Heading"] = blogi18n.T(c, "标签:%s", slug)
+	data := h.base(c, tr.T("标签:%s", slug), "", s)
+	data["Heading"] = tr.T("标签:%s", slug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
 	c.HTML(http.StatusOK, "list.gohtml", data)
@@ -361,17 +364,19 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 
 // notFound 渲染 404。
 func (h *Public) notFound(c *gin.Context) {
-	data := h.base(c, blogi18n.T(c, "页面不存在"), "", h.loadSettings())
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings())
 	data["Code"] = 404
-	data["Message"] = blogi18n.T(c, "你访问的页面不存在或已被删除。")
+	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
 	c.HTML(http.StatusNotFound, "error.gohtml", data)
 }
 
 func (h *Public) serverError(c *gin.Context, err error) {
 	h.log.Error("handler error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
-	data := h.base(c, blogi18n.T(c, "出错了"), "", h.loadSettings())
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("出错了"), "", h.loadSettings())
 	data["Code"] = 500
-	data["Message"] = blogi18n.T(c, "服务器内部错误,请稍后重试。")
+	data["Message"] = tr.T("服务器内部错误,请稍后重试。")
 	c.HTML(http.StatusInternalServerError, "error.gohtml", data)
 }
 

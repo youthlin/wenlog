@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 08:18+0800\n"
+"POT-Creation-Date: 2026-06-09 12:07+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -545,371 +545,371 @@ msgstr ""
 msgid "%d 条评论"
 msgstr ""
 
-#: internal/handler/admin.go:76 internal/handler/admin.go:89
+#: internal/handler/admin.go:78 internal/handler/admin.go:92
 msgid "登录"
 msgstr ""
 
-#: internal/handler/admin.go:78
+#: internal/handler/admin.go:80
 msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
 msgstr ""
 
-#: internal/handler/admin.go:90
+#: internal/handler/admin.go:93
 msgid "用户名或密码错误。"
 msgstr ""
 
-#: internal/handler/admin.go:110
+#: internal/handler/admin.go:114
 msgid "后台"
 msgstr ""
 
-#: internal/handler/admin.go:115 internal/handler/admin.go:124
-#: internal/handler/admin.go:195
+#: internal/handler/admin.go:120 internal/handler/admin.go:130
+#: internal/handler/admin.go:202
 msgid "WXR 导入 / 导出"
 msgstr ""
 
-#: internal/handler/admin.go:132
+#: internal/handler/admin.go:138
 msgid "表单参数有误。"
 msgstr ""
 
-#: internal/handler/admin.go:138
+#: internal/handler/admin.go:144
 msgid "请选择导入归属用户。"
 msgstr ""
 
-#: internal/handler/admin.go:144
+#: internal/handler/admin.go:150
 msgid "所选用户不存在。"
 msgstr ""
 
-#: internal/handler/admin.go:150
+#: internal/handler/admin.go:156
 msgid "请选择要导入的 XML 文件。"
 msgstr ""
 
-#: internal/handler/admin.go:155
+#: internal/handler/admin.go:161
 msgid "XML 文件不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:160
+#: internal/handler/admin.go:166
 msgid "XML 文件不能超过 50MB。"
 msgstr ""
 
-#: internal/handler/admin.go:166
+#: internal/handler/admin.go:172
 msgid "打开上传文件失败。"
 msgstr ""
 
-#: internal/handler/admin.go:181
+#: internal/handler/admin.go:187
 #, c-format
 msgid "导入失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:185
+#: internal/handler/admin.go:191
 msgid "导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。"
 msgstr ""
 
-#: internal/handler/admin.go:206
+#: internal/handler/admin.go:213
 msgid "导出表单参数有误。"
 msgstr ""
 
-#: internal/handler/admin.go:219
+#: internal/handler/admin.go:226
 msgid "请至少选择一项导出内容。"
 msgstr ""
 
-#: internal/handler/admin.go:233
+#: internal/handler/admin.go:240
 #, c-format
 msgid "导出失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:249
+#: internal/handler/admin.go:257
 msgid "设置"
 msgstr ""
 
-#: internal/handler/admin.go:267
+#: internal/handler/admin.go:275
 msgid "模板已重新解析。"
 msgstr ""
 
-#: internal/handler/admin.go:270
+#: internal/handler/admin.go:278
 msgid "模板文件已释放到 web/templates，并已切换为 hot 模式。"
 msgstr ""
 
-#: internal/handler/admin.go:273
+#: internal/handler/admin.go:281
 msgid "资源文件已释放到 web/assets，并已切换为 hot 模式。"
 msgstr ""
 
-#: internal/handler/admin.go:333
+#: internal/handler/admin.go:342
 msgid "Session Secret 不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:359
+#: internal/handler/admin.go:369
 msgid "用户名、显示名和邮件不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:370
+#: internal/handler/admin.go:380
 msgid "用户名已被占用。"
 msgstr ""
 
-#: internal/handler/admin.go:393
+#: internal/handler/admin.go:404
 msgid "原密码不正确。"
 msgstr ""
 
-#: internal/handler/admin.go:399
+#: internal/handler/admin.go:410
 msgid "两次输入的密码不一致。"
 msgstr ""
 
-#: internal/handler/admin.go:419
+#: internal/handler/admin.go:431
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr ""
 
-#: internal/handler/admin.go:425
+#: internal/handler/admin.go:437
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:436
+#: internal/handler/admin.go:449
 msgid "当前模板渲染器不可用。"
 msgstr ""
 
-#: internal/handler/admin.go:442
+#: internal/handler/admin.go:455
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr ""
 
-#: internal/handler/admin.go:448
+#: internal/handler/admin.go:461
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:459
+#: internal/handler/admin.go:473
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr ""
 
-#: internal/handler/admin.go:466
+#: internal/handler/admin.go:480
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:472
+#: internal/handler/admin.go:486
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:506
+#: internal/handler/admin.go:521
 msgid "DB Debug"
 msgstr ""
 
-#: internal/handler/admin.go:517
+#: internal/handler/admin.go:532
 msgid "仅允许只读 SQL(SELECT/EXPLAIN)。"
 msgstr ""
 
-#: internal/handler/admin.go:561
+#: internal/handler/admin.go:577
 msgid "未登录"
 msgstr ""
 
-#: internal/handler/admin.go:566
+#: internal/handler/admin.go:582
 msgid "未选择文件"
 msgstr ""
 
-#: internal/handler/admin.go:570
+#: internal/handler/admin.go:586
 msgid "文件不能超过 10MB"
 msgstr ""
 
-#: internal/handler/admin.go:575
+#: internal/handler/admin.go:591
 msgid "打开上传文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:585
+#: internal/handler/admin.go:601
 msgid "仅支持 png/jpg/gif/webp 图片"
 msgstr ""
 
-#: internal/handler/admin.go:589
+#: internal/handler/admin.go:605
 msgid "读取上传文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:599
+#: internal/handler/admin.go:615
 msgid "创建上传目录失败"
 msgstr ""
 
-#: internal/handler/admin.go:605
+#: internal/handler/admin.go:621
 msgid "保存文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:611
+#: internal/handler/admin.go:627
 msgid "写入文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:621
+#: internal/handler/admin.go:637
 msgid "保存上传记录失败"
 msgstr ""
 
-#: internal/handler/admin.go:635
+#: internal/handler/admin.go:652
 msgid "文件管理"
 msgstr ""
 
-#: internal/handler/admin.go:733 internal/handler/admin.go:899
-#: internal/handler/admin.go:980 internal/handler/admin.go:997
+#: internal/handler/admin.go:751 internal/handler/admin.go:921
+#: internal/handler/admin.go:1003 internal/handler/admin.go:1020
 msgid "内容管理"
 msgstr ""
 
-#: internal/handler/admin.go:744 internal/handler/admin.go:1084
+#: internal/handler/admin.go:763 internal/handler/admin.go:1108
 msgid "分类/标签"
 msgstr ""
 
-#: internal/handler/admin.go:754
+#: internal/handler/admin.go:773
 msgid "分类已保存。"
 msgstr ""
 
-#: internal/handler/admin.go:757
+#: internal/handler/admin.go:776
 msgid "分类已删除。"
 msgstr ""
 
-#: internal/handler/admin.go:760
+#: internal/handler/admin.go:779
 msgid "标签已保存。"
 msgstr ""
 
-#: internal/handler/admin.go:763
+#: internal/handler/admin.go:782
 msgid "标签已删除。"
 msgstr ""
 
-#: internal/handler/admin.go:803
+#: internal/handler/admin.go:823
 msgid "分类名称不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:811
+#: internal/handler/admin.go:831
 msgid "分类 slug 不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:820
+#: internal/handler/admin.go:840
 msgid "分类 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin.go:859
+#: internal/handler/admin.go:880
 msgid "标签名称不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:867
+#: internal/handler/admin.go:888
 msgid "标签 slug 不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:876
+#: internal/handler/admin.go:897
 msgid "标签 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin.go:998
+#: internal/handler/admin.go:1021
 #, c-format
 msgid "页面链接 /%s 已存在，请换一个 slug。"
 msgstr ""
 
-#: internal/handler/admin.go:1126
+#: internal/handler/admin.go:1151
 msgid "评论管理"
 msgstr ""
 
-#: internal/handler/admin.go:1212
+#: internal/handler/admin.go:1238
 msgid "友链管理"
 msgstr ""
 
-#: internal/handler/admin.go:1254
+#: internal/handler/admin.go:1281
 msgid "未找到"
 msgstr ""
 
-#: internal/handler/admin.go:1262
+#: internal/handler/admin.go:1290
 msgid "服务器错误"
 msgstr ""
 
-#: internal/handler/admin.go:1283
+#: internal/handler/admin.go:1311
 msgid "页面 slug 不能为空"
 msgstr ""
 
-#: internal/handler/admin.go:1286
+#: internal/handler/admin.go:1314
 msgid "页面 slug 只能是单段路径，不能包含 /"
 msgstr ""
 
-#: internal/handler/admin.go:1289
+#: internal/handler/admin.go:1317
 msgid "页面 slug 不能包含空白、? 或 #"
 msgstr ""
 
-#: internal/handler/admin.go:1292
+#: internal/handler/admin.go:1320
 msgid "页面 slug 非法"
 msgstr ""
 
-#: internal/handler/admin.go:1295
+#: internal/handler/admin.go:1323
 msgid "页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头"
 msgstr ""
 
-#: internal/handler/admin.go:1298
+#: internal/handler/admin.go:1326
 msgid "页面 slug 不能与文章永久链接格式冲突"
 msgstr ""
 
-#: internal/handler/admin.go:1301
+#: internal/handler/admin.go:1329
 msgid "页面 slug %q 为保留路由，请换一个"
 msgstr ""
 
-#: internal/handler/comment.go:44
+#: internal/handler/comment.go:45
 msgid "提交内容格式有误。"
 msgstr ""
 
-#: internal/handler/comment.go:50
+#: internal/handler/comment.go:51
 msgid "提交失败。"
 msgstr ""
 
-#: internal/handler/comment.go:68
+#: internal/handler/comment.go:69
 msgid "昵称和内容不能为空。"
 msgstr ""
 
-#: internal/handler/comment.go:72
+#: internal/handler/comment.go:73
 msgid "评论长度不合适。"
 msgstr ""
 
-#: internal/handler/comment.go:76
+#: internal/handler/comment.go:77
 msgid "邮箱不能为空。"
 msgstr ""
 
-#: internal/handler/comment.go:80
+#: internal/handler/comment.go:81
 msgid "邮箱格式不正确。"
 msgstr ""
 
-#: internal/handler/comment.go:90
+#: internal/handler/comment.go:91
 msgid "目标文章不存在。"
 msgstr ""
 
-#: internal/handler/comment.go:96
+#: internal/handler/comment.go:97
 msgid "该文章评论已关闭。"
 msgstr ""
 
-#: internal/handler/comment.go:104
+#: internal/handler/comment.go:105
 msgid "评论太频繁,请稍后再试。"
 msgstr ""
 
-#: internal/handler/comment.go:125
+#: internal/handler/comment.go:126
 msgid "评论已提交,等待审核后显示。"
-msgstr ""
-
-#: internal/handler/public.go:150
-#, c-format
-msgid "搜索:%s"
 msgstr ""
 
 #: internal/handler/public.go:151
 #, c-format
+msgid "搜索:%s"
+msgstr ""
+
+#: internal/handler/public.go:152
+#, c-format
 msgid "搜索「%s」"
 msgstr ""
 
-#: internal/handler/public.go:313 internal/handler/public.go:314
+#: internal/handler/public.go:315 internal/handler/public.go:316
 #, c-format
 msgid "分类:%s"
 msgstr ""
 
-#: internal/handler/public.go:330 internal/handler/public.go:331
+#: internal/handler/public.go:333 internal/handler/public.go:334
 #, c-format
 msgid "标签:%s"
 msgstr ""
 
-#: internal/handler/public.go:364
+#: internal/handler/public.go:368
 msgid "页面不存在"
 msgstr ""
 
-#: internal/handler/public.go:366
+#: internal/handler/public.go:370
 msgid "你访问的页面不存在或已被删除。"
 msgstr ""
 
-#: internal/handler/public.go:372
+#: internal/handler/public.go:377
 msgid "出错了"
 msgstr ""
 
-#: internal/handler/public.go:374
+#: internal/handler/public.go:379
 msgid "服务器内部错误,请稍后重试。"
 msgstr ""

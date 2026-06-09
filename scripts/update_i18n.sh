@@ -38,9 +38,6 @@ for file in "${ALL_GO_FILES[@]}"; do
   if [[ "$file" == *_test.go ]]; then
     continue
   fi
-  if ! grep -q 'T(' "$ROOT_DIR/$file"; then
-    continue
-  fi
   GO_FILES+=("$file")
 done
 
@@ -58,8 +55,12 @@ fi
     --force-po \
     --sort-by-file \
     --package-name=blog \
-    --keyword=T:2 \
-    --keyword=Mark:1 \
+    --keyword=T:1 \
+    --keyword=N:1,2 \
+    --keyword=N64:1,2 \
+    --keyword=X:1c,2 \
+    --keyword=XN:1c,2,3 \
+    --keyword=XN64:1c,2,3 \
     --output="$GO_POT" \
     -- "${GO_FILES[@]}"
 )

@@ -55,17 +55,20 @@
 
 ### 2.1 handler / Go 代码里的翻译
 
-handler 或其他请求相关代码里继续使用：
+handler 或其他请求相关代码里统一先取请求级 translator：
 
 ```go
-blogi18n.T(c, "登录")
+tr := i18n.Get(c)
+tr.T("登录")
+tr.N("%d 条评论", "%d 条评论", n, n)
+tr.X("button", "关闭")
 ```
 
-抽取脚本通过 `xgettext --keyword=T:2` 抓取这类文案。
+抽取脚本通过 `xgettext` 的 `T/N/N64/X/XN/XN64` 关键字直接抓取这类调用。
 
-### 2.2 不能直接被 `T(c, ...)` 抽取的文案
+### 2.2 不能直接被 translator 调用抽取的文案
 
-有些文案不会直接出现在 `T(c, ...)` 调用里，例如：
+有些文案不会直接出现在 `tr.T(...)` / `tr.N(...)` 调用里，例如：
 
 - 把翻译函数作为回调参数传递
 - 需要先标记、后由其它函数格式化
@@ -73,10 +76,11 @@ blogi18n.T(c, "登录")
 这种场景统一使用：
 
 ```go
-blogi18n.Mark("页面 slug 不能为空")
+gettext.Mark.T("页面 slug 不能为空")
+gettext.Mark.N("%d 条评论", "%d 条评论")
 ```
 
-`Mark` 是一个 no-op，仅用于给 `xgettext` 提供抽取锚点。抽取脚本会额外使用 `--keyword=Mark:1` 收集这些 msgid。
+`gettext.Mark` 是库内置的 no-op 标记器，仅用于给 `xgettext` 提供抽取锚点。
 
 ### 2.3 带 HTML 的翻译字符串
 
@@ -111,8 +115,12 @@ blogi18n.Mark("页面 slug 不能为空")
 
 Go 源码抽取关键字：
 
-- `T:2`
-- `Mark:1`
+- `T:1`
+- `N:1,2`
+- `N64:1,2`
+- `X:1c,2`
+- `XN:1c,2,3`
+- `XN64:1c,2,3`
 
 模板抽取关键字：
 

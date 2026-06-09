@@ -24,11 +24,12 @@ import (
 	"github.com/gomarkdown/markdown"
 	mhtml "github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/consts"
-	blogi18n "github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/i18n"
 	wpimport "github.com/youthlin/blog/internal/importer"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
@@ -68,26 +69,28 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 	if c != nil {
 		data["CSRFToken"] = middleware.CSRFToken(c)
 	}
-	return blogi18n.Inject(c, data)
+	return i18n.Inject(c, data)
 }
 
 // LoginForm 显示登录页。
 func (h *Admin) LoginForm(c *gin.Context) {
-	data := h.base(c, blogi18n.T(c, "登录"))
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("登录"))
 	if c.Query("message") == "session-secret-updated" {
-		data["Notice"] = blogi18n.T(c, "Session Secret 已更新，所有登录用户都需要重新登录。")
+		data["Notice"] = tr.T("Session Secret 已更新，所有登录用户都需要重新登录。")
 	}
 	c.HTML(http.StatusOK, "admin_login.gohtml", data)
 }
 
 // Login 处理登录 当前只有管理员一种用户 所以登录就能进入管理后台
 func (h *Admin) Login(c *gin.Context) {
+	tr := i18n.Get(c)
 	username := strings.TrimSpace(c.PostForm("username"))
 	password := c.PostForm("password")
 	u, err := h.st.GetUserByUsername(username)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
-		data := h.base(c, blogi18n.T(c, "登录"))
-		data["Error"] = blogi18n.T(c, "用户名或密码错误。")
+		data := h.base(c, tr.T("登录"))
+		data["Error"] = tr.T("用户名或密码错误。")
 		c.HTML(http.StatusUnauthorized, "admin_login.gohtml", data)
 		return
 	}
@@ -107,12 +110,14 @@ func (h *Admin) Logout(c *gin.Context) {
 
 // Dashboard 后台首页。
 func (h *Admin) Dashboard(c *gin.Context) {
-	c.HTML(http.StatusOK, "admin_dashboard.gohtml", h.base(c, blogi18n.T(c, "后台")))
+	tr := i18n.Get(c)
+	c.HTML(http.StatusOK, "admin_dashboard.gohtml", h.base(c, tr.T("后台")))
 }
 
 // ImportPage 显示 WXR 导入/导出页。
 func (h *Admin) ImportPage(c *gin.Context) {
-	data, ok := h.importPageData(c, blogi18n.T(c, "WXR 导入 / 导出"))
+	tr := i18n.Get(c)
+	data, ok := h.importPageData(c, tr.T("WXR 导入 / 导出"))
 	if !ok {
 		return
 	}
@@ -121,7 +126,8 @@ func (h *Admin) ImportPage(c *gin.Context) {
 
 // ImportXML 处理后台上传的 WXR XML,并把文章/页面归属到指定用户。
 func (h *Admin) ImportXML(c *gin.Context) {
-	data, ok := h.importPageData(c, blogi18n.T(c, "WXR 导入 / 导出"))
+	tr := i18n.Get(c)
+	data, ok := h.importPageData(c, tr.T("WXR 导入 / 导出"))
 	if !ok {
 		return
 	}
@@ -129,41 +135,41 @@ func (h *Admin) ImportXML(c *gin.Context) {
 		UserID uint `form:"user_id"`
 	}
 	if err := c.ShouldBind(&form); err != nil {
-		data["Error"] = blogi18n.T(c, "表单参数有误。")
+		data["Error"] = tr.T("表单参数有误。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	data["SelectedUserID"] = form.UserID
 	if form.UserID == 0 {
-		data["Error"] = blogi18n.T(c, "请选择导入归属用户。")
+		data["Error"] = tr.T("请选择导入归属用户。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	user, err := h.st.GetUserByID(form.UserID)
 	if err != nil {
-		data["Error"] = blogi18n.T(c, "所选用户不存在。")
+		data["Error"] = tr.T("所选用户不存在。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	fh, err := c.FormFile("xml_file")
 	if err != nil {
-		data["Error"] = blogi18n.T(c, "请选择要导入的 XML 文件。")
+		data["Error"] = tr.T("请选择要导入的 XML 文件。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	if fh.Size <= 0 {
-		data["Error"] = blogi18n.T(c, "XML 文件不能为空。")
+		data["Error"] = tr.T("XML 文件不能为空。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	if fh.Size > maxImportXMLSize {
-		data["Error"] = blogi18n.T(c, "XML 文件不能超过 50MB。")
+		data["Error"] = tr.T("XML 文件不能超过 50MB。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	file, err := fh.Open()
 	if err != nil {
-		data["Error"] = blogi18n.T(c, "打开上传文件失败。")
+		data["Error"] = tr.T("打开上传文件失败。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
@@ -178,11 +184,11 @@ func (h *Admin) ImportXML(c *gin.Context) {
 			slog.String("file", fh.Filename),
 			slog.Uint64("user_id", uint64(user.ID)),
 		)
-		data["Error"] = blogi18n.T(c, "导入失败: %s", err.Error())
+		data["Error"] = tr.T("导入失败: %s", err.Error())
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
-	data["Success"] = blogi18n.T(c, "导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。")
+	data["Success"] = tr.T("导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。")
 	data["TargetUser"] = user
 	data["ImportStats"] = stats
 	data["ImportedFileName"] = fh.Filename
@@ -192,7 +198,8 @@ func (h *Admin) ImportXML(c *gin.Context) {
 
 // ExportXML 导出可被当前后台重新导入的 XML。
 func (h *Admin) ExportXML(c *gin.Context) {
-	data, ok := h.importPageData(c, blogi18n.T(c, "WXR 导入 / 导出"))
+	tr := i18n.Get(c)
+	data, ok := h.importPageData(c, tr.T("WXR 导入 / 导出"))
 	if !ok {
 		return
 	}
@@ -203,7 +210,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 		Settings []string `form:"include_settings"`
 	}
 	if err := c.ShouldBind(&form); err != nil {
-		data["Error"] = blogi18n.T(c, "导出表单参数有误。")
+		data["Error"] = tr.T("导出表单参数有误。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
@@ -216,7 +223,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 	data["ExportComments"] = includeComments
 	data["ExportSettings"] = includeSettings
 	if !includePosts && !includePages && !includeComments && !includeSettings {
-		data["Error"] = blogi18n.T(c, "请至少选择一项导出内容。")
+		data["Error"] = tr.T("请至少选择一项导出内容。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
@@ -230,7 +237,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 		SiteURL:   requestBaseURL(c),
 	})
 	if err != nil {
-		data["Error"] = blogi18n.T(c, "导出失败: %s", err.Error())
+		data["Error"] = tr.T("导出失败: %s", err.Error())
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
@@ -246,7 +253,8 @@ func (h *Admin) SettingsPage(c *gin.Context) {
 }
 
 func (h *Admin) settingsData(c *gin.Context) gin.H {
-	data := h.base(c, blogi18n.T(c, "设置"))
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("设置"))
 	settings, _ := h.st.GetSettings(
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
@@ -264,13 +272,13 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 	data["TemplateHotReload"] = h.renderer != nil && h.renderer.Hot()
 	data["AssetHotReload"] = pathExists("web/assets")
 	if c != nil && c.Query("message") == "templates-reloaded" {
-		data["Notice"] = blogi18n.T(c, "模板已重新解析。")
+		data["Notice"] = tr.T("模板已重新解析。")
 	}
 	if c != nil && c.Query("message") == "templates-released" {
-		data["Notice"] = blogi18n.T(c, "模板文件已释放到 web/templates，并已切换为 hot 模式。")
+		data["Notice"] = tr.T("模板文件已释放到 web/templates，并已切换为 hot 模式。")
 	}
 	if c != nil && c.Query("message") == "assets-released" {
-		data["Notice"] = blogi18n.T(c, "资源文件已释放到 web/assets，并已切换为 hot 模式。")
+		data["Notice"] = tr.T("资源文件已释放到 web/assets，并已切换为 hot 模式。")
 	}
 	if u := h.currentUser(c); u != nil {
 		data["CurrentUser"] = u
@@ -327,10 +335,11 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 
 // SaveSessionSettings 修改 session secret。修改后所有登录用户都需要重新登录。
 func (h *Admin) SaveSessionSettings(c *gin.Context) {
+	tr := i18n.Get(c)
 	secret := strings.TrimSpace(c.PostForm("session_secret"))
 	if secret == "" {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "Session Secret 不能为空。")
+		data["Error"] = tr.T("Session Secret 不能为空。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
@@ -346,6 +355,7 @@ func (h *Admin) SaveSessionSettings(c *gin.Context) {
 
 // SaveProfileSettings 保存当前用户用户名/显示名/邮箱。
 func (h *Admin) SaveProfileSettings(c *gin.Context) {
+	tr := i18n.Get(c)
 	u := h.currentUser(c)
 	if u == nil {
 		h.notFound(c)
@@ -356,7 +366,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	email := strings.TrimSpace(c.PostForm("email"))
 	if username == "" || displayName == "" || email == "" {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "用户名、显示名和邮件不能为空。")
+		data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
@@ -367,7 +377,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	}
 	if exists {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "用户名已被占用。")
+		data["Error"] = tr.T("用户名已被占用。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
@@ -380,6 +390,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 
 // SavePasswordSettings 修改当前用户密码。
 func (h *Admin) SavePasswordSettings(c *gin.Context) {
+	tr := i18n.Get(c)
 	u := h.currentUser(c)
 	if u == nil {
 		h.notFound(c)
@@ -390,13 +401,13 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 	currentPassword := c.PostForm("current_password")
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "原密码不正确。")
+		data["Error"] = tr.T("原密码不正确。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if password == "" || password != confirm {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "两次输入的密码不一致。")
+		data["Error"] = tr.T("两次输入的密码不一致。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
@@ -414,15 +425,16 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 
 // ReloadTemplates 手动重新解析本地模板文件。仅热更新模式支持。
 func (h *Admin) ReloadTemplates(c *gin.Context) {
+	tr := i18n.Get(c)
 	if h.renderer == nil || !h.renderer.Hot() {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "当前不是热更新模式，不能重新解析模板。")
+		data["Error"] = tr.T("当前不是热更新模式，不能重新解析模板。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if err := h.renderer.Reload(); err != nil {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "重新解析模板失败: %s", err.Error())
+		data["Error"] = tr.T("重新解析模板失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
@@ -431,21 +443,22 @@ func (h *Admin) ReloadTemplates(c *gin.Context) {
 
 // ReleaseTemplates 把嵌入模板释放到本地目录,并切换为 hot 模式。
 func (h *Admin) ReleaseTemplates(c *gin.Context) {
+	tr := i18n.Get(c)
 	if h.renderer == nil {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "当前模板渲染器不可用。")
+		data["Error"] = tr.T("当前模板渲染器不可用。")
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	if h.renderer.Hot() {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "当前已经是 hot 模式，无需再次释放模板。")
+		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放模板。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if err := h.renderer.ReleaseToHotDir("web/templates"); err != nil {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "释放模板文件失败: %s", err.Error())
+		data["Error"] = tr.T("释放模板文件失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
@@ -454,22 +467,23 @@ func (h *Admin) ReleaseTemplates(c *gin.Context) {
 
 // ReleaseAssets 把嵌入资源释放到本地目录。释放完成后当前进程会自动优先读取该目录。
 func (h *Admin) ReleaseAssets(c *gin.Context) {
+	tr := i18n.Get(c)
 	if pathExists("web/assets") {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "当前已经是 hot 模式，无需再次释放资源文件。")
+		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放资源文件。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	assetsFS, err := fs.Sub(web.Assets, "assets")
 	if err != nil {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "读取嵌入资源失败: %s", err.Error())
+		data["Error"] = tr.T("读取嵌入资源失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	if err := releaseDirFromFS(assetsFS, "web/assets"); err != nil {
 		data := h.settingsData(c)
-		data["Error"] = blogi18n.T(c, "释放资源文件失败: %s", err.Error())
+		data["Error"] = tr.T("释放资源文件失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
@@ -503,7 +517,8 @@ func pathExists(path string) bool {
 
 // DebugPage 是只读 SQL 调试页,以 JSON 展示结果集。
 func (h *Admin) DebugPage(c *gin.Context) {
-	data := h.base(c, blogi18n.T(c, "DB Debug"))
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("DB Debug"))
 	sqlText := strings.TrimSpace(c.PostForm("sql"))
 	if c.Request.Method == http.MethodGet {
 		sqlText = ""
@@ -514,7 +529,7 @@ func (h *Admin) DebugPage(c *gin.Context) {
 		return
 	}
 	if !allowDebugSQL(sqlText) {
-		data["Error"] = blogi18n.T(c, "仅允许只读 SQL(SELECT/EXPLAIN)。")
+		data["Error"] = tr.T("仅允许只读 SQL(SELECT/EXPLAIN)。")
 		c.HTML(http.StatusBadRequest, "admin_debug.gohtml", data)
 		return
 	}
@@ -556,23 +571,24 @@ func (h *Admin) currentUser(c *gin.Context) *model.User {
 
 // UploadFile 上传图片并返回可直接插入 Markdown 的地址。
 func (h *Admin) UploadFile(c *gin.Context) {
+	tr := i18n.Get(c)
 	u := h.currentUser(c)
 	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "message": blogi18n.T(c, "未登录")})
+		c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "message": tr.T("未登录")})
 		return
 	}
 	fh, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": blogi18n.T(c, "未选择文件")})
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": tr.T("未选择文件")})
 		return
 	}
 	if fh.Size > 10<<20 {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": blogi18n.T(c, "文件不能超过 10MB")})
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": tr.T("文件不能超过 10MB")})
 		return
 	}
 	file, err := fh.Open()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": blogi18n.T(c, "打开上传文件失败")})
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": tr.T("打开上传文件失败")})
 		return
 	}
 	defer file.Close()
@@ -582,11 +598,11 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	buf = buf[:n]
 	mimeType := http.DetectContentType(buf)
 	if !allowedUploadMIME(mimeType) {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": blogi18n.T(c, "仅支持 png/jpg/gif/webp 图片")})
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": tr.T("仅支持 png/jpg/gif/webp 图片")})
 		return
 	}
 	if _, err = file.Seek(0, 0); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": blogi18n.T(c, "读取上传文件失败")})
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("读取上传文件失败")})
 		return
 	}
 
@@ -596,19 +612,19 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	fileName := util.GenerateRandomString(24, util.WithAlphaNumer()) + ext
 	absDir := filepath.Join(h.cfg.PublicDir, relDir)
 	if err = os.MkdirAll(absDir, 0o755); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": blogi18n.T(c, "创建上传目录失败")})
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("创建上传目录失败")})
 		return
 	}
 	absPath := filepath.Join(absDir, fileName)
 	out, err := os.Create(absPath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": blogi18n.T(c, "保存文件失败")})
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("保存文件失败")})
 		return
 	}
 	if _, err := io.Copy(out, file); err != nil {
 		out.Close()
 		_ = os.Remove(absPath)
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": blogi18n.T(c, "写入文件失败")})
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("写入文件失败")})
 		return
 	}
 	_ = out.Close()
@@ -618,7 +634,7 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	record := &model.Upload{Path: urlPath, OrigName: fh.Filename, MimeType: mimeType, Size: fh.Size, Width: width, Height: height, UploaderID: u.ID, CreatedAt: now}
 	if err := h.st.SaveUpload(record); err != nil {
 		_ = os.Remove(absPath)
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": blogi18n.T(c, "保存上传记录失败")})
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("保存上传记录失败")})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "id": record.ID, "url": urlPath, "markdown": "![](" + urlPath + ")"})
@@ -626,13 +642,14 @@ func (h *Admin) UploadFile(c *gin.Context) {
 
 // UploadsPage 文件管理页。
 func (h *Admin) UploadsPage(c *gin.Context) {
+	tr := i18n.Get(c)
 	page := atoiDefault(c.Query("page"), 1)
 	uploads, total, err := h.st.ListUploads(page, adminPageSize)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, blogi18n.T(c, "文件管理"))
+	data := h.base(c, tr.T("文件管理"))
 	data["Uploads"] = uploads
 	data["Total"] = total
 	data["Page"] = page
@@ -720,6 +737,7 @@ func imageSize(path string) (int, int) {
 
 // ListPosts 后台文章/页面列表。type 查询参数区分。
 func (h *Admin) ListPosts(c *gin.Context) {
+	tr := i18n.Get(c)
 	pt := c.DefaultQuery("type", model.PostTypePost)
 	if pt != model.PostTypePost && pt != model.PostTypePage {
 		pt = model.PostTypePost
@@ -730,7 +748,7 @@ func (h *Admin) ListPosts(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, blogi18n.T(c, "内容管理"))
+	data := h.base(c, tr.T("内容管理"))
 	data["Posts"] = posts
 	data["Total"] = total
 	data["PostType"] = pt
@@ -741,7 +759,8 @@ func (h *Admin) ListPosts(c *gin.Context) {
 
 // TermsPage 分类/标签管理页。
 func (h *Admin) TermsPage(c *gin.Context) {
-	data := h.base(c, blogi18n.T(c, "分类/标签"))
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("分类/标签"))
 	cats := h.st.AllCategories()
 	tags := h.st.AllTags()
 	data["Categories"] = cats
@@ -751,16 +770,16 @@ func (h *Admin) TermsPage(c *gin.Context) {
 	data["CategoryForm"] = model.Category{}
 	data["TagForm"] = model.Tag{}
 	if c.Query("message") == "category-saved" {
-		data["Notice"] = blogi18n.T(c, "分类已保存。")
+		data["Notice"] = tr.T("分类已保存。")
 	}
 	if c.Query("message") == "category-deleted" {
-		data["Notice"] = blogi18n.T(c, "分类已删除。")
+		data["Notice"] = tr.T("分类已删除。")
 	}
 	if c.Query("message") == "tag-saved" {
-		data["Notice"] = blogi18n.T(c, "标签已保存。")
+		data["Notice"] = tr.T("标签已保存。")
 	}
 	if c.Query("message") == "tag-deleted" {
-		data["Notice"] = blogi18n.T(c, "标签已删除。")
+		data["Notice"] = tr.T("标签已删除。")
 	}
 	if editID := atoiDefault(c.Query("edit_category"), 0); editID > 0 {
 		for _, cat := range cats {
@@ -793,6 +812,7 @@ type categoryForm struct {
 
 // SaveCategory 保存分类。
 func (h *Admin) SaveCategory(c *gin.Context) {
+	tr := i18n.Get(c)
 	var f categoryForm
 	if err := c.ShouldBind(&f); err != nil {
 		h.serverError(c, err)
@@ -800,7 +820,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 	}
 	name := strings.TrimSpace(f.Name)
 	if name == "" {
-		h.termsFormError(c, blogi18n.T(c, "分类名称不能为空。"), model.Category{ID: f.ID, Name: f.Name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		h.termsFormError(c, tr.T("分类名称不能为空。"), model.Category{ID: f.ID, Name: f.Name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
 	slug := normalizeTermSlug(f.Slug)
@@ -808,7 +828,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		slug = normalizeTermSlug(name)
 	}
 	if slug == "" {
-		h.termsFormError(c, blogi18n.T(c, "分类 slug 不能为空。"), model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		h.termsFormError(c, tr.T("分类 slug 不能为空。"), model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
 	exists, err := h.st.CategorySlugExists(slug, f.ID)
@@ -817,7 +837,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		return
 	}
 	if exists {
-		h.termsFormError(c, blogi18n.T(c, "分类 slug %q 已存在。", slug), model.Category{ID: f.ID, Name: name, Slug: slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		h.termsFormError(c, tr.T("分类 slug %q 已存在。", slug), model.Category{ID: f.ID, Name: name, Slug: slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
 	cat := &model.Category{ID: f.ID, Name: name, Slug: slug, Description: strings.TrimSpace(f.Description), ParentID: f.ParentID}
@@ -849,6 +869,7 @@ type tagForm struct {
 
 // SaveTag 保存标签。
 func (h *Admin) SaveTag(c *gin.Context) {
+	tr := i18n.Get(c)
 	var f tagForm
 	if err := c.ShouldBind(&f); err != nil {
 		h.serverError(c, err)
@@ -856,7 +877,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 	}
 	name := strings.TrimSpace(f.Name)
 	if name == "" {
-		h.termsFormError(c, blogi18n.T(c, "标签名称不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: f.Name, Slug: f.Slug}, false, true)
+		h.termsFormError(c, tr.T("标签名称不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: f.Name, Slug: f.Slug}, false, true)
 		return
 	}
 	slug := normalizeTermSlug(f.Slug)
@@ -864,7 +885,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		slug = normalizeTermSlug(name)
 	}
 	if slug == "" {
-		h.termsFormError(c, blogi18n.T(c, "标签 slug 不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)
+		h.termsFormError(c, tr.T("标签 slug 不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)
 		return
 	}
 	exists, err := h.st.TagSlugExists(slug, f.ID)
@@ -873,7 +894,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		return
 	}
 	if exists {
-		h.termsFormError(c, blogi18n.T(c, "标签 slug %q 已存在。", slug), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: slug}, false, true)
+		h.termsFormError(c, tr.T("标签 slug %q 已存在。", slug), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: slug}, false, true)
 		return
 	}
 	if err := h.st.SaveTag(&model.Tag{ID: f.ID, Name: name, Slug: slug}); err != nil {
@@ -895,8 +916,9 @@ func (h *Admin) DeleteTag(c *gin.Context) {
 
 // EditPostForm 显示新建/编辑表单。id=0 或缺省为新建。
 func (h *Admin) EditPostForm(c *gin.Context) {
+	tr := i18n.Get(c)
 	pt := c.DefaultQuery("type", model.PostTypePost)
-	data := h.base(c, blogi18n.T(c, "内容管理"))
+	data := h.base(c, tr.T("内容管理"))
 	data["PostType"] = pt
 	data["AllCategories"] = h.st.AllCategories()
 	data["SelectedCats"] = map[uint]bool{}
@@ -943,6 +965,7 @@ type postForm struct {
 
 // SavePost 保存文章/页面。正文以 Markdown 原文存 ContentMD,渲染后的 HTML 存 Content。
 func (h *Admin) SavePost(c *gin.Context) {
+	tr := i18n.Get(c)
 	var f postForm
 	if err := c.ShouldBind(&f); err != nil {
 		h.serverError(c, err)
@@ -976,8 +999,8 @@ func (h *Admin) SavePost(c *gin.Context) {
 	p.Title = strings.TrimSpace(f.Title)
 	p.Slug = strings.TrimSpace(f.Slug)
 	if f.PostType == model.PostTypePage {
-		if err := validatePageSlugT(func(msgID string, args ...any) string { return blogi18n.T(c, msgID, args...) }, p.Slug); err != nil {
-			data := h.base(c, blogi18n.T(c, "内容管理"))
+		if err := validatePageSlugT(tr.T, p.Slug); err != nil {
+			data := h.base(c, tr.T("内容管理"))
 			data["Error"] = err.Error()
 			data["PostType"] = f.PostType
 			data["AllCategories"] = h.st.AllCategories()
@@ -994,8 +1017,8 @@ func (h *Admin) SavePost(c *gin.Context) {
 			return
 		}
 		if exists {
-			data := h.base(c, blogi18n.T(c, "内容管理"))
-			data["Error"] = blogi18n.T(c, "页面链接 /%s 已存在，请换一个 slug。", p.Slug)
+			data := h.base(c, tr.T("内容管理"))
+			data["Error"] = tr.T("页面链接 /%s 已存在，请换一个 slug。", p.Slug)
 			data["PostType"] = f.PostType
 			data["AllCategories"] = h.st.AllCategories()
 			data["SelectedCats"] = map[uint]bool{}
@@ -1081,7 +1104,8 @@ func categoryParentNames(categories []model.Category) map[uint]string {
 }
 
 func (h *Admin) termsFormError(c *gin.Context, msg string, cat model.Category, tag model.Tag, editingCategory, editingTag bool) {
-	data := h.base(c, blogi18n.T(c, "分类/标签"))
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("分类/标签"))
 	cats := h.st.AllCategories()
 	data["Error"] = msg
 	data["Categories"] = cats
@@ -1116,6 +1140,7 @@ func (h *Admin) DeletePost(c *gin.Context) {
 
 // ListComments 后台评论列表。
 func (h *Admin) ListComments(c *gin.Context) {
+	tr := i18n.Get(c)
 	status := c.DefaultQuery("status", model.CommentPending)
 	page := atoiDefault(c.Query("page"), 1)
 	comments, total, err := h.st.AdminListComments(status, page, adminPageSize)
@@ -1123,7 +1148,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, blogi18n.T(c, "评论管理"))
+	data := h.base(c, tr.T("评论管理"))
 	data["Comments"] = comments
 	data["Total"] = total
 	data["FilterStatus"] = status
@@ -1208,8 +1233,9 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 
 // ListLinks 友链管理列表。
 func (h *Admin) ListLinks(c *gin.Context) {
+	tr := i18n.Get(c)
 	links, _ := h.st.AllLinks()
-	data := h.base(c, blogi18n.T(c, "友链管理"))
+	data := h.base(c, tr.T("友链管理"))
 	data["Links"] = links
 	c.HTML(http.StatusOK, "admin_links.gohtml", data)
 }
@@ -1249,17 +1275,19 @@ func (h *Admin) DeleteLink(c *gin.Context) {
 // --- 辅助 ---
 
 func (h *Admin) notFound(c *gin.Context) {
-	c.HTML(http.StatusNotFound, "admin_error.gohtml", blogi18n.Inject(c, gin.H{
+	tr := i18n.Get(c)
+	c.HTML(http.StatusNotFound, "admin_error.gohtml", i18n.Inject(c, gin.H{
 		"Title":   "404",
-		"Message": blogi18n.T(c, "未找到"),
+		"Message": tr.T("未找到"),
 	}))
 }
 
 func (h *Admin) serverError(c *gin.Context, err error) {
 	h.log.Error("admin error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
-	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", blogi18n.Inject(c, gin.H{
+	tr := i18n.Get(c)
+	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", i18n.Inject(c, gin.H{
 		"Title":   "500",
-		"Message": blogi18n.T(c, "服务器错误"),
+		"Message": tr.T("服务器错误"),
 	}))
 }
 
@@ -1280,25 +1308,25 @@ func validatePageSlug(slug string) error {
 func validatePageSlugT(tr func(string, ...any) string, slug string) error {
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
-		return errors.New(tr(blogi18n.Mark("页面 slug 不能为空")))
+		return errors.New(tr(gettext.Mark.T("页面 slug 不能为空")))
 	}
 	if strings.ContainsRune(slug, '/') {
-		return errors.New(tr(blogi18n.Mark("页面 slug 只能是单段路径，不能包含 /")))
+		return errors.New(tr(gettext.Mark.T("页面 slug 只能是单段路径，不能包含 /")))
 	}
 	if strings.ContainsAny(slug, "?# \t\r\n") {
-		return errors.New(tr(blogi18n.Mark("页面 slug 不能包含空白、? 或 #")))
+		return errors.New(tr(gettext.Mark.T("页面 slug 不能包含空白、? 或 #")))
 	}
 	if slug == "." || slug == ".." {
-		return errors.New(tr(blogi18n.Mark("页面 slug 非法")))
+		return errors.New(tr(gettext.Mark.T("页面 slug 非法")))
 	}
 	if !pageSlugAllowedRe.MatchString(slug) {
-		return errors.New(tr(blogi18n.Mark("页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头")))
+		return errors.New(tr(gettext.Mark.T("页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头")))
 	}
 	if _, _, ok := permalink.ParsePostPath("/" + slug); ok {
-		return errors.New(tr(blogi18n.Mark("页面 slug 不能与文章永久链接格式冲突")))
+		return errors.New(tr(gettext.Mark.T("页面 slug 不能与文章永久链接格式冲突")))
 	}
 	if pageSlugReserved[strings.ToLower(slug)] {
-		return errors.New(tr(blogi18n.Mark("页面 slug %q 为保留路由，请换一个"), slug))
+		return errors.New(tr(gettext.Mark.T("页面 slug %q 为保留路由，请换一个"), slug))
 	}
 	return nil
 }
