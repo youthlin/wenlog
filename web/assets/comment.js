@@ -1,5 +1,9 @@
 // 评论 Ajax 提交 + 评论分页 Ajax 切换。
 (function () {
+  var root = document.documentElement.dataset || {};
+  var MSG_SUCCESS = root.commentSuccess || "Comment submitted and awaiting moderation.";
+  var MSG_FAIL = root.commentFail || "Submission failed. Please try again later.";
+  var MSG_NETWORK = root.commentNetwork || "Network error. Please try again later.";
   var commentsBox = document.getElementById("comments-box");
   var form = document.getElementById("comment-form");
   if (!commentsBox) return;
@@ -77,14 +81,14 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.ok) {
-            showMsg(data.message || "评论已提交,等待审核后显示。", true);
+            showMsg(data.message || MSG_SUCCESS, true);
             f.querySelector("[name=content]").value = "";
             f.querySelector("[name=parent_id]").value = "0";
           } else {
-            showMsg(data.message || "提交失败,请稍后重试。", false);
+            showMsg(data.message || MSG_FAIL, false);
           }
         })
-        .catch(function () { showMsg("网络错误,请稍后重试。", false); })
+        .catch(function () { showMsg(MSG_NETWORK, false); })
         .finally(function () { btn.disabled = false; });
     });
     bindReplyButtons();

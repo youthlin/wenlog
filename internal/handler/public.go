@@ -15,6 +15,7 @@ import (
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/consts"
+	blogi18n "github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
@@ -56,7 +57,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 			csrfToken = token
 		}
 	}
-	return gin.H{
+	return blogi18n.Inject(c, gin.H{
 		"SiteName":           s.SiteName,
 		"Title":              title,
 		"Description":        desc,
@@ -73,7 +74,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"ArchiveMonths":      h.st.ArchiveMonths(),
 		"Categories":         h.st.AllCategories(),
 		"Tags":               h.st.AllTags(),
-	}
+	})
 }
 
 func (h *Public) loadSettings() publicSettings {
@@ -146,8 +147,8 @@ func (h *Public) Search(c *gin.Context) {
 			return
 		}
 	}
-	data := h.base(c, "搜索:"+kw, "", s)
-	data["Heading"] = "搜索「" + kw + "」"
+	data := h.base(c, blogi18n.T(c, "搜索:%s", kw), "", s)
+	data["Heading"] = blogi18n.T(c, "搜索「%s」", kw)
 	data["Keyword"] = kw
 	data["List"] = res
 	data["Pager"] = pager(res, "/search?q="+url.QueryEscape(kw))
@@ -309,8 +310,8 @@ func (h *Public) Category(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, "分类:"+slug, "", s)
-	data["Heading"] = "分类:" + slug
+	data := h.base(c, blogi18n.T(c, "分类:%s", slug), "", s)
+	data["Heading"] = blogi18n.T(c, "分类:%s", slug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
 	c.HTML(http.StatusOK, "list.gohtml", data)
@@ -326,8 +327,8 @@ func (h *Public) Tag(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, "标签:"+slug, "", s)
-	data["Heading"] = "标签:" + slug
+	data := h.base(c, blogi18n.T(c, "标签:%s", slug), "", s)
+	data["Heading"] = blogi18n.T(c, "标签:%s", slug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
 	c.HTML(http.StatusOK, "list.gohtml", data)
@@ -360,17 +361,17 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 
 // notFound 渲染 404。
 func (h *Public) notFound(c *gin.Context) {
-	data := h.base(c, "页面不存在", "", h.loadSettings())
+	data := h.base(c, blogi18n.T(c, "页面不存在"), "", h.loadSettings())
 	data["Code"] = 404
-	data["Message"] = "你访问的页面不存在或已被删除。"
+	data["Message"] = blogi18n.T(c, "你访问的页面不存在或已被删除。")
 	c.HTML(http.StatusNotFound, "error.gohtml", data)
 }
 
 func (h *Public) serverError(c *gin.Context, err error) {
 	h.log.Error("handler error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
-	data := h.base(c, "出错了", "", h.loadSettings())
+	data := h.base(c, blogi18n.T(c, "出错了"), "", h.loadSettings())
 	data["Code"] = 500
-	data["Message"] = "服务器内部错误,请稍后重试。"
+	data["Message"] = blogi18n.T(c, "服务器内部错误,请稍后重试。")
 	c.HTML(http.StatusInternalServerError, "error.gohtml", data)
 }
 

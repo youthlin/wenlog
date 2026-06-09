@@ -1,13 +1,13 @@
 {{define "post.gohtml"}}
 {{template "header" .}}
 <article class="post-detail">
-  <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">草稿预览</span>{{end}}</h1>
+  <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">{{.t.T "草稿预览"}}</span>{{end}}</h1>
   <div class="post-meta">
     <time>{{fmtDate .Post.PublishedAt}}</time>
     {{if .Post.Author.DisplayName}}<span class="author">{{.Post.Author.DisplayName}}</span>{{end}}
     {{range .Post.Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
-    <span class="views">{{.Post.Views}} 阅读</span>
-    {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">编辑</a>{{end}}
+    <span class="views">{{.Post.Views}} {{.t.T "阅读"}}</span>
+    {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.t.T "编辑"}}</a>{{end}}
   </div>
   <div class="post-content">{{detailHTML .Post}}</div>
   {{if .Post.Tags}}
@@ -28,7 +28,7 @@
 
 {{define "comments"}}
 <section class="comments" id="comments">
-  <h3>{{.CommentCount}} 条评论</h3>
+  <h3>{{.t.T "%d 条评论" .CommentCount}}</h3>
   <div id="comments-box">
     {{template "comments_fragment.gohtml" .}}
   </div>
@@ -46,7 +46,7 @@
         <span class="comment-author">{{.Author}}</span><time>{{fmtDateTime .CreatedAt}}</time>
       </div>
       <div class="comment-body">{{.Content}}</div>
-      <button class="comment-reply" type="button" data-reply="{{.ID}}">回复</button>
+      <button class="comment-reply" type="button" data-reply="{{.ID}}">{{$.t.T "回复"}}</button>
       {{$pid := .ID}}
       <ul class="comment-children">
         {{range $.Comments}}
@@ -57,7 +57,7 @@
             <span class="comment-author">{{.Author}}</span><time>{{fmtDateTime .CreatedAt}}</time>
           </div>
           <div class="comment-body">{{.Content}}</div>
-          <button class="comment-reply" type="button" data-reply="{{$pid}}">回复</button>
+          <button class="comment-reply" type="button" data-reply="{{$pid}}">{{$.t.T "回复"}}</button>
         </li>
         {{end}}
         {{end}}
@@ -69,15 +69,15 @@
 
   {{if gt .CommentPager.Pages 1}}
   <nav class="pagination comment-pagination">
-    {{if gt .CommentPager.Page 1}}<a href="{{.CommentPager.BaseURL}}?cpage={{sub .CommentPager.Page 1}}#comments" data-cpage="{{sub .CommentPager.Page 1}}">上一页</a>{{end}}
+    {{if gt .CommentPager.Page 1}}<a href="{{.CommentPager.BaseURL}}?cpage={{sub .CommentPager.Page 1}}#comments" data-cpage="{{sub .CommentPager.Page 1}}">{{.t.T "上一页"}}</a>{{end}}
     <span class="page-info">{{.CommentPager.Page}} / {{.CommentPager.Pages}}</span>
-    {{if lt .CommentPager.Page .CommentPager.Pages}}<a href="{{.CommentPager.BaseURL}}?cpage={{add .CommentPager.Page 1}}#comments" data-cpage="{{add .CommentPager.Page 1}}">下一页</a>{{end}}
+    {{if lt .CommentPager.Page .CommentPager.Pages}}<a href="{{.CommentPager.BaseURL}}?cpage={{add .CommentPager.Page 1}}#comments" data-cpage="{{add .CommentPager.Page 1}}">{{.t.T "下一页"}}</a>{{end}}
   </nav>
   {{end}}
 
   {{if .CurrentUser}}
-  <div class="comment-login-tip">以 <strong>{{if .CurrentUser.DisplayName}}{{.CurrentUser.DisplayName}}{{else}}{{.CurrentUser.Username}}{{end}}</strong> 的身份发表评论，
-    <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">登出</button></form>
+  <div class="comment-login-tip">{{if .CurrentUser.DisplayName}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.DisplayName))}}{{else}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.Username))}}{{end}}
+    <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "登出"}}</button></form>
   </div>
   {{end}}
 
@@ -86,17 +86,17 @@
     <input type="hidden" name="post_id" value="{{.Post.ID}}">
     <input type="hidden" name="parent_id" value="0">
     {{if not .CurrentUser}}
-      <p><input type="text" name="author" placeholder="昵称 *" required></p>
-      <p><input type="email" name="email" placeholder="邮箱 *(不公开)" required></p>
-      <p><input type="url" name="url" placeholder="网站(可选)"></p>
+      <p><input type="text" name="author" placeholder="{{.t.T "昵称 *"}}" required></p>
+      <p><input type="email" name="email" placeholder="{{.t.T "邮箱 *(不公开)"}}" required></p>
+      <p><input type="url" name="url" placeholder="{{.t.T "网站(可选)"}}"></p>
     {{end}}
     <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
-    <p><textarea name="content" rows="5" placeholder="说点什么吧…… *" required></textarea></p>
-    <p><label><input type="checkbox" name="notify"> 有回复时邮件通知我</label></p>
-    <p><button type="submit">提交评论</button></p>
-    <p class="comment-tip">评论提交后需经审核才会显示。</p>
+    <p><textarea name="content" rows="5" placeholder="{{.t.T "说点什么吧…… *"}}" required></textarea></p>
+    <p><label><input type="checkbox" name="notify"> {{.t.T "有回复时邮件通知我"}}</label></p>
+    <p><button type="submit">{{.t.T "提交评论"}}</button></p>
+    <p class="comment-tip">{{.t.T "评论提交后需经审核才会显示。"}}</p>
   </form>
   {{else}}
-  <p class="comment-closed">评论已关闭。</p>
+  <p class="comment-closed">{{.t.T "评论已关闭"}}</p>
   {{end}}
 {{end}}

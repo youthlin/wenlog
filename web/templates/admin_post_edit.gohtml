@@ -1,28 +1,28 @@
 {{define "admin_post_edit.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{if .IsEdit}}编辑{{else}}新建{{end}}{{if eq .PostType "page"}}页面{{else}}文章{{end}}</h1>
+<h1>{{if .IsEdit}}{{if eq .PostType "page"}}{{.t.T "编辑%s" (.t.T "页面")}}{{else}}{{.t.T "编辑%s" (.t.T "文章")}}{{end}}{{else}}{{if eq .PostType "page"}}{{.t.T "新建%s" (.t.T "页面")}}{{else}}{{.t.T "新建%s" (.t.T "文章")}}{{end}}{{end}}</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 <form class="edit-form" method="post" action="/admin/post">
   {{template "csrf_field" .}}
   {{if .Post}}<input type="hidden" name="id" value="{{.Post.ID}}">{{end}}
   <input type="hidden" name="post_type" value="{{.PostType}}">
-  <label>标题<input type="text" name="title" value="{{if .Post}}{{.Post.Title}}{{end}}" required></label>
+  <label>{{.t.T "标题"}}<input type="text" name="title" value="{{if .Post}}{{.Post.Title}}{{end}}" required></label>
   {{if eq .PostType "page"}}
-  <label>Slug(页面链接 /slug)<input type="text" name="slug" value="{{if .Post}}{{.Post.Slug}}{{end}}" required></label>
-  <label>导航顺序(0 = 不在顶部导航显示,大于 0 为排序)<input type="number" name="menu_order" value="{{if .Post}}{{.Post.MenuOrder}}{{end}}"></label>
+  <label>{{.t.T "Slug(页面链接 /slug)"}}<input type="text" name="slug" value="{{if .Post}}{{.Post.Slug}}{{end}}" required></label>
+  <label>{{.t.T "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"}}<input type="number" name="menu_order" value="{{if .Post}}{{.Post.MenuOrder}}{{end}}"></label>
   {{end}}
 
-  <label>正文(Markdown)</label>
+  <label>{{.t.T "正文(Markdown)"}}</label>
   <div class="editor-tools">
-    <label class="btn-secondary upload-btn">上传图片<input type="file" id="upload_file" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
-    <button type="button" class="btn-secondary" id="pick_upload_btn">选择已上传图片</button>
-    <span class="tip">支持文件上传、直接粘贴剪贴板图片，或从文件库选择后自动插入 Markdown。</span>
+    <label class="btn-secondary upload-btn">{{.t.T "上传图片"}}<input type="file" id="upload_file" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
+    <button type="button" class="btn-secondary" id="pick_upload_btn">{{.t.T "选择已上传图片"}}</button>
+    <span class="tip">{{.t.T "支持文件上传、直接粘贴剪贴板图片，或从文件库选择后自动插入 Markdown。"}}</span>
     <span class="tip" id="upload_status"></span>
   </div>
   <div class="upload-picker" id="upload_picker" hidden>
     <div class="upload-picker-head">
-      <strong>选择已上传图片</strong>
-      <button type="button" class="btn-secondary" id="close_upload_picker">关闭</button>
+      <strong>{{.t.T "选择已上传图片"}}</strong>
+      <button type="button" class="btn-secondary" id="close_upload_picker">{{.t.T "关闭"}}</button>
     </div>
     <div class="upload-picker-list" id="upload_picker_list"></div>
   </div>
@@ -30,37 +30,37 @@
     <textarea name="content_md" id="content_md" rows="20" required>{{if .Post}}{{.Post.ContentMD}}{{end}}</textarea>
     <div class="md-preview" id="md_preview" hidden></div>
   </div>
-  <p><button type="button" class="btn-secondary" id="preview_btn">预览</button> <span class="tip">支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。</span></p>
+  <p><button type="button" class="btn-secondary" id="preview_btn">{{.t.T "预览"}}</button> <span class="tip">{{.t.T "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"}}</span></p>
 
-  <label>摘要(可选)<textarea name="excerpt" rows="3">{{if .Post}}{{.Post.Excerpt}}{{end}}</textarea></label>
+  <label>{{.t.T "摘要(可选)"}}<textarea name="excerpt" rows="3">{{if .Post}}{{.Post.Excerpt}}{{end}}</textarea></label>
 
   {{if eq .PostType "post"}}
   <fieldset class="cat-field">
-    <legend>分类目录</legend>
+    <legend>{{.t.T "分类目录"}}</legend>
     {{range .AllCategories}}
     <label class="cat-check"><input type="checkbox" name="category_ids" value="{{.ID}}" {{if index $.SelectedCats .ID}}checked{{end}}> {{.Name}}</label>
     {{else}}
-    <p class="tip">还没有分类目录，可先去 <a href="/admin/terms">分类/标签管理</a> 新建分类。</p>
+    <p class="tip">{{.t.T "还没有分类目录，可先去 分类/标签管理 新建分类。"}}</p>
     {{end}}
   </fieldset>
-  <label>标签(逗号分隔)<input type="text" name="tags" value="{{.TagsCSV}}" placeholder="如:Go, 教程, 随笔"></label>
+  <label>{{.t.T "标签(逗号分隔)"}}<input type="text" name="tags" value="{{.TagsCSV}}" placeholder="{{.t.T "如:Go, 教程, 随笔"}}"></label>
   {{end}}
 
   <div class="form-row">
-    <label>状态
+    <label>{{.t.T "状态"}}
       <select name="status">
-        <option value="published" {{if and .Post (eq .Post.Status "published")}}selected{{end}}>发布</option>
-        <option value="draft" {{if and .Post (eq .Post.Status "draft")}}selected{{end}}>草稿</option>
+        <option value="published" {{if and .Post (eq .Post.Status "published")}}selected{{end}}>{{.t.T "发布"}}</option>
+        <option value="draft" {{if and .Post (eq .Post.Status "draft")}}selected{{end}}>{{.t.T "草稿"}}</option>
       </select>
     </label>
-    <label>评论
+    <label>{{.t.T "评论"}}
       <select name="comment_status">
-        <option value="open" {{if and .Post (ne .Post.CommentStatus "closed")}}selected{{end}}>开放</option>
-        <option value="closed" {{if and .Post (eq .Post.CommentStatus "closed")}}selected{{end}}>关闭</option>
+        <option value="open" {{if and .Post (ne .Post.CommentStatus "closed")}}selected{{end}}>{{.t.T "开放"}}</option>
+        <option value="closed" {{if and .Post (eq .Post.CommentStatus "closed")}}selected{{end}}>{{.t.T "关闭"}}</option>
       </select>
     </label>
   </div>
-  <p><button type="submit" class="btn">保存</button> <a href="/admin/posts?type={{.PostType}}">取消</a></p>
+  <p><button type="submit" class="btn">{{.t.T "保存"}}</button> <a href="/admin/posts?type={{.PostType}}">{{.t.T "取消"}}</a></p>
 </form>
 <script src="/assets/admin.js"></script>
 {{template "admin_footer" .}}

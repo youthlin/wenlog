@@ -14,10 +14,16 @@
 
   var navBtn = document.querySelector("[data-nav-toggle]");
   var navPanel = document.querySelector("[data-nav-panel]");
+  var openLabel = document.documentElement.dataset.navOpenLabel || "Open menu";
+  var closeLabel = document.documentElement.dataset.navCloseLabel || "Collapse menu";
+  var themeToggleLabel = document.documentElement.dataset.themeToggleLabel || "Toggle theme";
+  document.querySelectorAll("[data-theme-toggle]").forEach(function (btn) {
+    btn.setAttribute("aria-label", themeToggleLabel);
+  });
   if (navBtn && navPanel) {
     function syncNavButton(open) {
       navBtn.setAttribute("aria-expanded", open ? "true" : "false");
-      navBtn.setAttribute("aria-label", open ? "收起菜单" : "打开菜单");
+      navBtn.setAttribute("aria-label", open ? closeLabel : openLabel);
       navBtn.textContent = open ? "✕" : "☰";
     }
 

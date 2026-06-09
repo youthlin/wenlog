@@ -1,16 +1,16 @@
 {{define "admin_debug.gohtml"}}
 {{template "admin_header" .}}
-<h1>DB Debug</h1>
-<p class="tip">默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进入。</p>
+<h1>{{.t.T "DB Debug"}}</h1>
+<p class="tip">{{.t.T "默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进入。"}}</p>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 <form class="edit-form" method="post" action="/admin/debug" target="_blank">
   {{template "csrf_field" .}}
   <label>SQL<textarea name="sql" rows="8" placeholder="SELECT id, title FROM posts LIMIT 10;">{{.SQL}}</textarea></label>
-  <p><button type="submit" class="btn">执行</button></p>
+  <p><button type="submit" class="btn">{{.t.T "执行"}}</button></p>
 </form>
 {{if .ResultJSON}}
 <section class="debug-result">
-  <h3>Result Set(JSON)</h3>
+  <h3>{{.t.T "Result Set(JSON)"}}</h3>
   <pre class="debug-json"><code>{{.ResultJSON}}</code></pre>
 </section>
 {{end}}

@@ -19,7 +19,6 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/cockroachdb/errors"
 	ginrender "github.com/gin-gonic/gin/render"
-
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/wxr"
@@ -131,6 +130,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"categoryURL":      permalink.Category,
 		"tagURL":           permalink.Tag,
 		"safeHTML":         func(s string) template.HTML { return template.HTML(s) },
+		"escapeHTML":       stdhtml.EscapeString,
 		"listHTML":         listHTML,
 		"detailHTML":       detailHTML,
 		"hasMore":          func(content string) bool { _, m := wxr.SplitMore(content); return m },

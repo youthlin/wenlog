@@ -25,6 +25,7 @@ import (
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/handler"
+	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
@@ -65,6 +66,10 @@ func main() {
 	}
 	if err = ensureInitialContent(st); err != nil {
 		log.Error("ensure initial content", slog.Any("error", err))
+		os.Exit(1)
+	}
+	if err = i18n.Init(); err != nil {
+		log.Error("init i18n", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -271,6 +276,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 		middleware.Logger(log),
 		middleware.Metrics(),
 		sessions.Sessions("blog_session", sessionStore),
+		i18n.Middleware(),
 	)
 
 	// 模板与前端资源

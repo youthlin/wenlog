@@ -1,24 +1,24 @@
 {{define "admin_comments.gohtml"}}
 {{template "admin_header" .}}
-<h1>评论管理</h1>
+<h1>{{.t.T "评论管理"}}</h1>
 <nav class="filter-tabs">
-  <a href="/admin/comments?status=pending" {{if eq .FilterStatus "pending"}}class="active"{{end}}>待审 ({{.Counts.Pending}})</a>
-  <a href="/admin/comments?status=approved" {{if eq .FilterStatus "approved"}}class="active"{{end}}>已批准 ({{.Counts.Approved}})</a>
-  <a href="/admin/comments?status=spam" {{if eq .FilterStatus "spam"}}class="active"{{end}}>垃圾 ({{.Counts.Spam}})</a>
+  <a href="/admin/comments?status=pending" {{if eq .FilterStatus "pending"}}class="active"{{end}}>{{.t.T "待审"}} ({{.Counts.Pending}})</a>
+  <a href="/admin/comments?status=approved" {{if eq .FilterStatus "approved"}}class="active"{{end}}>{{.t.T "已批准"}} ({{.Counts.Approved}})</a>
+  <a href="/admin/comments?status=spam" {{if eq .FilterStatus "spam"}}class="active"{{end}}>{{.t.T "垃圾"}} ({{.Counts.Spam}})</a>
 </nav>
 
 <form method="post" action="/admin/comments/batch" id="batch-form" class="batch-bar">
   {{template "csrf_field" .}}
-  批量:
-  {{if ne .FilterStatus "approved"}}<button name="action" value="approve">批准</button>{{end}}
-  {{if ne .FilterStatus "pending"}}<button name="action" value="pending">待审</button>{{end}}
-  {{if ne .FilterStatus "spam"}}<button name="action" value="spam">垃圾</button>{{end}}
-  <button name="action" value="delete" class="link-danger" onclick="return confirm('确认批量删除选中评论?')">删除</button>
-  <label class="check-all"><input type="checkbox" id="check-all"> 全选</label>
+  {{.t.T "批量:"}}
+  {{if ne .FilterStatus "approved"}}<button name="action" value="approve">{{.t.T "批准"}}</button>{{end}}
+  {{if ne .FilterStatus "pending"}}<button name="action" value="pending">{{.t.T "待审"}}</button>{{end}}
+  {{if ne .FilterStatus "spam"}}<button name="action" value="spam">{{.t.T "垃圾"}}</button>{{end}}
+  <button name="action" value="delete" class="link-danger" onclick="return confirm('{{.t.T "确认批量删除选中评论?"}}')">{{.t.T "删除"}}</button>
+  <label class="check-all"><input type="checkbox" id="check-all"> {{.t.T "全选"}}</label>
 </form>
 
 <table class="data-table comments-table">
-  <thead><tr><th></th><th>作者</th><th>内容</th><th>文章</th><th>时间</th><th>操作</th></tr></thead>
+  <thead><tr><th></th><th>{{.t.T "作者"}}</th><th>{{.t.T "内容"}}</th><th>{{.t.T "文章"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
   <tbody>
   {{range .Comments}}
   <tr>
@@ -29,39 +29,39 @@
       <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
         {{template "csrf_field" $}}
         <textarea name="content" rows="3">{{.Content}}</textarea>
-        <button type="submit">保存</button>
-        <button type="button" class="c-edit-cancel">取消</button>
+        <button type="submit">{{$.t.T "保存"}}</button>
+        <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
       </form>
-      <button type="button" class="c-edit-btn">编辑</button>
+      <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
     </td>
     <td><a href="/?p={{.PostID}}" target="_blank">#{{.PostID}}</a></td>
     <td>{{fmtDateTime .CreatedAt}}</td>
     <td class="actions">
       {{if eq .Status "pending"}}
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>批准</button></form>
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>垃圾</button></form>
+        <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>{{$.t.T "批准"}}</button></form>
+        <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>{{$.t.T "垃圾"}}</button></form>
       {{else if eq .Status "approved"}}
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>驳回</button></form>
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>垃圾</button></form>
+        <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>{{$.t.T "驳回"}}</button></form>
+        <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>{{$.t.T "垃圾"}}</button></form>
       {{else if eq .Status "spam"}}
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>待审</button></form>
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>批准</button></form>
+        <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>{{$.t.T "待审"}}</button></form>
+        <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>{{$.t.T "批准"}}</button></form>
       {{end}}
-      <form class="inline" method="post" action="/admin/comment/{{.ID}}/delete" onsubmit="return confirm('确认删除?')">{{template "csrf_field" $}}<button class="link-danger">删除</button></form>
+      <form class="inline" method="post" action="/admin/comment/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除?"}}')">{{template "csrf_field" $}}<button class="link-danger">{{$.t.T "删除"}}</button></form>
     </td>
   </tr>
   {{else}}
-  <tr><td colspan="6">暂无评论</td></tr>
+  <tr><td colspan="6">{{.t.T "暂无评论"}}</td></tr>
   {{end}}
   </tbody>
 </table>
 
-<p class="total">共 {{.Total}} 条</p>
+<p class="total">{{.t.T "共 %d 条" .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/comments?status={{.FilterStatus}}&page={{sub .Page 1}}">上一页</a>{{end}}
+  {{if gt .Page 1}}<a href="/admin/comments?status={{.FilterStatus}}&page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/comments?status={{.FilterStatus}}&page={{add .Page 1}}">下一页</a>{{end}}
+  {{if lt .Page .Pages}}<a href="/admin/comments?status={{.FilterStatus}}&page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
 <script src="/assets/admin.js"></script>

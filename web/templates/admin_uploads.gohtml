@@ -1,11 +1,11 @@
 {{define "admin_uploads.gohtml"}}
 {{template "admin_header" .}}
 <div class="page-head">
-  <h1>文件管理</h1>
-  <label class="btn upload-btn">上传图片<input type="file" id="upload_file_page" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
+  <h1>{{.t.T "文件管理"}}</h1>
+  <label class="btn upload-btn">{{.t.T "上传图片"}}<input type="file" id="upload_file_page" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
 </div>
 <table class="data-table uploads-table">
-  <thead><tr><th>ID</th><th>预览</th><th>文件</th><th>大小</th><th>时间</th><th>操作</th></tr></thead>
+  <thead><tr><th>ID</th><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
   <tbody>
   {{range .Uploads}}
   <tr>
@@ -18,23 +18,23 @@
     <td>{{.Size}} B</td>
     <td>{{fmtDateTime .CreatedAt}}</td>
     <td>
-      <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('确认删除该文件?')">
+      <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该文件?"}}')">
         {{template "csrf_field" $}}
-        <button type="submit" class="link-danger">删除</button>
+        <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
       </form>
     </td>
   </tr>
   {{else}}
-  <tr><td colspan="6">暂无文件</td></tr>
+  <tr><td colspan="6">{{.t.T "暂无文件"}}</td></tr>
   {{end}}
   </tbody>
 </table>
-<p class="total">共 {{.Total}} 条</p>
+<p class="total">{{.t.T "共 %d 条" .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/uploads?page={{sub .Page 1}}">上一页</a>{{end}}
+  {{if gt .Page 1}}<a href="/admin/uploads?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/uploads?page={{add .Page 1}}">下一页</a>{{end}}
+  {{if lt .Page .Pages}}<a href="/admin/uploads?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
 {{template "admin_footer" .}}

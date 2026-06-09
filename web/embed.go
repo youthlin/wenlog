@@ -12,3 +12,8 @@ var Templates embed.FS
 //
 //go:embed assets
 var Assets embed.FS
+
+// I18n 是内置翻译文件。
+//
+//go:embed i18n
+var I18n embed.FS

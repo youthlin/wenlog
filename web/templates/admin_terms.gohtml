@@ -1,43 +1,43 @@
 {{define "admin_terms.gohtml"}}
 {{template "admin_header" .}}
-<h1>分类 / 标签管理</h1>
+<h1>{{.t.T "分类 / 标签管理"}}</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 {{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
 
 <div class="cards settings-cards">
   <section class="card settings-card">
-    <h3>{{if .EditingCategory}}编辑分类{{else}}新建分类{{end}}</h3>
+    <h3>{{if .EditingCategory}}{{.t.T "编辑分类"}}{{else}}{{.t.T "新建分类"}}{{end}}</h3>
     <form class="edit-form" method="post" action="/admin/category">
       {{template "csrf_field" .}}
       {{with .CategoryForm}}{{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}{{end}}
-      <label>名称<input type="text" name="name" value="{{with .CategoryForm}}{{.Name}}{{end}}" required></label>
-      <label>Slug<input type="text" name="slug" value="{{with .CategoryForm}}{{.Slug}}{{end}}" placeholder="留空时自动生成"></label>
-      <label>父分类
+      <label>{{.t.T "名称"}}<input type="text" name="name" value="{{with .CategoryForm}}{{.Name}}{{end}}" required></label>
+      <label>Slug<input type="text" name="slug" value="{{with .CategoryForm}}{{.Slug}}{{end}}" placeholder="{{.t.T "留空时自动生成"}}"></label>
+      <label>{{.t.T "父分类"}}
         <select name="parent_id">
-          <option value="0">无</option>
+          <option value="0">{{.t.T "无"}}</option>
           {{range .CategoryParentOptions}}
           <option value="{{.ID}}" {{with $.CategoryForm}}{{if eq .ParentID $.ID}}selected{{end}}{{end}}>{{.Name}}</option>
           {{end}}
         </select>
       </label>
-      <label>描述<textarea name="description" rows="4">{{with .CategoryForm}}{{.Description}}{{end}}</textarea></label>
+      <label>{{.t.T "描述"}}<textarea name="description" rows="4">{{with .CategoryForm}}{{.Description}}{{end}}</textarea></label>
       <p>
-        <button type="submit" class="btn">{{if .EditingCategory}}保存分类{{else}}创建分类{{end}}</button>
-        {{if .EditingCategory}}<a href="/admin/terms">取消</a>{{end}}
+        <button type="submit" class="btn">{{if .EditingCategory}}{{.t.T "保存分类"}}{{else}}{{.t.T "创建分类"}}{{end}}</button>
+        {{if .EditingCategory}}<a href="/admin/terms">{{.t.T "取消"}}</a>{{end}}
       </p>
     </form>
   </section>
 
   <section class="card settings-card">
-    <h3>{{if .EditingTag}}编辑标签{{else}}新建标签{{end}}</h3>
+    <h3>{{if .EditingTag}}{{.t.T "编辑标签"}}{{else}}{{.t.T "新建标签"}}{{end}}</h3>
     <form class="edit-form" method="post" action="/admin/tag">
       {{template "csrf_field" .}}
       {{with .TagForm}}{{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}{{end}}
-      <label>名称<input type="text" name="name" value="{{with .TagForm}}{{.Name}}{{end}}" required></label>
-      <label>Slug<input type="text" name="slug" value="{{with .TagForm}}{{.Slug}}{{end}}" placeholder="留空时自动生成"></label>
+      <label>{{.t.T "名称"}}<input type="text" name="name" value="{{with .TagForm}}{{.Name}}{{end}}" required></label>
+      <label>Slug<input type="text" name="slug" value="{{with .TagForm}}{{.Slug}}{{end}}" placeholder="{{.t.T "留空时自动生成"}}"></label>
       <p>
-        <button type="submit" class="btn">{{if .EditingTag}}保存标签{{else}}创建标签{{end}}</button>
-        {{if .EditingTag}}<a href="/admin/terms">取消</a>{{end}}
+        <button type="submit" class="btn">{{if .EditingTag}}{{.t.T "保存标签"}}{{else}}{{.t.T "创建标签"}}{{end}}</button>
+        {{if .EditingTag}}<a href="/admin/terms">{{.t.T "取消"}}</a>{{end}}
       </p>
     </form>
   </section>
@@ -45,9 +45,9 @@
 
 <div class="cards settings-cards">
   <section class="card settings-card">
-    <h3>分类列表</h3>
+    <h3>{{.t.T "分类列表"}}</h3>
     <table class="data-table">
-      <thead><tr><th>ID</th><th>名称</th><th>Slug</th><th>父分类</th><th>操作</th></tr></thead>
+      <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "父分类"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
       <tbody>
       {{range .Categories}}
       <tr>
@@ -56,24 +56,24 @@
         <td>{{.Slug}}</td>
         <td>{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</td>
         <td>
-          <a href="/admin/terms?edit_category={{.ID}}">编辑</a>
-          <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('确认删除该分类吗？')">
+          <a href="/admin/terms?edit_category={{.ID}}">{{$.t.T "编辑"}}</a>
+          <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？"}}')">
             {{template "csrf_field" $}}
-            <button type="submit" class="link-danger">删除</button>
+            <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
           </form>
         </td>
       </tr>
       {{else}}
-      <tr><td colspan="5">暂无分类</td></tr>
+      <tr><td colspan="5">{{.t.T "暂无分类"}}</td></tr>
       {{end}}
       </tbody>
     </table>
   </section>
 
   <section class="card settings-card">
-    <h3>标签列表</h3>
+    <h3>{{.t.T "标签列表"}}</h3>
     <table class="data-table">
-      <thead><tr><th>ID</th><th>名称</th><th>Slug</th><th>操作</th></tr></thead>
+      <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "操作"}}</th></tr></thead>
       <tbody>
       {{range .Tags}}
       <tr>
@@ -81,15 +81,15 @@
         <td>{{.Name}}</td>
         <td>{{.Slug}}</td>
         <td>
-          <a href="/admin/terms?edit_tag={{.ID}}">编辑</a>
-          <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('确认删除该标签吗？')">
+          <a href="/admin/terms?edit_tag={{.ID}}">{{$.t.T "编辑"}}</a>
+          <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该标签吗？"}}')">
             {{template "csrf_field" $}}
-            <button type="submit" class="link-danger">删除</button>
+            <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
           </form>
         </td>
       </tr>
       {{else}}
-      <tr><td colspan="4">暂无标签</td></tr>
+      <tr><td colspan="4">{{.t.T "暂无标签"}}</td></tr>
       {{end}}
       </tbody>
     </table>

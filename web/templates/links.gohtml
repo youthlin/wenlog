@@ -7,7 +7,7 @@
     {{range .Links}}
     <li><a href="{{.URL}}" target="_blank" rel="noopener">{{.Name}}</a>{{if .Description}} — {{.Description}}{{end}}</li>
     {{else}}
-    <li>暂无友链。</li>
+    <li>{{.t.T "暂无友链。"}}</li>
     {{end}}
   </ul>
 </article>
