@@ -10,7 +10,9 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"net/mail"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1153,7 +1155,28 @@ func (h *Admin) ListComments(c *gin.Context) {
 		return
 	}
 	data := h.base(c, tr.T("评论管理"))
+	postIDs := make([]uint, 0, len(comments))
+	for _, comment := range comments {
+		postIDs = append(postIDs, comment.PostID)
+	}
+	postsByID, err := h.st.AdminPostsByIDs(postIDs)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	commentPostTitles := make(map[uint]string, len(postsByID))
+	commentPostLinks := make(map[uint]string, len(postsByID))
+	for id, post := range postsByID {
+		commentPostTitles[id] = post.Title
+		if post.PostType == model.PostTypePage {
+			commentPostLinks[id] = permalink.Page(&post)
+		} else {
+			commentPostLinks[id] = permalink.Post(&post)
+		}
+	}
 	data["Comments"] = comments
+	data["CommentPostTitles"] = commentPostTitles
+	data["CommentPostLinks"] = commentPostLinks
 	data["Total"] = total
 	data["FilterStatus"] = status
 	data["Counts"] = h.st.AdminCommentCounts()
@@ -1162,15 +1185,56 @@ func (h *Admin) ListComments(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_comments.gohtml", data)
 }
 
-// EditComment 修改评论内容。
+// EditComment 修改评论内容和作者元信息。
 func (h *Admin) EditComment(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	content := strings.TrimSpace(c.PostForm("content"))
-	if content == "" {
+	fields := map[string]any{}
+	if _, ok := c.GetPostForm("content"); ok {
+		content := strings.TrimSpace(c.PostForm("content"))
+		if content == "" {
+			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			return
+		}
+		fields["content"] = content
+	}
+	if _, ok := c.GetPostForm("author"); ok {
+		author := strings.TrimSpace(c.PostForm("author"))
+		if author == "" {
+			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			return
+		}
+		fields["author"] = author
+	}
+	if _, ok := c.GetPostForm("email"); ok {
+		email := strings.TrimSpace(c.PostForm("email"))
+		if email == "" {
+			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			return
+		}
+		if _, err := mail.ParseAddress(email); err != nil {
+			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			return
+		}
+		fields["email"] = email
+	}
+	if _, ok := c.GetPostForm("url"); ok {
+		urlValue := strings.TrimSpace(c.PostForm("url"))
+		if urlValue != "" && !strings.Contains(urlValue, "://") {
+			urlValue = "https://" + urlValue
+		}
+		if urlValue != "" {
+			if _, err := url.ParseRequestURI(urlValue); err != nil {
+				c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+				return
+			}
+		}
+		fields["url"] = urlValue
+	}
+	if len(fields) == 0 {
 		c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
 		return
 	}
-	if err := h.st.UpdateCommentContent(uint(id), content); err != nil {
+	if err := h.st.UpdateCommentFields(uint(id), fields); err != nil {
 		h.serverError(c, err)
 		return
 	}

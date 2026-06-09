@@ -376,6 +376,38 @@ func (s *Store) AdminListComments(status string, page, pageSize int) ([]model.Co
 	return comments, total, errors.Wrap(err, "admin list comments")
 }
 
+// AdminPostsByIDs 按 ID 批量返回后台所需的文章/页面基础信息。
+func (s *Store) AdminPostsByIDs(ids []uint) (map[uint]model.Post, error) {
+	result := make(map[uint]model.Post, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	uniq := make([]uint, 0, len(ids))
+	seen := make(map[uint]struct{}, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniq = append(uniq, id)
+	}
+	if len(uniq) == 0 {
+		return result, nil
+	}
+	var posts []model.Post
+	err := s.db.Select("id", "title", "slug", "post_type", "published_at").Where("id IN ?", uniq).Find(&posts).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "admin posts by ids")
+	}
+	for _, post := range posts {
+		result[post.ID] = post
+	}
+	return result, nil
+}
+
 // SetCommentStatus 更新评论状态(approved/pending/spam)。
 func (s *Store) SetCommentStatus(id uint, status string) error {
 	return errors.Wrap(
@@ -388,11 +420,14 @@ func (s *Store) DeleteComment(id uint) error {
 	return s.softDeleteComments([]uint{id})
 }
 
-// UpdateCommentContent 修改评论内容(管理员编辑)。
-func (s *Store) UpdateCommentContent(id uint, content string) error {
+// UpdateCommentFields 修改评论内容/作者元信息(管理员编辑)。
+func (s *Store) UpdateCommentFields(id uint, fields map[string]any) error {
+	if len(fields) == 0 {
+		return nil
+	}
 	return errors.Wrap(
-		s.db.Model(&model.Comment{}).Where("id = ?", id).Update("content", content).Error,
-		"update comment content")
+		s.db.Model(&model.Comment{}).Where("id = ?", id).Updates(fields).Error,
+		"update comment fields")
 }
 
 // BatchSetCommentStatus 批量更新评论状态。

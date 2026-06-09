@@ -141,9 +141,10 @@
   }
 
   document.querySelectorAll(".c-edit-btn").forEach(function (btn) {
-    var cell = btn.closest(".comment-cell");
-    var text = cell.querySelector(".c-text");
+    var cell = btn.closest(".editable-cell");
+    var text = cell.querySelector(".c-display");
     var form = cell.querySelector(".c-edit");
+    if (!cell || !text || !form) return;
     btn.addEventListener("click", function () {
       text.hidden = true;
       form.hidden = false;

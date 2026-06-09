@@ -19,23 +19,55 @@
 
 <div class="table-scroll">
   <table class="data-table comments-table">
-	    <thead><tr><th></th><th>{{.t.T "作者"}}</th><th>{{.t.T "内容"}}</th><th>{{.t.T "文章"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+	    <thead><tr><th></th><th>{{.t.T "作者"}}</th><th>{{.t.T "内容"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
 	    <tbody>
 	    {{range .Comments}}
+	    {{$postID := .PostID}}
+	    {{$postTitle := index $.CommentPostTitles $postID}}
+	    {{$postLink := index $.CommentPostLinks $postID}}
 	    <tr>
       <td><input type="checkbox" name="ids" value="{{.ID}}" form="batch-form" class="row-check"></td>
-      <td>{{.Author}}<br><small>{{.Email}}</small></td>
-	      <td class="comment-cell">
-	        <div class="c-text">{{.Content}}</div>
+	      <td class="editable-cell comment-author-cell">
+	        <div class="c-display">
+	          <div class="comment-author-line">{{.Author}}</div>
+	          <div class="comment-meta"><small>{{$.t.T "邮箱"}}：{{.Email}}</small></div>
+	          <div class="comment-meta"><small>{{$.t.T "网址"}}：{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noreferrer">{{.URL}}</a>{{else}}-{{end}}</small></div>
+	          <div class="comment-meta"><small>IP：{{.IP}}</small></div>
+	        </div>
 	        <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
 	          {{template "csrf_field" $}}
-	          <textarea name="content" rows="3">{{.Content}}</textarea>
-	          <button type="submit">{{$.t.T "保存"}}</button>
-	          <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
+	          <label>{{$.t.T "作者"}}<input type="text" name="author" value="{{.Author}}" required></label>
+	          <label>{{$.t.T "邮箱"}}<input type="email" name="email" value="{{.Email}}" required></label>
+	          <label>{{$.t.T "网址"}}<input type="url" name="url" value="{{.URL}}" placeholder="https://example.com"></label>
+	          <div class="comment-meta"><small>IP：{{.IP}}</small></div>
+	          <div class="c-edit-actions">
+	            <button type="submit">{{$.t.T "保存"}}</button>
+	            <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
+	          </div>
 	        </form>
 	        <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
 	      </td>
-	      <td><a href="/?p={{.PostID}}" target="_blank">#{{.PostID}}</a></td>
+	      <td class="editable-cell comment-cell">
+	        <div class="c-display">
+	          <div class="comment-post-line">
+	            {{if $postLink}}
+	            <a href="{{$postLink}}" target="_blank" rel="noreferrer">{{$.t.T "发表在《%s》：" $postTitle}}</a>
+	            {{else}}
+	            {{$.t.T "发表在《%s》：" $postTitle}}
+	            {{end}}
+	          </div>
+	          <div class="comment-body">{{.Content}}</div>
+	        </div>
+	        <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
+	          {{template "csrf_field" $}}
+	          <textarea name="content" rows="3">{{.Content}}</textarea>
+	          <div class="c-edit-actions">
+	            <button type="submit">{{$.t.T "保存"}}</button>
+	            <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
+	          </div>
+	        </form>
+	        <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
+	      </td>
 	      <td>{{fmtDateTime .CreatedAt}}</td>
 	      <td class="actions">
 	        {{if eq .Status "pending"}}
@@ -52,7 +84,7 @@
 	      </td>
 	    </tr>
 	    {{else}}
-	    <tr><td colspan="6">{{.t.T "暂无评论"}}</td></tr>
+	    <tr><td colspan="5">{{.t.T "暂无评论"}}</td></tr>
 	    {{end}}
 	    </tbody>
   </table>

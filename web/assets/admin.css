@@ -83,9 +83,21 @@ a { color: var(--accent); }
 .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .data-table th { background: var(--th-bg); font-weight: 600; }
 .terms-table td:last-child, .terms-table th:last-child { white-space: nowrap; }
-.comment-cell { max-width: 380px; }
-.comment-cell .c-edit textarea { width: 100%; }
-.comment-cell .c-edit-btn { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 2px 0; font-size: 13px; }
+.editable-cell .c-display > * + * { margin-top: 4px; }
+.editable-cell .c-edit { display: grid; gap: 8px; }
+.editable-cell .c-edit label { display: grid; gap: 4px; font-weight: 600; }
+.editable-cell .c-edit input,
+.editable-cell .c-edit textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font: inherit; }
+.editable-cell .c-edit textarea { min-height: 96px; resize: vertical; }
+.editable-cell .c-edit-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.editable-cell .c-edit-actions button { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--fg); cursor: pointer; padding: 4px 10px; }
+.editable-cell .c-edit-btn { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 2px 0; font-size: 13px; }
+.comment-author-cell { min-width: 240px; }
+.comment-cell { min-width: 340px; max-width: 520px; }
+.comment-author-line,
+.comment-post-line { font-weight: 600; }
+.comment-meta { color: var(--muted); line-height: 1.5; }
+.comment-body { white-space: pre-wrap; word-break: break-word; }
 .actions { white-space: nowrap; }
 .inline { display: inline; }
 .inline button { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0 4px; font-size: 14px; }
