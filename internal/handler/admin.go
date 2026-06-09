@@ -1229,49 +1229,6 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
 }
 
-// --- 友链 ---
-
-// ListLinks 友链管理列表。
-func (h *Admin) ListLinks(c *gin.Context) {
-	tr := i18n.Get(c)
-	links, _ := h.st.AllLinks()
-	data := h.base(c, tr.T("友链管理"))
-	data["Links"] = links
-	c.HTML(http.StatusOK, "admin_links.gohtml", data)
-}
-
-// SaveLink 新建/更新友链。
-func (h *Admin) SaveLink(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.PostForm("id"), 10, 64)
-	sort, _ := strconv.Atoi(c.PostForm("sort"))
-	l := &model.Link{
-		ID:          uint(id),
-		Name:        strings.TrimSpace(c.PostForm("name")),
-		URL:         strings.TrimSpace(c.PostForm("url")),
-		Description: strings.TrimSpace(c.PostForm("description")),
-		Sort:        sort,
-	}
-	if l.Name == "" || l.URL == "" {
-		c.Redirect(http.StatusSeeOther, "/admin/links")
-		return
-	}
-	if err := h.st.SaveLink(l); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/links")
-}
-
-// DeleteLink 删除友链。
-func (h *Admin) DeleteLink(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.st.DeleteLink(uint(id)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/links")
-}
-
 // --- 辅助 ---
 
 func (h *Admin) notFound(c *gin.Context) {

@@ -218,7 +218,7 @@ func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 	return p
 }
 
-// Page 处理 /{slug} 页面以及若干特殊页面(归档/友链)。
+// Page 处理 /{slug} 页面以及若干特殊页面(归档)。
 func (h *Public) Page(c *gin.Context) {
 	slug := strings.Trim(c.Param("slug"), "/")
 	if slug == "" {
@@ -227,15 +227,6 @@ func (h *Public) Page(c *gin.Context) {
 	}
 	if slug == "archive" {
 		h.renderArchive(c, h.specialPage(c, "archive", "归档"))
-		return
-	}
-	if slug == "links" {
-		p, err := h.st.GetPageBySlug(slug)
-		if err != nil {
-			h.notFound(c)
-			return
-		}
-		h.renderLinks(c, p)
 		return
 	}
 	p, err := h.st.GetPageBySlug(slug)
@@ -306,16 +297,6 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 	data["Groups"] = groups
 	c.HTML(http.StatusOK, "archive.gohtml", data)
 }
-
-func (h *Public) renderLinks(c *gin.Context, p *model.Post) {
-	links, _ := h.st.AllLinks()
-	s := h.loadSettings()
-	data := h.base(c, p.Title, "", s)
-	data["Post"] = p
-	data["Links"] = links
-	c.HTML(http.StatusOK, "links.gohtml", data)
-}
-
 // Category 分类列表页。
 func (h *Public) Category(c *gin.Context) {
 	slug := c.Param("slug")

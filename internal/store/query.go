@@ -354,16 +354,6 @@ func (s *Store) PostMeta(id uint) (*model.Post, error) {
 	return &p, nil
 }
 
-// AllLinks 返回友链(按 sort)。
-func (s *Store) AllLinks() ([]model.Link, error) {
-	var links []model.Link
-	err := s.db.Order("sort ASC, id ASC").Find(&links).Error
-	if err != nil {
-		return nil, errors.Wrap(err, "all links")
-	}
-	return links, nil
-}
-
 // CreateComment 新建评论(默认 pending)。
 func (s *Store) CreateComment(c *model.Comment) error {
 	return errors.Wrap(s.db.Create(c).Error, "create comment")

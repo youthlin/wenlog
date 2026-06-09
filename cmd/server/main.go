@@ -433,8 +433,4 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.POST("/comments/edit/:id", adm.EditComment)
 	g.POST("/comments/batch", adm.BatchComments)
 
-	g.GET("/links", adm.ListLinks)
-	g.POST("/link", adm.SaveLink)
-	g.POST("/link/:id/delete", adm.DeleteLink)
-
 }

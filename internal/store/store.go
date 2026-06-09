@@ -48,7 +48,6 @@ func (s *Store) migrate() error {
 		&model.Category{},
 		&model.Tag{},
 		&model.Comment{},
-		&model.Link{},
 		&model.Setting{},
 		&model.Upload{},
 	)

@@ -105,15 +105,6 @@ type Comment struct {
 	CreatedAt     time.Time `gorm:"index"`
 }
 
-// Link 是友情链接,替代旧 /links 页面里的硬编码。
-type Link struct {
-	ID          uint   `gorm:"primaryKey"`
-	Name        string `gorm:"size:128"`
-	URL         string `gorm:"size:255"`
-	Description string `gorm:"size:512"`
-	Sort        int
-}
-
 // Setting 是站点级键值设置,用于后台持久化站点名称/描述等。
 type Setting struct {
 	Key       string `gorm:"primaryKey;size:64"`

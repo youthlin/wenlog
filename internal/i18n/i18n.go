@@ -59,7 +59,6 @@ var templateTranslationAnchors = []string{
 	gettext.Mark.T("文件：%s"),
 	gettext.Mark.T("归属用户：%s"),
 	gettext.Mark.T("说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错误。"),
-	gettext.Mark.T("暂无友链。"),
 	gettext.Mark.T("编辑%s"),
 	gettext.Mark.T("新建%s"),
 	gettext.Mark.T("Slug(页面链接 /slug)"),

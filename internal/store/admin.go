@@ -487,18 +487,6 @@ func (s *Store) PendingCommentCount() int64 {
 	return n
 }
 
-// --- 友链管理 ---
-
-// SaveLink 创建或更新友链。
-func (s *Store) SaveLink(l *model.Link) error {
-	return errors.Wrap(s.db.Save(l).Error, "save link")
-}
-
-// DeleteLink 删除友链。
-func (s *Store) DeleteLink(id uint) error {
-	return errors.Wrap(s.db.Delete(&model.Link{}, id).Error, "delete link")
-}
-
 // SaveUpload 创建上传元数据记录。
 func (s *Store) SaveUpload(u *model.Upload) error {
 	return errors.Wrap(s.db.Create(u).Error, "save upload")
