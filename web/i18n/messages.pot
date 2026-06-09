@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 22:28+0800\n"
+"POT-Creation-Date: 2026-06-09 22:45+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,9 +48,9 @@ msgid "继续编辑"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:10
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:40
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:44
 msgid "打开菜单"
 msgstr ""
 
@@ -62,7 +62,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:12
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:2
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:8
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:32
 msgid "切换主题"
@@ -72,57 +72,105 @@ msgstr ""
 msgid "%s 后台"
 msgstr ""
 
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:34
+msgid "暗黑"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:35
+msgid "明亮"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:36
+msgid "红梅"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:37
+msgid "绿竹"
+msgstr ""
+
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:38
+msgid "藕粉"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:35
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:39
+msgid "橙黄"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:40
+msgid "蔚蓝"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:41
+msgid "韵紫"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:46
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:22
 msgid "内容"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:48
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:5
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:72
 msgid "文章"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:49
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:6
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:73
 msgid "页面"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:38
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:50
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:7
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:74
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:56
 msgid "评论"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:56
 msgid "基本设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:61
 msgid "功能"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:63
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:4
 msgid "附件管理"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:64
 msgid "导入导出"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:69
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:26
 msgid "语言"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:74
 msgid "查看站点"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:75
 msgid "退出"
 msgstr ""
 
@@ -257,16 +305,16 @@ msgstr ""
 msgid "下载 XML"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:96
 msgid "用户名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:31
 msgid "密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:33
 msgid "← 返回到"
 msgstr ""
 
@@ -476,20 +524,20 @@ msgstr ""
 msgid "网络错误,请稍后重试。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:57
 msgid "回顶部"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:58
 msgid "到底部"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:72
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:75
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:87
 msgid "搜索"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:86
 msgid "输入关键词…"
 msgstr ""
 

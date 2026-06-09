@@ -1,5 +1,5 @@
 {{define "header"}}<!DOCTYPE html>
-<html lang="{{.htmlLang}}" data-theme="light"
+<html lang="{{.htmlLang}}" data-theme="dark"
       data-comment-success="{{.t.T "评论已提交,等待审核后显示。"}}"
       data-comment-fail="{{.t.T "提交失败,请稍后重试。"}}"
       data-comment-network="{{.t.T "网络错误,请稍后重试。"}}"
@@ -13,7 +13,7 @@
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
-<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 <header class="site-header">
@@ -28,8 +28,20 @@
         <span>/</span>
         <a href="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}aria-current="true"{{end}}>EN</a>
       </div>
+      <label class="theme-select-wrap">
+        <span class="sr-only">{{.t.T "切换主题"}}</span>
+        <select class="theme-select" data-theme-select>
+          <option value="dark">{{.t.T "暗黑"}}</option>
+          <option value="light">{{.t.T "明亮"}}</option>
+          <option value="red-plum">{{.t.T "红梅"}}</option>
+          <option value="bamboo">{{.t.T "绿竹"}}</option>
+          <option value="lotus">{{.t.T "藕粉"}}</option>
+          <option value="orange">{{.t.T "橙黄"}}</option>
+          <option value="azure">{{.t.T "蔚蓝"}}</option>
+          <option value="purple">{{.t.T "韵紫"}}</option>
+        </select>
+      </label>
       <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
-      <button type="button" class="theme-toggle" data-theme-toggle aria-label="{{.t.T "切换主题"}}">🌓</button>
     </div>
   </div>
 </header>
