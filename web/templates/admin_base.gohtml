@@ -66,11 +66,13 @@
         </div>
       </div>
       <div class="admin-nav-actions">
-        <div class="lang-switch" aria-label="{{.t.T "语言"}}">
-          <a href="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}aria-current="true"{{end}}>中文</a>
-          <span>/</span>
-          <a href="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}aria-current="true"{{end}}>EN</a>
-        </div>
+        <label class="lang-select-wrap">
+          <span class="sr-only">{{.t.T "语言"}}</span>
+          <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
+            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+          </select>
+        </label>
         <a href="/" target="_blank">{{.t.T "查看站点"}}</a>
         <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
       </div>

@@ -2,27 +2,48 @@
 (function () {
   var themes = ["dark", "light", "red-plum", "bamboo", "lotus", "orange", "azure", "purple"];
   var defaultTheme = "dark";
+  var themeStorageKey = "theme";
 
   function normalize(theme) {
     return themes.indexOf(theme) >= 0 ? theme : defaultTheme;
   }
 
-  function apply(theme) {
-    theme = normalize(theme);
+  function setTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem("theme", theme); } catch (e) {}
+    if (document.body) {
+      document.body.setAttribute("data-theme", theme);
+    }
+  }
+
+  function syncThemeSelects(theme) {
     document.querySelectorAll("[data-theme-select]").forEach(function (select) {
       select.value = theme;
     });
+  }
+
+  function apply(theme) {
+    theme = normalize(theme);
+    setTheme(theme);
+    try { localStorage.setItem(themeStorageKey, theme); } catch (e) {}
+    syncThemeSelects(theme);
   }
 
   apply(document.documentElement.getAttribute("data-theme") || defaultTheme);
 
   document.querySelectorAll("[data-theme-select]").forEach(function (select) {
     select.value = normalize(document.documentElement.getAttribute("data-theme"));
-    select.addEventListener("change", function () {
+    function handleThemeChange() {
       apply(select.value);
-    });
+    }
+    select.addEventListener("input", handleThemeChange);
+    select.addEventListener("change", handleThemeChange);
+  });
+
+  window.addEventListener("pageshow", function () {
+    var storedTheme = defaultTheme;
+    try { storedTheme = normalize(localStorage.getItem(themeStorageKey)); } catch (e) {}
+    setTheme(storedTheme);
+    syncThemeSelects(storedTheme);
   });
 
   var navBtn = document.querySelector("[data-nav-toggle]");
