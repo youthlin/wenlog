@@ -27,6 +27,11 @@
       <p class="tip">{{.t.T "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生效。"}}</p>
       <p><button type="submit" class="btn-secondary">{{.t.T "重新解析模板"}}</button></p>
     </form>
+    <form class="edit-form" method="post" action="/admin/settings/templates/embed">
+      {{template "csrf_field" .}}
+      <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘上。"}}</p>
+      <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌模板资源"}}</button></p>
+    </form>
     {{else}}
     <form class="edit-form" method="post" action="/admin/settings/templates/release">
       {{template "csrf_field" .}}
@@ -41,11 +46,35 @@
     <p class="tip">{{if .AssetHotReload}}{{.t.T "当前资源模式：hot（本地资源目录，修改后立即生效）"}}{{else}}{{.t.T "当前资源模式：static（embed 内置资源）"}}{{end}}</p>
     {{if .AssetHotReload}}
     <p class="tip">{{.t.T "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重新加载。"}}</p>
+    <form class="edit-form" method="post" action="/admin/settings/assets/embed">
+      {{template "csrf_field" .}}
+      <p class="warn-banner">{{.t.T "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"}}</p>
+      <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌资源文件"}}</button></p>
+    </form>
     {{else}}
     <form class="edit-form" method="post" action="/admin/settings/assets/release">
       {{template "csrf_field" .}}
       <p class="tip">{{.t.T "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录。"}}</p>
       <p><button type="submit" class="btn-secondary">{{.t.T "释放资源文件夹"}}</button></p>
+    </form>
+    {{end}}
+  </section>
+
+  <section class="card settings-card">
+    <h3>{{.t.T "翻译资源设置"}}</h3>
+    <p class="tip">{{if .I18nHotReload}}{{.t.T "当前翻译模式：hot（本地翻译目录）"}}{{else}}{{.t.T "当前翻译模式：static（embed 内置翻译资源）"}}{{end}}</p>
+    {{if .I18nHotReload}}
+    <p class="tip">{{.t.T "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"}}</p>
+    <form class="edit-form" method="post" action="/admin/settings/i18n/embed">
+      {{template "csrf_field" .}}
+      <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"}}</p>
+      <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌翻译资源"}}</button></p>
+    </form>
+    {{else}}
+    <form class="edit-form" method="post" action="/admin/settings/i18n/release">
+      {{template "csrf_field" .}}
+      <p class="tip">{{.t.T "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录。"}}</p>
+      <p><button type="submit" class="btn-secondary">{{.t.T "释放翻译资源目录"}}</button></p>
     </form>
     {{end}}
   </section>

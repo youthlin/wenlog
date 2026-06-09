@@ -61,7 +61,7 @@ func TestLocalFirstFileSystemSwitchesToLocalDir(t *testing.T) {
 	fallback := http.FS(fstest.MapFS{
 		"style.css": &fstest.MapFile{Data: []byte("from-embed")},
 	})
-	fsys := localFirstFileSystem{dir: localDir, fallback: fallback}
+	fsys := &localFirstFileSystem{dir: localDir, fallback: fallback}
 
 	if got := readFileFromHTTPFS(t, fsys, "style.css"); got != "from-embed" {
 		t.Fatalf("expected fallback content, got %q", got)
@@ -72,6 +72,7 @@ func TestLocalFirstFileSystemSwitchesToLocalDir(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(localDir, "style.css"), []byte("from-local"), 0o644); err != nil {
 		t.Fatalf("write local asset: %v", err)
 	}
+	fsys.SetHot(true)
 	if got := readFileFromHTTPFS(t, fsys, "style.css"); got != "from-local" {
 		t.Fatalf("expected local content, got %q", got)
 	}

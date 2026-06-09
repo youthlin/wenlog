@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -300,7 +301,8 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	// 历史图片(原路径)+ css/js。开发环境优先直接读磁盘,避免每次改样式/JS 都重启。
 	r.Static("/wp-content", filepath.Join(cfg.PublicDir, "wp-content"))
 	r.Static("/uploads", filepath.Join(cfg.PublicDir, "uploads"))
-	r.StaticFS("/assets", assetFS())
+	assetLocalFS := assetFS()
+	r.StaticFS("/assets", assetLocalFS)
 
 	// 监控与健康检查
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
@@ -311,7 +313,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	registerPublicRoutes(r, pub)
 
 	// 后台
-	adm := handler.NewAdmin(st, cfg, log, tplRenderer)
+	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS)
 	registerAdminRoutes(r, adm)
 	return r
 }
@@ -327,27 +329,43 @@ func templateRenderer() (*render.Renderer, error) {
 	return render.New(tplFS)
 }
 
-func assetFS() http.FileSystem {
+func assetFS() *localFirstFileSystem {
 	assetsFS, err := fs.Sub(web.Assets, "assets")
 	if err != nil {
 		panic(err)
 	}
-	return localFirstFileSystem{
+	fsys := &localFirstFileSystem{
 		dir:      "web/assets",
 		fallback: http.FS(assetsFS),
 	}
+	if _, err := os.Stat(fsys.dir); err == nil {
+		fsys.hot.Store(true)
+	}
+	return fsys
 }
 
 type localFirstFileSystem struct {
 	dir      string
 	fallback http.FileSystem
+	hot      atomic.Bool
 }
 
-func (fsys localFirstFileSystem) Open(name string) (http.File, error) {
-	if _, err := os.Stat(fsys.dir); err == nil {
+func (fsys *localFirstFileSystem) Open(name string) (http.File, error) {
+	if fsys != nil && fsys.hot.Load() {
 		return http.Dir(fsys.dir).Open(name)
 	}
 	return fsys.fallback.Open(name)
+}
+
+func (fsys *localFirstFileSystem) Hot() bool {
+	return fsys != nil && fsys.hot.Load()
+}
+
+func (fsys *localFirstFileSystem) SetHot(v bool) {
+	if fsys == nil {
+		return
+	}
+	fsys.hot.Store(v)
 }
 
 // registerPublicRoutes 注册前台路由。
@@ -402,7 +420,11 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.POST("/settings/site", adm.SaveSiteSettings)
 	g.POST("/settings/session", adm.SaveSessionSettings)
 	g.POST("/settings/assets/release", adm.ReleaseAssets)
+	g.POST("/settings/assets/embed", adm.UseEmbeddedAssets)
+	g.POST("/settings/i18n/release", adm.ReleaseI18n)
+	g.POST("/settings/i18n/embed", adm.UseEmbeddedI18n)
 	g.POST("/settings/templates/release", adm.ReleaseTemplates)
+	g.POST("/settings/templates/embed", adm.UseEmbeddedTemplates)
 	g.POST("/settings/templates/reload", adm.ReloadTemplates)
 	g.POST("/settings/profile", adm.SaveProfileSettings)
 	g.POST("/settings/password", adm.SavePasswordSettings)

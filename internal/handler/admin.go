@@ -10,8 +10,8 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
-	"net/mail"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -48,11 +48,17 @@ type Admin struct {
 	cfg      *config.Config
 	log      *slog.Logger
 	renderer *renderx.Renderer
+	assets   hotSwitcher
+}
+
+type hotSwitcher interface {
+	Hot() bool
+	SetHot(bool)
 }
 
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *renderx.Renderer) *Admin {
-	return &Admin{st: st, cfg: cfg, log: log, renderer: renderer}
+func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *renderx.Renderer, assets hotSwitcher) *Admin {
+	return &Admin{st: st, cfg: cfg, log: log, renderer: renderer, assets: assets}
 }
 
 const adminPageSize = 20
@@ -272,15 +278,28 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 		data["SessionSecretConfigured"] = true
 	}
 	data["TemplateHotReload"] = h.renderer != nil && h.renderer.Hot()
-	data["AssetHotReload"] = pathExists("web/assets")
+	data["AssetHotReload"] = h.assets != nil && h.assets.Hot()
+	data["I18nHotReload"] = i18n.Hot()
 	if c != nil && c.Query("message") == "templates-reloaded" {
 		data["Notice"] = tr.T("模板已重新解析。")
 	}
 	if c != nil && c.Query("message") == "templates-released" {
 		data["Notice"] = tr.T("模板文件已释放到 web/templates，并已切换为 hot 模式。")
 	}
+	if c != nil && c.Query("message") == "templates-embedded" {
+		data["Notice"] = tr.T("已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。")
+	}
 	if c != nil && c.Query("message") == "assets-released" {
 		data["Notice"] = tr.T("资源文件已释放到 web/assets，并已切换为 hot 模式。")
+	}
+	if c != nil && c.Query("message") == "assets-embedded" {
+		data["Notice"] = tr.T("已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。")
+	}
+	if c != nil && c.Query("message") == "i18n-released" {
+		data["Notice"] = tr.T("翻译资源已释放到 web/i18n，并已切换为 hot 模式。")
+	}
+	if c != nil && c.Query("message") == "i18n-embedded" {
+		data["Notice"] = tr.T("已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。")
 	}
 	if u := h.currentUser(c); u != nil {
 		data["CurrentUser"] = u
@@ -458,6 +477,16 @@ func (h *Admin) ReleaseTemplates(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
+	if pathExists("web/templates") {
+		if err := h.renderer.UseFS(os.DirFS("web/templates"), true); err != nil {
+			data := h.settingsData(c)
+			data["Error"] = tr.T("切换到本地模板失败: %s", err.Error())
+			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+			return
+		}
+		c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-released")
+		return
+	}
 	if err := h.renderer.ReleaseToHotDir("web/templates"); err != nil {
 		data := h.settingsData(c)
 		data["Error"] = tr.T("释放模板文件失败: %s", err.Error())
@@ -467,13 +496,49 @@ func (h *Admin) ReleaseTemplates(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-released")
 }
 
+// UseEmbeddedTemplates 切回当前进程使用内嵌模板资源,但保留本地目录。
+func (h *Admin) UseEmbeddedTemplates(c *gin.Context) {
+	tr := i18n.Get(c)
+	if h.renderer == nil || !h.renderer.Hot() {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("当前不是 hot 模式，不能切回内嵌模板。")
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	tplFS, err := fs.Sub(web.Templates, "templates")
+	if err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("读取内嵌模板失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if err := h.renderer.UseFS(tplFS, false); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("切换回内嵌模板失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-embedded")
+}
+
 // ReleaseAssets 把嵌入资源释放到本地目录。释放完成后当前进程会自动优先读取该目录。
 func (h *Admin) ReleaseAssets(c *gin.Context) {
 	tr := i18n.Get(c)
-	if pathExists("web/assets") {
+	if h.assets == nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("当前资源管理器不可用。")
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if h.assets.Hot() {
 		data := h.settingsData(c)
 		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放资源文件。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	if pathExists("web/assets") {
+		h.assets.SetHot(true)
+		c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-released")
 		return
 	}
 	assetsFS, err := fs.Sub(web.Assets, "assets")
@@ -489,7 +554,74 @@ func (h *Admin) ReleaseAssets(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
+	h.assets.SetHot(true)
 	c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-released")
+}
+
+// UseEmbeddedAssets 切回当前进程使用内嵌资源,但保留本地目录。
+func (h *Admin) UseEmbeddedAssets(c *gin.Context) {
+	tr := i18n.Get(c)
+	if h.assets == nil || !h.assets.Hot() {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("当前不是 hot 模式，不能切回内嵌资源。")
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	h.assets.SetHot(false)
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-embedded")
+}
+
+// ReleaseI18n 把嵌入翻译资源释放到本地目录,并切换当前进程优先读取本地目录。
+func (h *Admin) ReleaseI18n(c *gin.Context) {
+	tr := i18n.Get(c)
+	if i18n.Hot() {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放翻译资源。")
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	if !pathExists("web/i18n") {
+		langFS, err := fs.Sub(web.I18n, "i18n")
+		if err != nil {
+			data := h.settingsData(c)
+			data["Error"] = tr.T("读取内嵌翻译资源失败: %s", err.Error())
+			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+			return
+		}
+		if err := releaseDirFromFS(langFS, "web/i18n"); err != nil {
+			data := h.settingsData(c)
+			data["Error"] = tr.T("释放翻译资源失败: %s", err.Error())
+			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+			return
+		}
+	}
+	i18n.SetHot(true)
+	if err := i18n.Reload(); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("重新加载翻译资源失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=i18n-released")
+}
+
+// UseEmbeddedI18n 切回当前进程使用内嵌翻译资源,但保留本地目录。
+func (h *Admin) UseEmbeddedI18n(c *gin.Context) {
+	tr := i18n.Get(c)
+	if !i18n.Hot() {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("当前不是 hot 模式，不能切回内嵌翻译资源。")
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	i18n.SetHot(false)
+	if err := i18n.Reload(); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("重新加载翻译资源失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/settings?message=i18n-embedded")
 }
 
 func releaseDirFromFS(src fs.FS, targetDir string) error {

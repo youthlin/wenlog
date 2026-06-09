@@ -82,6 +82,23 @@ func (r *Renderer) Reload() error {
 	return nil
 }
 
+// UseFS 切换到指定文件系统重新加载模板,并设置 hot 模式标记。
+func (r *Renderer) UseFS(fsys fs.FS, hot bool) error {
+	if r == nil {
+		return nil
+	}
+	tpl, err := parseTemplates(fsys, r.pattern)
+	if err != nil {
+		return err
+	}
+	r.mu.Lock()
+	r.tpl = tpl
+	r.fsys = fsys
+	r.hot = hot
+	r.mu.Unlock()
+	return nil
+}
+
 // ReleaseToHotDir 把当前模板写入磁盘目录,并切换到该目录的 hot 模式。
 // 这样单二进制启动后也能在后台释放模板文件并启用手动热更新。
 func (r *Renderer) ReleaseToHotDir(dir string) error {

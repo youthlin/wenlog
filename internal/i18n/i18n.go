@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
@@ -75,11 +76,23 @@ var templateTranslationAnchors = []string{
 	gettext.Mark.T("重新解析模板"),
 	gettext.Mark.T("当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式。"),
 	gettext.Mark.T("释放出模板文件夹"),
+	gettext.Mark.T("切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘上。"),
+	gettext.Mark.T("使用内嵌模板资源"),
 	gettext.Mark.T("当前资源模式：hot（本地资源目录，修改后立即生效）"),
 	gettext.Mark.T("当前资源模式：static（embed 内置资源）"),
 	gettext.Mark.T("检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重新加载。"),
 	gettext.Mark.T("当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录。"),
 	gettext.Mark.T("释放资源文件夹"),
+	gettext.Mark.T("切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"),
+	gettext.Mark.T("使用内嵌资源文件"),
+	gettext.Mark.T("翻译资源设置"),
+	gettext.Mark.T("当前翻译模式：hot（本地翻译目录）"),
+	gettext.Mark.T("当前翻译模式：static（embed 内置翻译资源）"),
+	gettext.Mark.T("检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"),
+	gettext.Mark.T("切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"),
+	gettext.Mark.T("使用内嵌翻译资源"),
+	gettext.Mark.T("当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录。"),
+	gettext.Mark.T("释放翻译资源目录"),
 	gettext.Mark.T("已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"),
 	gettext.Mark.T("当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新登录。"),
 	gettext.Mark.T("编辑分类"),
@@ -112,15 +125,38 @@ var templateTranslationAnchors = []string{
 	gettext.Mark.T("评论提交后需经审核才会显示。"),
 }
 
+var hot atomic.Bool
+var hotConfigured atomic.Bool
+
 // Init 初始化全局翻译配置。
 // 当前仓库源码中的默认文案是中文,因此把源代码语言设为 zh_CN,英文通过 po 文件提供。
 func Init() error {
+	if !hotConfigured.Load() {
+		hot.Store(pathExists("web/i18n"))
+		hotConfigured.Store(true)
+	}
+	return loadTranslations()
+}
+
+// Hot 返回当前翻译资源是否处于本地目录优先模式。
+func Hot() bool { return hot.Load() }
+
+// SetHot 设置当前翻译资源是否优先使用本地目录。
+func SetHot(v bool) {
+	hot.Store(v)
+	hotConfigured.Store(true)
+}
+
+func loadTranslations() error {
 	gettext.SetGlobal(gettext.NewTranslations())
 	gettext.SetSourceCodeLocale("zh_CN")
 	gettext.SetLocale("zh_CN")
-	if _, err := os.Stat("web/i18n"); err == nil {
-		gettext.Load("web/i18n")
-		return nil
+	if hot.Load() {
+		if _, err := os.Stat("web/i18n"); err == nil {
+			gettext.Load("web/i18n")
+			return nil
+		}
+		hot.Store(false)
 	}
 	langFS, err := fs.Sub(web.I18n, "i18n")
 	if err != nil {
@@ -128,6 +164,16 @@ func Init() error {
 	}
 	gettext.LoadFS(langFS)
 	return nil
+}
+
+// Reload 重新加载翻译资源: 本地目录存在时优先使用本地目录,否则回退到 embed。
+func Reload() error {
+	return loadTranslations()
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // Middleware 为当前请求决定语言,优先级: query lang > cookie > Accept-Language。
