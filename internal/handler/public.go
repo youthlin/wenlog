@@ -225,18 +225,22 @@ func (h *Public) Page(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
+	if slug == "archive" {
+		h.renderArchive(c, h.specialPage(c, "archive", "归档"))
+		return
+	}
+	if slug == "links" {
+		p, err := h.st.GetPageBySlug(slug)
+		if err != nil {
+			h.notFound(c)
+			return
+		}
+		h.renderLinks(c, p)
+		return
+	}
 	p, err := h.st.GetPageBySlug(slug)
 	if err != nil {
 		h.notFound(c)
-		return
-	}
-
-	switch slug {
-	case "archive":
-		h.renderArchive(c, p)
-		return
-	case "links":
-		h.renderLinks(c, p)
 		return
 	}
 
@@ -259,6 +263,17 @@ func (h *Public) Page(c *gin.Context) {
 		return
 	}
 	c.HTML(http.StatusOK, "page.gohtml", data)
+}
+
+func (h *Public) specialPage(c *gin.Context, slug, fallbackTitle string) *model.Post {
+	if h.st != nil {
+		p, err := h.st.GetPageBySlug(slug)
+		if err == nil {
+			return p
+		}
+	}
+	tr := i18n.Get(c)
+	return &model.Post{Title: tr.T(fallbackTitle), Slug: slug, PostType: model.PostTypePage}
 }
 
 func (h *Public) renderArchive(c *gin.Context, p *model.Post) {

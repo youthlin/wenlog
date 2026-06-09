@@ -177,6 +177,13 @@ func ensureInitialContent(st *store.Store) error {
 		}
 		author = &users[0]
 	}
+	uncategorized := &model.Category{
+		Name: "未分类",
+		Slug: "uncategorized",
+	}
+	if err := st.SaveCategory(uncategorized); err != nil {
+		return err
+	}
 	now := time.Now()
 	postID, err := st.NextPostID()
 	if err != nil {
@@ -202,7 +209,7 @@ func ensureInitialContent(st *store.Store) error {
 		PublishedAt:   now,
 		ModifiedAt:    now,
 	}
-	if err := st.SavePost(welcome); err != nil {
+	if err := st.SavePostWithTerms(welcome, []uint{uncategorized.ID}, nil); err != nil {
 		return err
 	}
 	comment := &model.Comment{

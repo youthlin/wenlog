@@ -22,6 +22,21 @@ const (
 	CookieName = "lang"
 )
 
+var widgetTranslationAnchors = []string{
+	gettext.Mark.T("博主动态"),
+	gettext.Mark.T("近期文章"),
+	gettext.Mark.T("近期评论"),
+	gettext.Mark.T("发表在"),
+	gettext.Mark.T("归档"),
+	gettext.Mark.T("选择月份…"),
+	gettext.Mark.T("%d 年 %d 月(%d)"),
+	gettext.Mark.T("分类目录"),
+	gettext.Mark.T("选择分类…"),
+	gettext.Mark.T("标签"),
+	gettext.Mark.T("选择标签…"),
+	gettext.Mark.T("未分类"),
+}
+
 // Init 初始化全局翻译配置。
 // 当前仓库源码中的默认文案是中文,因此把源代码语言设为 zh_CN,英文通过 po 文件提供。
 func Init() error {

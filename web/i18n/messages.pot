@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 12:07+0800\n"
+"POT-Creation-Date: 2026-06-09 12:49+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -888,28 +888,77 @@ msgstr ""
 msgid "搜索「%s」"
 msgstr ""
 
-#: internal/handler/public.go:315 internal/handler/public.go:316
+#: internal/handler/public.go:328 internal/handler/public.go:329
 #, c-format
 msgid "分类:%s"
 msgstr ""
 
-#: internal/handler/public.go:333 internal/handler/public.go:334
+#: internal/handler/public.go:346 internal/handler/public.go:347
 #, c-format
 msgid "标签:%s"
 msgstr ""
 
-#: internal/handler/public.go:368
+#: internal/handler/public.go:381
 msgid "页面不存在"
 msgstr ""
 
-#: internal/handler/public.go:370
+#: internal/handler/public.go:383
 msgid "你访问的页面不存在或已被删除。"
 msgstr ""
 
-#: internal/handler/public.go:377
+#: internal/handler/public.go:390
 msgid "出错了"
 msgstr ""
 
-#: internal/handler/public.go:379
+#: internal/handler/public.go:392
 msgid "服务器内部错误,请稍后重试。"
+msgstr ""
+
+#: internal/i18n/i18n.go:26
+msgid "博主动态"
+msgstr ""
+
+#: internal/i18n/i18n.go:27
+msgid "近期文章"
+msgstr ""
+
+#: internal/i18n/i18n.go:28
+msgid "近期评论"
+msgstr ""
+
+#: internal/i18n/i18n.go:29
+msgid "发表在"
+msgstr ""
+
+#: internal/i18n/i18n.go:30
+msgid "归档"
+msgstr ""
+
+#: internal/i18n/i18n.go:31
+msgid "选择月份…"
+msgstr ""
+
+#: internal/i18n/i18n.go:32
+#, c-format
+msgid "%d 年 %d 月(%d)"
+msgstr ""
+
+#: internal/i18n/i18n.go:33
+msgid "分类目录"
+msgstr ""
+
+#: internal/i18n/i18n.go:34
+msgid "选择分类…"
+msgstr ""
+
+#: internal/i18n/i18n.go:35
+msgid "标签"
+msgstr ""
+
+#: internal/i18n/i18n.go:36
+msgid "选择标签…"
+msgstr ""
+
+#: internal/i18n/i18n.go:37
+msgid "未分类"
 msgstr ""

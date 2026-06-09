@@ -98,6 +98,20 @@ func TestEnsureInitialContent(t *testing.T) {
 	if posts[0].Title != "欢迎来到我的博客" || posts[0].PostType != model.PostTypePost {
 		t.Fatalf("first post = %+v", posts[0])
 	}
+	var categories []model.Category
+	if err := st.DB().Order("id ASC").Find(&categories).Error; err != nil {
+		t.Fatalf("list categories: %v", err)
+	}
+	if len(categories) != 1 || categories[0].Name != "未分类" || categories[0].Slug != "uncategorized" {
+		t.Fatalf("categories = %+v", categories)
+	}
+	post, err := st.GetPostByID(posts[0].ID)
+	if err != nil {
+		t.Fatalf("get welcome post: %v", err)
+	}
+	if len(post.Categories) != 1 || post.Categories[0].Slug != "uncategorized" {
+		t.Fatalf("welcome post categories = %+v", post.Categories)
+	}
 	if posts[1].Slug != "about" || posts[1].MenuOrder != 1 || posts[1].PostType != model.PostTypePage {
 		t.Fatalf("about page = %+v", posts[1])
 	}

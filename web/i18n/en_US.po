@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 12:07+0800\n"
+"POT-Creation-Date: 2026-06-09 12:49+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -899,34 +899,80 @@ msgstr "Search: %s"
 msgid "搜索「%s」"
 msgstr "Search “%s”"
 
-#: internal/handler/public.go:315 internal/handler/public.go:316
+#: internal/handler/public.go:328 internal/handler/public.go:329
 #, c-format
 msgid "分类:%s"
 msgstr "Category: %s"
 
-#: internal/handler/public.go:333 internal/handler/public.go:334
+#: internal/handler/public.go:346 internal/handler/public.go:347
 #, c-format
 msgid "标签:%s"
 msgstr "Tag: %s"
 
-#: internal/handler/public.go:368
+#: internal/handler/public.go:381
 msgid "页面不存在"
 msgstr "Page not found"
 
-#: internal/handler/public.go:370
+#: internal/handler/public.go:383
 msgid "你访问的页面不存在或已被删除。"
 msgstr "The page you requested does not exist or has been removed."
 
-#: internal/handler/public.go:377
+#: internal/handler/public.go:390
 msgid "出错了"
 msgstr "Something went wrong"
 
-#: internal/handler/public.go:379
+#: internal/handler/public.go:392
 msgid "服务器内部错误,请稍后重试。"
 msgstr "Internal server error. Please try again later."
 
-#~ msgid "%d 年 %d 月(%d)"
-#~ msgstr "%d-%02d (%d)"
+#: internal/i18n/i18n.go:26
+msgid "博主动态"
+msgstr "Latest notes"
+
+#: internal/i18n/i18n.go:27
+msgid "近期文章"
+msgstr "Recent posts"
+
+#: internal/i18n/i18n.go:28
+msgid "近期评论"
+msgstr "Recent comments"
+
+#: internal/i18n/i18n.go:29
+msgid "发表在"
+msgstr "commented on"
+
+#: internal/i18n/i18n.go:30
+msgid "归档"
+msgstr "Archives"
+
+#: internal/i18n/i18n.go:31
+msgid "选择月份…"
+msgstr "Select month…"
+
+#: internal/i18n/i18n.go:32
+#, c-format
+msgid "%d 年 %d 月(%d)"
+msgstr "%d-%02d (%d)"
+
+#: internal/i18n/i18n.go:33
+msgid "分类目录"
+msgstr "Categories"
+
+#: internal/i18n/i18n.go:34
+msgid "选择分类…"
+msgstr "Select category…"
+
+#: internal/i18n/i18n.go:35
+msgid "标签"
+msgstr "Tags"
+
+#: internal/i18n/i18n.go:36
+msgid "选择标签…"
+msgstr "Select tag…"
+
+#: internal/i18n/i18n.go:37
+msgid "未分类"
+msgstr "Uncategorized"
 
 #~ msgid "%s 管理"
 #~ msgstr "%s management"
@@ -961,20 +1007,11 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "保存标签"
 #~ msgstr "Save tag"
 
-#~ msgid "分类目录"
-#~ msgstr "Categories"
-
 #~ msgid "创建分类"
 #~ msgstr "Create category"
 
 #~ msgid "创建标签"
 #~ msgstr "Create tag"
-
-#~ msgid "博主动态"
-#~ msgstr "Latest notes"
-
-#~ msgid "发表在"
-#~ msgstr "commented on"
 
 #~ msgid "回复"
 #~ msgstr "Reply"
@@ -1003,9 +1040,6 @@ msgstr "Internal server error. Please try again later."
 
 #~ msgid "归属用户：%s"
 #~ msgstr "Owner: %s"
-
-#~ msgid "归档"
-#~ msgstr "Archives"
 
 #~ msgid ""
 #~ "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要"
@@ -1090,9 +1124,6 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "有回复时邮件通知我"
 #~ msgstr "Email me when someone replies"
 
-#~ msgid "标签"
-#~ msgstr "Tags"
-
 #~ msgid "标签(逗号分隔)"
 #~ msgstr "Tags (comma-separated)"
 
@@ -1158,23 +1189,8 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "请选择用户"
 #~ msgstr "Please select a user"
 
-#~ msgid "近期文章"
-#~ msgstr "Recent posts"
-
-#~ msgid "近期评论"
-#~ msgstr "Recent comments"
-
 #~ msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
 #~ msgstr "No categories yet. Create one first in Categories / Tags."
-
-#~ msgid "选择分类…"
-#~ msgstr "Select category…"
-
-#~ msgid "选择月份…"
-#~ msgstr "Select month…"
-
-#~ msgid "选择标签…"
-#~ msgstr "Select tag…"
 
 #~ msgid "邮箱 *(不公开)"
 #~ msgstr "Email * (not public)"

@@ -2,10 +2,15 @@ package handler
 
 import (
 	"io/fs"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
+
+	"github.com/gin-gonic/gin"
+	"github.com/youthlin/blog/internal/model"
 )
 
 func TestAllowDebugSQL(t *testing.T) {
@@ -86,5 +91,23 @@ func TestNormalizeTermSlug(t *testing.T) {
 		if got := normalizeTermSlug(in); got != want {
 			t.Fatalf("normalizeTermSlug(%q)=%q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestSpecialPageFallsBackWithoutStoredPage(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := &Public{}
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/archive", nil)
+	p := h.specialPage(c, "archive", "归档")
+	if p == nil {
+		t.Fatal("specialPage returned nil")
+	}
+	if p.Slug != "archive" || p.Title != "归档" {
+		t.Fatalf("specialPage = %+v", p)
+	}
+	if p.PostType != "" && p.PostType != model.PostTypePage {
+		t.Fatalf("unexpected post type: %+v", p)
 	}
 }
