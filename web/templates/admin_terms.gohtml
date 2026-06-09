@@ -47,7 +47,7 @@
   <section class="card settings-card">
     <h3>{{.t.T "分类列表"}}</h3>
     <div class="table-scroll">
-      <table class="data-table">
+      <table class="data-table terms-table categories-table">
         <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "父分类"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
         <tbody>
         {{range .Categories}}
@@ -75,7 +75,7 @@
   <section class="card settings-card">
     <h3>{{.t.T "标签列表"}}</h3>
     <div class="table-scroll">
-      <table class="data-table">
+      <table class="data-table terms-table tags-table">
         <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "操作"}}</th></tr></thead>
         <tbody>
         {{range .Tags}}

@@ -21,38 +21,47 @@
 <body class="admin">
 <header class="admin-header">
   <div class="admin-bar">
-    <a class="brand" href="/admin/">{{.SiteName}} {{.t.T "后台"}}</a>
-    <nav class="admin-nav">
-      <div class="nav-group">
-        <span class="nav-group-title">{{.t.T "内容"}}</span>
-        <div class="nav-group-links">
-          <a href="/admin/posts?type=post">{{.t.T "文章"}}</a>
-          <a href="/admin/posts?type=page">{{.t.T "页面"}}</a>
-          <a href="/admin/comments">{{.t.T "评论"}}{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}</a>
+    <div class="admin-bar-head">
+      <a class="brand" href="/admin/">{{.SiteName}} {{.t.T "后台"}}</a>
+      <div class="admin-header-actions">
+        <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
+        <button type="button" class="theme-toggle" data-theme-toggle aria-label="{{.t.T "切换主题"}}">🌓</button>
+      </div>
+    </div>
+    <nav id="admin-nav-menu" class="admin-nav" data-nav-panel>
+      <div class="admin-nav-groups">
+        <div class="nav-group">
+          <span class="nav-group-title">{{.t.T "内容"}}</span>
+          <div class="nav-group-links">
+            <a href="/admin/posts?type=post">{{.t.T "文章"}}</a>
+            <a href="/admin/posts?type=page">{{.t.T "页面"}}</a>
+            <a href="/admin/comments">{{.t.T "评论"}}{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-title">{{.t.T "设置"}}</span>
+          <div class="nav-group-links">
+            <a href="/admin/settings">{{.t.T "基本设置"}}</a>
+            <a href="/admin/terms">{{.t.T "分类/标签"}}</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-title">{{.t.T "功能"}}</span>
+          <div class="nav-group-links">
+            <a href="/admin/uploads">{{.t.T "附件管理"}}</a>
+            <a href="/admin/import">{{.t.T "导入导出"}}</a>
+          </div>
         </div>
       </div>
-      <div class="nav-group">
-        <span class="nav-group-title">{{.t.T "设置"}}</span>
-        <div class="nav-group-links">
-          <a href="/admin/settings">{{.t.T "基本设置"}}</a>
-          <a href="/admin/terms">{{.t.T "分类/标签"}}</a>
+      <div class="admin-nav-actions">
+        <div class="lang-switch" aria-label="{{.t.T "语言"}}">
+          <a href="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}aria-current="true"{{end}}>中文</a>
+          <span>/</span>
+          <a href="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}aria-current="true"{{end}}>EN</a>
         </div>
+        <a href="/" target="_blank">{{.t.T "查看站点"}}</a>
+        <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
       </div>
-      <div class="nav-group">
-        <span class="nav-group-title">{{.t.T "功能"}}</span>
-        <div class="nav-group-links">
-          <a href="/admin/uploads">{{.t.T "附件管理"}}</a>
-          <a href="/admin/import">{{.t.T "导入导出"}}</a>
-        </div>
-      </div>
-      <div class="lang-switch" aria-label="{{.t.T "语言"}}">
-        <a href="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}aria-current="true"{{end}}>中文</a>
-        <span>/</span>
-        <a href="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}aria-current="true"{{end}}>EN</a>
-      </div>
-      <a href="/" target="_blank">{{.t.T "查看站点"}}</a>
-      <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
-      <button type="button" class="theme-toggle" data-theme-toggle aria-label="{{.t.T "切换主题"}}">🌓</button>
     </nav>
   </div>
 </header>

@@ -17,6 +17,9 @@
   var openLabel = document.documentElement.dataset.navOpenLabel || "Open menu";
   var closeLabel = document.documentElement.dataset.navCloseLabel || "Collapse menu";
   var themeToggleLabel = document.documentElement.dataset.themeToggleLabel || "Toggle theme";
+  function isMobileNav() {
+    return !!(navBtn && window.getComputedStyle(navBtn).display !== "none");
+  }
   document.querySelectorAll("[data-theme-toggle]").forEach(function (btn) {
     btn.setAttribute("aria-label", themeToggleLabel);
   });
@@ -34,7 +37,7 @@
 
     navPanel.querySelectorAll("a").forEach(function (link) {
       link.addEventListener("click", function () {
-        if (!window.matchMedia("(max-width: 860px)").matches) {
+        if (!isMobileNav()) {
           return;
         }
         navPanel.classList.remove("is-open");
@@ -43,7 +46,7 @@
     });
 
     window.addEventListener("resize", function () {
-      if (window.matchMedia("(min-width: 861px)").matches) {
+      if (!isMobileNav()) {
         navPanel.classList.remove("is-open");
         syncNavButton(false);
       }
