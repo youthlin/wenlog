@@ -742,13 +742,17 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	if pt != model.PostTypePost && pt != model.PostTypePage {
 		pt = model.PostTypePost
 	}
+	title := tr.T("文章管理")
+	if pt == model.PostTypePage {
+		title = tr.T("页面管理")
+	}
 	page := atoiDefault(c.Query("page"), 1)
 	posts, total, err := h.st.AdminListPosts(pt, page, adminPageSize)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("内容管理"))
+	data := h.base(c, title)
 	data["Posts"] = posts
 	data["Total"] = total
 	data["PostType"] = pt

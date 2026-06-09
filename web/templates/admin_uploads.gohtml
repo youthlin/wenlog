@@ -4,31 +4,33 @@
   <h1>{{.t.T "文件管理"}}</h1>
   <label class="btn upload-btn">{{.t.T "上传图片"}}<input type="file" id="upload_file_page" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
 </div>
-<table class="data-table uploads-table">
-  <thead><tr><th>ID</th><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
-  <tbody>
-  {{range .Uploads}}
-  <tr>
-    <td>{{.ID}}</td>
-    <td>{{if .MimeType}}<img src="{{.Path}}" alt="" class="upload-thumb">{{end}}</td>
-    <td>
-      <div>{{.OrigName}}</div>
-      <div><a href="{{.Path}}" target="_blank">{{.Path}}</a></div>
-    </td>
-    <td>{{.Size}} B</td>
-    <td>{{fmtDateTime .CreatedAt}}</td>
-    <td>
-      <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该文件?"}}')">
-        {{template "csrf_field" $}}
-        <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
-      </form>
-    </td>
-  </tr>
-  {{else}}
-  <tr><td colspan="6">{{.t.T "暂无文件"}}</td></tr>
-  {{end}}
-  </tbody>
-</table>
+<div class="table-scroll">
+  <table class="data-table uploads-table">
+	    <thead><tr><th>ID</th><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+	    <tbody>
+	    {{range .Uploads}}
+	    <tr>
+      <td>{{.ID}}</td>
+      <td>{{if .MimeType}}<img src="{{.Path}}" alt="" class="upload-thumb">{{end}}</td>
+      <td>
+        <div>{{.OrigName}}</div>
+        <div><a href="{{.Path}}" target="_blank">{{.Path}}</a></div>
+      </td>
+	      <td>{{.Size}} B</td>
+	      <td>{{fmtDateTime .CreatedAt}}</td>
+	      <td>
+	        <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该文件?"}}')">
+	          {{template "csrf_field" $}}
+	          <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+	        </form>
+	      </td>
+	    </tr>
+	    {{else}}
+	    <tr><td colspan="6">{{.t.T "暂无文件"}}</td></tr>
+	    {{end}}
+	    </tbody>
+  </table>
+</div>
 <p class="total">{{.t.T "共 %d 条" .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">

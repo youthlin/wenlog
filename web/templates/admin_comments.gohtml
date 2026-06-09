@@ -17,44 +17,46 @@
   <label class="check-all"><input type="checkbox" id="check-all"> {{.t.T "全选"}}</label>
 </form>
 
-<table class="data-table comments-table">
-  <thead><tr><th></th><th>{{.t.T "作者"}}</th><th>{{.t.T "内容"}}</th><th>{{.t.T "文章"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
-  <tbody>
-  {{range .Comments}}
-  <tr>
-    <td><input type="checkbox" name="ids" value="{{.ID}}" form="batch-form" class="row-check"></td>
-    <td>{{.Author}}<br><small>{{.Email}}</small></td>
-    <td class="comment-cell">
-      <div class="c-text">{{.Content}}</div>
-      <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
-        {{template "csrf_field" $}}
-        <textarea name="content" rows="3">{{.Content}}</textarea>
-        <button type="submit">{{$.t.T "保存"}}</button>
-        <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
-      </form>
-      <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
-    </td>
-    <td><a href="/?p={{.PostID}}" target="_blank">#{{.PostID}}</a></td>
-    <td>{{fmtDateTime .CreatedAt}}</td>
-    <td class="actions">
-      {{if eq .Status "pending"}}
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>{{$.t.T "批准"}}</button></form>
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>{{$.t.T "垃圾"}}</button></form>
-      {{else if eq .Status "approved"}}
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>{{$.t.T "驳回"}}</button></form>
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>{{$.t.T "垃圾"}}</button></form>
-      {{else if eq .Status "spam"}}
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>{{$.t.T "待审"}}</button></form>
-        <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>{{$.t.T "批准"}}</button></form>
-      {{end}}
-      <form class="inline" method="post" action="/admin/comment/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除?"}}')">{{template "csrf_field" $}}<button class="link-danger">{{$.t.T "删除"}}</button></form>
-    </td>
-  </tr>
-  {{else}}
-  <tr><td colspan="6">{{.t.T "暂无评论"}}</td></tr>
-  {{end}}
-  </tbody>
-</table>
+<div class="table-scroll">
+  <table class="data-table comments-table">
+	    <thead><tr><th></th><th>{{.t.T "作者"}}</th><th>{{.t.T "内容"}}</th><th>{{.t.T "文章"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+	    <tbody>
+	    {{range .Comments}}
+	    <tr>
+      <td><input type="checkbox" name="ids" value="{{.ID}}" form="batch-form" class="row-check"></td>
+      <td>{{.Author}}<br><small>{{.Email}}</small></td>
+	      <td class="comment-cell">
+	        <div class="c-text">{{.Content}}</div>
+	        <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
+	          {{template "csrf_field" $}}
+	          <textarea name="content" rows="3">{{.Content}}</textarea>
+	          <button type="submit">{{$.t.T "保存"}}</button>
+	          <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
+	        </form>
+	        <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
+	      </td>
+	      <td><a href="/?p={{.PostID}}" target="_blank">#{{.PostID}}</a></td>
+	      <td>{{fmtDateTime .CreatedAt}}</td>
+	      <td class="actions">
+	        {{if eq .Status "pending"}}
+	          <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>{{$.t.T "批准"}}</button></form>
+	          <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>{{$.t.T "垃圾"}}</button></form>
+	        {{else if eq .Status "approved"}}
+	          <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>{{$.t.T "驳回"}}</button></form>
+	          <form class="inline" method="post" action="/admin/comment/{{.ID}}/spam">{{template "csrf_field" $}}<button>{{$.t.T "垃圾"}}</button></form>
+	        {{else if eq .Status "spam"}}
+	          <form class="inline" method="post" action="/admin/comment/{{.ID}}/pending">{{template "csrf_field" $}}<button>{{$.t.T "待审"}}</button></form>
+	          <form class="inline" method="post" action="/admin/comment/{{.ID}}/approve">{{template "csrf_field" $}}<button>{{$.t.T "批准"}}</button></form>
+	        {{end}}
+	        <form class="inline" method="post" action="/admin/comment/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除?"}}')">{{template "csrf_field" $}}<button class="link-danger">{{$.t.T "删除"}}</button></form>
+	      </td>
+	    </tr>
+	    {{else}}
+	    <tr><td colspan="6">{{.t.T "暂无评论"}}</td></tr>
+	    {{end}}
+	    </tbody>
+  </table>
+</div>
 
 <p class="total">{{.t.T "共 %d 条" .Total}}</p>
 {{if gt .Pages 1}}

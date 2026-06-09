@@ -46,53 +46,57 @@
 <div class="cards settings-cards">
   <section class="card settings-card">
     <h3>{{.t.T "分类列表"}}</h3>
-    <table class="data-table">
-      <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "父分类"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
-      <tbody>
-      {{range .Categories}}
-      <tr>
-        <td>{{.ID}}</td>
-        <td>{{.Name}}</td>
-        <td>{{.Slug}}</td>
-        <td>{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</td>
-        <td>
-          <a href="/admin/terms?edit_category={{.ID}}">{{$.t.T "编辑"}}</a>
-          <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？"}}')">
-            {{template "csrf_field" $}}
-            <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
-          </form>
-        </td>
-      </tr>
-      {{else}}
-      <tr><td colspan="5">{{.t.T "暂无分类"}}</td></tr>
-      {{end}}
-      </tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "父分类"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+        <tbody>
+        {{range .Categories}}
+        <tr>
+          <td>{{.ID}}</td>
+          <td>{{.Name}}</td>
+          <td>{{.Slug}}</td>
+          <td>{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</td>
+          <td>
+            <a href="/admin/terms?edit_category={{.ID}}">{{$.t.T "编辑"}}</a>
+            <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？"}}')">
+              {{template "csrf_field" $}}
+              <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+            </form>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="5">{{.t.T "暂无分类"}}</td></tr>
+        {{end}}
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="card settings-card">
     <h3>{{.t.T "标签列表"}}</h3>
-    <table class="data-table">
-      <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "操作"}}</th></tr></thead>
-      <tbody>
-      {{range .Tags}}
-      <tr>
-        <td>{{.ID}}</td>
-        <td>{{.Name}}</td>
-        <td>{{.Slug}}</td>
-        <td>
-          <a href="/admin/terms?edit_tag={{.ID}}">{{$.t.T "编辑"}}</a>
-          <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该标签吗？"}}')">
-            {{template "csrf_field" $}}
-            <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
-          </form>
-        </td>
-      </tr>
-      {{else}}
-      <tr><td colspan="4">{{.t.T "暂无标签"}}</td></tr>
-      {{end}}
-      </tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "操作"}}</th></tr></thead>
+        <tbody>
+        {{range .Tags}}
+        <tr>
+          <td>{{.ID}}</td>
+          <td>{{.Name}}</td>
+          <td>{{.Slug}}</td>
+          <td>
+            <a href="/admin/terms?edit_tag={{.ID}}">{{$.t.T "编辑"}}</a>
+            <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该标签吗？"}}')">
+              {{template "csrf_field" $}}
+              <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+            </form>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="4">{{.t.T "暂无标签"}}</td></tr>
+        {{end}}
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>
 {{template "admin_footer" .}}
