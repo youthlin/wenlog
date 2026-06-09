@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 20:50+0800\n"
+"POT-Creation-Date: 2026-06-09 22:28+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -68,7 +68,6 @@ msgid "内容"
 msgstr "Content"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:36
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:5
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:72
 msgid "文章"
@@ -162,7 +161,7 @@ msgstr "Actions"
 msgid "时间"
 msgstr "Time"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:93
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:32
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:34
 msgid "共 %d 条"
@@ -256,7 +255,7 @@ msgid "下载 XML"
 msgstr "Download XML"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:67
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:96
 msgid "用户名"
 msgstr "Username"
 
@@ -373,55 +372,55 @@ msgstr "Save site settings"
 msgid "模板设置"
 msgstr "Template settings"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:45
 msgid "资源文件设置"
 msgstr "Asset settings"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:83
 msgid "会话设置"
 msgstr "Session settings"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:86
 msgid "新的 Session Secret"
 msgstr "New session secret"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:86
 msgid "请输入新的 Session Secret"
 msgstr "Enter a new session secret"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:88
 msgid "更新 Session Secret"
 msgstr "Update session secret"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:64
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:93
 msgid "个人设置"
 msgstr "Profile"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:97
 msgid "显示名"
 msgstr "Display name"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:69
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:98
 msgid "邮件"
 msgstr "Email"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:99
 msgid "保存个人资料"
 msgstr "Save profile"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:103
 msgid "原密码"
 msgstr "Current password"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:75
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:104
 msgid "新密码"
 msgstr "New password"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:76
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:105
 msgid "确认新密码"
 msgstr "Confirm new password"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:106
 msgid "修改密码"
 msgstr "Change password"
 
@@ -507,304 +506,380 @@ msgstr "views"
 msgid "%d 条评论"
 msgstr "%d comments"
 
-#: internal/handler/admin.go:78 internal/handler/admin.go:92
+#: internal/handler/admin.go:86 internal/handler/admin.go:100
 msgid "登录"
 msgstr "Log in"
 
-#: internal/handler/admin.go:80
+#: internal/handler/admin.go:88
 msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
 msgstr "Session secret updated. All logged-in users must sign in again."
 
-#: internal/handler/admin.go:93
+#: internal/handler/admin.go:101
 msgid "用户名或密码错误。"
 msgstr "Invalid username or password."
 
-#: internal/handler/admin.go:114
+#: internal/handler/admin.go:122
 msgid "后台"
 msgstr "Admin"
 
-#: internal/handler/admin.go:120 internal/handler/admin.go:130
-#: internal/handler/admin.go:202
+#: internal/handler/admin.go:128 internal/handler/admin.go:138
+#: internal/handler/admin.go:210
 msgid "WXR 导入 / 导出"
 msgstr "WXR Import / Export"
 
-#: internal/handler/admin.go:138
+#: internal/handler/admin.go:146
 msgid "表单参数有误。"
 msgstr "Invalid form parameters."
 
-#: internal/handler/admin.go:144
+#: internal/handler/admin.go:152
 msgid "请选择导入归属用户。"
 msgstr "Please choose an import owner."
 
-#: internal/handler/admin.go:150
+#: internal/handler/admin.go:158
 msgid "所选用户不存在。"
 msgstr "The selected user does not exist."
 
-#: internal/handler/admin.go:156
+#: internal/handler/admin.go:164
 msgid "请选择要导入的 XML 文件。"
 msgstr "Please choose an XML file to import."
 
-#: internal/handler/admin.go:161
+#: internal/handler/admin.go:169
 msgid "XML 文件不能为空。"
 msgstr "XML file cannot be empty."
 
-#: internal/handler/admin.go:166
+#: internal/handler/admin.go:174
 msgid "XML 文件不能超过 50MB。"
 msgstr "XML file must be smaller than 50MB."
 
-#: internal/handler/admin.go:172
+#: internal/handler/admin.go:180
 msgid "打开上传文件失败。"
 msgstr "Failed to open the uploaded file."
 
-#: internal/handler/admin.go:187
+#: internal/handler/admin.go:195
 #, c-format
 msgid "导入失败: %s"
 msgstr "Import failed: %s"
 
-#: internal/handler/admin.go:191
+#: internal/handler/admin.go:199
 msgid "导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。"
 msgstr ""
 "Import finished. Existing posts/pages/comments with the same IDs were "
 "overwritten via upsert."
 
-#: internal/handler/admin.go:213
+#: internal/handler/admin.go:221
 msgid "导出表单参数有误。"
 msgstr "Invalid export form parameters."
 
-#: internal/handler/admin.go:226
+#: internal/handler/admin.go:234
 msgid "请至少选择一项导出内容。"
 msgstr "Select at least one content type to export."
 
-#: internal/handler/admin.go:240
+#: internal/handler/admin.go:248
 #, c-format
 msgid "导出失败: %s"
 msgstr "Export failed: %s"
 
-#: internal/handler/admin.go:257
+#: internal/handler/admin.go:265
 msgid "设置"
 msgstr "Settings"
 
-#: internal/handler/admin.go:275
+#: internal/handler/admin.go:284
 msgid "模板已重新解析。"
 msgstr "Templates reloaded."
 
-#: internal/handler/admin.go:278
-msgid "模板文件已释放到 web/templates，并已切换为 hot 模式。"
-msgstr "Templates were extracted to web/templates and switched to hot mode."
+#: internal/handler/admin.go:287
+msgid ""
+"已切换到本地模板 hot 模式；若 `web/templates` 已存在，则会直接复用现有文件，"
+"不覆盖你的改动。"
+msgstr ""
 
-#: internal/handler/admin.go:281
-msgid "资源文件已释放到 web/assets，并已切换为 hot 模式。"
-msgstr "Assets were extracted to web/assets and switched to hot mode."
+#: internal/handler/admin.go:290
+msgid "已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。"
+msgstr ""
 
-#: internal/handler/admin.go:342
+#: internal/handler/admin.go:293
+msgid ""
+"已切换到本地资源 hot 模式；若 `web/assets` 已存在，则会直接复用现有文件，不覆"
+"盖你的改动。"
+msgstr ""
+
+#: internal/handler/admin.go:296
+msgid "已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。"
+msgstr ""
+
+#: internal/handler/admin.go:299
+msgid ""
+"已切换到本地翻译资源 hot 模式；若 `web/i18n` 已存在，则会直接复用现有文件，不"
+"覆盖你的改动。"
+msgstr ""
+
+#: internal/handler/admin.go:302
+msgid "已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。"
+msgstr ""
+
+#: internal/handler/admin.go:363
 msgid "Session Secret 不能为空。"
 msgstr "Session secret cannot be empty."
 
-#: internal/handler/admin.go:369
+#: internal/handler/admin.go:390
 msgid "用户名、显示名和邮件不能为空。"
 msgstr "Username, display name, and email are required."
 
-#: internal/handler/admin.go:380
+#: internal/handler/admin.go:401
 msgid "用户名已被占用。"
 msgstr "Username is already taken."
 
-#: internal/handler/admin.go:404
+#: internal/handler/admin.go:425
 msgid "原密码不正确。"
 msgstr "Current password is incorrect."
 
-#: internal/handler/admin.go:410
+#: internal/handler/admin.go:431
 msgid "两次输入的密码不一致。"
 msgstr "The two passwords do not match."
 
-#: internal/handler/admin.go:431
+#: internal/handler/admin.go:452
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr "Template reload is unavailable because hot mode is not enabled."
 
-#: internal/handler/admin.go:437
+#: internal/handler/admin.go:458
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr "Failed to reload templates: %s"
 
-#: internal/handler/admin.go:449
+#: internal/handler/admin.go:470
 msgid "当前模板渲染器不可用。"
 msgstr "Template renderer is unavailable."
 
-#: internal/handler/admin.go:455
+#: internal/handler/admin.go:476
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr "Already in hot mode. No need to extract templates again."
 
-#: internal/handler/admin.go:461
+#: internal/handler/admin.go:483
+#, fuzzy, c-format
+msgid "切换到本地模板失败: %s"
+msgstr "Failed to reload templates: %s"
+
+#: internal/handler/admin.go:492
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr "Failed to extract templates: %s"
 
-#: internal/handler/admin.go:473
+#: internal/handler/admin.go:504
+#, fuzzy
+msgid "当前不是 hot 模式，不能切回内嵌模板。"
+msgstr "Template reload is unavailable because hot mode is not enabled."
+
+#: internal/handler/admin.go:511
+#, fuzzy, c-format
+msgid "读取内嵌模板失败: %s"
+msgstr "Failed to read embedded assets: %s"
+
+#: internal/handler/admin.go:517
+#, fuzzy, c-format
+msgid "切换回内嵌模板失败: %s"
+msgstr "Failed to reload templates: %s"
+
+#: internal/handler/admin.go:529
+#, fuzzy
+msgid "当前资源管理器不可用。"
+msgstr "Template renderer is unavailable."
+
+#: internal/handler/admin.go:535
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr "Already in hot mode. No need to extract assets again."
 
-#: internal/handler/admin.go:480
+#: internal/handler/admin.go:547
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr "Failed to read embedded assets: %s"
 
-#: internal/handler/admin.go:486
+#: internal/handler/admin.go:553
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr "Failed to extract assets: %s"
 
-#: internal/handler/admin.go:521
+#: internal/handler/admin.go:566
+#, fuzzy
+msgid "当前不是 hot 模式，不能切回内嵌资源。"
+msgstr "Template reload is unavailable because hot mode is not enabled."
+
+#: internal/handler/admin.go:579
+#, fuzzy
+msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
+msgstr "Already in hot mode. No need to extract assets again."
+
+#: internal/handler/admin.go:587
+#, fuzzy, c-format
+msgid "读取内嵌翻译资源失败: %s"
+msgstr "Failed to read embedded assets: %s"
+
+#: internal/handler/admin.go:593
+#, fuzzy, c-format
+msgid "释放翻译资源失败: %s"
+msgstr "Failed to extract assets: %s"
+
+#: internal/handler/admin.go:601 internal/handler/admin.go:620
+#, fuzzy, c-format
+msgid "重新加载翻译资源失败: %s"
+msgstr "Failed to reload templates: %s"
+
+#: internal/handler/admin.go:613
+msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
+msgstr ""
+
+#: internal/handler/admin.go:655
 msgid "DB Debug"
 msgstr "DB Debug"
 
-#: internal/handler/admin.go:532
+#: internal/handler/admin.go:666
 msgid "仅允许只读 SQL(SELECT/EXPLAIN)。"
 msgstr "Only read-only SQL is allowed (SELECT / EXPLAIN)."
 
-#: internal/handler/admin.go:577
+#: internal/handler/admin.go:711
 msgid "未登录"
 msgstr "Not logged in"
 
-#: internal/handler/admin.go:582
+#: internal/handler/admin.go:716
 msgid "未选择文件"
 msgstr "No file selected"
 
-#: internal/handler/admin.go:586
+#: internal/handler/admin.go:720
 msgid "文件不能超过 10MB"
 msgstr "File must be smaller than 10MB"
 
-#: internal/handler/admin.go:591
+#: internal/handler/admin.go:725
 msgid "打开上传文件失败"
 msgstr "Failed to open uploaded file"
 
-#: internal/handler/admin.go:601
+#: internal/handler/admin.go:735
 msgid "仅支持 png/jpg/gif/webp 图片"
 msgstr "Only png/jpg/gif/webp images are supported"
 
-#: internal/handler/admin.go:605
+#: internal/handler/admin.go:739
 msgid "读取上传文件失败"
 msgstr "Failed to read uploaded file"
 
-#: internal/handler/admin.go:615
+#: internal/handler/admin.go:749
 msgid "创建上传目录失败"
 msgstr "Failed to create upload directory"
 
-#: internal/handler/admin.go:621
+#: internal/handler/admin.go:755
 msgid "保存文件失败"
 msgstr "Failed to save file"
 
-#: internal/handler/admin.go:627
+#: internal/handler/admin.go:761
 msgid "写入文件失败"
 msgstr "Failed to write file"
 
-#: internal/handler/admin.go:637
+#: internal/handler/admin.go:771
 msgid "保存上传记录失败"
 msgstr "Failed to save upload record"
 
-#: internal/handler/admin.go:652
+#: internal/handler/admin.go:786
 msgid "文件管理"
 msgstr "Files"
 
-#: internal/handler/admin.go:745
+#: internal/handler/admin.go:879
 msgid "文章管理"
 msgstr "Posts"
 
-#: internal/handler/admin.go:747
+#: internal/handler/admin.go:881
 msgid "页面管理"
 msgstr "Pages"
 
-#: internal/handler/admin.go:767 internal/handler/admin.go:1112
+#: internal/handler/admin.go:901 internal/handler/admin.go:1246
 msgid "分类/标签"
 msgstr "Categories / Tags"
 
-#: internal/handler/admin.go:777
+#: internal/handler/admin.go:911
 msgid "分类已保存。"
 msgstr "Category saved."
 
-#: internal/handler/admin.go:780
+#: internal/handler/admin.go:914
 msgid "分类已删除。"
 msgstr "Category deleted."
 
-#: internal/handler/admin.go:783
+#: internal/handler/admin.go:917
 msgid "标签已保存。"
 msgstr "Tag saved."
 
-#: internal/handler/admin.go:786
+#: internal/handler/admin.go:920
 msgid "标签已删除。"
 msgstr "Tag deleted."
 
-#: internal/handler/admin.go:827
+#: internal/handler/admin.go:961
 msgid "分类名称不能为空。"
 msgstr "Category name cannot be empty."
 
-#: internal/handler/admin.go:835
+#: internal/handler/admin.go:969
 msgid "分类 slug 不能为空。"
 msgstr "Category slug cannot be empty."
 
-#: internal/handler/admin.go:844
+#: internal/handler/admin.go:978
 msgid "分类 slug %q 已存在。"
 msgstr "Category slug %q already exists."
 
-#: internal/handler/admin.go:884
+#: internal/handler/admin.go:1018
 msgid "标签名称不能为空。"
 msgstr "Tag name cannot be empty."
 
-#: internal/handler/admin.go:892
+#: internal/handler/admin.go:1026
 msgid "标签 slug 不能为空。"
 msgstr "Tag slug cannot be empty."
 
-#: internal/handler/admin.go:901
+#: internal/handler/admin.go:1035
 msgid "标签 slug %q 已存在。"
 msgstr "Tag slug %q already exists."
 
-#: internal/handler/admin.go:925 internal/handler/admin.go:1007
-#: internal/handler/admin.go:1024
+#: internal/handler/admin.go:1059 internal/handler/admin.go:1141
+#: internal/handler/admin.go:1158
 msgid "内容管理"
 msgstr "Content"
 
-#: internal/handler/admin.go:1025
+#: internal/handler/admin.go:1159
 #, c-format
 msgid "页面链接 /%s 已存在，请换一个 slug。"
 msgstr ""
 
-#: internal/handler/admin.go:1155
+#: internal/handler/admin.go:1289
 msgid "评论管理"
 msgstr "Comments"
 
-#: internal/handler/admin.go:1242
+#: internal/handler/admin.go:1438
 msgid "未找到"
 msgstr "Not found"
 
-#: internal/handler/admin.go:1251
+#: internal/handler/admin.go:1447
 msgid "服务器错误"
 msgstr "Server error"
 
-#: internal/handler/admin.go:1272
+#: internal/handler/admin.go:1468
 msgid "页面 slug 不能为空"
 msgstr "Page slug cannot be empty."
 
-#: internal/handler/admin.go:1275
+#: internal/handler/admin.go:1471
 msgid "页面 slug 只能是单段路径，不能包含 /"
 msgstr "Page slug must be a single path segment and cannot contain /."
 
-#: internal/handler/admin.go:1278
+#: internal/handler/admin.go:1474
 msgid "页面 slug 不能包含空白、? 或 #"
 msgstr "Page slug cannot contain whitespace, ? or #."
 
-#: internal/handler/admin.go:1281
+#: internal/handler/admin.go:1477
 msgid "页面 slug 非法"
 msgstr "Invalid page slug."
 
-#: internal/handler/admin.go:1284
+#: internal/handler/admin.go:1480
 msgid "页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头"
 msgstr ""
 "Page slug may only contain letters, numbers, dots, underscores, and hyphens, "
 "and must start with a letter or number."
 
-#: internal/handler/admin.go:1287
+#: internal/handler/admin.go:1483
 msgid "页面 slug 不能与文章永久链接格式冲突"
 msgstr "Page slug cannot conflict with the post permalink format."
 
-#: internal/handler/admin.go:1290
+#: internal/handler/admin.go:1486
 msgid "页面 slug %q 为保留路由，请换一个"
 msgstr "Page slug %q is a reserved route. Please choose another one."
 
@@ -884,84 +959,84 @@ msgstr "Something went wrong"
 msgid "服务器内部错误,请稍后重试。"
 msgstr "Internal server error. Please try again later."
 
-#: internal/i18n/i18n.go:26
+#: internal/i18n/i18n.go:27
 msgid "博主动态"
 msgstr "Latest notes"
 
-#: internal/i18n/i18n.go:27
+#: internal/i18n/i18n.go:28
 msgid "近期文章"
 msgstr "Recent posts"
 
-#: internal/i18n/i18n.go:28
+#: internal/i18n/i18n.go:29
 msgid "近期评论"
 msgstr "Recent comments"
 
-#: internal/i18n/i18n.go:29
+#: internal/i18n/i18n.go:30
 msgid "发表在"
 msgstr "commented on"
 
-#: internal/i18n/i18n.go:30
+#: internal/i18n/i18n.go:31
 msgid "归档"
 msgstr "Archives"
 
-#: internal/i18n/i18n.go:31
+#: internal/i18n/i18n.go:32
 msgid "选择月份…"
 msgstr "Select month…"
 
-#: internal/i18n/i18n.go:32
+#: internal/i18n/i18n.go:33
 #, c-format
 msgid "%d 年 %d 月(%d)"
 msgstr "%d-%02d (%d)"
 
-#: internal/i18n/i18n.go:33
+#: internal/i18n/i18n.go:34
 msgid "分类目录"
 msgstr "Categories"
 
-#: internal/i18n/i18n.go:34
+#: internal/i18n/i18n.go:35
 msgid "选择分类…"
 msgstr "Select category…"
 
-#: internal/i18n/i18n.go:35
+#: internal/i18n/i18n.go:36
 msgid "标签"
 msgstr "Tags"
 
-#: internal/i18n/i18n.go:36
+#: internal/i18n/i18n.go:37
 msgid "选择标签…"
 msgstr "Select tag…"
 
-#: internal/i18n/i18n.go:37
+#: internal/i18n/i18n.go:38
 msgid "未分类"
 msgstr "Uncategorized"
 
-#: internal/i18n/i18n.go:43
+#: internal/i18n/i18n.go:44
 msgid "批准"
 msgstr "Approve"
 
-#: internal/i18n/i18n.go:44
+#: internal/i18n/i18n.go:45
 msgid "编辑"
 msgstr "Edit"
 
-#: internal/i18n/i18n.go:45
+#: internal/i18n/i18n.go:46
 msgid "驳回"
 msgstr "Unapprove"
 
-#: internal/i18n/i18n.go:46
+#: internal/i18n/i18n.go:47
 msgid "确认删除?"
 msgstr "Delete this item?"
 
-#: internal/i18n/i18n.go:47
+#: internal/i18n/i18n.go:48
 msgid "暂无评论"
 msgstr "No comments yet"
 
-#: internal/i18n/i18n.go:48
+#: internal/i18n/i18n.go:49
 msgid "上一页"
 msgstr "Previous"
 
-#: internal/i18n/i18n.go:49
+#: internal/i18n/i18n.go:50
 msgid "下一页"
 msgstr "Next"
 
-#: internal/i18n/i18n.go:50
+#: internal/i18n/i18n.go:51
 msgid ""
 "默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进"
 "入。"
@@ -969,11 +1044,11 @@ msgstr ""
 "Read-only by default. Only SELECT / EXPLAIN are allowed. This page is hidden "
 "from the admin navigation, so open it directly by URL."
 
-#: internal/i18n/i18n.go:51
+#: internal/i18n/i18n.go:52
 msgid "Result Set(JSON)"
 msgstr "Result set (JSON)"
 
-#: internal/i18n/i18n.go:52
+#: internal/i18n/i18n.go:53
 msgid ""
 "注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
 "保存。"
@@ -981,41 +1056,41 @@ msgstr ""
 "Note: if posts, pages, or comments with the same ID already exist, this "
 "import overwrites them via upsert."
 
-#: internal/i18n/i18n.go:53
+#: internal/i18n/i18n.go:54
 msgid "XML 文件"
 msgstr "XML file"
 
-#: internal/i18n/i18n.go:54
+#: internal/i18n/i18n.go:55
 msgid "导入归属用户"
 msgstr "Import owner"
 
-#: internal/i18n/i18n.go:55
+#: internal/i18n/i18n.go:56
 msgid "请选择用户"
 msgstr "Please select a user"
 
-#: internal/i18n/i18n.go:56
+#: internal/i18n/i18n.go:57
 msgid "开始导入"
 msgstr "Start import"
 
-#: internal/i18n/i18n.go:57
+#: internal/i18n/i18n.go:58
 msgid "当前没有可选用户，请先创建管理员账号。"
 msgstr "No users are available. Please create an admin account first."
 
-#: internal/i18n/i18n.go:58
+#: internal/i18n/i18n.go:59
 msgid "最近一次导入结果"
 msgstr "Latest import result"
 
-#: internal/i18n/i18n.go:59
+#: internal/i18n/i18n.go:60
 #, c-format
 msgid "文件：%s"
 msgstr "File: %s"
 
-#: internal/i18n/i18n.go:60
+#: internal/i18n/i18n.go:61
 #, c-format
 msgid "归属用户：%s"
 msgstr "Owner: %s"
 
-#: internal/i18n/i18n.go:61
+#: internal/i18n/i18n.go:62
 msgid ""
 "说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错"
 "误。"
@@ -1023,60 +1098,60 @@ msgstr ""
 "If only comments are selected without posts/pages, a re-importable XML "
 "cannot be generated, so the submission will fail."
 
-#: internal/i18n/i18n.go:62
+#: internal/i18n/i18n.go:63
 #, c-format
 msgid "编辑%s"
 msgstr "Edit %s"
 
-#: internal/i18n/i18n.go:63
+#: internal/i18n/i18n.go:64
 #, c-format
 msgid "新建%s"
 msgstr "New %s"
 
-#: internal/i18n/i18n.go:64
+#: internal/i18n/i18n.go:65
 msgid "Slug(页面链接 /slug)"
 msgstr "Slug (page path /slug)"
 
-#: internal/i18n/i18n.go:65
+#: internal/i18n/i18n.go:66
 msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
 msgstr ""
 "Menu order (0 = hide from top navigation, values greater than 0 control "
 "sorting)"
 
-#: internal/i18n/i18n.go:66
+#: internal/i18n/i18n.go:67
 msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
 msgstr "No categories yet. Create one first in Categories / Tags."
 
-#: internal/i18n/i18n.go:67
+#: internal/i18n/i18n.go:68
 msgid "标签(逗号分隔)"
 msgstr "Tags (comma-separated)"
 
-#: internal/i18n/i18n.go:68
+#: internal/i18n/i18n.go:69
 msgid "如:Go, 教程, 随笔"
 msgstr "e.g. Go, tutorial, notes"
 
-#: internal/i18n/i18n.go:69
+#: internal/i18n/i18n.go:70
 #, c-format
 msgid "%s 管理"
 msgstr "%s management"
 
-#: internal/i18n/i18n.go:70
+#: internal/i18n/i18n.go:71
 msgid "已发布"
 msgstr "Published"
 
-#: internal/i18n/i18n.go:71
+#: internal/i18n/i18n.go:72
 msgid "暂无内容"
 msgstr "No content yet"
 
-#: internal/i18n/i18n.go:72
+#: internal/i18n/i18n.go:73
 msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
 msgstr "Template mode: hot (local templates + manual reload)"
 
-#: internal/i18n/i18n.go:73
+#: internal/i18n/i18n.go:74
 msgid "当前模板模式：static（embed 内置模板）"
 msgstr "Template mode: static (embedded templates)"
 
-#: internal/i18n/i18n.go:74
+#: internal/i18n/i18n.go:75
 msgid ""
 "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生"
 "效。"
@@ -1084,11 +1159,11 @@ msgstr ""
 "Local `web/templates` directory detected. After editing templates, click the "
 "button below to reload them."
 
-#: internal/i18n/i18n.go:75
+#: internal/i18n/i18n.go:76
 msgid "重新解析模板"
 msgstr "Reload templates"
 
-#: internal/i18n/i18n.go:76
+#: internal/i18n/i18n.go:77
 msgid ""
 "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
 "并让当前进程立即切换到 hot 模式。"
@@ -1096,19 +1171,39 @@ msgstr ""
 "The app is currently using embedded templates. Click below to extract them "
 "to `web/templates` and switch the current process to hot mode immediately."
 
-#: internal/i18n/i18n.go:77
+#: internal/i18n/i18n.go:78
+#, fuzzy
+msgid ""
+"当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
+"并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖"
+"你的改动。"
+msgstr ""
+"The app is currently using embedded templates. Click below to extract them "
+"to `web/templates` and switch the current process to hot mode immediately."
+
+#: internal/i18n/i18n.go:79
 msgid "释放出模板文件夹"
 msgstr "Extract template directory"
 
-#: internal/i18n/i18n.go:78
+#: internal/i18n/i18n.go:80
+msgid ""
+"切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘"
+"上。"
+msgstr ""
+
+#: internal/i18n/i18n.go:81
+msgid "使用内嵌模板资源"
+msgstr ""
+
+#: internal/i18n/i18n.go:82
 msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
 msgstr "Asset mode: hot (local assets, changes apply immediately)"
 
-#: internal/i18n/i18n.go:79
+#: internal/i18n/i18n.go:83
 msgid "当前资源模式：static（embed 内置资源）"
 msgstr "Asset mode: static (embedded assets)"
 
-#: internal/i18n/i18n.go:80
+#: internal/i18n/i18n.go:84
 msgid ""
 "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重"
 "新加载。"
@@ -1116,7 +1211,7 @@ msgstr ""
 "Local `web/assets` directory detected. CSS / JS changes take effect "
 "immediately without manual reload."
 
-#: internal/i18n/i18n.go:81
+#: internal/i18n/i18n.go:85
 msgid ""
 "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
 "当前进程也会立即优先读取本地目录。"
@@ -1125,17 +1220,89 @@ msgstr ""
 "`web/assets`; the current process will immediately prefer the local "
 "directory."
 
-#: internal/i18n/i18n.go:82
+#: internal/i18n/i18n.go:86
+#, fuzzy
+msgid ""
+"当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
+"当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆"
+"盖你的改动。"
+msgstr ""
+"The app is currently using embedded assets. Click below to extract them to "
+"`web/assets`; the current process will immediately prefer the local "
+"directory."
+
+#: internal/i18n/i18n.go:87
 msgid "释放资源文件夹"
 msgstr "Extract asset directory"
 
-#: internal/i18n/i18n.go:83
+#: internal/i18n/i18n.go:88
+msgid ""
+"切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"
+msgstr ""
+
+#: internal/i18n/i18n.go:89
+msgid "使用内嵌资源文件"
+msgstr ""
+
+#: internal/i18n/i18n.go:90
+msgid "翻译资源设置"
+msgstr ""
+
+#: internal/i18n/i18n.go:91
+#, fuzzy
+msgid "当前翻译模式：hot（本地翻译目录）"
+msgstr "Asset mode: hot (local assets, changes apply immediately)"
+
+#: internal/i18n/i18n.go:92
+#, fuzzy
+msgid "当前翻译模式：static（embed 内置翻译资源）"
+msgstr "Asset mode: static (embedded assets)"
+
+#: internal/i18n/i18n.go:93
+msgid "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"
+msgstr ""
+
+#: internal/i18n/i18n.go:94
+msgid ""
+"切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"
+msgstr ""
+
+#: internal/i18n/i18n.go:95
+msgid "使用内嵌翻译资源"
+msgstr ""
+
+#: internal/i18n/i18n.go:96
+#, fuzzy
+msgid ""
+"当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/"
+"i18n`，并让当前进程立即优先读取本地目录。"
+msgstr ""
+"The app is currently using embedded assets. Click below to extract them to "
+"`web/assets`; the current process will immediately prefer the local "
+"directory."
+
+#: internal/i18n/i18n.go:97
+#, fuzzy
+msgid ""
+"当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/"
+"i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文"
+"件，不覆盖你的改动。"
+msgstr ""
+"The app is currently using embedded assets. Click below to extract them to "
+"`web/assets`; the current process will immediately prefer the local "
+"directory."
+
+#: internal/i18n/i18n.go:98
+msgid "释放翻译资源目录"
+msgstr ""
+
+#: internal/i18n/i18n.go:99
 msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
 msgstr ""
 "A custom session secret is configured. Updating it will sign out all logged-"
 "in users."
 
-#: internal/i18n/i18n.go:84
+#: internal/i18n/i18n.go:100
 msgid ""
 "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
 "登录。"
@@ -1143,115 +1310,121 @@ msgstr ""
 "The default or environment-provided session secret is still in use. Updating "
 "it will sign out all logged-in users."
 
-#: internal/i18n/i18n.go:85
+#: internal/i18n/i18n.go:101
 msgid "编辑分类"
 msgstr "Edit category"
 
-#: internal/i18n/i18n.go:86
+#: internal/i18n/i18n.go:102
 msgid "新建分类"
 msgstr "New category"
 
-#: internal/i18n/i18n.go:87
+#: internal/i18n/i18n.go:103
 msgid "保存分类"
 msgstr "Save category"
 
-#: internal/i18n/i18n.go:88
+#: internal/i18n/i18n.go:104
 msgid "创建分类"
 msgstr "Create category"
 
-#: internal/i18n/i18n.go:89
+#: internal/i18n/i18n.go:105
 msgid "编辑标签"
 msgstr "Edit tag"
 
-#: internal/i18n/i18n.go:90
+#: internal/i18n/i18n.go:106
 msgid "新建标签"
 msgstr "New tag"
 
-#: internal/i18n/i18n.go:91
+#: internal/i18n/i18n.go:107
 msgid "保存标签"
 msgstr "Save tag"
 
-#: internal/i18n/i18n.go:92
+#: internal/i18n/i18n.go:108
 msgid "创建标签"
 msgstr "Create tag"
 
-#: internal/i18n/i18n.go:93
+#: internal/i18n/i18n.go:109
 msgid "确认删除该分类吗？"
 msgstr "Delete this category?"
 
-#: internal/i18n/i18n.go:94
+#: internal/i18n/i18n.go:110
 msgid "暂无分类"
 msgstr "No categories yet"
 
-#: internal/i18n/i18n.go:95
+#: internal/i18n/i18n.go:111
 msgid "确认删除该标签吗？"
 msgstr "Delete this tag?"
 
-#: internal/i18n/i18n.go:96
+#: internal/i18n/i18n.go:112
 msgid "暂无标签"
 msgstr "No tags yet"
 
-#: internal/i18n/i18n.go:97
+#: internal/i18n/i18n.go:113
 msgid "确认删除该文件?"
 msgstr "Delete this file?"
 
-#: internal/i18n/i18n.go:98
+#: internal/i18n/i18n.go:114
 msgid "暂无文件"
 msgstr "No files yet"
 
-#: internal/i18n/i18n.go:99
+#: internal/i18n/i18n.go:115
 msgid "评论已关闭"
 msgstr "Comments closed"
 
-#: internal/i18n/i18n.go:100
+#: internal/i18n/i18n.go:116
 msgid "阅读全文 →"
 msgstr "Read more →"
 
-#: internal/i18n/i18n.go:101
+#: internal/i18n/i18n.go:117
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
 
-#: internal/i18n/i18n.go:102
+#: internal/i18n/i18n.go:118
 msgid "草稿预览"
 msgstr "Draft preview"
 
-#: internal/i18n/i18n.go:103
+#: internal/i18n/i18n.go:119
 msgid "回复"
 msgstr "Reply"
 
-#: internal/i18n/i18n.go:104
+#: internal/i18n/i18n.go:120
 #, c-format
 msgid "以 <strong>%s</strong> 的身份发表评论，"
 msgstr "Commenting as <strong>%s</strong>,"
 
-#: internal/i18n/i18n.go:105
+#: internal/i18n/i18n.go:121
 msgid "登出"
 msgstr "Sign out"
 
-#: internal/i18n/i18n.go:106
+#: internal/i18n/i18n.go:122
 msgid "昵称 *"
 msgstr "Name *"
 
-#: internal/i18n/i18n.go:107
+#: internal/i18n/i18n.go:123
 msgid "邮箱 *(不公开)"
 msgstr "Email * (not public)"
 
-#: internal/i18n/i18n.go:108
+#: internal/i18n/i18n.go:124
 msgid "网站(可选)"
 msgstr "Website (optional)"
 
-#: internal/i18n/i18n.go:109
+#: internal/i18n/i18n.go:125
 msgid "说点什么吧…… *"
 msgstr "Say something… *"
 
-#: internal/i18n/i18n.go:110
+#: internal/i18n/i18n.go:126
 msgid "有回复时邮件通知我"
 msgstr "Email me when someone replies"
 
-#: internal/i18n/i18n.go:111
+#: internal/i18n/i18n.go:127
 msgid "提交评论"
 msgstr "Submit comment"
 
-#: internal/i18n/i18n.go:112
+#: internal/i18n/i18n.go:128
 msgid "评论提交后需经审核才会显示。"
 msgstr "Comments will appear after moderation."
+
+#~ msgid "模板文件已释放到 web/templates，并已切换为 hot 模式。"
+#~ msgstr "Templates were extracted to web/templates and switched to hot mode."
+
+#~ msgid "资源文件已释放到 web/assets，并已切换为 hot 模式。"
+#~ msgstr "Assets were extracted to web/assets and switched to hot mode."

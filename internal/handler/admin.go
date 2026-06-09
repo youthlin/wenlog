@@ -284,19 +284,19 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 		data["Notice"] = tr.T("模板已重新解析。")
 	}
 	if c != nil && c.Query("message") == "templates-released" {
-		data["Notice"] = tr.T("模板文件已释放到 web/templates，并已切换为 hot 模式。")
+		data["Notice"] = tr.T("已切换到本地模板 hot 模式；若 `web/templates` 已存在，则会直接复用现有文件，不覆盖你的改动。")
 	}
 	if c != nil && c.Query("message") == "templates-embedded" {
 		data["Notice"] = tr.T("已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。")
 	}
 	if c != nil && c.Query("message") == "assets-released" {
-		data["Notice"] = tr.T("资源文件已释放到 web/assets，并已切换为 hot 模式。")
+		data["Notice"] = tr.T("已切换到本地资源 hot 模式；若 `web/assets` 已存在，则会直接复用现有文件，不覆盖你的改动。")
 	}
 	if c != nil && c.Query("message") == "assets-embedded" {
 		data["Notice"] = tr.T("已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。")
 	}
 	if c != nil && c.Query("message") == "i18n-released" {
-		data["Notice"] = tr.T("翻译资源已释放到 web/i18n，并已切换为 hot 模式。")
+		data["Notice"] = tr.T("已切换到本地翻译资源 hot 模式；若 `web/i18n` 已存在，则会直接复用现有文件，不覆盖你的改动。")
 	}
 	if c != nil && c.Query("message") == "i18n-embedded" {
 		data["Notice"] = tr.T("已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。")

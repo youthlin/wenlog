@@ -35,7 +35,7 @@
     {{else}}
     <form class="edit-form" method="post" action="/admin/settings/templates/release">
       {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式。"}}</p>
+      <p class="tip">{{.t.T "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
       <p><button type="submit" class="btn-secondary">{{.t.T "释放出模板文件夹"}}</button></p>
     </form>
     {{end}}
@@ -54,7 +54,7 @@
     {{else}}
     <form class="edit-form" method="post" action="/admin/settings/assets/release">
       {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录。"}}</p>
+      <p class="tip">{{.t.T "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
       <p><button type="submit" class="btn-secondary">{{.t.T "释放资源文件夹"}}</button></p>
     </form>
     {{end}}
@@ -73,7 +73,7 @@
     {{else}}
     <form class="edit-form" method="post" action="/admin/settings/i18n/release">
       {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录。"}}</p>
+      <p class="tip">{{.t.T "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
       <p><button type="submit" class="btn-secondary">{{.t.T "释放翻译资源目录"}}</button></p>
     </form>
     {{end}}
