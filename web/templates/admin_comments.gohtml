@@ -9,7 +9,7 @@
 
 <form method="post" action="/admin/comments/batch" id="batch-form" class="batch-bar">
   {{template "csrf_field" .}}
-  {{.t.T "批量:"}}
+  <span class="comments-batch-op-note">{{.t.T "批量:"}}</span>
   {{if ne .FilterStatus "approved"}}<button name="action" value="approve">{{.t.T "批准"}}</button>{{end}}
   {{if ne .FilterStatus "pending"}}<button name="action" value="pending">{{.t.T "待审"}}</button>{{end}}
   {{if ne .FilterStatus "spam"}}<button name="action" value="spam">{{.t.T "垃圾"}}</button>{{end}}

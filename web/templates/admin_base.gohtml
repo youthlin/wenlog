@@ -13,7 +13,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.Title}} · {{.SiteName}} {{.t.T "后台"}}</title>
+<title>{{.Title}} · {{.SiteName}}</title>
 {{if .CSRFToken}}<meta name="csrf-token" content="{{.CSRFToken}}">{{end}}
 <link rel="stylesheet" href="/assets/admin.css">
 <script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
@@ -22,7 +22,7 @@
 <header class="admin-header">
   <div class="admin-bar">
     <div class="admin-bar-head">
-      <a class="brand" href="/admin/">{{.SiteName}} {{.t.T "后台"}}</a>
+      <a class="brand" href="/admin/">{{.t.T "%s 后台" .SiteName}}</a>
       <div class="admin-header-actions">
         <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
         <button type="button" class="theme-toggle" data-theme-toggle aria-label="{{.t.T "切换主题"}}">🌓</button>
