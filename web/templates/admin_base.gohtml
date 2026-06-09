@@ -8,8 +8,7 @@
       data-preview-label="{{.t.T "预览"}}"
       data-continue-editing-label="{{.t.T "继续编辑"}}"
       data-nav-open-label="{{.t.T "打开菜单"}}"
-      data-nav-close-label="{{.t.T "收起菜单"}}"
-      data-theme-toggle-label="{{.t.T "切换主题"}}">
+      data-nav-close-label="{{.t.T "收起菜单"}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -26,7 +25,7 @@
       <div class="admin-header-actions">
         <label class="theme-select-wrap">
           <span class="sr-only">{{.t.T "切换主题"}}</span>
-          <select class="theme-select" data-theme-select>
+          <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
             <option value="dark">{{.t.T "暗黑"}}</option>
             <option value="light">{{.t.T "明亮"}}</option>
             <option value="red-plum">{{.t.T "红梅"}}</option>

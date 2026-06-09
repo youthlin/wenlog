@@ -4,8 +4,7 @@
       data-comment-fail="{{.t.T "提交失败,请稍后重试。"}}"
       data-comment-network="{{.t.T "网络错误,请稍后重试。"}}"
       data-nav-open-label="{{.t.T "打开菜单"}}"
-      data-nav-close-label="{{.t.T "收起菜单"}}"
-      data-theme-toggle-label="{{.t.T "切换主题"}}">
+      data-nav-close-label="{{.t.T "收起菜单"}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,7 +31,7 @@
       </label>
       <label class="theme-select-wrap">
         <span class="sr-only">{{.t.T "切换主题"}}</span>
-        <select class="theme-select" data-theme-select>
+        <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
           <option value="dark">{{.t.T "暗黑"}}</option>
           <option value="light">{{.t.T "明亮"}}</option>
           <option value="red-plum">{{.t.T "红梅"}}</option>

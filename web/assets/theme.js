@@ -50,13 +50,9 @@
   var navPanel = document.querySelector("[data-nav-panel]");
   var openLabel = document.documentElement.dataset.navOpenLabel || "Open menu";
   var closeLabel = document.documentElement.dataset.navCloseLabel || "Collapse menu";
-  var themeToggleLabel = document.documentElement.dataset.themeToggleLabel || "Toggle theme";
   function isMobileNav() {
     return !!(navBtn && window.getComputedStyle(navBtn).display !== "none");
   }
-  document.querySelectorAll("[data-theme-select]").forEach(function (select) {
-    select.setAttribute("aria-label", themeToggleLabel);
-  });
   if (navBtn && navPanel) {
     function syncNavButton(open) {
       navBtn.setAttribute("aria-expanded", open ? "true" : "false");
