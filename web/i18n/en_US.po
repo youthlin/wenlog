@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 12:49+0800\n"
+"POT-Creation-Date: 2026-06-09 13:15+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -196,14 +196,6 @@ msgstr "Upload a WordPress XML file and import with overwrite"
 msgid "导入"
 msgstr "Import"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:4
-msgid ""
-"默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进"
-"入。"
-msgstr ""
-"Read-only by default. Only SELECT / EXPLAIN are allowed. This page is hidden "
-"from the admin navigation, so open it directly by URL."
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:9
 msgid "执行"
 msgstr "Run"
@@ -221,14 +213,6 @@ msgid "上传 WXR 导出 XML，并选择导入后文章/页面归属到哪个后
 msgstr ""
 "Upload a WXR export XML file and choose which admin user imported posts/"
 "pages should belong to."
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:12
-msgid ""
-"注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
-"保存。"
-msgstr ""
-"Note: if posts, pages, or comments with the same ID already exist, this "
-"import overwrites them via upsert."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:35
 msgid "导入行为"
@@ -266,14 +250,6 @@ msgstr "Export XML"
 msgid "导出后可直接在本页重新导入，用于迁移或备份。"
 msgstr ""
 "The exported XML can be re-imported on this page for migration or backup."
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:65
-msgid ""
-"说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错"
-"误。"
-msgstr ""
-"If only comments are selected without posts/pages, a re-importable XML "
-"cannot be generated, so the submission will fail."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:69
 msgid "选择要导出的内容"
@@ -899,29 +875,29 @@ msgstr "Search: %s"
 msgid "搜索「%s」"
 msgstr "Search “%s”"
 
-#: internal/handler/public.go:328 internal/handler/public.go:329
+#: internal/handler/public.go:330 internal/handler/public.go:331
 #, c-format
 msgid "分类:%s"
 msgstr "Category: %s"
 
-#: internal/handler/public.go:346 internal/handler/public.go:347
+#: internal/handler/public.go:348 internal/handler/public.go:349
 #, c-format
 msgid "标签:%s"
 msgstr "Tag: %s"
 
-#: internal/handler/public.go:381
+#: internal/handler/public.go:383
 msgid "页面不存在"
 msgstr "Page not found"
 
-#: internal/handler/public.go:383
+#: internal/handler/public.go:385
 msgid "你访问的页面不存在或已被删除。"
 msgstr "The page you requested does not exist or has been removed."
 
-#: internal/handler/public.go:390
+#: internal/handler/public.go:392
 msgid "出错了"
 msgstr "Something went wrong"
 
-#: internal/handler/public.go:392
+#: internal/handler/public.go:394
 msgid "服务器内部错误,请稍后重试。"
 msgstr "Internal server error. Please try again later."
 
@@ -974,238 +950,335 @@ msgstr "Select tag…"
 msgid "未分类"
 msgstr "Uncategorized"
 
-#~ msgid "%s 管理"
-#~ msgstr "%s management"
+#: internal/i18n/i18n.go:43
+msgid "批准"
+msgstr "Approve"
 
-#~ msgid "Result Set(JSON)"
-#~ msgstr "Result set (JSON)"
+#: internal/i18n/i18n.go:44
+msgid "编辑"
+msgstr "Edit"
+
+#: internal/i18n/i18n.go:45
+msgid "驳回"
+msgstr "Unapprove"
+
+#: internal/i18n/i18n.go:46
+msgid "确认删除?"
+msgstr "Delete this item?"
+
+#: internal/i18n/i18n.go:47
+msgid "暂无评论"
+msgstr "No comments yet"
+
+#: internal/i18n/i18n.go:48
+msgid "上一页"
+msgstr "Previous"
+
+#: internal/i18n/i18n.go:49
+msgid "下一页"
+msgstr "Next"
+
+#: internal/i18n/i18n.go:50
+msgid ""
+"默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进"
+"入。"
+msgstr ""
+"Read-only by default. Only SELECT / EXPLAIN are allowed. This page is hidden "
+"from the admin navigation, so open it directly by URL."
+
+#: internal/i18n/i18n.go:51
+msgid "Result Set(JSON)"
+msgstr "Result set (JSON)"
+
+#: internal/i18n/i18n.go:52
+msgid ""
+"注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
+"保存。"
+msgstr ""
+"Note: if posts, pages, or comments with the same ID already exist, this "
+"import overwrites them via upsert."
+
+#: internal/i18n/i18n.go:53
+msgid "XML 文件"
+msgstr "XML file"
+
+#: internal/i18n/i18n.go:54
+msgid "导入归属用户"
+msgstr "Import owner"
+
+#: internal/i18n/i18n.go:55
+msgid "请选择用户"
+msgstr "Please select a user"
+
+#: internal/i18n/i18n.go:56
+msgid "开始导入"
+msgstr "Start import"
+
+#: internal/i18n/i18n.go:57
+msgid "当前没有可选用户，请先创建管理员账号。"
+msgstr "No users are available. Please create an admin account first."
+
+#: internal/i18n/i18n.go:58
+msgid "最近一次导入结果"
+msgstr "Latest import result"
+
+#: internal/i18n/i18n.go:59
+#, c-format
+msgid "文件：%s"
+msgstr "File: %s"
+
+#: internal/i18n/i18n.go:60
+#, c-format
+msgid "归属用户：%s"
+msgstr "Owner: %s"
+
+#: internal/i18n/i18n.go:61
+msgid ""
+"说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错"
+"误。"
+msgstr ""
+"If only comments are selected without posts/pages, a re-importable XML "
+"cannot be generated, so the submission will fail."
+
+#: internal/i18n/i18n.go:62
+msgid "暂无友链。"
+msgstr "No links yet."
+
+#: internal/i18n/i18n.go:63
+#, c-format
+msgid "编辑%s"
+msgstr "Edit %s"
+
+#: internal/i18n/i18n.go:64
+#, c-format
+msgid "新建%s"
+msgstr "New %s"
+
+#: internal/i18n/i18n.go:65
+msgid "Slug(页面链接 /slug)"
+msgstr "Slug (page path /slug)"
+
+#: internal/i18n/i18n.go:66
+msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
+msgstr ""
+"Menu order (0 = hide from top navigation, values greater than 0 control "
+"sorting)"
+
+#: internal/i18n/i18n.go:67
+msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
+msgstr "No categories yet. Create one first in Categories / Tags."
+
+#: internal/i18n/i18n.go:68
+msgid "标签(逗号分隔)"
+msgstr "Tags (comma-separated)"
+
+#: internal/i18n/i18n.go:69
+msgid "如:Go, 教程, 随笔"
+msgstr "e.g. Go, tutorial, notes"
+
+#: internal/i18n/i18n.go:70
+#, c-format
+msgid "%s 管理"
+msgstr "%s management"
+
+#: internal/i18n/i18n.go:71
+msgid "已发布"
+msgstr "Published"
+
+#: internal/i18n/i18n.go:72
+msgid "暂无内容"
+msgstr "No content yet"
+
+#: internal/i18n/i18n.go:73
+msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
+msgstr "Template mode: hot (local templates + manual reload)"
+
+#: internal/i18n/i18n.go:74
+msgid "当前模板模式：static（embed 内置模板）"
+msgstr "Template mode: static (embedded templates)"
+
+#: internal/i18n/i18n.go:75
+msgid ""
+"检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生"
+"效。"
+msgstr ""
+"Local `web/templates` directory detected. After editing templates, click the "
+"button below to reload them."
+
+#: internal/i18n/i18n.go:76
+msgid "重新解析模板"
+msgstr "Reload templates"
+
+#: internal/i18n/i18n.go:77
+msgid ""
+"当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
+"并让当前进程立即切换到 hot 模式。"
+msgstr ""
+"The app is currently using embedded templates. Click below to extract them "
+"to `web/templates` and switch the current process to hot mode immediately."
+
+#: internal/i18n/i18n.go:78
+msgid "释放出模板文件夹"
+msgstr "Extract template directory"
+
+#: internal/i18n/i18n.go:79
+msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
+msgstr "Asset mode: hot (local assets, changes apply immediately)"
+
+#: internal/i18n/i18n.go:80
+msgid "当前资源模式：static（embed 内置资源）"
+msgstr "Asset mode: static (embedded assets)"
+
+#: internal/i18n/i18n.go:81
+msgid ""
+"检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重"
+"新加载。"
+msgstr ""
+"Local `web/assets` directory detected. CSS / JS changes take effect "
+"immediately without manual reload."
+
+#: internal/i18n/i18n.go:82
+msgid ""
+"当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
+"当前进程也会立即优先读取本地目录。"
+msgstr ""
+"The app is currently using embedded assets. Click below to extract them to "
+"`web/assets`; the current process will immediately prefer the local "
+"directory."
+
+#: internal/i18n/i18n.go:83
+msgid "释放资源文件夹"
+msgstr "Extract asset directory"
+
+#: internal/i18n/i18n.go:84
+msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
+msgstr ""
+"A custom session secret is configured. Updating it will sign out all logged-"
+"in users."
+
+#: internal/i18n/i18n.go:85
+msgid ""
+"当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
+"登录。"
+msgstr ""
+"The default or environment-provided session secret is still in use. Updating "
+"it will sign out all logged-in users."
+
+#: internal/i18n/i18n.go:86
+msgid "编辑分类"
+msgstr "Edit category"
+
+#: internal/i18n/i18n.go:87
+msgid "新建分类"
+msgstr "New category"
+
+#: internal/i18n/i18n.go:88
+msgid "保存分类"
+msgstr "Save category"
+
+#: internal/i18n/i18n.go:89
+msgid "创建分类"
+msgstr "Create category"
+
+#: internal/i18n/i18n.go:90
+msgid "编辑标签"
+msgstr "Edit tag"
+
+#: internal/i18n/i18n.go:91
+msgid "新建标签"
+msgstr "New tag"
+
+#: internal/i18n/i18n.go:92
+msgid "保存标签"
+msgstr "Save tag"
+
+#: internal/i18n/i18n.go:93
+msgid "创建标签"
+msgstr "Create tag"
+
+#: internal/i18n/i18n.go:94
+msgid "确认删除该分类吗？"
+msgstr "Delete this category?"
+
+#: internal/i18n/i18n.go:95
+msgid "暂无分类"
+msgstr "No categories yet"
+
+#: internal/i18n/i18n.go:96
+msgid "确认删除该标签吗？"
+msgstr "Delete this tag?"
+
+#: internal/i18n/i18n.go:97
+msgid "暂无标签"
+msgstr "No tags yet"
+
+#: internal/i18n/i18n.go:98
+msgid "确认删除该文件?"
+msgstr "Delete this file?"
+
+#: internal/i18n/i18n.go:99
+msgid "暂无文件"
+msgstr "No files yet"
+
+#: internal/i18n/i18n.go:100
+msgid "评论已关闭"
+msgstr "Comments closed"
+
+#: internal/i18n/i18n.go:101
+msgid "阅读全文 →"
+msgstr "Read more →"
+
+#: internal/i18n/i18n.go:102
+msgid "没有找到匹配的文章。"
+msgstr "No matching posts found."
+
+#: internal/i18n/i18n.go:103
+msgid "草稿预览"
+msgstr "Draft preview"
+
+#: internal/i18n/i18n.go:104
+msgid "回复"
+msgstr "Reply"
+
+#: internal/i18n/i18n.go:105
+#, c-format
+msgid "以 <strong>%s</strong> 的身份发表评论，"
+msgstr "Commenting as <strong>%s</strong>,"
+
+#: internal/i18n/i18n.go:106
+msgid "登出"
+msgstr "Sign out"
+
+#: internal/i18n/i18n.go:107
+msgid "昵称 *"
+msgstr "Name *"
+
+#: internal/i18n/i18n.go:108
+msgid "邮箱 *(不公开)"
+msgstr "Email * (not public)"
+
+#: internal/i18n/i18n.go:109
+msgid "网站(可选)"
+msgstr "Website (optional)"
+
+#: internal/i18n/i18n.go:110
+msgid "说点什么吧…… *"
+msgstr "Say something… *"
+
+#: internal/i18n/i18n.go:111
+msgid "有回复时邮件通知我"
+msgstr "Email me when someone replies"
+
+#: internal/i18n/i18n.go:112
+msgid "提交评论"
+msgstr "Submit comment"
+
+#: internal/i18n/i18n.go:113
+msgid "评论提交后需经审核才会显示。"
+msgstr "Comments will appear after moderation."
 
 #~ msgid "Slug"
 #~ msgstr "Slug"
 
-#~ msgid "Slug(页面链接 /slug)"
-#~ msgstr "Slug (page path /slug)"
-
-#~ msgid "XML 文件"
-#~ msgstr "XML file"
-
 #~ msgid "← 返回到 %s"
 #~ msgstr "← Back to %s"
-
-#~ msgid "上一页"
-#~ msgstr "Previous"
-
-#~ msgid "下一页"
-#~ msgstr "Next"
-
-#~ msgid "以 <strong>%s</strong> 的身份发表评论，"
-#~ msgstr "Commenting as <strong>%s</strong>,"
-
-#~ msgid "保存分类"
-#~ msgstr "Save category"
-
-#~ msgid "保存标签"
-#~ msgstr "Save tag"
-
-#~ msgid "创建分类"
-#~ msgstr "Create category"
-
-#~ msgid "创建标签"
-#~ msgstr "Create tag"
-
-#~ msgid "回复"
-#~ msgstr "Reply"
-
-#~ msgid "如:Go, 教程, 随笔"
-#~ msgstr "e.g. Go, tutorial, notes"
-
-#~ msgid "导入归属用户"
-#~ msgstr "Import owner"
-
-#~ msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
-#~ msgstr ""
-#~ "Menu order (0 = hide from top navigation, values greater than 0 control "
-#~ "sorting)"
-
-#~ msgid "已发布"
-#~ msgstr "Published"
-
-#~ msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
-#~ msgstr ""
-#~ "A custom session secret is configured. Updating it will sign out all "
-#~ "logged-in users."
-
-#~ msgid "开始导入"
-#~ msgstr "Start import"
-
-#~ msgid "归属用户：%s"
-#~ msgstr "Owner: %s"
-
-#~ msgid ""
-#~ "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要"
-#~ "重新登录。"
-#~ msgstr ""
-#~ "The default or environment-provided session secret is still in use. "
-#~ "Updating it will sign out all logged-in users."
-
-#~ msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
-#~ msgstr "Template mode: hot (local templates + manual reload)"
-
-#~ msgid "当前模板模式：static（embed 内置模板）"
-#~ msgstr "Template mode: static (embedded templates)"
-
-#~ msgid ""
-#~ "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/"
-#~ "templates`，并让当前进程立即切换到 hot 模式。"
-#~ msgstr ""
-#~ "The app is currently using embedded templates. Click below to extract "
-#~ "them to `web/templates` and switch the current process to hot mode "
-#~ "immediately."
-
-#~ msgid ""
-#~ "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/"
-#~ "assets`，当前进程也会立即优先读取本地目录。"
-#~ msgstr ""
-#~ "The app is currently using embedded assets. Click below to extract them "
-#~ "to `web/assets`; the current process will immediately prefer the local "
-#~ "directory."
-
-#~ msgid "当前没有可选用户，请先创建管理员账号。"
-#~ msgstr "No users are available. Please create an admin account first."
-
-#~ msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
-#~ msgstr "Asset mode: hot (local assets, changes apply immediately)"
-
-#~ msgid "当前资源模式：static（embed 内置资源）"
-#~ msgstr "Asset mode: static (embedded assets)"
-
-#~ msgid "批准"
-#~ msgstr "Approve"
-
-#~ msgid "提交评论"
-#~ msgstr "Submit comment"
-
-#~ msgid "文件：%s"
-#~ msgstr "File: %s"
-
-#~ msgid "新建%s"
-#~ msgstr "New %s"
-
-#~ msgid "新建分类"
-#~ msgstr "New category"
-
-#~ msgid "新建标签"
-#~ msgstr "New tag"
-
-#~ msgid "昵称 *"
-#~ msgstr "Name *"
-
-#~ msgid "暂无内容"
-#~ msgstr "No content yet"
-
-#~ msgid "暂无分类"
-#~ msgstr "No categories yet"
-
-#~ msgid "暂无友链。"
-#~ msgstr "No links yet."
-
-#~ msgid "暂无文件"
-#~ msgstr "No files yet"
-
-#~ msgid "暂无标签"
-#~ msgstr "No tags yet"
-
-#~ msgid "暂无评论"
-#~ msgstr "No comments yet"
-
-#~ msgid "最近一次导入结果"
-#~ msgstr "Latest import result"
-
-#~ msgid "有回复时邮件通知我"
-#~ msgstr "Email me when someone replies"
-
-#~ msgid "标签(逗号分隔)"
-#~ msgstr "Tags (comma-separated)"
-
-#~ msgid ""
-#~ "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手"
-#~ "动重新加载。"
-#~ msgstr ""
-#~ "Local `web/assets` directory detected. CSS / JS changes take effect "
-#~ "immediately without manual reload."
-
-#~ msgid ""
-#~ "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析"
-#~ "并生效。"
-#~ msgstr ""
-#~ "Local `web/templates` directory detected. After editing templates, click "
-#~ "the button below to reload them."
-
-#~ msgid "没有找到匹配的文章。"
-#~ msgstr "No matching posts found."
-
-#~ msgid "登出"
-#~ msgstr "Sign out"
-
-#~ msgid "确认删除?"
-#~ msgstr "Delete this item?"
-
-#~ msgid "确认删除该分类吗？"
-#~ msgstr "Delete this category?"
-
-#~ msgid "确认删除该文件?"
-#~ msgstr "Delete this file?"
-
-#~ msgid "确认删除该标签吗？"
-#~ msgstr "Delete this tag?"
-
-#~ msgid "编辑"
-#~ msgstr "Edit"
-
-#~ msgid "编辑%s"
-#~ msgstr "Edit %s"
-
-#~ msgid "编辑分类"
-#~ msgstr "Edit category"
-
-#~ msgid "编辑标签"
-#~ msgstr "Edit tag"
-
-#~ msgid "网站(可选)"
-#~ msgstr "Website (optional)"
-
-#~ msgid "草稿预览"
-#~ msgstr "Draft preview"
-
-#~ msgid "评论已关闭"
-#~ msgstr "Comments closed"
-
-#~ msgid "评论提交后需经审核才会显示。"
-#~ msgstr "Comments will appear after moderation."
-
-#~ msgid "说点什么吧…… *"
-#~ msgstr "Say something… *"
-
-#~ msgid "请选择用户"
-#~ msgstr "Please select a user"
-
-#~ msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
-#~ msgstr "No categories yet. Create one first in Categories / Tags."
-
-#~ msgid "邮箱 *(不公开)"
-#~ msgstr "Email * (not public)"
-
-#~ msgid "释放出模板文件夹"
-#~ msgstr "Extract template directory"
-
-#~ msgid "释放资源文件夹"
-#~ msgstr "Extract asset directory"
-
-#~ msgid "重新解析模板"
-#~ msgstr "Reload templates"
-
-#~ msgid "阅读全文 →"
-#~ msgstr "Read more →"
-
-#~ msgid "驳回"
-#~ msgstr "Unapprove"

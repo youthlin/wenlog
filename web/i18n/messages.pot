@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 12:49+0800\n"
+"POT-Creation-Date: 2026-06-09 13:15+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -206,12 +206,6 @@ msgstr ""
 msgid "导入"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:4
-msgid ""
-"默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进"
-"入。"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:9
 msgid "执行"
 msgstr ""
@@ -226,12 +220,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:11
 msgid "上传 WXR 导出 XML，并选择导入后文章/页面归属到哪个后台用户。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:12
-msgid ""
-"注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
-"保存。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:35
@@ -264,12 +252,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:64
 msgid "导出后可直接在本页重新导入，用于迁移或备份。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:65
-msgid ""
-"说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错"
-"误。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:69
@@ -888,29 +870,29 @@ msgstr ""
 msgid "搜索「%s」"
 msgstr ""
 
-#: internal/handler/public.go:328 internal/handler/public.go:329
+#: internal/handler/public.go:330 internal/handler/public.go:331
 #, c-format
 msgid "分类:%s"
 msgstr ""
 
-#: internal/handler/public.go:346 internal/handler/public.go:347
+#: internal/handler/public.go:348 internal/handler/public.go:349
 #, c-format
 msgid "标签:%s"
 msgstr ""
 
-#: internal/handler/public.go:381
+#: internal/handler/public.go:383
 msgid "页面不存在"
 msgstr ""
 
-#: internal/handler/public.go:383
+#: internal/handler/public.go:385
 msgid "你访问的页面不存在或已被删除。"
 msgstr ""
 
-#: internal/handler/public.go:390
+#: internal/handler/public.go:392
 msgid "出错了"
 msgstr ""
 
-#: internal/handler/public.go:392
+#: internal/handler/public.go:394
 msgid "服务器内部错误,请稍后重试。"
 msgstr ""
 
@@ -961,4 +943,310 @@ msgstr ""
 
 #: internal/i18n/i18n.go:37
 msgid "未分类"
+msgstr ""
+
+#: internal/i18n/i18n.go:43
+msgid "批准"
+msgstr ""
+
+#: internal/i18n/i18n.go:44
+msgid "编辑"
+msgstr ""
+
+#: internal/i18n/i18n.go:45
+msgid "驳回"
+msgstr ""
+
+#: internal/i18n/i18n.go:46
+msgid "确认删除?"
+msgstr ""
+
+#: internal/i18n/i18n.go:47
+msgid "暂无评论"
+msgstr ""
+
+#: internal/i18n/i18n.go:48
+msgid "上一页"
+msgstr ""
+
+#: internal/i18n/i18n.go:49
+msgid "下一页"
+msgstr ""
+
+#: internal/i18n/i18n.go:50
+msgid ""
+"默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进"
+"入。"
+msgstr ""
+
+#: internal/i18n/i18n.go:51
+msgid "Result Set(JSON)"
+msgstr ""
+
+#: internal/i18n/i18n.go:52
+msgid ""
+"注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
+"保存。"
+msgstr ""
+
+#: internal/i18n/i18n.go:53
+msgid "XML 文件"
+msgstr ""
+
+#: internal/i18n/i18n.go:54
+msgid "导入归属用户"
+msgstr ""
+
+#: internal/i18n/i18n.go:55
+msgid "请选择用户"
+msgstr ""
+
+#: internal/i18n/i18n.go:56
+msgid "开始导入"
+msgstr ""
+
+#: internal/i18n/i18n.go:57
+msgid "当前没有可选用户，请先创建管理员账号。"
+msgstr ""
+
+#: internal/i18n/i18n.go:58
+msgid "最近一次导入结果"
+msgstr ""
+
+#: internal/i18n/i18n.go:59
+#, c-format
+msgid "文件：%s"
+msgstr ""
+
+#: internal/i18n/i18n.go:60
+#, c-format
+msgid "归属用户：%s"
+msgstr ""
+
+#: internal/i18n/i18n.go:61
+msgid ""
+"说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错"
+"误。"
+msgstr ""
+
+#: internal/i18n/i18n.go:62
+msgid "暂无友链。"
+msgstr ""
+
+#: internal/i18n/i18n.go:63
+#, c-format
+msgid "编辑%s"
+msgstr ""
+
+#: internal/i18n/i18n.go:64
+#, c-format
+msgid "新建%s"
+msgstr ""
+
+#: internal/i18n/i18n.go:65
+msgid "Slug(页面链接 /slug)"
+msgstr ""
+
+#: internal/i18n/i18n.go:66
+msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
+msgstr ""
+
+#: internal/i18n/i18n.go:67
+msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
+msgstr ""
+
+#: internal/i18n/i18n.go:68
+msgid "标签(逗号分隔)"
+msgstr ""
+
+#: internal/i18n/i18n.go:69
+msgid "如:Go, 教程, 随笔"
+msgstr ""
+
+#: internal/i18n/i18n.go:70
+#, c-format
+msgid "%s 管理"
+msgstr ""
+
+#: internal/i18n/i18n.go:71
+msgid "已发布"
+msgstr ""
+
+#: internal/i18n/i18n.go:72
+msgid "暂无内容"
+msgstr ""
+
+#: internal/i18n/i18n.go:73
+msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
+msgstr ""
+
+#: internal/i18n/i18n.go:74
+msgid "当前模板模式：static（embed 内置模板）"
+msgstr ""
+
+#: internal/i18n/i18n.go:75
+msgid ""
+"检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生"
+"效。"
+msgstr ""
+
+#: internal/i18n/i18n.go:76
+msgid "重新解析模板"
+msgstr ""
+
+#: internal/i18n/i18n.go:77
+msgid ""
+"当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
+"并让当前进程立即切换到 hot 模式。"
+msgstr ""
+
+#: internal/i18n/i18n.go:78
+msgid "释放出模板文件夹"
+msgstr ""
+
+#: internal/i18n/i18n.go:79
+msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
+msgstr ""
+
+#: internal/i18n/i18n.go:80
+msgid "当前资源模式：static（embed 内置资源）"
+msgstr ""
+
+#: internal/i18n/i18n.go:81
+msgid ""
+"检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重"
+"新加载。"
+msgstr ""
+
+#: internal/i18n/i18n.go:82
+msgid ""
+"当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
+"当前进程也会立即优先读取本地目录。"
+msgstr ""
+
+#: internal/i18n/i18n.go:83
+msgid "释放资源文件夹"
+msgstr ""
+
+#: internal/i18n/i18n.go:84
+msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
+msgstr ""
+
+#: internal/i18n/i18n.go:85
+msgid ""
+"当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
+"登录。"
+msgstr ""
+
+#: internal/i18n/i18n.go:86
+msgid "编辑分类"
+msgstr ""
+
+#: internal/i18n/i18n.go:87
+msgid "新建分类"
+msgstr ""
+
+#: internal/i18n/i18n.go:88
+msgid "保存分类"
+msgstr ""
+
+#: internal/i18n/i18n.go:89
+msgid "创建分类"
+msgstr ""
+
+#: internal/i18n/i18n.go:90
+msgid "编辑标签"
+msgstr ""
+
+#: internal/i18n/i18n.go:91
+msgid "新建标签"
+msgstr ""
+
+#: internal/i18n/i18n.go:92
+msgid "保存标签"
+msgstr ""
+
+#: internal/i18n/i18n.go:93
+msgid "创建标签"
+msgstr ""
+
+#: internal/i18n/i18n.go:94
+msgid "确认删除该分类吗？"
+msgstr ""
+
+#: internal/i18n/i18n.go:95
+msgid "暂无分类"
+msgstr ""
+
+#: internal/i18n/i18n.go:96
+msgid "确认删除该标签吗？"
+msgstr ""
+
+#: internal/i18n/i18n.go:97
+msgid "暂无标签"
+msgstr ""
+
+#: internal/i18n/i18n.go:98
+msgid "确认删除该文件?"
+msgstr ""
+
+#: internal/i18n/i18n.go:99
+msgid "暂无文件"
+msgstr ""
+
+#: internal/i18n/i18n.go:100
+msgid "评论已关闭"
+msgstr ""
+
+#: internal/i18n/i18n.go:101
+msgid "阅读全文 →"
+msgstr ""
+
+#: internal/i18n/i18n.go:102
+msgid "没有找到匹配的文章。"
+msgstr ""
+
+#: internal/i18n/i18n.go:103
+msgid "草稿预览"
+msgstr ""
+
+#: internal/i18n/i18n.go:104
+msgid "回复"
+msgstr ""
+
+#: internal/i18n/i18n.go:105
+#, c-format
+msgid "以 <strong>%s</strong> 的身份发表评论，"
+msgstr ""
+
+#: internal/i18n/i18n.go:106
+msgid "登出"
+msgstr ""
+
+#: internal/i18n/i18n.go:107
+msgid "昵称 *"
+msgstr ""
+
+#: internal/i18n/i18n.go:108
+msgid "邮箱 *(不公开)"
+msgstr ""
+
+#: internal/i18n/i18n.go:109
+msgid "网站(可选)"
+msgstr ""
+
+#: internal/i18n/i18n.go:110
+msgid "说点什么吧…… *"
+msgstr ""
+
+#: internal/i18n/i18n.go:111
+msgid "有回复时邮件通知我"
+msgstr ""
+
+#: internal/i18n/i18n.go:112
+msgid "提交评论"
+msgstr ""
+
+#: internal/i18n/i18n.go:113
+msgid "评论提交后需经审核才会显示。"
 msgstr ""
