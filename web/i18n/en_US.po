@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-10 18:00+0800\n"
+"POT-Creation-Date: 2026-06-10 19:52+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -553,6 +553,96 @@ msgstr "views"
 msgid "%d 条评论"
 msgstr "%d comments"
 
+#: cmd/server/bootstrap.go:23
+msgid "欢迎来到我的博客"
+msgstr "Welcome to my blog"
+
+#: cmd/server/bootstrap.go:24
+msgid "关于"
+msgstr "About"
+
+#: cmd/server/bootstrap.go:25
+msgid "欢迎使用这个博客程序，你可以在后台管理评论，快去看看吧。"
+msgstr ""
+"Welcome to this blog app. You can manage comments in the admin panel—go take "
+"a look."
+
+#: cmd/server/bootstrap.go:26
+msgid ""
+"欢迎使用这个独立博客程序。它专注于：\n"
+"\n"
+"- **简单部署**：单二进制 + SQLite，适合个人博客快速上线。\n"
+"- **内容优先**：支持 Markdown 写作，也兼容逐步整理已有内容。\n"
+"- **可持续维护**：后台可管理文章、页面、评论、资源与模板。\n"
+"\n"
+"你可以先到后台看看设置、写一篇文章、再把这里改成真正属于你自己的首页开场白。"
+"祝写作愉快。"
+msgstr ""
+"Welcome to this independent blog app. It focuses on:\n"
+"\n"
+"- **Simple deployment**: a single binary plus SQLite, great for getting a "
+"personal blog online quickly.\n"
+"- **Content first**: write in Markdown while keeping it easy to gradually "
+"organize existing content.\n"
+"- **Sustainable maintenance**: manage posts, pages, comments, assets, and "
+"templates from the admin panel.\n"
+"\n"
+"You can start by exploring the admin settings, writing a post, and then "
+"replacing this with an introduction that truly feels like your own homepage. "
+"Happy writing."
+
+#: cmd/server/bootstrap.go:27
+msgid ""
+"你好，欢迎来到这里。\n"
+"\n"
+"我是这个博客的作者，喜欢记录技术、写作、日常想法，也会把一些正在尝试和思考的"
+"东西慢慢整理出来。这里不会只放“结论”，也会保留过程、踩坑和一些还没完全想清楚"
+"的问题。\n"
+"\n"
+"如果你恰好读到某篇文章，希望它能给你一点启发；如果你也在做相似的事情，欢迎交"
+"流。"
+msgstr ""
+"Hi, welcome.\n"
+"\n"
+"I'm the author of this blog. I like writing about technology, everyday "
+"thoughts, and things I'm currently exploring or thinking through. This space "
+"won't only keep the final conclusions—it will also keep the process, the "
+"pitfalls, and some questions I haven't fully figured out yet.\n"
+"\n"
+"If you happen to read a post here, I hope it offers you a bit of "
+"inspiration. And if you're working on similar things, feel free to reach out."
+
+#: cmd/server/bootstrap.go:28
+#, c-format
+msgid "已生成随机密码: %s\n"
+msgstr "Generated random password: %s\n"
+
+#: cmd/server/bootstrap.go:29
+msgid "密码处理失败, err=%v\n"
+msgstr "Password processing failed, err=%v\n"
+
+#: cmd/server/bootstrap.go:30
+msgid "设置密码失败, err=%v\n"
+msgstr "Failed to set password, err=%v\n"
+
+#: cmd/server/bootstrap.go:31
+#, c-format
+msgid "已为用户 %s 重置密码\n"
+msgstr "Password reset for user %s\n"
+
+#: cmd/server/bootstrap.go:32
+#, c-format
+msgid "已自动创建管理员, 用户名: admin 密码: %s\n"
+msgstr "Created initial admin automatically, username: admin password: %s\n"
+
+#: cmd/server/bootstrap.go:33
+msgid "初始化内容失败: 未找到可用作者"
+msgstr "Failed to initialize content: no available author found"
+
+#: cmd/server/bootstrap.go:111 internal/i18n/i18n.go:37
+msgid "未分类"
+msgstr "Uncategorized"
+
 #: internal/handler/admin.go:86 internal/handler/admin.go:100
 msgid "登录"
 msgstr "Log in"
@@ -1015,83 +1105,75 @@ msgid "服务器内部错误,请稍后重试。"
 msgstr "Internal server error. Please try again later."
 
 #: internal/i18n/i18n.go:27
-msgid "博主动态"
-msgstr "Latest notes"
-
-#: internal/i18n/i18n.go:28
 msgid "近期文章"
 msgstr "Recent posts"
 
-#: internal/i18n/i18n.go:29
+#: internal/i18n/i18n.go:28
 msgid "近期评论"
 msgstr "Recent comments"
 
-#: internal/i18n/i18n.go:30
+#: internal/i18n/i18n.go:29
 msgid "发表在"
 msgstr "commented on"
 
-#: internal/i18n/i18n.go:31
+#: internal/i18n/i18n.go:30
 msgid "归档"
 msgstr "Archives"
 
-#: internal/i18n/i18n.go:32
+#: internal/i18n/i18n.go:31
 msgid "选择月份…"
 msgstr "Select month…"
 
-#: internal/i18n/i18n.go:33
+#: internal/i18n/i18n.go:32
 #, c-format
 msgid "%d 年 %d 月(%d)"
 msgstr "%d-%02d (%d)"
 
-#: internal/i18n/i18n.go:34
+#: internal/i18n/i18n.go:33
 msgid "分类目录"
 msgstr "Categories"
 
-#: internal/i18n/i18n.go:35
+#: internal/i18n/i18n.go:34
 msgid "选择分类…"
 msgstr "Select category…"
 
-#: internal/i18n/i18n.go:36
+#: internal/i18n/i18n.go:35
 msgid "标签"
 msgstr "Tags"
 
-#: internal/i18n/i18n.go:37
+#: internal/i18n/i18n.go:36
 msgid "选择标签…"
 msgstr "Select tag…"
 
-#: internal/i18n/i18n.go:38
-msgid "未分类"
-msgstr "Uncategorized"
-
-#: internal/i18n/i18n.go:44
+#: internal/i18n/i18n.go:43
 msgid "批准"
 msgstr "Approve"
 
-#: internal/i18n/i18n.go:45
+#: internal/i18n/i18n.go:44
 msgid "编辑"
 msgstr "Edit"
 
-#: internal/i18n/i18n.go:46
+#: internal/i18n/i18n.go:45
 msgid "驳回"
 msgstr "Unapprove"
 
-#: internal/i18n/i18n.go:47
+#: internal/i18n/i18n.go:46
 msgid "确认删除?"
 msgstr "Delete this item?"
 
-#: internal/i18n/i18n.go:48
+#: internal/i18n/i18n.go:47
 msgid "暂无评论"
 msgstr "No comments yet"
 
-#: internal/i18n/i18n.go:49
+#: internal/i18n/i18n.go:48
 msgid "上一页"
 msgstr "Previous"
 
-#: internal/i18n/i18n.go:50
+#: internal/i18n/i18n.go:49
 msgid "下一页"
 msgstr "Next"
 
-#: internal/i18n/i18n.go:51
+#: internal/i18n/i18n.go:50
 msgid ""
 "默认只读，仅允许 SELECT / EXPLAIN。该入口不在后台导航展示，请直接输入 URL 进"
 "入。"
@@ -1099,11 +1181,11 @@ msgstr ""
 "Read-only by default. Only SELECT / EXPLAIN are allowed. This page is hidden "
 "from the admin navigation, so open it directly by URL."
 
-#: internal/i18n/i18n.go:52
+#: internal/i18n/i18n.go:51
 msgid "Result Set(JSON)"
 msgstr "Result set (JSON)"
 
-#: internal/i18n/i18n.go:53
+#: internal/i18n/i18n.go:52
 msgid ""
 "注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
 "保存。"
@@ -1111,41 +1193,41 @@ msgstr ""
 "Note: if posts, pages, or comments with the same ID already exist, this "
 "import overwrites them via upsert."
 
-#: internal/i18n/i18n.go:54
+#: internal/i18n/i18n.go:53
 msgid "XML 文件"
 msgstr "XML file"
 
-#: internal/i18n/i18n.go:55
+#: internal/i18n/i18n.go:54
 msgid "导入归属用户"
 msgstr "Import owner"
 
-#: internal/i18n/i18n.go:56
+#: internal/i18n/i18n.go:55
 msgid "请选择用户"
 msgstr "Please select a user"
 
-#: internal/i18n/i18n.go:57
+#: internal/i18n/i18n.go:56
 msgid "开始导入"
 msgstr "Start import"
 
-#: internal/i18n/i18n.go:58
+#: internal/i18n/i18n.go:57
 msgid "当前没有可选用户，请先创建管理员账号。"
 msgstr "No users are available. Please create an admin account first."
 
-#: internal/i18n/i18n.go:59
+#: internal/i18n/i18n.go:58
 msgid "最近一次导入结果"
 msgstr "Latest import result"
 
-#: internal/i18n/i18n.go:60
+#: internal/i18n/i18n.go:59
 #, c-format
 msgid "文件：%s"
 msgstr "File: %s"
 
-#: internal/i18n/i18n.go:61
+#: internal/i18n/i18n.go:60
 #, c-format
 msgid "归属用户：%s"
 msgstr "Owner: %s"
 
-#: internal/i18n/i18n.go:62
+#: internal/i18n/i18n.go:61
 msgid ""
 "说明：若只勾选“评论”而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示错"
 "误。"
@@ -1153,60 +1235,60 @@ msgstr ""
 "If only comments are selected without posts/pages, a re-importable XML "
 "cannot be generated, so the submission will fail."
 
-#: internal/i18n/i18n.go:63
+#: internal/i18n/i18n.go:62
 #, c-format
 msgid "编辑%s"
 msgstr "Edit %s"
 
-#: internal/i18n/i18n.go:64
+#: internal/i18n/i18n.go:63
 #, c-format
 msgid "新建%s"
 msgstr "New %s"
 
-#: internal/i18n/i18n.go:65
+#: internal/i18n/i18n.go:64
 msgid "Slug(页面链接 /slug)"
 msgstr "Slug (page path /slug)"
 
-#: internal/i18n/i18n.go:66
+#: internal/i18n/i18n.go:65
 msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
 msgstr ""
 "Menu order (0 = hide from top navigation, values greater than 0 control "
 "sorting)"
 
-#: internal/i18n/i18n.go:67
+#: internal/i18n/i18n.go:66
 msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
 msgstr "No categories yet. Create one first in Categories / Tags."
 
-#: internal/i18n/i18n.go:68
+#: internal/i18n/i18n.go:67
 msgid "标签(逗号分隔)"
 msgstr "Tags (comma-separated)"
 
-#: internal/i18n/i18n.go:69
+#: internal/i18n/i18n.go:68
 msgid "如:Go, 教程, 随笔"
 msgstr "e.g. Go, tutorial, notes"
 
-#: internal/i18n/i18n.go:70
+#: internal/i18n/i18n.go:69
 #, c-format
 msgid "%s 管理"
 msgstr "%s management"
 
-#: internal/i18n/i18n.go:71
+#: internal/i18n/i18n.go:70
 msgid "已发布"
 msgstr "Published"
 
-#: internal/i18n/i18n.go:72
+#: internal/i18n/i18n.go:71
 msgid "暂无内容"
 msgstr "No content yet"
 
-#: internal/i18n/i18n.go:73
+#: internal/i18n/i18n.go:72
 msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
 msgstr "Template mode: hot (local templates + manual reload)"
 
-#: internal/i18n/i18n.go:74
+#: internal/i18n/i18n.go:73
 msgid "当前模板模式：static（embed 内置模板）"
 msgstr "Template mode: static (embedded templates)"
 
-#: internal/i18n/i18n.go:75
+#: internal/i18n/i18n.go:74
 msgid ""
 "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生"
 "效。"
@@ -1214,11 +1296,11 @@ msgstr ""
 "Local `web/templates` directory detected. After editing templates, click the "
 "button below to reload them."
 
-#: internal/i18n/i18n.go:76
+#: internal/i18n/i18n.go:75
 msgid "重新解析模板"
 msgstr "Reload templates"
 
-#: internal/i18n/i18n.go:77
+#: internal/i18n/i18n.go:76
 msgid ""
 "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
 "并让当前进程立即切换到 hot 模式。"
@@ -1226,7 +1308,7 @@ msgstr ""
 "The app is currently using embedded templates. Click below to extract them "
 "to `web/templates` and switch the current process to hot mode immediately."
 
-#: internal/i18n/i18n.go:78
+#: internal/i18n/i18n.go:77
 msgid ""
 "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
 "并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖"
@@ -1237,11 +1319,11 @@ msgstr ""
 "if the directory already exists, existing files are reused without "
 "overwriting your changes."
 
-#: internal/i18n/i18n.go:79
+#: internal/i18n/i18n.go:78
 msgid "释放出模板文件夹"
 msgstr "Extract template directory"
 
-#: internal/i18n/i18n.go:80
+#: internal/i18n/i18n.go:79
 msgid ""
 "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘"
 "上。"
@@ -1249,19 +1331,19 @@ msgstr ""
 "After switching back, the current process will immediately use embedded "
 "templates, while the local `web/templates` directory remains on disk."
 
-#: internal/i18n/i18n.go:81
+#: internal/i18n/i18n.go:80
 msgid "使用内嵌模板资源"
 msgstr "Use embedded templates"
 
-#: internal/i18n/i18n.go:82
+#: internal/i18n/i18n.go:81
 msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
 msgstr "Asset mode: hot (local assets, changes apply immediately)"
 
-#: internal/i18n/i18n.go:83
+#: internal/i18n/i18n.go:82
 msgid "当前资源模式：static（embed 内置资源）"
 msgstr "Asset mode: static (embedded assets)"
 
-#: internal/i18n/i18n.go:84
+#: internal/i18n/i18n.go:83
 msgid ""
 "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重"
 "新加载。"
@@ -1269,7 +1351,7 @@ msgstr ""
 "Local `web/assets` directory detected. CSS / JS changes take effect "
 "immediately without manual reload."
 
-#: internal/i18n/i18n.go:85
+#: internal/i18n/i18n.go:84
 msgid ""
 "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
 "当前进程也会立即优先读取本地目录。"
@@ -1278,7 +1360,7 @@ msgstr ""
 "`web/assets`; the current process will immediately prefer the local "
 "directory."
 
-#: internal/i18n/i18n.go:86
+#: internal/i18n/i18n.go:85
 msgid ""
 "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
 "当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆"
@@ -1289,51 +1371,51 @@ msgstr ""
 "directory; if the directory already exists, existing files are reused "
 "without overwriting your changes."
 
-#: internal/i18n/i18n.go:87
+#: internal/i18n/i18n.go:86
 msgid "释放资源文件夹"
 msgstr "Extract asset directory"
 
-#: internal/i18n/i18n.go:88
+#: internal/i18n/i18n.go:87
 msgid ""
 "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"
 msgstr ""
 "After switching back, subsequent requests will automatically use embedded "
 "assets, while the local `web/assets` directory remains on disk."
 
-#: internal/i18n/i18n.go:89
+#: internal/i18n/i18n.go:88
 msgid "使用内嵌资源文件"
 msgstr "Use embedded assets"
 
-#: internal/i18n/i18n.go:90
+#: internal/i18n/i18n.go:89
 msgid "翻译资源设置"
 msgstr "Translation resources"
 
-#: internal/i18n/i18n.go:91
+#: internal/i18n/i18n.go:90
 msgid "当前翻译模式：hot（本地翻译目录）"
 msgstr "Translation mode: hot (local translations)"
 
-#: internal/i18n/i18n.go:92
+#: internal/i18n/i18n.go:91
 msgid "当前翻译模式：static（embed 内置翻译资源）"
 msgstr "Translation mode: static (embedded translations)"
 
-#: internal/i18n/i18n.go:93
+#: internal/i18n/i18n.go:92
 msgid "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"
 msgstr ""
 "Local `web/i18n` directory detected. The current process will prefer local "
 "translations."
 
-#: internal/i18n/i18n.go:94
+#: internal/i18n/i18n.go:93
 msgid ""
 "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"
 msgstr ""
 "After switching back, the current process will immediately use embedded "
 "translations, while the local `web/i18n` directory remains on disk."
 
-#: internal/i18n/i18n.go:95
+#: internal/i18n/i18n.go:94
 msgid "使用内嵌翻译资源"
 msgstr "Use embedded translations"
 
-#: internal/i18n/i18n.go:96
+#: internal/i18n/i18n.go:95
 msgid ""
 "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/"
 "i18n`，并让当前进程立即优先读取本地目录。"
@@ -1342,7 +1424,7 @@ msgstr ""
 "them to `web/i18n`; the current process will immediately prefer the local "
 "directory."
 
-#: internal/i18n/i18n.go:97
+#: internal/i18n/i18n.go:96
 msgid ""
 "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/"
 "i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文"
@@ -1353,17 +1435,17 @@ msgstr ""
 "directory; if the directory already exists, existing files are reused "
 "without overwriting your changes."
 
-#: internal/i18n/i18n.go:98
+#: internal/i18n/i18n.go:97
 msgid "释放翻译资源目录"
 msgstr "Extract translation directory"
 
-#: internal/i18n/i18n.go:99
+#: internal/i18n/i18n.go:98
 msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
 msgstr ""
 "A custom session secret is configured. Updating it will sign out all logged-"
 "in users."
 
-#: internal/i18n/i18n.go:100
+#: internal/i18n/i18n.go:99
 msgid ""
 "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
 "登录。"
@@ -1371,190 +1453,118 @@ msgstr ""
 "The default or environment-provided session secret is still in use. Updating "
 "it will sign out all logged-in users."
 
-#: internal/i18n/i18n.go:101
+#: internal/i18n/i18n.go:100
 msgid "编辑分类"
 msgstr "Edit category"
 
-#: internal/i18n/i18n.go:102
+#: internal/i18n/i18n.go:101
 msgid "新建分类"
 msgstr "New category"
 
-#: internal/i18n/i18n.go:103
+#: internal/i18n/i18n.go:102
 msgid "保存分类"
 msgstr "Save category"
 
-#: internal/i18n/i18n.go:104
+#: internal/i18n/i18n.go:103
 msgid "创建分类"
 msgstr "Create category"
 
-#: internal/i18n/i18n.go:105
+#: internal/i18n/i18n.go:104
 msgid "编辑标签"
 msgstr "Edit tag"
 
-#: internal/i18n/i18n.go:106
+#: internal/i18n/i18n.go:105
 msgid "新建标签"
 msgstr "New tag"
 
-#: internal/i18n/i18n.go:107
+#: internal/i18n/i18n.go:106
 msgid "保存标签"
 msgstr "Save tag"
 
-#: internal/i18n/i18n.go:108
+#: internal/i18n/i18n.go:107
 msgid "创建标签"
 msgstr "Create tag"
 
-#: internal/i18n/i18n.go:109
+#: internal/i18n/i18n.go:108
 msgid "确认删除该分类吗？"
 msgstr "Delete this category?"
 
-#: internal/i18n/i18n.go:110
+#: internal/i18n/i18n.go:109
 msgid "暂无分类"
 msgstr "No categories yet"
 
-#: internal/i18n/i18n.go:111
+#: internal/i18n/i18n.go:110
 msgid "确认删除该标签吗？"
 msgstr "Delete this tag?"
 
-#: internal/i18n/i18n.go:112
+#: internal/i18n/i18n.go:111
 msgid "暂无标签"
 msgstr "No tags yet"
 
-#: internal/i18n/i18n.go:113
+#: internal/i18n/i18n.go:112
 msgid "确认删除该文件?"
 msgstr "Delete this file?"
 
-#: internal/i18n/i18n.go:114
+#: internal/i18n/i18n.go:113
 msgid "暂无文件"
 msgstr "No files yet"
 
-#: internal/i18n/i18n.go:115
+#: internal/i18n/i18n.go:114
 msgid "评论已关闭"
 msgstr "Comments closed"
 
-#: internal/i18n/i18n.go:116
+#: internal/i18n/i18n.go:115
 msgid "阅读全文 →"
 msgstr "Read more →"
 
-#: internal/i18n/i18n.go:117
+#: internal/i18n/i18n.go:116
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
 
-#: internal/i18n/i18n.go:118
+#: internal/i18n/i18n.go:117
 msgid "草稿预览"
 msgstr "Draft preview"
 
-#: internal/i18n/i18n.go:119
+#: internal/i18n/i18n.go:118
 msgid "回复"
 msgstr "Reply"
 
-#: internal/i18n/i18n.go:120
+#: internal/i18n/i18n.go:119
 #, c-format
 msgid "以 <strong>%s</strong> 的身份发表评论，"
 msgstr "Commenting as <strong>%s</strong>,"
 
-#: internal/i18n/i18n.go:121
+#: internal/i18n/i18n.go:120
 msgid "登出"
 msgstr "Sign out"
 
-#: internal/i18n/i18n.go:122
+#: internal/i18n/i18n.go:121
 msgid "昵称 *"
 msgstr "Name *"
 
-#: internal/i18n/i18n.go:123
+#: internal/i18n/i18n.go:122
 msgid "邮箱 *(不公开)"
 msgstr "Email * (not public)"
 
-#: internal/i18n/i18n.go:124
+#: internal/i18n/i18n.go:123
 msgid "网站(可选)"
 msgstr "Website (optional)"
 
-#: internal/i18n/i18n.go:125
+#: internal/i18n/i18n.go:124
 msgid "说点什么吧…… *"
 msgstr "Say something… *"
 
-#: internal/i18n/i18n.go:126
+#: internal/i18n/i18n.go:125
 msgid "有回复时邮件通知我"
 msgstr "Email me when someone replies"
 
-#: internal/i18n/i18n.go:127
+#: internal/i18n/i18n.go:126
 msgid "提交评论"
 msgstr "Submit comment"
 
-#: internal/i18n/i18n.go:128
+#: internal/i18n/i18n.go:127
 msgid "评论提交后需经审核才会显示。"
 msgstr "Comments will appear after moderation."
 
-#: internal/i18n/i18n.go:133
-msgid "欢迎来到我的博客"
-msgstr "Welcome to my blog"
-
-#: internal/i18n/i18n.go:134
-msgid "关于"
-msgstr "About"
-
-#: internal/i18n/i18n.go:135
-msgid "欢迎使用这个博客程序，你可以在后台管理评论，快去看看吧。"
-msgstr ""
-"Welcome to this blog app. You can manage comments in the admin panel—go take "
-"a look."
-
-#: cmd/server/bootstrap.go:26
-msgid ""
-"欢迎使用这个独立博客程序。它专注于：\n"
-"\n"
-"- **简单部署**：单二进制 + SQLite，适合个人博客快速上线。\n"
-"- **内容优先**：支持 Markdown 写作，也兼容逐步整理已有内容。\n"
-"- **可持续维护**：后台可管理文章、页面、评论、资源与模板。\n"
-"\n"
-"你可以先到后台看看设置、写一篇文章、再把这里改成真正属于你自己的首页开场白。祝写作愉快。"
-msgstr ""
-"Welcome to this independent blog app. It focuses on:\n"
-"\n"
-"- **Simple deployment**: a single binary plus SQLite, great for getting a personal blog online quickly.\n"
-"- **Content first**: write in Markdown while keeping it easy to gradually organize existing content.\n"
-"- **Sustainable maintenance**: manage posts, pages, comments, assets, and templates from the admin panel.\n"
-"\n"
-"You can start by exploring the admin settings, writing a post, and then replacing this with an introduction that truly feels like your own homepage. Happy writing."
-
-#: cmd/server/bootstrap.go:27
-msgid ""
-"你好，欢迎来到这里。\n"
-"\n"
-"我是这个博客的作者，喜欢记录技术、写作、日常想法，也会把一些正在尝试和思考的东西慢慢整理出来。这里不会只放“结论”，也会保留过程、踩坑和一些还没完全想清楚的问题。\n"
-"\n"
-"如果你恰好读到某篇文章，希望它能给你一点启发；如果你也在做相似的事情，欢迎交流。"
-msgstr ""
-"Hi, welcome.\n"
-"\n"
-"I'm the author of this blog. I like writing about technology, everyday thoughts, and things I'm currently exploring or thinking through. This space won't only keep the final conclusions—it will also keep the process, the pitfalls, and some questions I haven't fully figured out yet.\n"
-"\n"
-"If you happen to read a post here, I hope it offers you a bit of inspiration. And if you're working on similar things, feel free to reach out."
-
-#: cmd/server/bootstrap.go:28
-#, c-format
-msgid "已生成随机密码: %s\n"
-msgstr "Generated random password: %s\n"
-
-#: cmd/server/bootstrap.go:29
-#, c-format
-msgid "密码处理失败, err=%v\n"
-msgstr "Password processing failed, err=%v\n"
-
-#: cmd/server/bootstrap.go:30
-#, c-format
-msgid "设置密码失败, err=%v\n"
-msgstr "Failed to set password, err=%v\n"
-
-#: cmd/server/bootstrap.go:31
-#, c-format
-msgid "已为用户 %s 重置密码\n"
-msgstr "Password reset for user %s\n"
-
-#: cmd/server/bootstrap.go:32
-#, c-format
-msgid "已自动创建管理员, 用户名: admin 密码: %s\n"
-msgstr "Created initial admin automatically, username: admin password: %s\n"
-
-#: cmd/server/bootstrap.go:33
-msgid "初始化内容失败: 未找到可用作者"
-msgstr "Failed to initialize content: no available author found"
+#~ msgid "博主动态"
+#~ msgstr "Latest notes"
