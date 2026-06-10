@@ -1,6 +1,6 @@
 {{define "admin_post_edit.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{if .IsEdit}}{{if eq .PostType "page"}}{{.t.T "编辑%s" (.t.T "页面")}}{{else}}{{.t.T "编辑%s" (.t.T "文章")}}{{end}}{{else}}{{if eq .PostType "page"}}{{.t.T "新建%s" (.t.T "页面")}}{{else}}{{.t.T "新建%s" (.t.T "文章")}}{{end}}{{end}}</h1>
+<h1>{{if .IsEdit}}{{if eq .PostType "page"}}{{.t.T "编辑%s" (.t.X "admin.post_type.singular" "页面")}}{{else}}{{.t.T "编辑%s" (.t.X "admin.post_type.singular" "文章")}}{{end}}{{else}}{{if eq .PostType "page"}}{{.t.T "新建%s" (.t.X "admin.post_type.singular" "页面")}}{{else}}{{.t.T "新建%s" (.t.X "admin.post_type.singular" "文章")}}{{end}}{{end}}</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 <form class="edit-form" method="post" action="/admin/post">
   {{template "csrf_field" .}}
@@ -56,7 +56,7 @@
     <label>{{.t.T "评论"}}
       <select name="comment_status">
         <option value="open" {{if and .Post (ne .Post.CommentStatus "closed")}}selected{{end}}>{{.t.T "开放"}}</option>
-        <option value="closed" {{if and .Post (eq .Post.CommentStatus "closed")}}selected{{end}}>{{.t.T "关闭"}}</option>
+        <option value="closed" {{if and .Post (eq .Post.CommentStatus "closed")}}selected{{end}}>{{.t.X "admin.comment_status.option" "关闭"}}</option>
       </select>
     </label>
   </div>

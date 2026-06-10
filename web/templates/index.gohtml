@@ -9,10 +9,10 @@
       {{if .Author.DisplayName}}<span class="author">{{.Author.DisplayName}}</span>{{end}}
       {{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
       {{range .Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
-      <span class="views">{{.Views}} {{$.t.T "阅读"}}</span>
+      <span class="views">{{$.t.N64 "%d 次阅读" "%d 次阅读" .Views .Views}}</span>
       {{if eq .CommentStatus "closed"}}<span class="comment-count">{{$.t.T "评论已关闭"}}</span>
       {{else if eq .CommentCount 0}}<a class="comment-count" href="{{postURL .}}#comments">{{$.t.T "暂无评论"}}</a>
-      {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.t.T "%d 条评论" .CommentCount}}</a>{{end}}
+      {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.t.N64 "%d 条评论" "%d 条评论" .CommentCount .CommentCount}}</a>{{end}}
       {{if and $.CurrentUserID (eq $.CurrentUserID .AuthorID)}}<a class="edit-link" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>{{end}}
     </div>
     <div class="post-content">{{listHTML .}}</div>

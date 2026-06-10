@@ -4,7 +4,7 @@
 <div class="cards">
   <a class="card" href="/admin/posts?type=post"><h3>{{.t.T "文章"}}</h3><p>{{.t.T "管理博客文章"}}</p></a>
   <a class="card" href="/admin/posts?type=page"><h3>{{.t.T "页面"}}</h3><p>{{.t.T "管理独立页面"}}</p></a>
-  <a class="card" href="/admin/comments"><h3>{{.t.T "评论"}}</h3><p>{{.t.T "%d 条待审" .PendingCount}}</p></a>
+  <a class="card" href="/admin/comments"><h3>{{.t.T "评论"}}</h3><p>{{.t.N64 "%d 条待审评论" "%d 条待审评论" .PendingCount .PendingCount}}</p></a>
   <a class="card" href="/admin/import"><h3>{{.t.T "导入"}}</h3><p>{{.t.T "上传 WordPress XML 并覆盖导入"}}</p></a>
 </div>
 {{template "admin_footer" .}}

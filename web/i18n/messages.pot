@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-10 21:11+0800\n"
+"POT-Creation-Date: 2026-06-10 23:06+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:3
 msgid "上传中..."
@@ -65,29 +66,23 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:58
 msgid "内容"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:5
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:51
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:72
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
 msgid "文章"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:52
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:73
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
 msgid "页面"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:31
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:7
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:53
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:74
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:56
 msgid "评论"
@@ -185,8 +180,6 @@ msgid "韵紫"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:5
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:88
 msgid "待审"
 msgstr ""
 
@@ -195,9 +188,6 @@ msgid "已批准"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:7
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:83
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:86
 msgid "垃圾"
 msgstr ""
 
@@ -205,18 +195,7 @@ msgstr ""
 msgid "全选"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:82
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:89
-msgid "批准"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:91
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:38
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:90
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:24
 msgid "删除"
 msgstr ""
 
@@ -225,101 +204,22 @@ msgid "确认批量删除选中评论?"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:29
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:47
 msgid "作者"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:80
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:34
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:79
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:9
 msgid "操作"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:28
-msgid "选择"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:39
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:48
-msgid "邮箱"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:40
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:49
-msgid "网址"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:74
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:63
-msgid "保存"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:75
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:26
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:40
-msgid "取消"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:56
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:78
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:35
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:60
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:87
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:10
-msgid "编辑"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:65
-msgid "发表在《%s》："
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:85
-msgid "驳回"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:91
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:36
-msgid "确认删除?"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:95
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:15
-msgid "暂无评论"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:101
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:48
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:34
-msgid "共 %d 条"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:104
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:51
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:37
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:75
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:72
-msgid "上一页"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:106
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:39
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:77
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:74
-msgid "下一页"
-msgstr ""
+msgid "共 %d 条评论"
+msgid_plural "共 %d 条评论"
+msgstr[0] ""
+msgstr[1] ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:3
 msgid "欢迎回来"
@@ -334,8 +234,10 @@ msgid "管理独立页面"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:7
-msgid "%d 条待审"
-msgstr ""
+msgid "%d 条待审评论"
+msgid_plural "%d 条待审评论"
+msgstr[0] ""
+msgstr[1] ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:8
 msgid "上传 WordPress XML 并覆盖导入"
@@ -355,10 +257,6 @@ msgstr ""
 msgid "执行"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:13
-msgid "Result Set(JSON)"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_error.gohtml:3
 msgid "返回后台"
 msgstr ""
@@ -375,26 +273,6 @@ msgstr ""
 msgid ""
 "注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
 "保存。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:16
-msgid "XML 文件"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:19
-msgid "导入归属用户"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:21
-msgid "请选择用户"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:27
-msgid "开始导入"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:30
-msgid "当前没有可选用户，请先创建管理员账号。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:35
@@ -419,29 +297,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:41
 msgid "非 `post` / `page` 类型内容不会导入。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:45
-msgid "最近一次导入结果"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:46
-msgid "文件：%s"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:47
-msgid "归属用户：%s"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:54
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:39
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:141
-msgid "分类目录"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:55
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:151
-msgid "标签"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:65
@@ -479,26 +334,9 @@ msgstr ""
 msgid "← 返回到"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
-msgid "新建%s"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
-msgid "编辑%s"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:9
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:16
 msgid "标题"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:11
-msgid "Slug(页面链接 /slug)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:12
-msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:15
@@ -520,7 +358,6 @@ msgid "支持文件上传、直接粘贴剪贴板图片，或从文件库选择�
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:25
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:59
 msgid "关闭"
 msgstr ""
 
@@ -532,21 +369,8 @@ msgstr ""
 msgid "摘要(可选)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:43
-msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:46
-msgid "如:Go, 教程, 随笔"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:46
-msgid "标签(逗号分隔)"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:50
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:31
 msgid "状态"
 msgstr ""
 
@@ -555,7 +379,6 @@ msgid "发布"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:31
 msgid "草稿"
 msgstr ""
 
@@ -563,35 +386,29 @@ msgstr ""
 msgid "开放"
 msgstr ""
 
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:59
+msgctxt "admin.comment_status.option"
+msgid "关闭"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:63
+msgid "保存"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:63
+msgid "取消"
+msgstr ""
+
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:5
 msgid "新建"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:32
 msgid "发布时间"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:33
 msgid "浏览"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:20
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:22
-msgid "（无标题）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:27
-msgid "路径"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:31
-msgid "已发布"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:43
-msgid "暂无内容"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:8
@@ -622,117 +439,12 @@ msgstr ""
 msgid "模板设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:23
-msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:23
-msgid "当前模板模式：static（embed 内置模板）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:27
-msgid ""
-"检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生"
-"效。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:28
-msgid "重新解析模板"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:32
-msgid ""
-"切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘"
-"上。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:33
-msgid "使用内嵌模板资源"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:38
-msgid ""
-"当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
-"并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖"
-"你的改动。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:39
-msgid "释放出模板文件夹"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:45
 msgid "资源文件设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:46
-msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:46
-msgid "当前资源模式：static（embed 内置资源）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:48
-msgid ""
-"检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重"
-"新加载。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:51
-msgid ""
-"切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:52
-msgid "使用内嵌资源文件"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:57
-msgid ""
-"当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
-"当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆"
-"盖你的改动。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:58
-msgid "释放资源文件夹"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:64
 msgid "翻译资源设置"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:65
-msgid "当前翻译模式：hot（本地翻译目录）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:65
-msgid "当前翻译模式：static（embed 内置翻译资源）"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:67
-msgid "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:70
-msgid ""
-"切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:71
-msgid "使用内嵌翻译资源"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:76
-msgid ""
-"当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/"
-"i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文"
-"件，不覆盖你的改动。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:77
-msgid "释放翻译资源目录"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:83
@@ -745,16 +457,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:86
 msgid "请输入新的 Session Secret"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:87
-msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:87
-msgid ""
-"当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
-"登录。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:88
@@ -797,14 +499,6 @@ msgstr ""
 msgid "分类 / 标签管理"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:9
-msgid "新建分类"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:9
-msgid "编辑分类"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:13
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:36
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
@@ -830,52 +524,12 @@ msgstr ""
 msgid "描述"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:25
-msgid "保存分类"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:25
-msgid "创建分类"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:32
-msgid "新建标签"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:32
-msgid "编辑标签"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:39
-msgid "保存标签"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:39
-msgid "创建标签"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:48
 msgid "分类列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:61
-msgid "确认删除该分类吗？"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:68
-msgid "暂无分类"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:76
 msgid "标签列表"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:88
-msgid "确认删除该标签吗？"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:95
-msgid "暂无标签"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:9
@@ -890,13 +544,11 @@ msgstr ""
 msgid "时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:22
-msgid "确认删除该文件?"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:29
-msgid "暂无文件"
-msgstr ""
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:34
+msgid "共 %d 个文件"
+msgid_plural "共 %d 个文件"
+msgstr[0] ""
+msgstr[1] ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:4
 msgid "提交失败,请稍后重试。"
@@ -923,117 +575,21 @@ msgstr ""
 msgid "输入关键词…"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:94
-msgid "博主动态"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:99
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:122
-msgid "发表在"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:108
-msgid "近期文章"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:117
-msgid "近期评论"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:131
-msgid "归档"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:133
-msgid "选择月份…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:134
-msgid "%d 年 %d 月(%d)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:143
-msgid "选择分类…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:153
-msgid "选择标签…"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/error.gohtml:6
 msgid "返回首页"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:12
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:13
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:9
-msgid "阅读"
-msgstr ""
+msgid "%d 次阅读"
+msgid_plural "%d 次阅读"
+msgstr[0] ""
+msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:100
-msgid "评论已关闭"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:16
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:31
 msgid "%d 条评论"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:19
-msgid "阅读全文 →"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:21
-msgid "没有找到匹配的文章。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:4
-msgid "草稿预览"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:49
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:60
-msgid "回复"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:79
-msgid "以 <strong>%s</strong> 的身份发表评论，"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:80
-msgid "登出"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:89
-msgid "昵称 *"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:90
-msgid "邮箱 *(不公开)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:91
-msgid "网站(可选)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:94
-msgid "说点什么吧…… *"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:95
-msgid "有回复时邮件通知我"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:96
-msgid "提交评论"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:97
-msgid "评论提交后需经审核才会显示。"
-msgstr ""
+msgid_plural "%d 条评论"
+msgstr[0] ""
+msgstr[1] ""
 
 #: cmd/server/bootstrap.go:23
 msgid "欢迎来到我的博客"
@@ -1102,372 +658,396 @@ msgstr ""
 msgid "未分类"
 msgstr ""
 
-#: internal/handler/admin.go:86 internal/handler/admin.go:100
+#: internal/handler/admin.go:72
+msgctxt "admin.post_type.singular"
+msgid "文章"
+msgstr ""
+
+#: internal/handler/admin.go:73
+msgctxt "admin.post_type.singular"
+msgid "页面"
+msgstr ""
+
+#: internal/handler/admin.go:74
+#, c-format
+msgid "共 %d 篇文章"
+msgid_plural "共 %d 篇文章"
+msgstr[0] ""
+msgstr[1] ""
+
+#: internal/handler/admin.go:75
+#, c-format
+msgid "共 %d 个页面"
+msgid_plural "共 %d 个页面"
+msgstr[0] ""
+msgstr[1] ""
+
+#: internal/handler/admin.go:96 internal/handler/admin.go:110
 msgid "登录"
 msgstr ""
 
-#: internal/handler/admin.go:88
+#: internal/handler/admin.go:98
 msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
 msgstr ""
 
-#: internal/handler/admin.go:101
+#: internal/handler/admin.go:111
 msgid "用户名或密码错误。"
 msgstr ""
 
-#: internal/handler/admin.go:122
+#: internal/handler/admin.go:132
 msgid "后台"
 msgstr ""
 
-#: internal/handler/admin.go:128 internal/handler/admin.go:138
-#: internal/handler/admin.go:210
+#: internal/handler/admin.go:138 internal/handler/admin.go:148
+#: internal/handler/admin.go:220
 msgid "WXR 导入 / 导出"
 msgstr ""
 
-#: internal/handler/admin.go:146
+#: internal/handler/admin.go:156
 msgid "表单参数有误。"
 msgstr ""
 
-#: internal/handler/admin.go:152
+#: internal/handler/admin.go:162
 msgid "请选择导入归属用户。"
 msgstr ""
 
-#: internal/handler/admin.go:158
+#: internal/handler/admin.go:168
 msgid "所选用户不存在。"
 msgstr ""
 
-#: internal/handler/admin.go:164
+#: internal/handler/admin.go:174
 msgid "请选择要导入的 XML 文件。"
 msgstr ""
 
-#: internal/handler/admin.go:169
+#: internal/handler/admin.go:179
 msgid "XML 文件不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:174
+#: internal/handler/admin.go:184
 msgid "XML 文件不能超过 50MB。"
 msgstr ""
 
-#: internal/handler/admin.go:180
+#: internal/handler/admin.go:190
 msgid "打开上传文件失败。"
 msgstr ""
 
-#: internal/handler/admin.go:195
+#: internal/handler/admin.go:205
 #, c-format
 msgid "导入失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:199
+#: internal/handler/admin.go:209
 msgid "导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。"
 msgstr ""
 
-#: internal/handler/admin.go:221
+#: internal/handler/admin.go:231
 msgid "导出表单参数有误。"
 msgstr ""
 
-#: internal/handler/admin.go:234
+#: internal/handler/admin.go:244
 msgid "请至少选择一项导出内容。"
 msgstr ""
 
-#: internal/handler/admin.go:248
+#: internal/handler/admin.go:258
 #, c-format
 msgid "导出失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:265
+#: internal/handler/admin.go:275
 msgid "设置"
 msgstr ""
 
-#: internal/handler/admin.go:284
+#: internal/handler/admin.go:294
 msgid "模板已重新解析。"
 msgstr ""
 
-#: internal/handler/admin.go:287
+#: internal/handler/admin.go:297
 msgid ""
 "已切换到本地模板 hot 模式；若 `web/templates` 已存在，则会直接复用现有文件，"
 "不覆盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin.go:290
+#: internal/handler/admin.go:300
 msgid "已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin.go:293
+#: internal/handler/admin.go:303
 msgid ""
 "已切换到本地资源 hot 模式；若 `web/assets` 已存在，则会直接复用现有文件，不覆"
 "盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin.go:296
+#: internal/handler/admin.go:306
 msgid "已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin.go:299
+#: internal/handler/admin.go:309
 msgid ""
 "已切换到本地翻译资源 hot 模式；若 `web/i18n` 已存在，则会直接复用现有文件，不"
 "覆盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin.go:302
+#: internal/handler/admin.go:312
 msgid "已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin.go:363
+#: internal/handler/admin.go:373
 msgid "Session Secret 不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:390
+#: internal/handler/admin.go:400
 msgid "用户名、显示名和邮件不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:401
+#: internal/handler/admin.go:411
 msgid "用户名已被占用。"
 msgstr ""
 
-#: internal/handler/admin.go:425
+#: internal/handler/admin.go:435
 msgid "原密码不正确。"
 msgstr ""
 
-#: internal/handler/admin.go:431
+#: internal/handler/admin.go:441
 msgid "两次输入的密码不一致。"
 msgstr ""
 
-#: internal/handler/admin.go:452
+#: internal/handler/admin.go:462
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr ""
 
-#: internal/handler/admin.go:458
+#: internal/handler/admin.go:468
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:470
+#: internal/handler/admin.go:480
 msgid "当前模板渲染器不可用。"
 msgstr ""
 
-#: internal/handler/admin.go:476
+#: internal/handler/admin.go:486
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr ""
 
-#: internal/handler/admin.go:483
+#: internal/handler/admin.go:493
 #, c-format
 msgid "切换到本地模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:492
+#: internal/handler/admin.go:502
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:504
+#: internal/handler/admin.go:514
 msgid "当前不是 hot 模式，不能切回内嵌模板。"
 msgstr ""
 
-#: internal/handler/admin.go:511
+#: internal/handler/admin.go:521
 #, c-format
 msgid "读取内嵌模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:517
+#: internal/handler/admin.go:527
 #, c-format
 msgid "切换回内嵌模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:529
+#: internal/handler/admin.go:539
 msgid "当前资源管理器不可用。"
 msgstr ""
 
-#: internal/handler/admin.go:535
+#: internal/handler/admin.go:545
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr ""
 
-#: internal/handler/admin.go:547
+#: internal/handler/admin.go:557
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:553
+#: internal/handler/admin.go:563
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:566
+#: internal/handler/admin.go:576
 msgid "当前不是 hot 模式，不能切回内嵌资源。"
 msgstr ""
 
-#: internal/handler/admin.go:579
+#: internal/handler/admin.go:589
 msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
 msgstr ""
 
-#: internal/handler/admin.go:587
+#: internal/handler/admin.go:597
 #, c-format
 msgid "读取内嵌翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:593
+#: internal/handler/admin.go:603
 #, c-format
 msgid "释放翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:601 internal/handler/admin.go:620
+#: internal/handler/admin.go:611 internal/handler/admin.go:630
 #, c-format
 msgid "重新加载翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin.go:613
+#: internal/handler/admin.go:623
 msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
 msgstr ""
 
-#: internal/handler/admin.go:655
+#: internal/handler/admin.go:665
 msgid "DB Debug"
 msgstr ""
 
-#: internal/handler/admin.go:666
+#: internal/handler/admin.go:676
 msgid "仅允许只读 SQL(SELECT/EXPLAIN)。"
 msgstr ""
 
-#: internal/handler/admin.go:711
+#: internal/handler/admin.go:721
 msgid "未登录"
 msgstr ""
 
-#: internal/handler/admin.go:716
+#: internal/handler/admin.go:726
 msgid "未选择文件"
 msgstr ""
 
-#: internal/handler/admin.go:720
+#: internal/handler/admin.go:730
 msgid "文件不能超过 10MB"
 msgstr ""
 
-#: internal/handler/admin.go:725
+#: internal/handler/admin.go:735
 msgid "打开上传文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:735
+#: internal/handler/admin.go:745
 msgid "仅支持 png/jpg/gif/webp 图片"
 msgstr ""
 
-#: internal/handler/admin.go:739
+#: internal/handler/admin.go:749
 msgid "读取上传文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:749
+#: internal/handler/admin.go:759
 msgid "创建上传目录失败"
 msgstr ""
 
-#: internal/handler/admin.go:755
+#: internal/handler/admin.go:765
 msgid "保存文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:761
+#: internal/handler/admin.go:771
 msgid "写入文件失败"
 msgstr ""
 
-#: internal/handler/admin.go:771
+#: internal/handler/admin.go:781
 msgid "保存上传记录失败"
 msgstr ""
 
-#: internal/handler/admin.go:786
+#: internal/handler/admin.go:796
 msgid "文件管理"
 msgstr ""
 
-#: internal/handler/admin.go:879
+#: internal/handler/admin.go:889
 msgid "文章管理"
 msgstr ""
 
-#: internal/handler/admin.go:881
+#: internal/handler/admin.go:891
 msgid "页面管理"
 msgstr ""
 
-#: internal/handler/admin.go:901 internal/handler/admin.go:1246
+#: internal/handler/admin.go:911 internal/handler/admin.go:1256
 msgid "分类/标签"
 msgstr ""
 
-#: internal/handler/admin.go:911
+#: internal/handler/admin.go:921
 msgid "分类已保存。"
 msgstr ""
 
-#: internal/handler/admin.go:914
+#: internal/handler/admin.go:924
 msgid "分类已删除。"
 msgstr ""
 
-#: internal/handler/admin.go:917
+#: internal/handler/admin.go:927
 msgid "标签已保存。"
 msgstr ""
 
-#: internal/handler/admin.go:920
+#: internal/handler/admin.go:930
 msgid "标签已删除。"
 msgstr ""
 
-#: internal/handler/admin.go:961
+#: internal/handler/admin.go:971
 msgid "分类名称不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:969
+#: internal/handler/admin.go:979
 msgid "分类 slug 不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:978
+#: internal/handler/admin.go:988
 msgid "分类 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin.go:1018
+#: internal/handler/admin.go:1028
 msgid "标签名称不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:1026
+#: internal/handler/admin.go:1036
 msgid "标签 slug 不能为空。"
 msgstr ""
 
-#: internal/handler/admin.go:1035
+#: internal/handler/admin.go:1045
 msgid "标签 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin.go:1059 internal/handler/admin.go:1141
-#: internal/handler/admin.go:1158
+#: internal/handler/admin.go:1069 internal/handler/admin.go:1151
+#: internal/handler/admin.go:1168
 msgid "内容管理"
 msgstr ""
 
-#: internal/handler/admin.go:1159
+#: internal/handler/admin.go:1169
 #, c-format
 msgid "页面链接 /%s 已存在，请换一个 slug。"
 msgstr ""
 
-#: internal/handler/admin.go:1289
+#: internal/handler/admin.go:1299
 msgid "评论管理"
 msgstr ""
 
-#: internal/handler/admin.go:1438
+#: internal/handler/admin.go:1448
 msgid "未找到"
 msgstr ""
 
-#: internal/handler/admin.go:1447
+#: internal/handler/admin.go:1457
 msgid "服务器错误"
 msgstr ""
 
-#: internal/handler/admin.go:1468
+#: internal/handler/admin.go:1478
 msgid "页面 slug 不能为空"
 msgstr ""
 
-#: internal/handler/admin.go:1471
+#: internal/handler/admin.go:1481
 msgid "页面 slug 只能是单段路径，不能包含 /"
 msgstr ""
 
-#: internal/handler/admin.go:1474
+#: internal/handler/admin.go:1484
 msgid "页面 slug 不能包含空白、? 或 #"
 msgstr ""
 
-#: internal/handler/admin.go:1477
+#: internal/handler/admin.go:1487
 msgid "页面 slug 非法"
 msgstr ""
 
-#: internal/handler/admin.go:1480
+#: internal/handler/admin.go:1490
 msgid "页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头"
 msgstr ""
 
-#: internal/handler/admin.go:1483
+#: internal/handler/admin.go:1493
 msgid "页面 slug 不能与文章永久链接格式冲突"
 msgstr ""
 
-#: internal/handler/admin.go:1486
+#: internal/handler/admin.go:1496
 msgid "页面 slug %q 为保留路由，请换一个"
 msgstr ""
 

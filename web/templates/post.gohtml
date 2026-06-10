@@ -6,7 +6,7 @@
     <time>{{fmtDate .Post.PublishedAt}}</time>
     {{if .Post.Author.DisplayName}}<span class="author">{{.Post.Author.DisplayName}}</span>{{end}}
     {{range .Post.Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
-    <span class="views">{{.Post.Views}} {{.t.T "阅读"}}</span>
+    <span class="views">{{.t.N64 "%d 次阅读" "%d 次阅读" .Post.Views .Post.Views}}</span>
     {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.t.T "编辑"}}</a>{{end}}
   </div>
   <div class="post-content">{{detailHTML .Post}}</div>
@@ -28,7 +28,7 @@
 
 {{define "comments"}}
 <section class="comments" id="comments">
-  <h3>{{.t.T "%d 条评论" .CommentCount}}</h3>
+  <h3>{{.t.N64 "%d 条评论" "%d 条评论" .CommentCount .CommentCount}}</h3>
   <div id="comments-box">
     {{template "comments_fragment.gohtml" .}}
   </div>

@@ -31,7 +31,7 @@
 	    </tbody>
   </table>
 </div>
-<p class="total">{{.t.T "共 %d 条" .Total}}</p>
+<p class="total">{{.t.N64 "共 %d 个文件" "共 %d 个文件" .Total .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
   {{if gt .Page 1}}<a href="/admin/uploads?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}

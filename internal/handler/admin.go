@@ -66,6 +66,16 @@ const maxImportXMLSize = 50 << 20
 const defaultPublicPageSize = 10
 const defaultFeedSize = 20
 
+// 这些文案当前主要在模板里以嵌套调用或条件分支形式出现，
+// 额外放一个 Mark 锚点，避免抽取工具在更新 PO 时漏掉上下文/复数字符串。
+var _ = func() struct{} {
+	_, _ = gettext.Mark.X("admin.post_type.singular", "文章")
+	_, _ = gettext.Mark.X("admin.post_type.singular", "页面")
+	_, _ = gettext.Mark.N("共 %d 篇文章", "共 %d 篇文章")
+	_, _ = gettext.Mark.N("共 %d 个页面", "共 %d 个页面")
+	return struct{}{}
+}()
+
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	v, _ := h.st.GetSetting(consts.SettingsSiteName)
 	siteName := firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault)
