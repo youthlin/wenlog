@@ -1,4 +1,4 @@
-//go:build !unix || android || ios
+//go:build !unix || ios
 
 package main
 
