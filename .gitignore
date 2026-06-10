@@ -1,7 +1,10 @@
 # 二进制
 /blog
 /server
+/server.exe
 /importer
+/build
+/output
 
 # 运行时数据
 /data/
@@ -17,3 +20,6 @@ WordPress.*.xml
 *.swp
 .idea/
 .vscode/
+
+# skills 本地锁文件（可能包含本机路径）
+skills-lock.json

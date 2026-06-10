@@ -153,7 +153,9 @@ func SetHot(v bool) {
 func loadTranslations() error {
 	gettext.SetGlobal(gettext.NewTranslations())
 	gettext.SetSourceCodeLocale("zh_CN")
-	gettext.SetLocale("zh_CN")
+	// 不强制固定成中文, 让空值走系统默认语言匹配。
+	// 这样启动阶段插入的初始内容也能跟随服务器默认语言做翻译。
+	gettext.SetLocale("")
 	if hot.Load() {
 		if _, err := os.Stat("web/i18n"); err == nil {
 			gettext.Load("web/i18n")

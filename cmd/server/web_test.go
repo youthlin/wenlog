@@ -8,8 +8,10 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
+	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -78,8 +80,26 @@ func TestLocalFirstFileSystemSwitchesToLocalDir(t *testing.T) {
 	}
 }
 
+func readFileFromHTTPFS(t *testing.T, fsys http.FileSystem, name string) string {
+	t.Helper()
+	f, err := fsys.Open(name)
+	if err != nil {
+		t.Fatalf("open %q: %v", name, err)
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatalf("read %q: %v", name, err)
+	}
+	return string(data)
+}
+
 func TestEnsureInitialContent(t *testing.T) {
 	st := newTestStore(t)
+	if err := i18n.Init(); err != nil {
+		t.Fatalf("init i18n: %v", err)
+	}
+	gettext.SetLocale("en_US")
 	if err := ensureInitialAdmin(st); err != nil {
 		t.Fatalf("ensure initial admin: %v", err)
 	}
@@ -96,14 +116,14 @@ func TestEnsureInitialContent(t *testing.T) {
 	if len(posts) != 2 {
 		t.Fatalf("post count = %d, want 2", len(posts))
 	}
-	if posts[0].Title != "欢迎来到我的博客" || posts[0].PostType != model.PostTypePost {
+	if posts[0].Title != "Welcome to my blog" || posts[0].PostType != model.PostTypePost {
 		t.Fatalf("first post = %+v", posts[0])
 	}
 	var categories []model.Category
 	if err := st.DB().Order("id ASC").Find(&categories).Error; err != nil {
 		t.Fatalf("list categories: %v", err)
 	}
-	if len(categories) != 1 || categories[0].Name != "未分类" || categories[0].Slug != "uncategorized" {
+	if len(categories) != 1 || categories[0].Name != "Uncategorized" || categories[0].Slug != "uncategorized" {
 		t.Fatalf("categories = %+v", categories)
 	}
 	post, err := st.GetPostByID(posts[0].ID)
@@ -113,7 +133,7 @@ func TestEnsureInitialContent(t *testing.T) {
 	if len(post.Categories) != 1 || post.Categories[0].Slug != "uncategorized" {
 		t.Fatalf("welcome post categories = %+v", post.Categories)
 	}
-	if posts[1].Slug != "about" || posts[1].MenuOrder != 1 || posts[1].PostType != model.PostTypePage {
+	if posts[1].Title != "About" || posts[1].Slug != "about" || posts[1].MenuOrder != 1 || posts[1].PostType != model.PostTypePage {
 		t.Fatalf("about page = %+v", posts[1])
 	}
 	var comments []model.Comment
@@ -126,18 +146,4 @@ func TestEnsureInitialContent(t *testing.T) {
 	if comments[0].Status != model.CommentApproved || comments[0].Author != "youthlin" {
 		t.Fatalf("comment = %+v", comments[0])
 	}
-}
-
-func readFileFromHTTPFS(t *testing.T, fsys http.FileSystem, name string) string {
-	t.Helper()
-	f, err := fsys.Open(name)
-	if err != nil {
-		t.Fatalf("open %q: %v", name, err)
-	}
-	defer f.Close()
-	data, err := io.ReadAll(f)
-	if err != nil {
-		t.Fatalf("read %q: %v", name, err)
-	}
-	return string(data)
 }

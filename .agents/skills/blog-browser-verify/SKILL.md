@@ -31,7 +31,7 @@ description: "用于本仓库的本地运行与浏览器验收流程。当用户
    - 这样可以确保后续浏览器登录后台时有稳定账号可用。
 
 3. **启动服务**
-   - 用 `go run ./cmd/server/main.go` 启动服务。
+   - 用 `go run ./cmd/server` 启动服务。
    - 如果 agent 运行环境支持后台进程，启动后持续检查 `http://127.0.0.1:8888/healthz`，直到返回成功。
    - 若 8888 已被当前仓库服务占用，优先复用；若不是本仓库实例，再处理冲突。
 
@@ -99,10 +99,10 @@ description: "用于本仓库的本地运行与浏览器验收流程。当用户
 
 ```bash
 # 设置管理员密码
-go run ./cmd/server/main.go -set-admin "admin:admin123456"
+go run ./cmd/server -set-admin "admin:admin123456"
 
 # 启动服务
-go run ./cmd/server/main.go
+go run ./cmd/server
 
 # 健康检查
 http://127.0.0.1:8888/healthz

@@ -32,7 +32,9 @@ MERGED_POT="$I18N_DIR/messages.pot"
 XTEMPLATE_ERR="$TMP_DIR/xtemplate.stderr"
 XTEMPLATE_FUNCS='postURL,pageURL,categoryURL,tagURL,safeHTML,escapeHTML,listHTML,detailHTML,hasMore,gravatar,gravatarPrimary,gravatarFallback,fmtDate,fmtDateTime,year,add,sub,seq'
 
-mapfile -t ALL_GO_FILES < <(cd "$ROOT_DIR" && git ls-files '*.go')
+# 同时纳入已跟踪与未跟踪(但未被 .gitignore 忽略)的 Go 文件，
+# 这样重构拆出的新文件在 git add 前也能参与 i18n 抽取。
+mapfile -t ALL_GO_FILES < <(cd "$ROOT_DIR" && git ls-files --cached --others --exclude-standard -- '*.go')
 GO_FILES=()
 for file in "${ALL_GO_FILES[@]}"; do
   if [[ "$file" == *_test.go ]]; then
