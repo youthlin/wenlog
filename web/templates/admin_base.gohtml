@@ -18,28 +18,10 @@
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body class="admin">
-<header class="admin-header">
-  <div class="admin-bar">
-    <div class="admin-bar-head">
-      <a class="brand" href="/admin/">{{.t.T "%s 后台" .SiteName}}</a>
-      <div class="admin-header-actions">
-        <label class="theme-select-wrap">
-          <span class="sr-only">{{.t.T "切换主题"}}</span>
-          <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
-            <option value="dark">{{.t.T "暗黑"}}</option>
-            <option value="light">{{.t.T "明亮"}}</option>
-            <option value="red-plum">{{.t.T "红梅"}}</option>
-            <option value="bamboo">{{.t.T "绿竹"}}</option>
-            <option value="lotus">{{.t.T "藕粉"}}</option>
-            <option value="orange">{{.t.T "橙黄"}}</option>
-            <option value="azure">{{.t.T "蔚蓝"}}</option>
-            <option value="purple">{{.t.T "韵紫"}}</option>
-          </select>
-        </label>
-        <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
-      </div>
-    </div>
-    <nav id="admin-nav-menu" class="admin-nav" data-nav-panel>
+<header class="site-header admin-header">
+  <div class="container header-inner admin-bar">
+    <a class="site-title brand" href="/admin/">{{.t.T "%s 后台" .SiteName}}</a>
+    <nav id="admin-nav-menu" class="site-nav admin-nav" data-nav-panel>
       <div class="admin-nav-groups">
         <div class="nav-group">
           <span class="nav-group-title">{{.t.T "内容"}}</span>
@@ -65,17 +47,33 @@
         </div>
       </div>
       <div class="admin-nav-actions">
-        <label class="lang-select-wrap">
-          <span class="sr-only">{{.t.T "语言"}}</span>
-          <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
-            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
-          </select>
-        </label>
         <a href="/" target="_blank">{{.t.T "查看站点"}}</a>
         <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
       </div>
     </nav>
+    <div class="header-actions admin-header-actions">
+      <label class="lang-select-wrap">
+        <span class="sr-only">{{.t.T "语言"}}</span>
+        <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+          <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
+          <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+        </select>
+      </label>
+      <label class="theme-select-wrap">
+        <span class="sr-only">{{.t.T "切换主题"}}</span>
+        <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
+          <option value="dark">{{.t.T "暗黑"}}</option>
+          <option value="light">{{.t.T "明亮"}}</option>
+          <option value="red-plum">{{.t.T "红梅"}}</option>
+          <option value="bamboo">{{.t.T "绿竹"}}</option>
+          <option value="lotus">{{.t.T "藕粉"}}</option>
+          <option value="orange">{{.t.T "橙黄"}}</option>
+          <option value="azure">{{.t.T "蔚蓝"}}</option>
+          <option value="purple">{{.t.T "韵紫"}}</option>
+        </select>
+      </label>
+      <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
+    </div>
   </div>
 </header>
 <main class="admin-main">

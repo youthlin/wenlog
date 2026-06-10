@@ -1,7 +1,7 @@
 ---
 name: blog-browser-verify
 version: 1.0.0
-description: "用于本仓库的本地运行与浏览器验收流程。当用户要求启动 youthlin/blog、设置后台管理员、打开 8888 页面、验证前后台主题/语言切换、检查样式协调性、截图确认页面效果时使用。"
+description: "用于本仓库的本地运行与浏览器验收流程。当用户要求启动项目、设置后台管理员、打开 8888 页面、验证前后台主题/语言切换、检查样式协调性、截图确认页面效果时使用。"
 ---
 
 # Blog Browser Verify
@@ -20,7 +20,7 @@ description: "用于本仓库的本地运行与浏览器验收流程。当用户
 ## Instructions
 
 1. **先确认仓库位置**
-   - 当前仓库工作目录应为：`/data00/home/youthlin.chen/go/src/github.com/youthlin/blog`
+   - 应当在当前仓库工作目录执行
    - 除非用户明确要求，不要切换到别的仓库执行。
 
 2. **准备管理员账号**
