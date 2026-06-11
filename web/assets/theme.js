@@ -48,12 +48,24 @@
 
   var navBtn = document.querySelector("[data-nav-toggle]");
   var navPanel = document.querySelector("[data-nav-panel]");
+  var navBackdrop = document.querySelector("[data-nav-backdrop]");
   var openLabel = document.documentElement.dataset.navOpenLabel || "Open menu";
   var closeLabel = document.documentElement.dataset.navCloseLabel || "Collapse menu";
   function isMobileNav() {
     return !!(navBtn && window.getComputedStyle(navBtn).display !== "none");
   }
   if (navBtn && navPanel) {
+    function setNavState(open) {
+      navPanel.classList.toggle("is-open", open);
+      if (navBackdrop) {
+        navBackdrop.classList.toggle("is-open", open);
+      }
+      if (document.body) {
+        document.body.classList.toggle("nav-open", open && isMobileNav());
+      }
+      syncNavButton(open);
+    }
+
     function syncNavButton(open) {
       navBtn.setAttribute("aria-expanded", open ? "true" : "false");
       navBtn.setAttribute("aria-label", open ? closeLabel : openLabel);
@@ -61,27 +73,36 @@
     }
 
     navBtn.addEventListener("click", function () {
-      var open = navPanel.classList.toggle("is-open");
-      syncNavButton(open);
+      setNavState(!navPanel.classList.contains("is-open"));
     });
+
+    if (navBackdrop) {
+      navBackdrop.addEventListener("click", function () {
+        setNavState(false);
+      });
+    }
 
     navPanel.querySelectorAll("a").forEach(function (link) {
       link.addEventListener("click", function () {
         if (!isMobileNav()) {
           return;
         }
-        navPanel.classList.remove("is-open");
-        syncNavButton(false);
+        setNavState(false);
       });
+    });
+
+    window.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        setNavState(false);
+      }
     });
 
     window.addEventListener("resize", function () {
       if (!isMobileNav()) {
-        navPanel.classList.remove("is-open");
-        syncNavButton(false);
+        setNavState(false);
       }
     });
 
-    syncNavButton(navPanel.classList.contains("is-open"));
+    setNavState(navPanel.classList.contains("is-open"));
   }
 })();

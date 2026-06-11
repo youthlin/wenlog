@@ -87,8 +87,52 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 	}
 	if c != nil {
 		data["CSRFToken"] = middleware.CSRFToken(c)
+		data["CurrentAdminNav"] = adminNavKey(c)
 	}
 	return i18n.Inject(c, data)
+}
+
+func adminNavKey(c *gin.Context) string {
+	if c == nil {
+		return ""
+	}
+	path := c.FullPath()
+	if path == "" && c.Request != nil && c.Request.URL != nil {
+		path = c.Request.URL.Path
+	}
+	switch path {
+	case "/admin/":
+		return "dashboard"
+	case "/admin/posts":
+		return adminPostNavKey(c.DefaultQuery("type", model.PostTypePost))
+	case "/admin/post/new", "/admin/post/:id", "/admin/post", "/admin/preview":
+		postType := c.PostForm("post_type")
+		if postType == "" {
+			postType = c.DefaultQuery("type", model.PostTypePost)
+		}
+		return adminPostNavKey(postType)
+	case "/admin/comments", "/admin/comment/:id/:action", "/admin/comments/edit/:id", "/admin/comments/batch":
+		return "comments"
+	case "/admin/settings", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/profile", "/admin/settings/password":
+		return "settings"
+	case "/admin/debug":
+		return "debug"
+	case "/admin/terms", "/admin/category", "/admin/category/:id/delete", "/admin/tag", "/admin/tag/:id/delete":
+		return "terms"
+	case "/admin/uploads", "/admin/uploads.json", "/admin/upload", "/admin/upload/:id/delete":
+		return "uploads"
+	case "/admin/import", "/admin/export":
+		return "import"
+	default:
+		return ""
+	}
+}
+
+func adminPostNavKey(postType string) string {
+	if postType == model.PostTypePage {
+		return "pages"
+	}
+	return "posts"
 }
 
 // LoginForm 显示登录页。
