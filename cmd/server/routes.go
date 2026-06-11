@@ -24,8 +24,6 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 		pub.Index(c)
 	})
 
-	r.GET("/category/:slug", pub.Category)
-	r.GET("/tag/:slug", pub.Tag)
 	r.GET("/search", pub.Search)
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)

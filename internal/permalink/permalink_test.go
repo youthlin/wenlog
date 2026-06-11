@@ -73,3 +73,23 @@ func TestValidatePostPattern(t *testing.T) {
 		t.Fatalf("unexpected validation error: %v", err)
 	}
 }
+
+func TestTaxonomyPrefix(t *testing.T) {
+	SetTaxonomyPrefixes("topics", "labels")
+	if got := Category("go"); got != "/topics/go" {
+		t.Fatalf("Category()=%q", got)
+	}
+	if got := Tag("gin"); got != "/labels/gin" {
+		t.Fatalf("Tag()=%q", got)
+	}
+	if slug, ok := ParseCategoryPath("/topics/go"); !ok || slug != "go" {
+		t.Fatalf("ParseCategoryPath=%q,%v", slug, ok)
+	}
+	if slug, ok := ParseTagPath("/labels/gin"); !ok || slug != "gin" {
+		t.Fatalf("ParseTagPath=%q,%v", slug, ok)
+	}
+	if err := ValidateTaxonomyPrefix("bad/path"); err == nil {
+		t.Fatal("want invalid taxonomy prefix to fail")
+	}
+	SetTaxonomyPrefixes("category", "tag")
+}

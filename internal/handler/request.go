@@ -45,11 +45,20 @@ func positiveIntSetting(raw string, def int) int {
 
 func syncPostPermalink(st *store.Store) string {
 	pattern := consts.SettingsPostPermalinkDefault
+	categoryPrefix := consts.SettingsCategoryPrefixDefault
+	tagPrefix := consts.SettingsTagPrefixDefault
 	if st != nil {
 		if v, err := st.GetSetting(consts.SettingsPostPermalink); err == nil && strings.TrimSpace(v) != "" {
 			pattern = v
 		}
+		if v, err := st.GetSetting(consts.SettingsCategoryPrefix); err == nil && strings.TrimSpace(v) != "" {
+			categoryPrefix = v
+		}
+		if v, err := st.GetSetting(consts.SettingsTagPrefix); err == nil && strings.TrimSpace(v) != "" {
+			tagPrefix = v
+		}
 	}
 	permalink.SetPostPattern(pattern)
+	permalink.SetTaxonomyPrefixes(categoryPrefix, tagPrefix)
 	return permalink.CurrentPostPattern()
 }

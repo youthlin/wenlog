@@ -35,6 +35,8 @@ type publicSettings struct {
 	SiteName        string
 	SiteDescription string
 	PostPermalink   string
+	CategoryPrefix  string
+	TagPrefix       string
 	PageSize        int
 	FeedSize        int
 	SayingPostID    uint
@@ -92,6 +94,8 @@ func (h *Public) loadSettings() publicSettings {
 		SiteName:        firstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription: settings[consts.SettingsSiteDesc],
 		PostPermalink:   postPermalink,
+		CategoryPrefix:  permalink.CurrentCategoryPrefix(),
+		TagPrefix:       permalink.CurrentTagPrefix(),
 		PageSize:        positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
 		FeedSize:        positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
 		SayingPostID:    uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
@@ -108,6 +112,16 @@ func (h *Public) DynamicOrLegacy(c *gin.Context) {
 			h.Page(c)
 			return
 		}
+	}
+	if slug, ok := permalink.ParseCategoryPath(path); ok {
+		c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
+		h.Category(c)
+		return
+	}
+	if slug, ok := permalink.ParseTagPath(path); ok {
+		c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
+		h.Tag(c)
+		return
 	}
 	if match, ok := permalink.ParsePostPath(path); ok {
 		if h.renderResolvedPost(c, path, match) {
@@ -351,6 +365,9 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 // Category 分类列表页。
 func (h *Public) Category(c *gin.Context) {
 	slug := c.Param("slug")
+	if slug == "" {
+		slug = c.Query("slug")
+	}
 	page := atoiDefault(c.Query("page"), 1)
 	s := h.loadSettings()
 	tr := i18n.Get(c)
@@ -369,6 +386,9 @@ func (h *Public) Category(c *gin.Context) {
 // Tag 标签列表页。
 func (h *Public) Tag(c *gin.Context) {
 	slug := c.Param("slug")
+	if slug == "" {
+		slug = c.Query("slug")
+	}
 	page := atoiDefault(c.Query("page"), 1)
 	s := h.loadSettings()
 	tr := i18n.Get(c)

@@ -2,8 +2,8 @@
 //
 // 技术方案说明（记录在包内，便于后续维护）：
 //
-// 1. 站点只允许配置“文章永久链接结构”，页面仍然保持单段 /{slug}，这样可以继续
-//    复用现有页面模型、导航逻辑与保留路由（如 /search、/feed、/category/*）。
+// 1. 站点允许配置“文章永久链接结构”以及“分类/标签页面前缀”，页面仍然保持单段
+//    /{slug}，这样可以继续复用现有页面模型与导航逻辑。
 // 2. 文章永久链接结构兼容一组常见 WordPress 占位符：
 //    %year% %monthnum% %day% %hour% %minute% %second%
 //    %post_id% %postname% %category% %author%
@@ -138,6 +138,15 @@ var currentPattern = struct {
 	cp *compiledPattern
 }{cp: mustCompile(consts.SettingsPostPermalinkDefault)}
 
+var currentTaxonomy = struct {
+	mu             sync.RWMutex
+	categoryPrefix string
+	tagPrefix      string
+}{
+	categoryPrefix: consts.SettingsCategoryPrefixDefault,
+	tagPrefix:      consts.SettingsTagPrefixDefault,
+}
+
 // NormalizePostPattern 归一化固定链接结构。
 func NormalizePostPattern(raw string) string {
 	raw = strings.TrimSpace(raw)
@@ -204,10 +213,98 @@ func ParsePostPath(path string) (*PostPathMatch, bool) {
 }
 
 // Category 返回分类页路径。
-func Category(slug string) string { return "/category/" + slug }
+func Category(slug string) string {
+	currentTaxonomy.mu.RLock()
+	prefix := currentTaxonomy.categoryPrefix
+	currentTaxonomy.mu.RUnlock()
+	return "/" + prefix + "/" + slug
+}
 
 // Tag 返回标签页路径。
-func Tag(slug string) string { return "/tag/" + slug }
+func Tag(slug string) string {
+	currentTaxonomy.mu.RLock()
+	prefix := currentTaxonomy.tagPrefix
+	currentTaxonomy.mu.RUnlock()
+	return "/" + prefix + "/" + slug
+}
+
+func NormalizeTaxonomyPrefix(raw, def string) string {
+	raw = strings.Trim(strings.TrimSpace(raw), "/")
+	if raw == "" {
+		return def
+	}
+	return strings.ToLower(raw)
+}
+
+func ValidateTaxonomyPrefix(raw string) error {
+	raw = strings.Trim(strings.TrimSpace(raw), "/")
+	if raw == "" {
+		return fmt.Errorf("前缀不能为空")
+	}
+	if strings.ContainsRune(raw, '/') || strings.ContainsAny(raw, "?# \t\r\n") {
+		return fmt.Errorf("前缀不能包含 /、空白、? 或 #")
+	}
+	if raw == "." || raw == ".." {
+		return fmt.Errorf("前缀非法")
+	}
+	matched, err := regexp.MatchString(`^[A-Za-z0-9][A-Za-z0-9._-]*$`, raw)
+	if err != nil {
+		return err
+	}
+	if !matched {
+		return fmt.Errorf("前缀仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头")
+	}
+	return nil
+}
+
+func SetTaxonomyPrefixes(categoryPrefix, tagPrefix string) {
+	currentTaxonomy.mu.Lock()
+	currentTaxonomy.categoryPrefix = NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
+	currentTaxonomy.tagPrefix = NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
+	currentTaxonomy.mu.Unlock()
+}
+
+func CurrentCategoryPrefix() string {
+	currentTaxonomy.mu.RLock()
+	defer currentTaxonomy.mu.RUnlock()
+	return currentTaxonomy.categoryPrefix
+}
+
+func CurrentTagPrefix() string {
+	currentTaxonomy.mu.RLock()
+	defer currentTaxonomy.mu.RUnlock()
+	return currentTaxonomy.tagPrefix
+}
+
+func ParseCategoryPath(path string) (slug string, ok bool) {
+	currentTaxonomy.mu.RLock()
+	prefix := currentTaxonomy.categoryPrefix
+	currentTaxonomy.mu.RUnlock()
+	return parseTaxonomyPath(path, prefix)
+}
+
+func ParseTagPath(path string) (slug string, ok bool) {
+	currentTaxonomy.mu.RLock()
+	prefix := currentTaxonomy.tagPrefix
+	currentTaxonomy.mu.RUnlock()
+	return parseTaxonomyPath(path, prefix)
+}
+
+func parseTaxonomyPath(path, prefix string) (slug string, ok bool) {
+	prefix = strings.Trim(prefix, "/")
+	if prefix == "" {
+		return "", false
+	}
+	marker := "/" + prefix + "/"
+	if !strings.HasPrefix(path, marker) {
+		return "", false
+	}
+	slug = strings.TrimPrefix(path, marker)
+	if slug == "" || strings.ContainsRune(slug, '/') {
+		return "", false
+	}
+	return slug, true
+}
 
 func compile(raw string) (*compiledPattern, error) {
 	normalized := NormalizePostPattern(raw)

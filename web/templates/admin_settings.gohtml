@@ -13,6 +13,11 @@
       <label>{{.t.T "文章固定链接结构"}}<input type="text" name="post_permalink" value="{{.PostPermalinkValue}}" required></label>
       <p class="tip">{{.t.T "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% %post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%%post_id%.html。"}}</p>
       <div class="form-row">
+        <label>{{.t.T "分类目录前缀"}}<input type="text" name="category_prefix" value="{{.CategoryPrefixValue}}" required></label>
+        <label>{{.t.T "标签前缀"}}<input type="text" name="tag_prefix" value="{{.TagPrefixValue}}" required></label>
+      </div>
+      <p class="tip">{{.t.T "例如可把分类目录从 /category/go 改成 /topics/go，把标签从 /tag/gin 改成 /labels/gin。"}}</p>
+      <div class="form-row">
         <label>{{.t.T "列表分页数量"}}<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
         <label>{{.t.T "Feed 输出数量"}}<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
       </div>

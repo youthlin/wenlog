@@ -13,6 +13,12 @@ const (
 	// 固定链接
 	SettingsPostPermalink        = "post_permalink"
 	SettingsPostPermalinkDefault = "/%year%%post_id%.html"
+	// 分类目录前缀
+	SettingsCategoryPrefix        = "category_prefix"
+	SettingsCategoryPrefixDefault = "category"
+	// 标签前缀
+	SettingsTagPrefix        = "tag_prefix"
+	SettingsTagPrefixDefault = "tag"
 	// 博主动态用哪个postid
 	SettingsSayingPageID        = "saying_page_id"
 	SettingsSayingPageIDDefault = 456

@@ -278,6 +278,8 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
 		consts.SettingsPostPermalink,
+		consts.SettingsCategoryPrefix,
+		consts.SettingsTagPrefix,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
@@ -286,6 +288,8 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 	data["SiteNameValue"] = firstNonEmptyAdmin(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault)
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
 	data["PostPermalinkValue"] = firstNonEmptyAdmin(settings[consts.SettingsPostPermalink], consts.SettingsPostPermalinkDefault)
+	data["CategoryPrefixValue"] = firstNonEmptyAdmin(settings[consts.SettingsCategoryPrefix], consts.SettingsCategoryPrefixDefault)
+	data["TagPrefixValue"] = firstNonEmptyAdmin(settings[consts.SettingsTagPrefix], consts.SettingsTagPrefixDefault)
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
 	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
@@ -344,6 +348,8 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	name := strings.TrimSpace(c.PostForm("site_name"))
 	desc := strings.TrimSpace(c.PostForm("site_description"))
 	postPermalink := strings.TrimSpace(c.PostForm("post_permalink"))
+	categoryPrefix := strings.TrimSpace(c.PostForm("category_prefix"))
+	tagPrefix := strings.TrimSpace(c.PostForm("tag_prefix"))
 	pageSize, err := strconv.Atoi(strings.TrimSpace(c.PostForm("page_size")))
 	if err != nil || pageSize < 1 {
 		pageSize = defaultPublicPageSize
@@ -357,6 +363,32 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
+	if err := permalink.ValidateTaxonomyPrefix(categoryPrefix); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("分类目录前缀不合法: %s", err.Error())
+		data["CategoryPrefixValue"] = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
+		data["TagPrefixValue"] = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	if err := permalink.ValidateTaxonomyPrefix(tagPrefix); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("标签前缀不合法: %s", err.Error())
+		data["CategoryPrefixValue"] = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
+		data["TagPrefixValue"] = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
+	catNorm := permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
+	tagNorm := permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
+	if catNorm == tagNorm {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("分类目录前缀和标签前缀不能相同。")
+		data["CategoryPrefixValue"] = catNorm
+		data["TagPrefixValue"] = tagNorm
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
 	if err := h.st.SetSetting("site_name", name); err != nil {
 		h.serverError(c, err)
 		return
@@ -366,6 +398,14 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	if err := h.st.SetSetting(consts.SettingsPostPermalink, permalink.NormalizePostPattern(postPermalink)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsCategoryPrefix, catNorm); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsTagPrefix, tagNorm); err != nil {
 		h.serverError(c, err)
 		return
 	}
