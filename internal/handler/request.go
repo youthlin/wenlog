@@ -5,6 +5,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/youthlin/blog/internal/consts"
+	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/store"
 )
 
 func requestBaseURL(c *gin.Context) string {
@@ -37,4 +41,15 @@ func positiveIntSetting(raw string, def int) int {
 		return def
 	}
 	return n
+}
+
+func syncPostPermalink(st *store.Store) string {
+	pattern := consts.SettingsPostPermalinkDefault
+	if st != nil {
+		if v, err := st.GetSetting(consts.SettingsPostPermalink); err == nil && strings.TrimSpace(v) != "" {
+			pattern = v
+		}
+	}
+	permalink.SetPostPattern(pattern)
+	return permalink.CurrentPostPattern()
 }

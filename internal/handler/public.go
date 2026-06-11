@@ -34,6 +34,7 @@ const commentPageSize = 20
 type publicSettings struct {
 	SiteName        string
 	SiteDescription string
+	PostPermalink   string
 	PageSize        int
 	FeedSize        int
 	SayingPostID    uint
@@ -79,6 +80,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 }
 
 func (h *Public) loadSettings() publicSettings {
+	postPermalink := syncPostPermalink(h.st)
 	settings, _ := h.st.GetSettings(
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
@@ -89,10 +91,33 @@ func (h *Public) loadSettings() publicSettings {
 	return publicSettings{
 		SiteName:        firstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription: settings[consts.SettingsSiteDesc],
+		PostPermalink:   postPermalink,
 		PageSize:        positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
 		FeedSize:        positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
 		SayingPostID:    uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
 	}
+}
+
+// DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。
+func (h *Public) DynamicOrLegacy(c *gin.Context) {
+	syncPostPermalink(h.st)
+	path := c.Request.URL.Path
+	if slug, ok := singleSegmentSlug(path); ok {
+		if h.pageExists(slug) {
+			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
+			h.Page(c)
+			return
+		}
+	}
+	if match, ok := permalink.ParsePostPath(path); ok {
+		if h.renderResolvedPost(c, path, match) {
+			return
+		}
+	}
+	if h.LegacyQueryRedirect(c) {
+		return
+	}
+	h.notFound(c)
 }
 
 // currentUser 返回当前登录用户(未登录为 nil)。
@@ -159,53 +184,17 @@ func (h *Public) Search(c *gin.Context) {
 	c.HTML(http.StatusOK, "list.gohtml", data)
 }
 
-// Post 文章详情(永久链接 /{year}{id}.html)。
+// Post 文章详情（按当前固定链接规则解析）。
 func (h *Public) Post(c *gin.Context) {
-	year, id, ok := permalink.ParsePostPath(c.Request.URL.Path)
+	syncPostPermalink(h.st)
+	match, ok := permalink.ParsePostPath(c.Request.URL.Path)
 	if !ok {
 		h.notFound(c)
 		return
 	}
-	p, err := h.st.GetPostByID(id)
-	if err != nil {
-		// 已发布未命中:可能是草稿,仅作者本人可预览。
-		p = h.draftForAuthor(c, id)
-		if p == nil {
-			h.notFound(c)
-			return
-		}
+	if !h.renderResolvedPost(c, c.Request.URL.Path, match) {
+		h.notFound(c)
 	}
-	// 校验 URL 中年份与发布年份一致,否则 301 到正确链接(保链接健壮性)。
-	if p.PublishedAt.Year() != year {
-		c.Redirect(http.StatusMovedPermanently, permalink.Post(p))
-		return
-	}
-	if p.Status == model.StatusPublished {
-		_ = h.st.IncrementViews(id)
-		p.Views++ // 本次展示也算上
-	}
-
-	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.ApprovedCommentsPage(id, commentPage, commentPageSize)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	s := h.loadSettings()
-	data := h.base(c, p.Title, p.Excerpt, s)
-	data["Post"] = p
-	data["IsDraft"] = p.Status == model.StatusDraft
-	data["Comments"] = comments.Comments
-	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
-	data["CommentCount"] = comments.TotalComments
-	data["CommentOpen"] = p.CommentStatus != "closed"
-	data["PrevPost"] = h.st.PrevPost(p.PublishedAt)
-	data["NextPost"] = h.st.NextPost(p.PublishedAt)
-	if c.Query("ajax") == "comments" {
-		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
-		return
-	}
-	c.HTML(http.StatusOK, "post.gohtml", data)
 }
 
 // draftForAuthor 返回草稿文章,仅当请求者是该文章作者本人;否则 nil。
@@ -223,6 +212,7 @@ func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 
 // Page 处理 /{slug} 页面以及若干特殊页面(归档)。
 func (h *Public) Page(c *gin.Context) {
+	_ = h.loadSettings()
 	slug := strings.Trim(c.Param("slug"), "/")
 	if slug == "" {
 		h.notFound(c)
@@ -260,6 +250,60 @@ func (h *Public) Page(c *gin.Context) {
 		return
 	}
 	c.HTML(http.StatusOK, "page.gohtml", data)
+}
+
+func (h *Public) pageExists(slug string) bool {
+	if slug == "archive" {
+		return true
+	}
+	if h.st == nil {
+		return false
+	}
+	_, err := h.st.GetPageBySlug(slug)
+	return err == nil
+}
+
+func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalink.PostPathMatch) bool {
+	p, err := h.st.ResolvePostByPath(path, match)
+	if err != nil {
+		if match == nil || !match.HasPostID {
+			return false
+		}
+		p = h.draftForAuthor(c, match.PostID)
+		if p == nil {
+			return false
+		}
+	}
+	if got := permalink.Post(p); got != path {
+		c.Redirect(http.StatusMovedPermanently, got)
+		return true
+	}
+	if p.Status == model.StatusPublished {
+		_ = h.st.IncrementViews(p.ID)
+		p.Views++
+	}
+	commentPage := atoiDefault(c.Query("cpage"), 1)
+	comments, err := h.st.ApprovedCommentsPage(p.ID, commentPage, commentPageSize)
+	if err != nil {
+		h.serverError(c, err)
+		return true
+	}
+	s := h.loadSettings()
+	data := h.base(c, p.Title, p.Excerpt, s)
+	data["Post"] = p
+	data["IsDraft"] = p.Status == model.StatusDraft
+	data["Comments"] = comments.Comments
+	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
+	data["CommentCount"] = comments.TotalComments
+	data["CommentOpen"] = p.CommentStatus != "closed"
+	data["PrevPost"] = h.st.PrevPost(p.PublishedAt)
+	data["NextPost"] = h.st.NextPost(p.PublishedAt)
+	if c.Query("ajax") == "comments" {
+		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+		return true
+	}
+	c.HTML(http.StatusOK, "post.gohtml", data)
+	return true
 }
 
 func (h *Public) specialPage(c *gin.Context, slug, fallbackTitle string) *model.Post {
@@ -343,6 +387,7 @@ func (h *Public) Tag(c *gin.Context) {
 // LegacyQueryRedirect 处理 /?p={id} 旧链接 301 到永久链接。
 // 返回 true 表示已处理。
 func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
+	syncPostPermalink(h.st)
 	pid := c.Query("p")
 	if pid == "" {
 		return false
@@ -418,4 +463,12 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func singleSegmentSlug(path string) (string, bool) {
+	path = strings.Trim(path, "/")
+	if path == "" || strings.ContainsRune(path, '/') {
+		return "", false
+	}
+	return path, true
 }

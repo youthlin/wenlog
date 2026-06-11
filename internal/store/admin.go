@@ -93,6 +93,17 @@ func (s *Store) PageSlugExists(slug string, excludeID uint) (bool, error) {
 	return n > 0, errors.Wrap(err, "count page slug")
 }
 
+// PostSlugExists 检查文章 slug 是否已被其他文章占用。
+func (s *Store) PostSlugExists(slug string, excludeID uint) (bool, error) {
+	var n int64
+	q := s.db.Model(&model.Post{}).Where("post_type = ? AND slug = ?", model.PostTypePost, slug)
+	if excludeID > 0 {
+		q = q.Where("id <> ?", excludeID)
+	}
+	err := q.Count(&n).Error
+	return n > 0, errors.Wrap(err, "count post slug")
+}
+
 // UpdateUserPassword 按用户 ID 更新密码哈希。
 func (s *Store) UpdateUserPassword(id uint, passwordHash string) error {
 	return errors.Wrap(
@@ -192,7 +203,8 @@ func (s *Store) AdminListPosts(postType string, page, pageSize int) ([]model.Pos
 		return nil, 0, errors.Wrap(err, "count")
 	}
 	var posts []model.Post
-	err := q.Order("published_at DESC").
+	err := q.Preload("Categories").Preload("Author").
+		Order("published_at DESC").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&posts).Error
 	return posts, total, errors.Wrap(err, "admin list posts")
 }
@@ -398,7 +410,9 @@ func (s *Store) AdminPostsByIDs(ids []uint) (map[uint]model.Post, error) {
 		return result, nil
 	}
 	var posts []model.Post
-	err := s.db.Select("id", "title", "slug", "post_type", "published_at").Where("id IN ?", uniq).Find(&posts).Error
+	err := s.db.Select("id", "title", "slug", "post_type", "published_at", "author_id").
+		Preload("Categories").Preload("Author").
+		Where("id IN ?", uniq).Find(&posts).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "admin posts by ids")
 	}

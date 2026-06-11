@@ -5,7 +5,6 @@ import (
 
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/permalink"
 )
 
 // registerPublicRoutes 注册前台路由。
@@ -31,20 +30,8 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)
 
-	// 根路径下的单段路由:既可能是文章永久链接,也可能是页面 slug。
-	r.GET("/:seg", func(c *gin.Context) {
-		path := c.Request.URL.Path
-		if _, _, ok := permalink.ParsePostPath(path); ok {
-			pub.Post(c)
-			return
-		}
-		// 否则当作页面 slug。
-		c.Params = append(c.Params, gin.Param{Key: "slug", Value: c.Param("seg")})
-		pub.Page(c)
-	})
-
-	// 兜底:旧 slug 301 或 404。
-	r.NoRoute(pub.NotFoundOrLegacy)
+	// 兜底动态路由: 页面 slug + 任意层级文章永久链接 + 旧链接兼容。
+	r.NoRoute(pub.DynamicOrLegacy)
 }
 
 // registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。

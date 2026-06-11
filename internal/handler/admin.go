@@ -76,12 +76,14 @@ var _ = func() struct{} {
 }()
 
 func (h *Admin) base(c *gin.Context, title string) gin.H {
+	currentPostPermalink := syncPostPermalink(h.st)
 	v, _ := h.st.GetSetting(consts.SettingsSiteName)
 	siteName := firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault)
 	data := gin.H{
-		"SiteName":     siteName,
-		"Title":        title,
-		"PendingCount": h.st.PendingCommentCount(),
+		"SiteName":             siteName,
+		"Title":                title,
+		"PendingCount":         h.st.PendingCommentCount(),
+		"PostPermalinkPattern": currentPostPermalink,
 	}
 	if c != nil {
 		data["CSRFToken"] = middleware.CSRFToken(c)
@@ -275,6 +277,7 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 	settings, _ := h.st.GetSettings(
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
+		consts.SettingsPostPermalink,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
@@ -282,6 +285,7 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 	)
 	data["SiteNameValue"] = firstNonEmptyAdmin(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault)
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
+	data["PostPermalinkValue"] = firstNonEmptyAdmin(settings[consts.SettingsPostPermalink], consts.SettingsPostPermalinkDefault)
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
 	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
@@ -336,19 +340,32 @@ func (h *Admin) importPageData(c *gin.Context, title string) (gin.H, bool) {
 
 // SaveSiteSettings 保存站点名称/描述。
 func (h *Admin) SaveSiteSettings(c *gin.Context) {
+	tr := i18n.Get(c)
 	name := strings.TrimSpace(c.PostForm("site_name"))
 	desc := strings.TrimSpace(c.PostForm("site_description"))
+	postPermalink := strings.TrimSpace(c.PostForm("post_permalink"))
 	pageSize, err := strconv.Atoi(strings.TrimSpace(c.PostForm("page_size")))
 	if err != nil || pageSize < 1 {
 		pageSize = defaultPublicPageSize
 	}
 	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
 	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
+	if err := permalink.ValidatePostPattern(postPermalink); err != nil {
+		data := h.settingsData(c)
+		data["Error"] = tr.T("固定链接结构不合法: %s", err.Error())
+		data["PostPermalinkValue"] = permalink.NormalizePostPattern(postPermalink)
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		return
+	}
 	if err := h.st.SetSetting("site_name", name); err != nil {
 		h.serverError(c, err)
 		return
 	}
 	if err := h.st.SetSetting("site_description", desc); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsPostPermalink, permalink.NormalizePostPattern(postPermalink)); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -364,6 +381,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	syncPostPermalink(h.st)
 	c.Redirect(http.StatusSeeOther, "/admin/settings")
 }
 
@@ -1185,6 +1203,40 @@ func (h *Admin) SavePost(c *gin.Context) {
 			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
 			return
 		}
+	} else {
+		p.Slug = normalizeTermSlug(p.Slug)
+		if p.Slug == "" {
+			p.Slug = normalizeTermSlug(p.Title)
+		}
+		if err := validatePostSlugT(tr.T, p.Slug); err != nil {
+			data := h.base(c, tr.T("内容管理"))
+			data["Error"] = err.Error()
+			data["PostType"] = f.PostType
+			data["AllCategories"] = h.st.AllCategories()
+			data["SelectedCats"] = selectedCats(f.CategoryIDs)
+			data["TagsCSV"] = f.Tags
+			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
+			data["IsEdit"] = f.ID > 0
+			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+			return
+		}
+		exists, err := h.st.PostSlugExists(p.Slug, p.ID)
+		if err != nil {
+			h.serverError(c, err)
+			return
+		}
+		if exists {
+			data := h.base(c, tr.T("内容管理"))
+			data["Error"] = tr.T("文章 slug %q 已存在，请换一个。", p.Slug)
+			data["PostType"] = f.PostType
+			data["AllCategories"] = h.st.AllCategories()
+			data["SelectedCats"] = selectedCats(f.CategoryIDs)
+			data["TagsCSV"] = f.Tags
+			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
+			data["IsEdit"] = f.ID > 0
+			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+			return
+		}
 	}
 	p.Excerpt = f.Excerpt
 	p.PostType = f.PostType
@@ -1482,6 +1534,7 @@ func validatePageSlug(slug string) error {
 }
 
 func validatePageSlugT(tr func(string, ...any) string, slug string) error {
+	syncPostPermalink(nil)
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
 		return errors.New(tr(gettext.Mark.T("页面 slug 不能为空")))
@@ -1498,13 +1551,41 @@ func validatePageSlugT(tr func(string, ...any) string, slug string) error {
 	if !pageSlugAllowedRe.MatchString(slug) {
 		return errors.New(tr(gettext.Mark.T("页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头")))
 	}
-	if _, _, ok := permalink.ParsePostPath("/" + slug); ok {
+	if _, ok := permalink.ParsePostPath("/" + slug); ok {
 		return errors.New(tr(gettext.Mark.T("页面 slug 不能与文章永久链接格式冲突")))
 	}
 	if pageSlugReserved[strings.ToLower(slug)] {
 		return errors.New(tr(gettext.Mark.T("页面 slug %q 为保留路由，请换一个"), slug))
 	}
 	return nil
+}
+
+func validatePostSlugT(tr func(string, ...any) string, slug string) error {
+	if !permalink.CurrentPatternUsesToken("postname") {
+		return nil
+	}
+	slug = strings.TrimSpace(slug)
+	if slug == "" {
+		return errors.New(tr(gettext.Mark.T("当前固定链接结构使用了 %postname%，文章 slug 不能为空")))
+	}
+	if strings.ContainsRune(slug, '/') || strings.ContainsAny(slug, "?# \t\r\n") {
+		return errors.New(tr(gettext.Mark.T("文章 slug 不能包含 /、空白、? 或 #")))
+	}
+	if slug == "." || slug == ".." {
+		return errors.New(tr(gettext.Mark.T("文章 slug 非法")))
+	}
+	if pageSlugReserved[strings.ToLower(slug)] {
+		return errors.New(tr(gettext.Mark.T("文章 slug %q 为保留路由，请换一个"), slug))
+	}
+	return nil
+}
+
+func selectedCats(ids []uint) map[uint]bool {
+	out := make(map[uint]bool, len(ids))
+	for _, id := range ids {
+		out[id] = true
+	}
+	return out
 }
 
 // renderMarkdown 把 Markdown 渲染为 HTML,并复用前台统一的代码块高亮逻辑。

@@ -2,6 +2,7 @@
 package store
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -154,6 +155,65 @@ func (s *Store) GetPostByID(id uint) (*model.Post, error) {
 	return &p, nil
 }
 
+// ResolvePostByPath 根据解析后的固定链接条件定位已发布文章。
+//
+// 注意：这里不会仅凭某一个字段直接认定命中，而是先做数据库过滤，再用
+// permalink.Post 的结果与原路径做一次精确比对，确保“当前规则生成出来的路径”
+// 与用户请求完全一致。
+func (s *Store) ResolvePostByPath(path string, match *permalink.PostPathMatch) (*model.Post, error) {
+	if match == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+	q := s.db.Model(&model.Post{}).
+		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished)
+	if match.HasPostID {
+		q = q.Where("posts.id = ?", match.PostID)
+	}
+	if match.HasName {
+		q = q.Where("posts.slug = ?", match.PostName)
+	}
+	if match.HasYear {
+		q = q.Where("strftime('%Y', posts.published_at) = ?", fmt.Sprintf("%04d", match.Year))
+	}
+	if match.HasMonth {
+		q = q.Where("strftime('%m', posts.published_at) = ?", fmt.Sprintf("%02d", match.Month))
+	}
+	if match.HasDay {
+		q = q.Where("strftime('%d', posts.published_at) = ?", fmt.Sprintf("%02d", match.Day))
+	}
+	if match.HasHour {
+		q = q.Where("strftime('%H', posts.published_at) = ?", fmt.Sprintf("%02d", match.Hour))
+	}
+	if match.HasMinute {
+		q = q.Where("strftime('%M', posts.published_at) = ?", fmt.Sprintf("%02d", match.Minute))
+	}
+	if match.HasSecond {
+		q = q.Where("strftime('%S', posts.published_at) = ?", fmt.Sprintf("%02d", match.Second))
+	}
+	if match.HasAuthor {
+		q = q.Joins("JOIN users ON users.id = posts.author_id").Where("users.username = ?", match.Author)
+	}
+	if match.HasCat {
+		q = q.Joins("JOIN post_categories pc_path ON pc_path.post_id = posts.id").
+			Joins("JOIN categories c_path ON c_path.id = pc_path.category_id").
+			Where("c_path.slug = ?", match.Category)
+	}
+	var posts []model.Post
+	err := q.Preload("Categories").Preload("Tags").Preload("Author").
+		Order("published_at DESC").Order("id DESC").
+		Limit(20).
+		Find(&posts).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "resolve post by path")
+	}
+	for i := range posts {
+		if permalink.Post(&posts[i]) == path {
+			return &posts[i], nil
+		}
+	}
+	return nil, gorm.ErrRecordNotFound
+}
+
 // GetPostAnyStatus 按 ID 取任意状态文章(含分类/标签/作者),用于作者预览草稿。
 func (s *Store) GetPostAnyStatus(id uint) (*model.Post, error) {
 	var p model.Post
@@ -169,7 +229,8 @@ func (s *Store) GetPostAnyStatus(id uint) (*model.Post, error) {
 // PrevPost 返回比 t 更早的最近一篇已发布文章(上一篇)。无则返回 nil。
 func (s *Store) PrevPost(t time.Time) *model.Post {
 	var p model.Post
-	err := s.db.Select("id", "title", "published_at").
+	err := s.db.Select("id", "title", "slug", "published_at", "author_id").
+		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ? AND published_at < ?",
 			model.PostTypePost, model.StatusPublished, t).
 		Order("published_at DESC").First(&p).Error
@@ -182,7 +243,8 @@ func (s *Store) PrevPost(t time.Time) *model.Post {
 // NextPost 返回比 t 更晚的最近一篇已发布文章(下一篇)。无则返回 nil。
 func (s *Store) NextPost(t time.Time) *model.Post {
 	var p model.Post
-	err := s.db.Select("id", "title", "published_at").
+	err := s.db.Select("id", "title", "slug", "published_at", "author_id").
+		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ? AND published_at > ?",
 			model.PostTypePost, model.StatusPublished, t).
 		Order("published_at ASC").First(&p).Error
@@ -212,7 +274,8 @@ func (s *Store) IncrementViews(id uint) error {
 // AllPostsForArchive 返回全部已发布文章(仅 id/title/published_at),用于归档页。
 func (s *Store) AllPostsForArchive() ([]model.Post, error) {
 	var posts []model.Post
-	err := s.db.Select("id", "title", "published_at").
+	err := s.db.Select("id", "title", "slug", "published_at", "author_id").
+		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Order("published_at DESC").Find(&posts).Error
 	if err != nil {
@@ -346,7 +409,8 @@ func (s *Store) MenuPages() ([]model.Post, error) {
 // PostMeta 取文章/页面的轻量字段(用于重定向、校验、小组件链接)。
 func (s *Store) PostMeta(id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db.Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status").
+	err := s.db.Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
+		Preload("Categories").Preload("Author").
 		Where("id = ?", id).First(&p).Error
 	if err != nil {
 		return nil, err
@@ -385,7 +449,8 @@ func (s *Store) RecentCommentItems(n, pageSize int) []CommentWidgetItem {
 // RecentPosts 返回最近 n 篇已发布文章(仅 id/title/published_at,侧栏小组件)。
 func (s *Store) RecentPosts(n int) []model.Post {
 	var ps []model.Post
-	s.db.Select("id", "title", "published_at").
+	s.db.Select("id", "title", "slug", "published_at", "author_id").
+		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Order("published_at DESC").Limit(n).Find(&ps)
 	return ps

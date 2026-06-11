@@ -10,6 +10,8 @@
       {{template "csrf_field" .}}
       <label>{{.t.T "站点名称"}}<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
       <label>{{.t.T "站点描述"}}<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
+      <label>{{.t.T "文章固定链接结构"}}<input type="text" name="post_permalink" value="{{.PostPermalinkValue}}" required></label>
+      <p class="tip">{{.t.T "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% %post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%%post_id%.html。"}}</p>
       <div class="form-row">
         <label>{{.t.T "列表分页数量"}}<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
         <label>{{.t.T "Feed 输出数量"}}<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
