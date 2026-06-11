@@ -19,32 +19,10 @@
   <div class="container header-inner">
     <a class="site-title" href="/">{{.SiteName}}</a>
     <nav id="site-nav-menu" class="site-nav" data-nav-panel>
-      {{range .Menu}}<a href="{{pageURL .}}">{{.Title}}</a>{{end}}
-    </nav>
-    <div class="header-actions">
-      <div class="desktop-header-controls">
-      <label class="lang-select-wrap">
-        <span class="sr-only">{{.t.T "语言"}}</span>
-        <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-          <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
-          <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
-        </select>
-      </label>
-      <label class="theme-select-wrap">
-        <span class="sr-only">{{.t.T "切换主题"}}</span>
-        <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
-          <option value="dark">{{.t.T "暗黑"}}</option>
-          <option value="light">{{.t.T "明亮"}}</option>
-          <option value="red-plum">{{.t.T "红梅"}}</option>
-          <option value="bamboo">{{.t.T "绿竹"}}</option>
-          <option value="lotus">{{.t.T "藕粉"}}</option>
-          <option value="orange">{{.t.T "橙黄"}}</option>
-          <option value="azure">{{.t.T "蔚蓝"}}</option>
-          <option value="purple">{{.t.T "韵紫"}}</option>
-        </select>
-      </label>
+      <div class="site-nav-links">
+        {{range .Menu}}<a href="{{pageURL .}}">{{.Title}}</a>{{end}}
       </div>
-      <div class="mobile-header-tools" aria-label="{{.t.T "界面设置"}}">
+      <div class="site-nav-utility" aria-label="{{.t.T "界面设置"}}">
         <label class="lang-select-wrap">
           <span class="sr-only">{{.t.T "语言"}}</span>
           <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
@@ -66,6 +44,8 @@
           </select>
         </label>
       </div>
+    </nav>
+    <div class="header-actions">
       <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
     </div>
   </div>

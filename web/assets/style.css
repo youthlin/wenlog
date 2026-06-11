@@ -179,14 +179,15 @@ img { max-width: 100%; }
 .avatar-picture { display: inline-flex; line-height: 0; }
 
 /* 顶部 */
-.site-header { background: var(--header-bg); border-bottom: 1px solid var(--header-border, var(--border)); position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(140%) blur(10px); box-shadow: var(--header-shadow); }
+.site-header { background: var(--header-bg); border-bottom: 1px solid var(--accent); position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(140%) blur(10px); box-shadow: var(--header-shadow); }
 .header-inner { display: flex; align-items: center; gap: 16px; min-height: 64px; }
 .site-title { font-size: 20px; font-weight: 700; color: var(--fg); }
 .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .desktop-header-controls { display: flex; align-items: center; gap: 8px; }
-.mobile-header-tools { display: none; }
 .nav-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 5px; cursor: pointer; font-size: 18px; padding: 4px 10px; color: var(--fg); }
-.site-nav { flex: 1; }
+.site-nav { flex: 1; display: flex; align-items: center; gap: 16px; min-width: 0; }
+.site-nav-links { display: flex; flex-wrap: wrap; gap: 0; }
+.site-nav-utility { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .site-nav a { margin-right: 10px; color: var(--fg); font-size: 15px; padding: 8px 12px; border-radius: 999px; }
 .site-nav a:hover { text-decoration: none; background: var(--nav-hover-bg); }
 .nav-search input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font-size: 14px; }
@@ -205,19 +206,19 @@ img { max-width: 100%; }
   .sidebar { width: 100%; }
   .site-header .header-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; padding: 12px 16px; min-height: 0; }
   .site-title { min-width: 0; width: auto; }
-  .header-actions { margin-left: 0; width: auto; justify-self: end; display: grid; grid-template-columns: minmax(0, 84px) minmax(0, 84px) auto; align-items: center; gap: 8px; }
+  .header-actions { margin-left: 0; width: auto; justify-self: end; display: flex; align-items: center; gap: 8px; grid-column: 2; grid-row: 1; }
   .desktop-header-controls { display: none; }
-  .nav-toggle { display: inline-block; grid-column: 3; justify-self: end; }
+  .nav-toggle { display: inline-block; justify-self: end; }
   .theme-select, .lang-select { min-width: 0; max-width: 100px; font-size: 13px; padding-left: 10px; padding-right: 28px; }
-  .site-nav { grid-column: 1 / -1; width: 100%; display: none; flex-direction: column; gap: 8px; margin-top: 2px; padding: 14px 0 8px; border-top: 1px solid var(--border); }
+  .site-nav { grid-column: 1 / -1; grid-row: 2; width: 100%; display: none; flex-direction: column; gap: 0; margin-top: 2px; padding: 14px 0 8px; border-top: 1px solid var(--border); }
   .site-nav.is-open { display: flex; }
-  .site-nav a { display: block; margin: 2px 0; margin-right: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); text-align: left; }
-  .mobile-header-tools { display: none; }
-  .site-nav.is-open ~ .header-actions .mobile-header-tools { display: contents; }
-  .header-actions .mobile-header-tools .lang-select-wrap,
-  .header-actions .mobile-header-tools .theme-select-wrap { display: block; }
-  .header-actions .mobile-header-tools .lang-select,
-  .header-actions .mobile-header-tools .theme-select { width: 100%; min-width: 0; max-width: none; }
+  .site-nav-links { display: grid; gap: 8px; width: 100%; }
+  .site-nav a { display: block; width: 100%; margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); text-align: left; }
+  .site-nav-utility { width: 100%; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; }
+  .site-nav-utility .lang-select-wrap,
+  .site-nav-utility .theme-select-wrap { display: inline-flex; max-width: 100%; }
+  .site-nav-utility .lang-select,
+  .site-nav-utility .theme-select { width: auto; min-width: 96px; max-width: 100%; }
   .nav-search { width: 100%; order: 4; display: none; }
   .site-nav.is-open + .nav-search { display: block; }
   .nav-search input { width: 100%; }

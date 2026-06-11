@@ -45,60 +45,36 @@
             <a href="/admin/import">{{.t.T "导入导出"}}</a>
           </div>
         </div>
-      </div>
-      <div class="admin-nav-utility">
-        <span class="nav-group-title">{{.t.T "快捷操作"}}</span>
-        <div class="admin-nav-actions">
-          <a href="/" target="_blank">{{.t.T "查看站点"}}</a>
-          <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
+        <div class="nav-group">
+          <span class="nav-group-title">{{.t.T "快捷操作"}}</span>
+          <div class="nav-group-links">
+            <label class="lang-select-wrap">
+            <span class="sr-only">{{.t.T "语言"}}</span>
+            <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+              <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
+              <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+            </select>
+          </label>
+          <label class="theme-select-wrap">
+            <span class="sr-only">{{.t.T "切换主题"}}</span>
+            <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
+              <option value="dark">{{.t.T "暗黑"}}</option>
+              <option value="light">{{.t.T "明亮"}}</option>
+              <option value="red-plum">{{.t.T "红梅"}}</option>
+              <option value="bamboo">{{.t.T "绿竹"}}</option>
+              <option value="lotus">{{.t.T "藕粉"}}</option>
+              <option value="orange">{{.t.T "橙黄"}}</option>
+              <option value="azure">{{.t.T "蔚蓝"}}</option>
+              <option value="purple">{{.t.T "韵紫"}}</option>
+            </select>
+          </label>
+            <a href="/" target="_blank">{{.t.T "查看站点"}}</a>
+            <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
+          </div>
         </div>
       </div>
     </nav>
     <div class="header-actions admin-header-actions">
-      <div class="desktop-header-controls">
-      <label class="lang-select-wrap">
-        <span class="sr-only">{{.t.T "语言"}}</span>
-        <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-          <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
-          <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
-        </select>
-      </label>
-      <label class="theme-select-wrap">
-        <span class="sr-only">{{.t.T "切换主题"}}</span>
-        <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
-          <option value="dark">{{.t.T "暗黑"}}</option>
-          <option value="light">{{.t.T "明亮"}}</option>
-          <option value="red-plum">{{.t.T "红梅"}}</option>
-          <option value="bamboo">{{.t.T "绿竹"}}</option>
-          <option value="lotus">{{.t.T "藕粉"}}</option>
-          <option value="orange">{{.t.T "橙黄"}}</option>
-          <option value="azure">{{.t.T "蔚蓝"}}</option>
-          <option value="purple">{{.t.T "韵紫"}}</option>
-        </select>
-      </label>
-      </div>
-      <div class="mobile-header-tools admin-mobile-header-tools" aria-label="{{.t.T "界面设置"}}">
-        <label class="lang-select-wrap">
-          <span class="sr-only">{{.t.T "语言"}}</span>
-          <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
-            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
-          </select>
-        </label>
-        <label class="theme-select-wrap">
-          <span class="sr-only">{{.t.T "切换主题"}}</span>
-          <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
-            <option value="dark">{{.t.T "暗黑"}}</option>
-            <option value="light">{{.t.T "明亮"}}</option>
-            <option value="red-plum">{{.t.T "红梅"}}</option>
-            <option value="bamboo">{{.t.T "绿竹"}}</option>
-            <option value="lotus">{{.t.T "藕粉"}}</option>
-            <option value="orange">{{.t.T "橙黄"}}</option>
-            <option value="azure">{{.t.T "蔚蓝"}}</option>
-            <option value="purple">{{.t.T "韵紫"}}</option>
-          </select>
-        </label>
-      </div>
       <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
     </div>
   </div>
