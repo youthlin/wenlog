@@ -73,13 +73,15 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		h.commentResp(c, false, tr.T("评论长度不合适。"), req.PostID)
 		return
 	}
-	if req.Email == "" {
+	if loggedInUser == nil && req.Email == "" {
 		h.commentResp(c, false, tr.T("邮箱不能为空。"), req.PostID)
 		return
 	}
-	if _, err := mail.ParseAddress(req.Email); err != nil {
-		h.commentResp(c, false, tr.T("邮箱格式不正确。"), req.PostID)
-		return
+	if req.Email != "" {
+		if _, err := mail.ParseAddress(req.Email); err != nil {
+			h.commentResp(c, false, tr.T("邮箱格式不正确。"), req.PostID)
+			return
+		}
 	}
 
 	// 3. 目标文章/页面必须存在、已发布、评论开放。

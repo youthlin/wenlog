@@ -14,6 +14,8 @@
         <label>{{.t.T "列表分页数量"}}<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
         <label>{{.t.T "Feed 输出数量"}}<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
       </div>
+      <label>{{.t.T "博主动态 post_id"}}<input type="number" min="1" name="saying_page_id" value="{{.SayingPageIDValue}}" required></label>
+      <p class="tip">{{.t.T "可填写文章或页面的 post_id；侧栏小组件会读取该 post_id 下博主本人发表的评论。"}}</p>
       <p><button type="submit" class="btn">{{.t.T "保存站点设置"}}</button></p>
     </form>
   </section>

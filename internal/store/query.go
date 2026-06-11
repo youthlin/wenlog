@@ -195,7 +195,7 @@ func (s *Store) NextPost(t time.Time) *model.Post {
 // GetPageBySlug 按 slug 取页面(post_type=page)。
 func (s *Store) GetPageBySlug(slug string) (*model.Post, error) {
 	var p model.Post
-	err := s.db.Where("slug = ? AND post_type = ? AND status = ?",
+	err := s.db.Preload("Author").Where("slug = ? AND post_type = ? AND status = ?",
 		slug, model.PostTypePage, model.StatusPublished).First(&p).Error
 	if err != nil {
 		return nil, err
@@ -368,9 +368,6 @@ func (s *Store) RecentCommentCountByIP(ip string, sinceUnix int64) (int64, error
 	return n, errors.Wrap(err, "recent comment count")
 }
 
-// SayingPageID 是「博主动态」对应的 WordPress 页面 id(/saying)。
-const SayingPageID = 456
-
 // RecentComments 返回最近 n 条已批准评论(侧栏小组件)。
 func (s *Store) RecentComments(n int) []model.Comment {
 	var cs []model.Comment
@@ -394,20 +391,20 @@ func (s *Store) RecentPosts(n int) []model.Post {
 	return ps
 }
 
-// SayingComments 返回 /saying 页(博主动态)上博主本人发表的最近 n 条评论。
+// SayingComments 返回指定 post_id 下博主本人发表的最近 n 条评论。
 // 「博主本人」= 评论 email 命中 users 表。
-func (s *Store) SayingComments(n int) []model.Comment {
+func (s *Store) SayingComments(postID uint, n int) []model.Comment {
 	var cs []model.Comment
 	s.db.Where("post_id = ? AND status = ? AND email IN (?)",
-		SayingPageID, model.CommentApproved,
+		postID, model.CommentApproved,
 		s.db.Model(&model.User{}).Select("email")).
 		Order("created_at DESC").Limit(n).Find(&cs)
 	return cs
 }
 
 // SayingCommentItems 返回博主动态的小组件展示模型。
-func (s *Store) SayingCommentItems(n, pageSize int) []CommentWidgetItem {
-	comments := s.SayingComments(n)
+func (s *Store) SayingCommentItems(postID uint, n, pageSize int) []CommentWidgetItem {
+	comments := s.SayingComments(postID, n)
 	return s.buildCommentWidgetItems(comments, pageSize)
 }
 

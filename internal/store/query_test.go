@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 )
 
@@ -142,11 +143,13 @@ func TestApprovedCommentCounts(t *testing.T) {
 func TestSayingComments(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()
+	sayingPostID := uint(789)
 	db.Create(&model.User{ID: 1, Username: "youthlin", Email: "me@example.com"})
-	db.Create(&model.Comment{ID: 1, PostID: SayingPageID, Email: "me@example.com", Status: model.CommentApproved, Content: "动态1", CreatedAt: time.Now()})
-	db.Create(&model.Comment{ID: 2, PostID: SayingPageID, Email: "guest@x.com", Status: model.CommentApproved, Content: "访客", CreatedAt: time.Now()})
+	db.Create(&model.Comment{ID: 1, PostID: sayingPostID, Email: "me@example.com", Status: model.CommentApproved, Content: "动态1", CreatedAt: time.Now()})
+	db.Create(&model.Comment{ID: 2, PostID: sayingPostID, Email: "guest@x.com", Status: model.CommentApproved, Content: "访客", CreatedAt: time.Now()})
+	db.Create(&model.Comment{ID: 3, PostID: uint(consts.SettingsSayingPageIDDefault), Email: "me@example.com", Status: model.CommentApproved, Content: "旧配置", CreatedAt: time.Now()})
 
-	got := st.SayingComments(5)
+	got := st.SayingComments(sayingPostID, 5)
 	if len(got) != 1 || got[0].ID != 1 {
 		t.Errorf("SayingComments returned %d, want only blogger's id=1", len(got))
 	}

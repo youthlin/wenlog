@@ -36,6 +36,7 @@ type publicSettings struct {
 	SiteDescription string
 	PageSize        int
 	FeedSize        int
+	SayingPostID    uint
 }
 
 // NewPublic 构造前台处理器。
@@ -69,8 +70,8 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"RecentComments":     h.st.RecentComments(8),
 		"RecentCommentItems": h.st.RecentCommentItems(8, commentPageSize),
 		"RecentPosts":        h.st.RecentPosts(8),
-		"SayingComments":     h.st.SayingComments(5),
-		"SayingCommentItems": h.st.SayingCommentItems(5, commentPageSize),
+		"SayingComments":     h.st.SayingComments(s.SayingPostID, 5),
+		"SayingCommentItems": h.st.SayingCommentItems(s.SayingPostID, 5, commentPageSize),
 		"ArchiveMonths":      h.st.ArchiveMonths(),
 		"Categories":         h.st.AllCategories(),
 		"Tags":               h.st.AllTags(),
@@ -83,12 +84,14 @@ func (h *Public) loadSettings() publicSettings {
 		consts.SettingsSiteDesc,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
+		consts.SettingsSayingPageID,
 	)
 	return publicSettings{
 		SiteName:        firstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription: settings[consts.SettingsSiteDesc],
 		PageSize:        positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
 		FeedSize:        positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
+		SayingPostID:    uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
 	}
 }
 
@@ -234,6 +237,10 @@ func (h *Public) Page(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
+	if p.Status == model.StatusPublished {
+		_ = h.st.IncrementViews(p.ID)
+		p.Views++
+	}
 
 	commentPage := atoiDefault(c.Query("cpage"), 1)
 	comments, err := h.st.ApprovedCommentsPage(p.ID, commentPage, commentPageSize)
@@ -248,7 +255,6 @@ func (h *Public) Page(c *gin.Context) {
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
-	data["ShowComments"] = p.CommentStatus != "closed"
 	if c.Query("ajax") == "comments" {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return
@@ -297,6 +303,7 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 	data["Groups"] = groups
 	c.HTML(http.StatusOK, "archive.gohtml", data)
 }
+
 // Category 分类列表页。
 func (h *Public) Category(c *gin.Context) {
 	slug := c.Param("slug")

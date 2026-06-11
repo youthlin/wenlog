@@ -277,12 +277,14 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 		consts.SettingsSiteDesc,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
+		consts.SettingsSayingPageID,
 		consts.SettingsSessionSecret,
 	)
 	data["SiteNameValue"] = firstNonEmptyAdmin(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault)
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
+	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
 	if strings.TrimSpace(settings[consts.SettingsSessionSecret]) != "" {
 		data["SessionSecretConfigured"] = true
 	}
@@ -340,10 +342,8 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	if err != nil || pageSize < 1 {
 		pageSize = defaultPublicPageSize
 	}
-	feedSize, err := strconv.Atoi(strings.TrimSpace(c.PostForm("feed_size")))
-	if err != nil || feedSize < 1 {
-		feedSize = defaultFeedSize
-	}
+	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
+	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
 	if err := h.st.SetSetting("site_name", name); err != nil {
 		h.serverError(c, err)
 		return
@@ -357,6 +357,10 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	if err := h.st.SetSetting("feed_size", strconv.Itoa(feedSize)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsSayingPageID, strconv.Itoa(sayingPageID)); err != nil {
 		h.serverError(c, err)
 		return
 	}
