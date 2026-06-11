@@ -52,12 +52,20 @@
         <tbody>
         {{range .Categories}}
         <tr>
-          <td>{{.ID}}</td>
-          <td>{{.Name}}</td>
-          <td>{{.Slug}}</td>
-          <td>{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</td>
-          <td>
-            <a href="/admin/terms?edit_category={{.ID}}">{{$.t.T "编辑"}}</a>
+          <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
+          <td class="post-title-cell term-name-cell" data-label="{{$.t.T "名称"}}">
+            <div class="post-title-panel">
+              <div class="post-title-line">{{.Name}}</div>
+              <div class="post-meta-list">
+                <div class="post-meta-item"><small>Slug：{{if .Slug}}{{.Slug}}{{else}}-{{end}}</small></div>
+                <div class="post-meta-item"><small>{{$.t.T "父分类"}}：{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</small></div>
+              </div>
+            </div>
+          </td>
+          <td class="term-slug-cell" data-label="Slug"><span class="admin-meta-badge">{{if .Slug}}{{.Slug}}{{else}}-{{end}}</span></td>
+          <td class="term-parent-cell" data-label="{{$.t.T "父分类"}}"><span class="admin-meta-badge">{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</span></td>
+          <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
+            <a class="post-action-link" href="/admin/terms?edit_category={{.ID}}">{{$.t.T "编辑"}}</a>
             <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？"}}')">
               {{template "csrf_field" $}}
               <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
@@ -80,11 +88,18 @@
         <tbody>
         {{range .Tags}}
         <tr>
-          <td>{{.ID}}</td>
-          <td>{{.Name}}</td>
-          <td>{{.Slug}}</td>
-          <td>
-            <a href="/admin/terms?edit_tag={{.ID}}">{{$.t.T "编辑"}}</a>
+          <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
+          <td class="post-title-cell term-name-cell" data-label="{{$.t.T "名称"}}">
+            <div class="post-title-panel">
+              <div class="post-title-line">{{.Name}}</div>
+              <div class="post-meta-list">
+                <div class="post-meta-item"><small>Slug：{{if .Slug}}{{.Slug}}{{else}}-{{end}}</small></div>
+              </div>
+            </div>
+          </td>
+          <td class="term-slug-cell" data-label="Slug"><span class="admin-meta-badge">{{if .Slug}}{{.Slug}}{{else}}-{{end}}</span></td>
+          <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
+            <a class="post-action-link" href="/admin/terms?edit_tag={{.ID}}">{{$.t.T "编辑"}}</a>
             <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该标签吗？"}}')">
               {{template "csrf_field" $}}
               <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>

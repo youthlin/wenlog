@@ -25,6 +25,9 @@ func runDaemon(cfg *config.Config) bool {
 		case "stop":
 			fmt.Fprintf(os.Stderr, "停止服务失败, err=%v\n", stopDaemon(cfg))
 			os.Exit(1)
+		case "restart":
+			fmt.Fprintf(os.Stderr, "重启服务失败, err=%v\n", restartDaemon(cfg))
+			os.Exit(1)
 		}
 	}
 	return false
@@ -41,10 +44,10 @@ func startDaemon(cfg *config.Config) error {
 
 func stopDaemon(cfg *config.Config) error {
 	_ = cfg
-	return fmt.Errorf("当前平台 %s 暂不支持 start/stop 后台模式；请直接前台运行，或交给系统服务管理器托管", runtime.GOOS)
+	return fmt.Errorf("当前平台 %s 暂不支持 start/stop/restart 后台模式；请直接前台运行，或交给系统服务管理器托管", runtime.GOOS)
 }
 
-func processExists(pid int) bool {
-	_ = pid
-	return false
+func restartDaemon(cfg *config.Config) error {
+	_ = cfg
+	return fmt.Errorf("当前平台 %s 暂不支持 start/stop/restart 后台模式；请直接前台运行，或交给系统服务管理器托管", runtime.GOOS)
 }

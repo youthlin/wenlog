@@ -22,9 +22,10 @@ import (
 var daemonChild = flag.Bool("daemon-child", false, "内部参数: 后台子进程模式")
 
 const (
-	start = "start"
-	stop  = "stop"
-	run   = "run"
+	start   = "start"
+	stop    = "stop"
+	restart = "restart"
+	run     = "run"
 )
 
 func runDaemon(cfg *config.Config) bool {
@@ -41,6 +42,12 @@ func runDaemon(cfg *config.Config) bool {
 			os.Exit(1)
 		}
 		return true
+	case restart:
+		if err := restartDaemon(cfg); err != nil {
+			fmt.Fprintf(os.Stderr, "重启服务失败, err=%v\n", err)
+			os.Exit(1)
+		}
+		return true
 	}
 	return false
 }
@@ -50,7 +57,7 @@ func runMode(args []string) string {
 		return run
 	}
 	switch args[0] {
-	case run, start, stop:
+	case run, start, stop, restart:
 		return args[0]
 	default:
 		return run
@@ -95,9 +102,10 @@ func startDaemon(cfg *config.Config) error {
 	_ = cmd.Process.Release()
 	deadline := time.Now().Add(8 * time.Second)
 	for time.Now().Before(deadline) {
-		if _, running, err := readRunningPID(pidFile); err == nil && running {
+		if pid, running, err := readRunningPID(pidFile); err == nil && running {
 			if err := checkHealth(cfg); err == nil {
-				fmt.Printf("后台启动成功, 访问: %s, pidfile: %s, log: %s\n", healthBaseURL(cfg), pidFile, logFile)
+				fmt.Printf("后台启动成功, 访问: %s, pidfile: %s(%d), log: %s\n",
+					healthBaseURL(cfg), pidFile, pid, logFile)
 				return nil
 			}
 		}
@@ -220,6 +228,21 @@ func stopDaemon(cfg *config.Config) error {
 		time.Sleep(200 * time.Millisecond)
 	}
 	return fmt.Errorf("已发送停止信号, 但进程仍未退出, pid=%d", pid)
+}
+
+func restartDaemon(cfg *config.Config) error {
+	pidFile := daemonPIDFile(cfg)
+	if pid, running, err := readRunningPID(pidFile); err != nil {
+		return err
+	} else if running {
+		fmt.Printf("检测到后台服务运行中, 准备重启, pid=%d\n", pid)
+		if err := stopDaemon(cfg); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("服务当前未运行, 直接启动\n")
+	}
+	return startDaemon(cfg)
 }
 
 func processExists(pid int) bool {

@@ -18,6 +18,7 @@ func TestRunMode(t *testing.T) {
 		{name: "explicit run", args: []string{"run"}, want: "run"},
 		{name: "start", args: []string{"start"}, want: "start"},
 		{name: "stop", args: []string{"stop"}, want: "stop"},
+		{name: "restart", args: []string{"restart"}, want: "restart"},
 		{name: "unknown falls back to run", args: []string{"status"}, want: "run"},
 	}
 	for _, tt := range tests {

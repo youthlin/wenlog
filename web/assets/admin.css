@@ -364,6 +364,38 @@ a { color: var(--accent); }
 .upload-pick-item img { width: 100%; height: 88px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 6px; }
 .upload-pick-item span { display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .uploads-table .upload-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.terms-table tbody tr:last-child td,
+.uploads-table tbody tr:last-child td { border-bottom: 0; }
+.terms-table .post-title-cell,
+.uploads-table .post-title-cell { min-width: 260px; }
+.term-slug-cell,
+.term-parent-cell,
+.upload-preview-cell,
+.upload-size-cell,
+.upload-time-cell { white-space: nowrap; }
+.admin-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 75%, var(--bg));
+  color: var(--fg);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.upload-file-panel { display: flex; align-items: flex-start; gap: 12px; }
+.upload-file-text { min-width: 0; flex: 1; }
+.upload-file-path a { word-break: break-all; }
+.upload-thumb-inline { display: none; flex: 0 0 auto; }
+.upload-thumb-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 72%, var(--card));
+  color: var(--muted);
+}
 .cat-field { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; margin-bottom: 14px; }
 .cat-field legend { font-weight: 600; padding: 0 6px; }
 .cat-check { display: inline-block; font-weight: normal; margin: 0 14px 6px 0; }
@@ -426,6 +458,8 @@ a { color: var(--accent); }
 @media (max-width: 760px) {
   .table-scroll:has(.comments-table) { overflow: visible; }
   .table-scroll:has(.posts-table) { overflow: visible; }
+  .table-scroll:has(.terms-table) { overflow: visible; }
+  .table-scroll:has(.uploads-table) { overflow: visible; }
   .comments-table,
   .comments-table thead,
   .comments-table tbody,
@@ -470,6 +504,47 @@ a { color: var(--accent); }
   .post-actions-cell { display: grid !important; gap: 8px; }
   .post-actions-cell .post-action-link + .inline,
   .post-actions-cell .inline + .inline { margin-top: 0; }
+
+  .terms-table,
+  .terms-table thead,
+  .terms-table tbody,
+  .terms-table tr,
+  .terms-table th,
+  .terms-table td,
+  .uploads-table,
+  .uploads-table thead,
+  .uploads-table tbody,
+  .uploads-table tr,
+  .uploads-table th,
+  .uploads-table td { display: block; width: 100%; }
+  .terms-table,
+  .uploads-table { min-width: 0 !important; background: transparent; border-spacing: 0; }
+  .terms-table thead,
+  .uploads-table thead { display: none; }
+  .terms-table tbody,
+  .uploads-table tbody { display: grid; gap: 14px; }
+  .terms-table tbody tr,
+  .uploads-table tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: 0 10px 24px rgba(15, 23, 42, .05); overflow: hidden; }
+  .terms-table tbody tr td,
+  .uploads-table tbody tr td { border-bottom: 0; padding: 12px 14px; }
+  .terms-table tbody tr td[data-label]::before,
+  .uploads-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .terms-table .post-title-cell,
+  .terms-table .post-actions-cell,
+  .uploads-table .post-title-cell,
+  .uploads-table .post-actions-cell,
+  .upload-preview-cell { min-width: 0; max-width: none; }
+  .terms-table .post-title-panel,
+  .uploads-table .post-title-panel { padding: 12px; }
+  .terms-table .post-actions-cell,
+  .uploads-table .post-actions-cell { display: grid !important; gap: 8px; }
+  .terms-table .post-actions-cell .post-action-link + .inline,
+  .terms-table .post-actions-cell .inline + .inline,
+  .uploads-table .post-actions-cell .post-action-link + .inline,
+  .uploads-table .post-actions-cell .inline + .inline { margin-top: 0; }
+  .uploads-table .upload-preview-cell { display: none; }
+  .uploads-table .upload-file-panel { align-items: center; }
+  .uploads-table .upload-thumb-inline { display: block; width: 64px; height: 64px; }
 }
 
 @media (max-width: 640px) {

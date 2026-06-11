@@ -4,21 +4,29 @@
   <h1>{{.t.T "附件管理"}}</h1>
   <label class="btn upload-btn">{{.t.T "上传图片"}}<input type="file" id="upload_file_page" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
 </div>
+<p class="tip" id="upload_status"></p>
 <div class="table-scroll">
   <table class="data-table uploads-table">
 	    <thead><tr><th>ID</th><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
 	    <tbody>
 	    {{range .Uploads}}
 	    <tr>
-      <td>{{.ID}}</td>
-      <td>{{if .MimeType}}<img src="{{.Path}}" alt="" class="upload-thumb">{{end}}</td>
-      <td>
-        <div>{{.OrigName}}</div>
-        <div><a href="{{.Path}}" target="_blank">{{.Path}}</a></div>
+      <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
+      <td class="upload-preview-cell" data-label="{{$.t.T "预览"}}">{{if .MimeType}}<img src="{{.Path}}" alt="" class="upload-thumb">{{else}}<span class="upload-thumb upload-thumb-placeholder">-</span>{{end}}</td>
+      <td class="post-title-cell upload-file-cell" data-label="{{$.t.T "文件"}}">
+        <div class="post-title-panel upload-file-panel">
+          {{if .MimeType}}<img src="{{.Path}}" alt="" class="upload-thumb upload-thumb-inline">{{end}}
+          <div class="upload-file-text">
+            <div class="post-title-line">{{.OrigName}}</div>
+            <div class="post-meta-list">
+              <div class="post-meta-item upload-file-path"><small>{{$.t.T "路径"}}：<a href="{{.Path}}" target="_blank" rel="noreferrer">{{.Path}}</a></small></div>
+            </div>
+          </div>
+        </div>
       </td>
-	      <td>{{.Size}} B</td>
-	      <td>{{fmtDateTime .CreatedAt}}</td>
-	      <td>
+	      <td class="upload-size-cell" data-label="{{$.t.T "大小"}}"><span class="admin-meta-badge">{{.Size}} B</span></td>
+	      <td class="upload-time-cell" data-label="{{$.t.T "时间"}}"><time class="admin-meta-badge" datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time></td>
+	      <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
 	        <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该文件?"}}')">
 	          {{template "csrf_field" $}}
 	          <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
@@ -39,5 +47,6 @@
   {{if lt .Page .Pages}}<a href="/admin/uploads?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
+<script src="/assets/admin.js"></script>
 {{template "admin_footer" .}}
 {{end}}
