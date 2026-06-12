@@ -11,7 +11,9 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df
 	github.com/gorilla/sessions v1.4.0
 	github.com/prometheus/client_golang v1.23.2
+	github.com/youthlin/t v0.1.2
 	golang.org/x/crypto v0.52.0
+	golang.org/x/text v0.37.0
 	gorm.io/gorm v1.31.1
 )
 
@@ -63,14 +65,12 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
-	github.com/youthlin/t v0.1.1 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
 	golang.org/x/net v0.54.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
