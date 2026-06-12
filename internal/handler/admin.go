@@ -113,7 +113,7 @@ func adminNavKey(c *gin.Context) string {
 		return adminPostNavKey(postType)
 	case "/admin/comments", "/admin/comment/:id/:action", "/admin/comments/edit/:id", "/admin/comments/batch":
 		return "comments"
-	case "/admin/settings", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/profile", "/admin/settings/password":
+	case "/admin/settings", "/admin/settings/user", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/profile", "/admin/settings/password":
 		return "settings"
 	case "/admin/debug":
 		return "debug"
@@ -133,6 +133,46 @@ func adminPostNavKey(postType string) string {
 		return "pages"
 	}
 	return "posts"
+}
+
+func settingsSection(c *gin.Context) string {
+	if c == nil {
+		return "general"
+	}
+	path := c.FullPath()
+	if path == "" && c.Request != nil && c.Request.URL != nil {
+		path = c.Request.URL.Path
+	}
+	switch path {
+	case "/admin/settings/user", "/admin/settings/profile", "/admin/settings/password":
+		return "user"
+	case "/admin/settings/developer", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload":
+		return "developer"
+	default:
+		return "general"
+	}
+}
+
+func settingsPageURL(section string) string {
+	switch normalizeSettingsSection(section) {
+	case "user":
+		return "/admin/settings/user"
+	case "developer":
+		return "/admin/settings/developer"
+	default:
+		return "/admin/settings"
+	}
+}
+
+func normalizeSettingsSection(section string) string {
+	switch strings.TrimSpace(section) {
+	case "account", "user":
+		return "user"
+	case "resources", "developer":
+		return "developer"
+	default:
+		return "general"
+	}
 }
 
 // LoginForm 显示登录页。
@@ -311,13 +351,50 @@ func (h *Admin) ExportXML(c *gin.Context) {
 
 // SettingsPage 后台设置页:站点设置 + 个人设置。
 func (h *Admin) SettingsPage(c *gin.Context) {
-	data := h.settingsData(c)
+	data := h.settingsDataForSection(c, "general")
 	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
 }
 
+// UserSettingsPage 后台用户设置页。
+func (h *Admin) UserSettingsPage(c *gin.Context) {
+	data := h.settingsDataForSection(c, "user")
+	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
+}
+
+// DeveloperSettingsPage 后台开发设置页。
+func (h *Admin) DeveloperSettingsPage(c *gin.Context) {
+	data := h.settingsDataForSection(c, "developer")
+	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
+}
+
+func settingsRedirectURL(section, message string) string {
+	base := settingsPageURL(normalizeSettingsSection(section))
+	v := url.Values{}
+	if strings.TrimSpace(message) != "" {
+		v.Set("message", message)
+	}
+	if encoded := v.Encode(); encoded != "" {
+		return base + "?" + encoded
+	}
+	return base
+}
+
 func (h *Admin) settingsData(c *gin.Context) gin.H {
+	return h.settingsDataForSection(c, settingsSection(c))
+}
+
+func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("设置"))
+	currentSection := normalizeSettingsSection(section)
+	title := tr.T("常规设置")
+	switch currentSection {
+	case "user":
+		title = tr.T("用户设置")
+	case "developer":
+		title = tr.T("开发设置")
+	}
+	data := h.base(c, title)
+	data["CurrentSettingsSection"] = currentSection
 	settings, _ := h.st.GetSettings(
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
@@ -343,6 +420,9 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 	data["TemplateHotReload"] = h.renderer != nil && h.renderer.Hot()
 	data["AssetHotReload"] = h.assets != nil && h.assets.Hot()
 	data["I18nHotReload"] = i18n.Hot()
+	data["SettingsGeneralURL"] = settingsPageURL("general")
+	data["SettingsUserURL"] = settingsPageURL("user")
+	data["SettingsDeveloperURL"] = settingsPageURL("developer")
 	if c != nil && c.Query("message") == "templates-reloaded" {
 		data["Notice"] = tr.T("模板已重新解析。")
 	}
@@ -368,6 +448,10 @@ func (h *Admin) settingsData(c *gin.Context) gin.H {
 		data["CurrentUser"] = u
 	}
 	return data
+}
+
+func (h *Admin) settingsDataForTab(c *gin.Context, tab string) gin.H {
+	return h.settingsDataForSection(c, tab)
 }
 
 func (h *Admin) importPageData(c *gin.Context, title string) (gin.H, bool) {
@@ -401,14 +485,14 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
 	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
 	if err := permalink.ValidatePostPattern(postPermalink); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("固定链接结构不合法: %s", err.Error())
 		data["PostPermalinkValue"] = permalink.NormalizePostPattern(postPermalink)
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if err := permalink.ValidateTaxonomyPrefix(categoryPrefix); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("分类目录前缀不合法: %s", err.Error())
 		data["CategoryPrefixValue"] = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
 		data["TagPrefixValue"] = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
@@ -416,7 +500,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	if err := permalink.ValidateTaxonomyPrefix(tagPrefix); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("标签前缀不合法: %s", err.Error())
 		data["CategoryPrefixValue"] = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
 		data["TagPrefixValue"] = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
@@ -426,7 +510,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	catNorm := permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
 	tagNorm := permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
 	if catNorm == tagNorm {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("分类目录前缀和标签前缀不能相同。")
 		data["CategoryPrefixValue"] = catNorm
 		data["TagPrefixValue"] = tagNorm
@@ -466,7 +550,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	syncPostPermalink(h.st)
-	c.Redirect(http.StatusSeeOther, "/admin/settings")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", ""))
 }
 
 // SaveSessionSettings 修改 session secret。修改后所有登录用户都需要重新登录。
@@ -474,7 +558,7 @@ func (h *Admin) SaveSessionSettings(c *gin.Context) {
 	tr := i18n.Get(c)
 	secret := strings.TrimSpace(c.PostForm("session_secret"))
 	if secret == "" {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("Session Secret 不能为空。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
@@ -501,7 +585,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	displayName := strings.TrimSpace(c.PostForm("display_name"))
 	email := strings.TrimSpace(c.PostForm("email"))
 	if username == "" || displayName == "" || email == "" {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "account")
 		data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
@@ -512,7 +596,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		return
 	}
 	if exists {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "account")
 		data["Error"] = tr.T("用户名已被占用。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
@@ -521,7 +605,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("account", ""))
 }
 
 // SavePasswordSettings 修改当前用户密码。
@@ -536,13 +620,13 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 	confirm := c.PostForm("confirm_password")
 	currentPassword := c.PostForm("current_password")
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "account")
 		data["Error"] = tr.T("原密码不正确。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if password == "" || password != confirm {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "account")
 		data["Error"] = tr.T("两次输入的密码不一致。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
@@ -556,141 +640,141 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("account", ""))
 }
 
 // ReloadTemplates 手动重新解析本地模板文件。仅热更新模式支持。
 func (h *Admin) ReloadTemplates(c *gin.Context) {
 	tr := i18n.Get(c)
 	if h.renderer == nil || !h.renderer.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前不是热更新模式，不能重新解析模板。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if err := h.renderer.Reload(); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("重新解析模板失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-reloaded")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "templates-reloaded"))
 }
 
 // ReleaseTemplates 把嵌入模板释放到本地目录,并切换为 hot 模式。
 func (h *Admin) ReleaseTemplates(c *gin.Context) {
 	tr := i18n.Get(c)
 	if h.renderer == nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前模板渲染器不可用。")
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	if h.renderer.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放模板。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if pathExists("web/templates") {
 		if err := h.renderer.UseFS(os.DirFS("web/templates"), true); err != nil {
-			data := h.settingsData(c)
+			data := h.settingsDataForTab(c, "resources")
 			data["Error"] = tr.T("切换到本地模板失败: %s", err.Error())
 			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 			return
 		}
-		c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-released")
+		c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "templates-released"))
 		return
 	}
 	if err := h.renderer.ReleaseToHotDir("web/templates"); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("释放模板文件失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-released")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "templates-released"))
 }
 
 // UseEmbeddedTemplates 切回当前进程使用内嵌模板资源,但保留本地目录。
 func (h *Admin) UseEmbeddedTemplates(c *gin.Context) {
 	tr := i18n.Get(c)
 	if h.renderer == nil || !h.renderer.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前不是 hot 模式，不能切回内嵌模板。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	tplFS, err := fs.Sub(web.Templates, "templates")
 	if err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("读取内嵌模板失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	if err := h.renderer.UseFS(tplFS, false); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("切换回内嵌模板失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=templates-embedded")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "templates-embedded"))
 }
 
 // ReleaseAssets 把嵌入资源释放到本地目录。释放完成后当前进程会自动优先读取该目录。
 func (h *Admin) ReleaseAssets(c *gin.Context) {
 	tr := i18n.Get(c)
 	if h.assets == nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前资源管理器不可用。")
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	if h.assets.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放资源文件。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	if pathExists("web/assets") {
 		h.assets.SetHot(true)
-		c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-released")
+		c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "assets-released"))
 		return
 	}
 	assetsFS, err := fs.Sub(web.Assets, "assets")
 	if err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("读取嵌入资源失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	if err := releaseDirFromFS(assetsFS, "web/assets"); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("释放资源文件失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
 	h.assets.SetHot(true)
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-released")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "assets-released"))
 }
 
 // UseEmbeddedAssets 切回当前进程使用内嵌资源,但保留本地目录。
 func (h *Admin) UseEmbeddedAssets(c *gin.Context) {
 	tr := i18n.Get(c)
 	if h.assets == nil || !h.assets.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前不是 hot 模式，不能切回内嵌资源。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	h.assets.SetHot(false)
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=assets-embedded")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "assets-embedded"))
 }
 
 // ReleaseI18n 把嵌入翻译资源释放到本地目录,并切换当前进程优先读取本地目录。
 func (h *Admin) ReleaseI18n(c *gin.Context) {
 	tr := i18n.Get(c)
 	if i18n.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前已经是 hot 模式，无需再次释放翻译资源。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
@@ -698,13 +782,13 @@ func (h *Admin) ReleaseI18n(c *gin.Context) {
 	if !pathExists("web/i18n") {
 		langFS, err := fs.Sub(web.I18n, "i18n")
 		if err != nil {
-			data := h.settingsData(c)
+			data := h.settingsDataForTab(c, "resources")
 			data["Error"] = tr.T("读取内嵌翻译资源失败: %s", err.Error())
 			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 			return
 		}
 		if err := releaseDirFromFS(langFS, "web/i18n"); err != nil {
-			data := h.settingsData(c)
+			data := h.settingsDataForTab(c, "resources")
 			data["Error"] = tr.T("释放翻译资源失败: %s", err.Error())
 			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 			return
@@ -712,31 +796,31 @@ func (h *Admin) ReleaseI18n(c *gin.Context) {
 	}
 	i18n.SetHot(true)
 	if err := i18n.Reload(); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("重新加载翻译资源失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=i18n-released")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "i18n-released"))
 }
 
 // UseEmbeddedI18n 切回当前进程使用内嵌翻译资源,但保留本地目录。
 func (h *Admin) UseEmbeddedI18n(c *gin.Context) {
 	tr := i18n.Get(c)
 	if !i18n.Hot() {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("当前不是 hot 模式，不能切回内嵌翻译资源。")
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
 	i18n.SetHot(false)
 	if err := i18n.Reload(); err != nil {
-		data := h.settingsData(c)
+		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("重新加载翻译资源失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings?message=i18n-embedded")
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "i18n-embedded"))
 }
 
 func releaseDirFromFS(src fs.FS, targetDir string) error {

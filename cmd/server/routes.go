@@ -42,6 +42,8 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.GET("/", adm.Dashboard)
 	g.POST("/logout", adm.Logout)
 	g.GET("/settings", adm.SettingsPage)
+	g.GET("/settings/user", adm.UserSettingsPage)
+	g.GET("/settings/developer", adm.DeveloperSettingsPage)
 	g.POST("/settings/site", adm.SaveSiteSettings)
 	g.POST("/settings/session", adm.SaveSessionSettings)
 	g.POST("/settings/assets/release", adm.ReleaseAssets)

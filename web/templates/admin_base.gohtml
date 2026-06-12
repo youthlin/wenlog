@@ -50,7 +50,9 @@
           <div class="nav-group">
             <span class="nav-group-title">{{.t.T "设置"}}</span>
             <div class="nav-group-links">
-              <a class="admin-nav-link {{if eq .CurrentAdminNav "settings"}}is-active{{end}}" href="/admin/settings"><span>{{.t.T "基本设置"}}</span></a>
+              <a class="admin-nav-link {{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "general")}}is-active{{end}}" href="/admin/settings"><span>{{.t.T "常规"}}</span></a>
+              <a class="admin-nav-link {{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "user")}}is-active{{end}}" href="/admin/settings/user"><span>{{.t.T "用户"}}</span></a>
+              <a class="admin-nav-link {{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "developer")}}is-active{{end}}" href="/admin/settings/developer"><span>{{.t.T "开发"}}</span></a>
               <a class="admin-nav-link {{if eq .CurrentAdminNav "terms"}}is-active{{end}}" href="/admin/terms"><span>{{.t.T "分类/标签"}}</span></a>
             </div>
           </div>

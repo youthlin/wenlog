@@ -581,10 +581,10 @@ a { color: var(--accent); }
 .err-banner { color: #e74c3c; background: rgba(231,76,60,.08); border: 1px solid rgba(231,76,60,.2); border-radius: 6px; padding: 10px 12px; }
 .notice-banner { color: #216e39; background: rgba(46,160,67,.12); border: 1px solid rgba(46,160,67,.28); border-radius: 6px; padding: 10px 12px; }
 .warn-banner { color: #9a6700; background: rgba(255,193,7,.14); border: 1px solid rgba(255,193,7,.3); border-radius: 6px; padding: 10px 12px; }
-.settings-cards { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.settings-main { width: min(100%, 960px); }
+.settings-stack { display: grid; gap: 18px; }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
-.tip-list { margin: 0; padding-left: 20px; color: var(--muted); }
-.tip-list li + li { margin-top: 8px; }
+.settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
 .import-result { margin-top: 16px; }
 .debug-result { margin-top: 20px; }
 .debug-json { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; overflow: auto; max-height: 60vh; }

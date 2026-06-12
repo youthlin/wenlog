@@ -1,120 +1,145 @@
 {{define "admin_settings.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{.t.T "设置"}}</h1>
+<h1>
+  {{if eq .CurrentSettingsSection "developer"}}
+  {{.t.T "开发设置"}}
+  {{else if eq .CurrentSettingsSection "user"}}
+  {{.t.T "用户设置"}}
+  {{else}}
+  {{.t.T "常规设置"}}
+  {{end}}
+</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 {{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
-<div class="cards settings-cards">
-  <section class="card settings-card">
-    <h3>{{.t.T "站点设置"}}</h3>
-    <form class="edit-form" method="post" action="/admin/settings/site">
-      {{template "csrf_field" .}}
-      <label>{{.t.T "站点名称"}}<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
-      <label>{{.t.T "站点描述"}}<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
-      <label>{{.t.T "文章固定链接结构"}}<input type="text" name="post_permalink" value="{{.PostPermalinkValue}}" required></label>
-      <p class="tip">{{.t.T "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% %post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%%post_id%.html。"}}</p>
-      <div class="form-row">
-        <label>{{.t.T "分类目录前缀"}}<input type="text" name="category_prefix" value="{{.CategoryPrefixValue}}" required></label>
-        <label>{{.t.T "标签前缀"}}<input type="text" name="tag_prefix" value="{{.TagPrefixValue}}" required></label>
-      </div>
-      <p class="tip">{{.t.T "例如可把分类目录从 /category/go 改成 /topics/go，把标签从 /tag/gin 改成 /labels/gin。"}}</p>
-      <div class="form-row">
-        <label>{{.t.T "列表分页数量"}}<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
-        <label>{{.t.T "Feed 输出数量"}}<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
-      </div>
-      <label>{{.t.T "博主动态 post_id"}}<input type="number" min="1" name="saying_page_id" value="{{.SayingPageIDValue}}" required></label>
-      <p class="tip">{{.t.T "可填写文章或页面的 post_id；侧栏小组件会读取该 post_id 下博主本人发表的评论。"}}</p>
-      <p><button type="submit" class="btn">{{.t.T "保存站点设置"}}</button></p>
-    </form>
-  </section>
 
-  <section class="card settings-card">
-    <h3>{{.t.T "模板设置"}}</h3>
-    <p class="tip">{{if .TemplateHotReload}}{{.t.T "当前模板模式：hot（本地模板 + 手动重新解析）"}}{{else}}{{.t.T "当前模板模式：static（embed 内置模板）"}}{{end}}</p>
-    {{if .TemplateHotReload}}
-    <form class="edit-form" method="post" action="/admin/settings/templates/reload">
-      {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生效。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "重新解析模板"}}</button></p>
-    </form>
-    <form class="edit-form" method="post" action="/admin/settings/templates/embed">
-      {{template "csrf_field" .}}
-      <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘上。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌模板资源"}}</button></p>
-    </form>
-    {{else}}
-    <form class="edit-form" method="post" action="/admin/settings/templates/release">
-      {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "释放出模板文件夹"}}</button></p>
-    </form>
-    {{end}}
-  </section>
+{{if eq .CurrentSettingsSection "developer"}}
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "模板设置"}}</h3>
+      <p class="tip">{{if .TemplateHotReload}}{{.t.T "当前模板模式：hot（本地模板 + 手动重新解析）"}}{{else}}{{.t.T "当前模板模式：static（embed 内置模板）"}}{{end}}</p>
+      {{if .TemplateHotReload}}
+      <form class="edit-form" method="post" action="/admin/settings/templates/reload">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生效。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "重新解析模板"}}</button></p>
+      </form>
+      <form class="edit-form" method="post" action="/admin/settings/templates/embed">
+        {{template "csrf_field" .}}
+        <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘上。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌模板资源"}}</button></p>
+      </form>
+      {{else}}
+      <form class="edit-form" method="post" action="/admin/settings/templates/release">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "释放出模板文件夹"}}</button></p>
+      </form>
+      {{end}}
+    </section>
 
-  <section class="card settings-card">
-    <h3>{{.t.T "资源文件设置"}}</h3>
-    <p class="tip">{{if .AssetHotReload}}{{.t.T "当前资源模式：hot（本地资源目录，修改后立即生效）"}}{{else}}{{.t.T "当前资源模式：static（embed 内置资源）"}}{{end}}</p>
-    {{if .AssetHotReload}}
-    <p class="tip">{{.t.T "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重新加载。"}}</p>
-    <form class="edit-form" method="post" action="/admin/settings/assets/embed">
-      {{template "csrf_field" .}}
-      <p class="warn-banner">{{.t.T "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌资源文件"}}</button></p>
-    </form>
-    {{else}}
-    <form class="edit-form" method="post" action="/admin/settings/assets/release">
-      {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "释放资源文件夹"}}</button></p>
-    </form>
-    {{end}}
-  </section>
+    <section class="card settings-card">
+      <h3>{{.t.T "资源文件设置"}}</h3>
+      <p class="tip">{{if .AssetHotReload}}{{.t.T "当前资源模式：hot（本地资源目录，修改后立即生效）"}}{{else}}{{.t.T "当前资源模式：static（embed 内置资源）"}}{{end}}</p>
+      {{if .AssetHotReload}}
+      <p class="tip">{{.t.T "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重新加载。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/assets/embed">
+        {{template "csrf_field" .}}
+        <p class="warn-banner">{{.t.T "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌资源文件"}}</button></p>
+      </form>
+      {{else}}
+      <form class="edit-form" method="post" action="/admin/settings/assets/release">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "释放资源文件夹"}}</button></p>
+      </form>
+      {{end}}
+    </section>
 
-  <section class="card settings-card">
-    <h3>{{.t.T "翻译资源设置"}}</h3>
-    <p class="tip">{{if .I18nHotReload}}{{.t.T "当前翻译模式：hot（本地翻译目录）"}}{{else}}{{.t.T "当前翻译模式：static（embed 内置翻译资源）"}}{{end}}</p>
-    {{if .I18nHotReload}}
-    <p class="tip">{{.t.T "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"}}</p>
-    <form class="edit-form" method="post" action="/admin/settings/i18n/embed">
-      {{template "csrf_field" .}}
-      <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌翻译资源"}}</button></p>
-    </form>
-    {{else}}
-    <form class="edit-form" method="post" action="/admin/settings/i18n/release">
-      {{template "csrf_field" .}}
-      <p class="tip">{{.t.T "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
-      <p><button type="submit" class="btn-secondary">{{.t.T "释放翻译资源目录"}}</button></p>
-    </form>
-    {{end}}
-  </section>
-
-  <section class="card settings-card">
-    <h3>{{.t.T "会话设置"}}</h3>
-    <form class="edit-form" method="post" action="/admin/settings/session">
-      {{template "csrf_field" .}}
-      <label>{{.t.T "新的 Session Secret"}}<input type="text" name="session_secret" placeholder="{{.t.T "请输入新的 Session Secret"}}" required></label>
-      <p class="tip">{{if .SessionSecretConfigured}}{{.t.T "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"}}{{else}}{{.t.T "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新登录。"}}{{end}}</p>
-      <p><button type="submit" class="btn">{{.t.T "更新 Session Secret"}}</button></p>
-    </form>
-  </section>
-
-  <section class="card settings-card">
-    <h3>{{.t.T "个人设置"}}</h3>
-    <form class="edit-form" method="post" action="/admin/settings/profile">
-      {{template "csrf_field" .}}
-      <label>{{.t.T "用户名"}}<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
-      <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
-      <label>{{.t.T "邮件"}}<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
-      <p><button type="submit" class="btn">{{.t.T "保存个人资料"}}</button></p>
-    </form>
-    <form class="edit-form" method="post" action="/admin/settings/password">
-      {{template "csrf_field" .}}
-      <label>{{.t.T "原密码"}}<input type="password" name="current_password" required></label>
-      <label>{{.t.T "新密码"}}<input type="password" name="new_password" required></label>
-      <label>{{.t.T "确认新密码"}}<input type="password" name="confirm_password" required></label>
-      <p><button type="submit" class="btn">{{.t.T "修改密码"}}</button></p>
-    </form>
-  </section>
+    <section class="card settings-card">
+      <h3>{{.t.T "翻译资源设置"}}</h3>
+      <p class="tip">{{if .I18nHotReload}}{{.t.T "当前翻译模式：hot（本地翻译目录）"}}{{else}}{{.t.T "当前翻译模式：static（embed 内置翻译资源）"}}{{end}}</p>
+      {{if .I18nHotReload}}
+      <p class="tip">{{.t.T "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/i18n/embed">
+        {{template "csrf_field" .}}
+        <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌翻译资源"}}</button></p>
+      </form>
+      {{else}}
+      <form class="edit-form" method="post" action="/admin/settings/i18n/release">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "释放翻译资源目录"}}</button></p>
+      </form>
+      {{end}}
+    </section>
+  </div>
 </div>
+{{else if eq .CurrentSettingsSection "user"}}
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "个人资料"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/profile">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "用户名"}}<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
+        <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
+        <label>{{.t.T "邮件"}}<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
+        <p><button type="submit" class="btn">{{.t.T "保存个人资料"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "密码设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/password">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "原密码"}}<input type="password" name="current_password" required></label>
+        <label>{{.t.T "新密码"}}<input type="password" name="new_password" required></label>
+        <label>{{.t.T "确认新密码"}}<input type="password" name="confirm_password" required></label>
+        <p><button type="submit" class="btn">{{.t.T "修改密码"}}</button></p>
+      </form>
+    </section>
+  </div>
+</div>
+{{else}}
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "站点设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/site">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "站点名称"}}<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
+        <label>{{.t.T "站点描述"}}<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
+        <label>{{.t.T "文章固定链接结构"}}<input type="text" name="post_permalink" value="{{.PostPermalinkValue}}" required></label>
+        <p class="tip">{{.t.T "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% %post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%%post_id%.html。"}}</p>
+        <div class="form-row">
+          <label>{{.t.T "分类目录前缀"}}<input type="text" name="category_prefix" value="{{.CategoryPrefixValue}}" required></label>
+          <label>{{.t.T "标签前缀"}}<input type="text" name="tag_prefix" value="{{.TagPrefixValue}}" required></label>
+        </div>
+        <p class="tip">{{.t.T "例如可把分类目录从 /category/go 改成 /topics/go，把标签从 /tag/gin 改成 /labels/gin。"}}</p>
+        <div class="form-row">
+          <label>{{.t.T "列表分页数量"}}<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
+          <label>{{.t.T "Feed 输出数量"}}<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
+        </div>
+        <label>{{.t.T "博主动态 post_id"}}<input type="number" min="1" name="saying_page_id" value="{{.SayingPageIDValue}}" required></label>
+        <p class="tip">{{.t.T "可填写文章或页面的 post_id；侧栏小组件会读取该 post_id 下博主本人发表的评论。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存站点设置"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "会话设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/session">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "新的 Session Secret"}}<input type="text" name="session_secret" placeholder="{{.t.T "请输入新的 Session Secret"}}" required></label>
+        <p class="tip">{{if .SessionSecretConfigured}}{{.t.T "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"}}{{else}}{{.t.T "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新登录。"}}{{end}}</p>
+        <p><button type="submit" class="btn">{{.t.T "更新 Session Secret"}}</button></p>
+      </form>
+    </section>
+  </div>
+</div>
+{{end}}
 {{template "admin_footer" .}}
 {{end}}
