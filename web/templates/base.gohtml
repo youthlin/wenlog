@@ -133,7 +133,7 @@
   {{if .ArchiveMonths}}
   <section class="widget widget-archive">
     <h3>{{.t.T "归档"}}</h3>
-    <select onchange="if(this.value)location=this.value">
+    <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入月份筛选…"}}" data-search-empty="{{.t.T "没有匹配的月份"}}">
       <option value="">{{.t.T "选择月份…"}}</option>
       {{range .ArchiveMonths}}<option value="/archive#{{.Year}}">{{$.t.T "%d 年 %d 月(%d)" .Year .Month .Count}}</option>{{end}}
     </select>
@@ -143,7 +143,7 @@
   {{if .Categories}}
   <section class="widget widget-categories">
     <h3>{{.t.T "分类目录"}}</h3>
-    <select onchange="if(this.value)location=this.value">
+    <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入分类名筛选…"}}" data-search-empty="{{.t.T "没有匹配的分类"}}">
       <option value="">{{.t.T "选择分类…"}}</option>
       {{range .Categories}}<option value="{{categoryURL .Slug}}">{{.Name}}</option>{{end}}
     </select>
@@ -153,7 +153,7 @@
   {{if .Tags}}
   <section class="widget widget-tags">
     <h3>{{.t.T "标签"}}</h3>
-    <select onchange="if(this.value)location=this.value">
+    <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">
       <option value="">{{.t.T "选择标签…"}}</option>
       {{range .Tags}}<option value="{{tagURL .Slug}}">{{.Name}}</option>{{end}}
     </select>

@@ -58,6 +58,8 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.GET("/debug", adm.DebugPage)
 	g.POST("/debug", adm.DebugPage)
 	g.GET("/terms", adm.TermsPage)
+	g.GET("/categories", adm.CategoriesPage)
+	g.GET("/tags", adm.TagsPage)
 	g.POST("/category", adm.SaveCategory)
 	g.POST("/category/:id/delete", adm.DeleteCategory)
 	g.POST("/tag", adm.SaveTag)

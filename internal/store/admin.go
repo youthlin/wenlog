@@ -11,6 +11,10 @@ import (
 	"github.com/youthlin/blog/internal/model"
 )
 
+func termQueryLike(keyword string) string {
+	return "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
+}
+
 // GetUserByUsername 按用户名查用户(登录用)。
 func (s *Store) GetUserByUsername(username string) (*model.User, error) {
 	var u model.User
@@ -196,14 +200,28 @@ func (s *Store) CountPosts() (int64, error) {
 }
 
 // AdminListPosts 返回某类型的全部文章/页面(不限状态),用于后台列表。
-func (s *Store) AdminListPosts(postType string, page, pageSize int) ([]model.Post, int64, error) {
+func (s *Store) AdminListPosts(postType string, page, pageSize int, categoryID, tagID uint, keyword string) ([]model.Post, int64, error) {
 	q := s.db.Model(&model.Post{}).Where("post_type = ?", postType)
+	if categoryID > 0 {
+		q = q.Joins("JOIN post_categories pc_admin ON pc_admin.post_id = posts.id").Where("pc_admin.category_id = ?", categoryID)
+	}
+	if tagID > 0 {
+		q = q.Joins("JOIN post_tags pt_admin ON pt_admin.post_id = posts.id").Where("pt_admin.tag_id = ?", tagID)
+	}
+	if kw := strings.TrimSpace(keyword); kw != "" {
+		like := termQueryLike(kw)
+		q = q.Where("LOWER(title) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(content_md) LIKE ? OR LOWER(content) LIKE ?", like, like, like, like)
+	}
 	var total int64
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, errors.Wrap(err, "count")
 	}
 	var posts []model.Post
-	err := q.Preload("Categories").Preload("Author").
+	commentCount := s.db.Model(&model.Comment{}).
+		Select("COUNT(1)").
+		Where("comments.post_id = posts.id")
+	err := q.Select("posts.*, (?) AS comment_count", commentCount).
+		Preload("Categories").Preload("Tags").Preload("Author").
 		Order("published_at DESC").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&posts).Error
 	return posts, total, errors.Wrap(err, "admin list posts")
@@ -386,6 +404,56 @@ func (s *Store) AdminListComments(status string, page, pageSize int) ([]model.Co
 	err := q.Order("created_at DESC").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&comments).Error
 	return comments, total, errors.Wrap(err, "admin list comments")
+}
+
+// AdminListCategories 返回后台分类列表(支持搜索与分页)。
+func (s *Store) AdminListCategories(keyword string, page, pageSize int) ([]model.Category, int64, error) {
+	q := s.db.Model(&model.Category{})
+	applyKeyword := func(db *gorm.DB) *gorm.DB {
+		if kw := strings.TrimSpace(keyword); kw != "" {
+			like := termQueryLike(kw)
+			return db.Where("LOWER(name) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(description) LIKE ?", like, like, like)
+		}
+		return db
+	}
+	q = applyKeyword(q)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "count categories")
+	}
+	var categories []model.Category
+	listQ := applyKeyword(s.db.Model(&model.Category{}))
+	err := listQ.Select("categories.*, COUNT(DISTINCT posts.id) AS post_count").
+		Joins("LEFT JOIN post_categories pc_count ON pc_count.category_id = categories.id").
+		Joins("LEFT JOIN posts ON posts.id = pc_count.post_id AND posts.post_type = ?", model.PostTypePost).
+		Group("categories.id").Order("categories.name ASC").
+		Offset((page-1)*pageSize).Limit(pageSize).Find(&categories).Error
+	return categories, total, errors.Wrap(err, "admin list categories")
+}
+
+// AdminListTags 返回后台标签列表(支持搜索与分页)。
+func (s *Store) AdminListTags(keyword string, page, pageSize int) ([]model.Tag, int64, error) {
+	q := s.db.Model(&model.Tag{})
+	applyKeyword := func(db *gorm.DB) *gorm.DB {
+		if kw := strings.TrimSpace(keyword); kw != "" {
+			like := termQueryLike(kw)
+			return db.Where("LOWER(name) LIKE ? OR LOWER(slug) LIKE ?", like, like)
+		}
+		return db
+	}
+	q = applyKeyword(q)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "count tags")
+	}
+	var tags []model.Tag
+	listQ := applyKeyword(s.db.Model(&model.Tag{}))
+	err := listQ.Select("tags.*, COUNT(DISTINCT posts.id) AS post_count").
+		Joins("LEFT JOIN post_tags pt_count ON pt_count.tag_id = tags.id").
+		Joins("LEFT JOIN posts ON posts.id = pt_count.post_id AND posts.post_type = ?", model.PostTypePost).
+		Group("tags.id").Order("tags.name ASC").
+		Offset((page-1)*pageSize).Limit(pageSize).Find(&tags).Error
+	return tags, total, errors.Wrap(err, "admin list tags")
 }
 
 // AdminPostsByIDs 按 ID 批量返回后台所需的文章/页面基础信息。

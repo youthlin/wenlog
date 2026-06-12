@@ -46,7 +46,7 @@ func (s *Store) ListPosts(page, pageSize int, categorySlug, tagSlug string) (*Li
 	if page < 1 {
 		page = 1
 	}
-	q := s.db.Model(&model.Post{}).
+	q := s.db.Omit("CommentCount").Model(&model.Post{}).
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished)
 
 	if categorySlug != "" {
@@ -85,7 +85,7 @@ func (s *Store) SearchPosts(keyword string, page, pageSize int) (*ListPostsResul
 		page = 1
 	}
 	like := "%" + keyword + "%"
-	q := s.db.Model(&model.Post{}).
+	q := s.db.Omit("CommentCount").Model(&model.Post{}).
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Where("title LIKE ? OR content LIKE ?", like, like)
 
@@ -146,7 +146,7 @@ func (s *Store) ApprovedCommentCounts(postIDs []uint) map[uint]int64 {
 // GetPostByID 按 ID 取已发布文章(含分类/标签/作者)。
 func (s *Store) GetPostByID(id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db.Preload("Categories").Preload("Tags").Preload("Author").
+	err := s.db.Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
 		Where("id = ? AND status = ?", id, model.StatusPublished).
 		First(&p).Error
 	if err != nil {
@@ -164,7 +164,7 @@ func (s *Store) ResolvePostByPath(path string, match *permalink.PostPathMatch) (
 	if match == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
-	q := s.db.Model(&model.Post{}).
+	q := s.db.Omit("CommentCount").Model(&model.Post{}).
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished)
 	if match.HasPostID {
 		q = q.Where("posts.id = ?", match.PostID)
@@ -217,7 +217,7 @@ func (s *Store) ResolvePostByPath(path string, match *permalink.PostPathMatch) (
 // GetPostAnyStatus 按 ID 取任意状态文章(含分类/标签/作者),用于作者预览草稿。
 func (s *Store) GetPostAnyStatus(id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db.Preload("Categories").Preload("Tags").Preload("Author").
+	err := s.db.Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
 		Where("id = ? AND post_type = ?", id, model.PostTypePost).
 		First(&p).Error
 	if err != nil {
@@ -257,7 +257,7 @@ func (s *Store) NextPost(t time.Time) *model.Post {
 // GetPageBySlug 按 slug 取页面(post_type=page)。
 func (s *Store) GetPageBySlug(slug string) (*model.Post, error) {
 	var p model.Post
-	err := s.db.Preload("Author").Where("slug = ? AND post_type = ? AND status = ?",
+	err := s.db.Omit("CommentCount").Preload("Author").Where("slug = ? AND post_type = ? AND status = ?",
 		slug, model.PostTypePage, model.StatusPublished).First(&p).Error
 	if err != nil {
 		return nil, err

@@ -286,6 +286,27 @@ img { max-width: 100%; }
 .widget ul { list-style: none; padding: 0; margin: 0; }
 .widget li { padding: 5px 0; font-size: 14px; line-height: 1.5; }
 .widget select, .widget input[type=search] { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font-size: 14px; }
+.searchable-select-native { display: none !important; }
+.searchable-select { position: relative; width: 100%; }
+.searchable-select-trigger,
+.searchable-select-input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+.searchable-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; text-align: left; }
+.searchable-select-trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.searchable-select-trigger-icon { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.searchable-select-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: var(--surface-shadow); }
+.searchable-select-input { margin-bottom: 8px; }
+.searchable-select-list { display: grid; gap: 4px; max-height: 240px; overflow: auto; }
+.searchable-select-option { width: 100%; border: 0; border-radius: 6px; background: transparent; color: var(--fg); text-align: left; padding: 8px 10px; cursor: pointer; }
+.searchable-select-option:hover, .searchable-select-option.is-active { background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.searchable-select-empty { padding: 8px 10px 4px; color: var(--muted); font-size: 13px; }
 .widget-search form { display: flex; gap: 6px; }
 .widget-search button { background: var(--accent); color: #fff; border: 0; padding: 0 14px; border-radius: 5px; cursor: pointer;width: 65px; }
 .widget-comment-line { display: flex; align-items: center; gap: 6px; }

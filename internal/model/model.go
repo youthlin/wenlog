@@ -64,8 +64,9 @@ type Post struct {
 	PublishedAt time.Time `gorm:"index"`
 	ModifiedAt  time.Time
 
-	// CommentCount 是已批准评论数,渲染期填充,不入库。
-	CommentCount int64 `gorm:"-"`
+	// CommentCount 仅用于渲染期展示,不入库。
+	// 前台通常填充已批准评论数,后台列表可按场景填充总评论数。
+	CommentCount int64 `gorm:"->;-:migration"`
 
 	Author     User       `gorm:"foreignKey:AuthorID"`
 	Categories []Category `gorm:"many2many:post_categories;"`
@@ -80,6 +81,7 @@ type Category struct {
 	Slug        string `gorm:"uniqueIndex;size:128"`
 	Description string `gorm:"type:text"`
 	ParentID    uint   `gorm:"index"`
+	PostCount   int64  `gorm:"->;-:migration"`
 }
 
 // Tag 是文章标签。
@@ -87,6 +89,7 @@ type Tag struct {
 	ID   uint   `gorm:"primaryKey"`
 	Name string `gorm:"size:128"`
 	Slug string `gorm:"uniqueIndex;size:191"`
+	PostCount int64 `gorm:"->;-:migration"`
 }
 
 // Comment 是评论,支持楼中楼(ParentID 指向父评论)。

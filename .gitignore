@@ -5,6 +5,7 @@
 /importer
 /build
 /output
+tmp*
 
 # 运行时数据
 /data/

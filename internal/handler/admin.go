@@ -65,16 +65,6 @@ const maxImportXMLSize = 50 << 20
 const defaultPublicPageSize = 10
 const defaultFeedSize = 20
 
-// 这些文案当前主要在模板里以嵌套调用或条件分支形式出现，
-// 额外放一个 Mark 锚点，避免抽取工具在更新 PO 时漏掉上下文/复数字符串。
-var _ = func() struct{} {
-	_, _ = gettext.Mark.X("admin.post_type.singular", "文章")
-	_, _ = gettext.Mark.X("admin.post_type.singular", "页面")
-	_, _ = gettext.Mark.N("共 %d 篇文章", "共 %d 篇文章")
-	_, _ = gettext.Mark.N("共 %d 个页面", "共 %d 个页面")
-	return struct{}{}
-}()
-
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(h.st)
 	v, _ := h.st.GetSetting(consts.SettingsSiteName)
@@ -113,12 +103,14 @@ func adminNavKey(c *gin.Context) string {
 		return adminPostNavKey(postType)
 	case "/admin/comments", "/admin/comment/:id/:action", "/admin/comments/edit/:id", "/admin/comments/batch":
 		return "comments"
+	case "/admin/categories", "/admin/category", "/admin/category/:id/delete":
+		return "categories"
+	case "/admin/tags", "/admin/tag", "/admin/tag/:id/delete":
+		return "tags"
 	case "/admin/settings", "/admin/settings/user", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/profile", "/admin/settings/password":
 		return "settings"
 	case "/admin/debug":
 		return "debug"
-	case "/admin/terms", "/admin/category", "/admin/category/:id/delete", "/admin/tag", "/admin/tag/:id/delete":
-		return "terms"
 	case "/admin/uploads", "/admin/uploads.json", "/admin/upload", "/admin/upload/:id/delete":
 		return "uploads"
 	case "/admin/import", "/admin/export":
@@ -1081,12 +1073,40 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	if pt != model.PostTypePost && pt != model.PostTypePage {
 		pt = model.PostTypePost
 	}
+	keyword := strings.TrimSpace(c.Query("q"))
+	categoryID := uint(atoiDefault(c.Query("category_id"), 0))
+	tagID := uint(atoiDefault(c.Query("tag_id"), 0))
+	if pt == model.PostTypePage {
+		categoryID = 0
+		tagID = 0
+	}
 	title := tr.T("文章管理")
 	if pt == model.PostTypePage {
 		title = tr.T("页面管理")
 	}
+	if pt == model.PostTypePost {
+		if categoryID > 0 {
+			for _, cat := range h.st.AllCategories() {
+				if cat.ID == categoryID {
+					title = tr.T("文章管理 · 分类：%s", cat.Name)
+					break
+				}
+			}
+		}
+		if tagID > 0 {
+			for _, tag := range h.st.AllTags() {
+				if tag.ID == tagID {
+					title = tr.T("文章管理 · 标签：%s", tag.Name)
+					break
+				}
+			}
+		}
+	}
+	if keyword != "" {
+		title = tr.T("%s · 搜索：%s", title, keyword)
+	}
 	page := atoiDefault(c.Query("page"), 1)
-	posts, total, err := h.st.AdminListPosts(pt, page, adminPageSize)
+	posts, total, err := h.st.AdminListPosts(pt, page, adminPageSize, categoryID, tagID, keyword)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -1095,34 +1115,200 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	data["Posts"] = posts
 	data["Total"] = total
 	data["PostType"] = pt
+	data["CategoriesPageURL"] = termsPageURL("category")
+	data["TagsPageURL"] = termsPageURL("tag")
+	data["CategoryFilterID"] = categoryID
+	data["TagFilterID"] = tagID
+	data["Keyword"] = keyword
+	data["AllCategories"] = h.st.AllCategories()
+	data["AllTags"] = h.st.AllTags()
+	data["ClearPostFilterURL"] = adminPostsListURL(pt, 1, 0, 0, "")
 	data["Page"] = page
-	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	data["Pages"] = pages
+	if page > 1 {
+		data["PrevPageURL"] = adminPostsListURL(pt, page-1, categoryID, tagID, keyword)
+	}
+	if page < pages {
+		data["NextPageURL"] = adminPostsListURL(pt, page+1, categoryID, tagID, keyword)
+	}
 	c.HTML(http.StatusOK, "admin_posts.gohtml", data)
 }
 
-// TermsPage 分类/标签管理页。
+func adminPostsListURL(postType string, page int, categoryID, tagID uint, keyword string) string {
+	v := url.Values{}
+	v.Set("type", postType)
+	if page > 1 {
+		v.Set("page", strconv.Itoa(page))
+	}
+	if categoryID > 0 {
+		v.Set("category_id", strconv.Itoa(int(categoryID)))
+	}
+	if tagID > 0 {
+		v.Set("tag_id", strconv.Itoa(int(tagID)))
+	}
+	if strings.TrimSpace(keyword) != "" {
+		v.Set("q", strings.TrimSpace(keyword))
+	}
+	return "/admin/posts?" + v.Encode()
+}
+
+func normalizeTermsSection(section string) string {
+	switch strings.TrimSpace(section) {
+	case "tag", "tags":
+		return "tag"
+	default:
+		return "category"
+	}
+}
+
+func termsPageURL(section string) string {
+	switch normalizeTermsSection(section) {
+	case "tag":
+		return "/admin/tags"
+	default:
+		return "/admin/categories"
+	}
+}
+
+func termsRedirectURL(section, message string) string {
+	base := termsPageURL(section)
+	v := url.Values{}
+	if strings.TrimSpace(message) != "" {
+		v.Set("message", message)
+	}
+	if encoded := v.Encode(); encoded != "" {
+		return base + "?" + encoded
+	}
+	return base
+}
+
+func termsListURL(section, keyword string, page int) string {
+	base := termsPageURL(section)
+	v := url.Values{}
+	if strings.TrimSpace(keyword) != "" {
+		v.Set("q", strings.TrimSpace(keyword))
+	}
+	if page > 1 {
+		v.Set("page", strconv.Itoa(page))
+	}
+	if encoded := v.Encode(); encoded != "" {
+		return base + "?" + encoded
+	}
+	return base
+}
+
+// TermsPage 兼容旧分类/标签入口,按查询参数跳转到对应的新页面。
 func (h *Admin) TermsPage(c *gin.Context) {
+	section := "category"
+	message := c.Query("message")
+	if c.Query("edit_tag") != "" || strings.HasPrefix(message, "tag-") {
+		section = "tag"
+	}
+	c.Redirect(http.StatusSeeOther, termsPageURL(section)+"?"+c.Request.URL.RawQuery)
+}
+
+// CategoriesPage 分类管理页。
+func (h *Admin) CategoriesPage(c *gin.Context) {
+	data := h.termsDataForSection(c, "category")
+	c.HTML(http.StatusOK, "admin_terms.gohtml", data)
+}
+
+// TagsPage 标签管理页。
+func (h *Admin) TagsPage(c *gin.Context) {
+	data := h.termsDataForSection(c, "tag")
+	c.HTML(http.StatusOK, "admin_terms.gohtml", data)
+}
+
+func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("分类/标签"))
+	currentSection := normalizeTermsSection(section)
+	page := atoiDefault(c.Query("page"), 1)
+	if page < 1 {
+		page = 1
+	}
+	keyword := strings.TrimSpace(c.Query("q"))
+	title := tr.T("分类管理")
+	if currentSection == "tag" {
+		title = tr.T("标签管理")
+	}
+	data := h.base(c, title)
 	cats := h.st.AllCategories()
-	tags := h.st.AllTags()
-	data["Categories"] = cats
-	data["Tags"] = tags
+	data["CurrentTermsSection"] = currentSection
+	data["CurrentTermsPageURL"] = termsPageURL(currentSection)
+	data["CategoriesPageURL"] = termsPageURL("category")
+	data["TagsPageURL"] = termsPageURL("tag")
 	data["CategoryParents"] = categoryParentNames(cats)
 	data["CategoryParentOptions"] = cats
 	data["CategoryForm"] = model.Category{}
-	data["TagForm"] = model.Tag{}
+	data["CategoryPostListURLs"] = categoryPostListURLs(cats)
+	data["CategoryPublicURLs"] = categoryPublicURLs(cats)
+	data["Keyword"] = keyword
+	data["Page"] = page
+	data["ListPageURL"] = termsListURL(currentSection, keyword, 1)
+	if currentSection == "tag" {
+		allTags := h.st.AllTags()
+		tags, total, err := h.st.AdminListTags(keyword, page, adminPageSize)
+		pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+		if err != nil {
+			data["Error"] = tr.T("加载标签列表失败。")
+			data["Tags"] = []model.Tag{}
+			data["Total"] = int64(0)
+			data["Pages"] = 0
+		} else {
+			data["Tags"] = tags
+			data["Total"] = total
+			data["Pages"] = pages
+			if page > 1 {
+				data["PrevPageURL"] = termsListURL(currentSection, keyword, page-1)
+			}
+			if page < pages {
+				data["NextPageURL"] = termsListURL(currentSection, keyword, page+1)
+			}
+		}
+		data["TagForm"] = model.Tag{}
+		data["TagPostListURLs"] = tagPostListURLs(allTags)
+		data["TagPublicURLs"] = tagPublicURLs(allTags)
+		if c.Query("message") == "tag-saved" {
+			data["Notice"] = tr.T("标签已保存。")
+		}
+		if c.Query("message") == "tag-deleted" {
+			data["Notice"] = tr.T("标签已删除。")
+		}
+		if editID := atoiDefault(c.Query("edit_tag"), 0); editID > 0 {
+			for _, tag := range allTags {
+				if int(tag.ID) == editID {
+					data["TagForm"] = tag
+					data["EditingTag"] = true
+					break
+				}
+			}
+		}
+		return data
+	}
+	categories, total, err := h.st.AdminListCategories(keyword, page, adminPageSize)
+	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	if err != nil {
+		data["Error"] = tr.T("加载分类列表失败。")
+		data["Categories"] = []model.Category{}
+		data["Total"] = int64(0)
+		data["Pages"] = 0
+	} else {
+		data["Categories"] = categories
+		data["Total"] = total
+		data["Pages"] = pages
+		if page > 1 {
+			data["PrevPageURL"] = termsListURL(currentSection, keyword, page-1)
+		}
+		if page < pages {
+			data["NextPageURL"] = termsListURL(currentSection, keyword, page+1)
+		}
+	}
 	if c.Query("message") == "category-saved" {
 		data["Notice"] = tr.T("分类已保存。")
 	}
 	if c.Query("message") == "category-deleted" {
 		data["Notice"] = tr.T("分类已删除。")
-	}
-	if c.Query("message") == "tag-saved" {
-		data["Notice"] = tr.T("标签已保存。")
-	}
-	if c.Query("message") == "tag-deleted" {
-		data["Notice"] = tr.T("标签已删除。")
 	}
 	if editID := atoiDefault(c.Query("edit_category"), 0); editID > 0 {
 		for _, cat := range cats {
@@ -1133,16 +1319,39 @@ func (h *Admin) TermsPage(c *gin.Context) {
 			}
 		}
 	}
-	if editID := atoiDefault(c.Query("edit_tag"), 0); editID > 0 {
-		for _, tag := range tags {
-			if int(tag.ID) == editID {
-				data["TagForm"] = tag
-				data["EditingTag"] = true
-				break
-			}
-		}
+	return data
+}
+
+func categoryPostListURLs(categories []model.Category) map[uint]string {
+	byID := make(map[uint]string, len(categories))
+	for _, category := range categories {
+		byID[category.ID] = adminPostsListURL(model.PostTypePost, 1, category.ID, 0, "")
 	}
-	c.HTML(http.StatusOK, "admin_terms.gohtml", data)
+	return byID
+}
+
+func tagPostListURLs(tags []model.Tag) map[uint]string {
+	byID := make(map[uint]string, len(tags))
+	for _, tag := range tags {
+		byID[tag.ID] = adminPostsListURL(model.PostTypePost, 1, 0, tag.ID, "")
+	}
+	return byID
+}
+
+func categoryPublicURLs(categories []model.Category) map[uint]string {
+	byID := make(map[uint]string, len(categories))
+	for _, category := range categories {
+		byID[category.ID] = permalink.Category(category.Slug)
+	}
+	return byID
+}
+
+func tagPublicURLs(tags []model.Tag) map[uint]string {
+	byID := make(map[uint]string, len(tags))
+	for _, tag := range tags {
+		byID[tag.ID] = permalink.Tag(tag.Slug)
+	}
+	return byID
 }
 
 type categoryForm struct {
@@ -1163,7 +1372,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 	}
 	name := strings.TrimSpace(f.Name)
 	if name == "" {
-		h.termsFormError(c, tr.T("分类名称不能为空。"), model.Category{ID: f.ID, Name: f.Name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		h.termsFormError(c, "category", tr.T("分类名称不能为空。"), model.Category{ID: f.ID, Name: f.Name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
 	slug := normalizeTermSlug(f.Slug)
@@ -1171,7 +1380,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		slug = normalizeTermSlug(name)
 	}
 	if slug == "" {
-		h.termsFormError(c, tr.T("分类 slug 不能为空。"), model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		h.termsFormError(c, "category", tr.T("分类 slug 不能为空。"), model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
 	exists, err := h.st.CategorySlugExists(slug, f.ID)
@@ -1180,7 +1389,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		return
 	}
 	if exists {
-		h.termsFormError(c, tr.T("分类 slug %q 已存在。", slug), model.Category{ID: f.ID, Name: name, Slug: slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
+		h.termsFormError(c, "category", tr.T("分类 slug %q 已存在。", slug), model.Category{ID: f.ID, Name: name, Slug: slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
 	cat := &model.Category{ID: f.ID, Name: name, Slug: slug, Description: strings.TrimSpace(f.Description), ParentID: f.ParentID}
@@ -1191,7 +1400,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/terms?message=category-saved")
+	c.Redirect(http.StatusSeeOther, termsRedirectURL("category", "category-saved"))
 }
 
 // DeleteCategory 删除分类。
@@ -1201,7 +1410,7 @@ func (h *Admin) DeleteCategory(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/terms?message=category-deleted")
+	c.Redirect(http.StatusSeeOther, termsRedirectURL("category", "category-deleted"))
 }
 
 type tagForm struct {
@@ -1220,7 +1429,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 	}
 	name := strings.TrimSpace(f.Name)
 	if name == "" {
-		h.termsFormError(c, tr.T("标签名称不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: f.Name, Slug: f.Slug}, false, true)
+		h.termsFormError(c, "tag", tr.T("标签名称不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: f.Name, Slug: f.Slug}, false, true)
 		return
 	}
 	slug := normalizeTermSlug(f.Slug)
@@ -1228,7 +1437,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		slug = normalizeTermSlug(name)
 	}
 	if slug == "" {
-		h.termsFormError(c, tr.T("标签 slug 不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)
+		h.termsFormError(c, "tag", tr.T("标签 slug 不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)
 		return
 	}
 	exists, err := h.st.TagSlugExists(slug, f.ID)
@@ -1237,14 +1446,14 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		return
 	}
 	if exists {
-		h.termsFormError(c, tr.T("标签 slug %q 已存在。", slug), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: slug}, false, true)
+		h.termsFormError(c, "tag", tr.T("标签 slug %q 已存在。", slug), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: slug}, false, true)
 		return
 	}
 	if err := h.st.SaveTag(&model.Tag{ID: f.ID, Name: name, Slug: slug}); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/terms?message=tag-saved")
+	c.Redirect(http.StatusSeeOther, termsRedirectURL("tag", "tag-saved"))
 }
 
 // DeleteTag 删除标签。
@@ -1254,7 +1463,7 @@ func (h *Admin) DeleteTag(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/terms?message=tag-deleted")
+	c.Redirect(http.StatusSeeOther, termsRedirectURL("tag", "tag-deleted"))
 }
 
 // EditPostForm 显示新建/编辑表单。id=0 或缺省为新建。
@@ -1480,15 +1689,9 @@ func categoryParentNames(categories []model.Category) map[uint]string {
 	return byID
 }
 
-func (h *Admin) termsFormError(c *gin.Context, msg string, cat model.Category, tag model.Tag, editingCategory, editingTag bool) {
-	tr := i18n.Get(c)
-	data := h.base(c, tr.T("分类/标签"))
-	cats := h.st.AllCategories()
+func (h *Admin) termsFormError(c *gin.Context, section, msg string, cat model.Category, tag model.Tag, editingCategory, editingTag bool) {
+	data := h.termsDataForSection(c, section)
 	data["Error"] = msg
-	data["Categories"] = cats
-	data["Tags"] = h.st.AllTags()
-	data["CategoryParents"] = categoryParentNames(cats)
-	data["CategoryParentOptions"] = cats
 	data["CategoryForm"] = cat
 	data["TagForm"] = tag
 	data["EditingCategory"] = editingCategory
@@ -1518,7 +1721,12 @@ func (h *Admin) DeletePost(c *gin.Context) {
 // ListComments 后台评论列表。
 func (h *Admin) ListComments(c *gin.Context) {
 	tr := i18n.Get(c)
-	status := c.DefaultQuery("status", model.CommentPending)
+	status := c.DefaultQuery("status", model.CommentApproved)
+	switch status {
+	case model.CommentApproved, model.CommentPending, model.CommentSpam:
+	default:
+		status = model.CommentApproved
+	}
 	page := atoiDefault(c.Query("page"), 1)
 	comments, total, err := h.st.AdminListComments(status, page, adminPageSize)
 	if err != nil {

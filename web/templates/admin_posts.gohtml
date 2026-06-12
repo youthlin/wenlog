@@ -1,36 +1,108 @@
 {{define "admin_posts.gohtml"}}
-{{template "admin_header" .}}
+{{- template "admin_header" . -}}
 <div class="page-head">
   <h1>{{.Title}}</h1>
-  <a class="btn" href="/admin/post/new?type={{.PostType}}">{{.t.T "新建"}}</a>
+  <div>
+    {{if or .CategoryFilterID .TagFilterID .Keyword}}<a class="btn-secondary" href="{{.ClearPostFilterURL}}">{{.t.T "取消"}}</a>{{end}}
+    <a class="btn" href="/admin/post/new?type={{.PostType}}">{{.t.T "新建"}}</a>
+  </div>
+</div>
+<div class="posts-toolbar">
+  <form class="posts-filter-form" method="get" action="/admin/posts">
+    <input type="hidden" name="type" value="{{.PostType}}">
+    {{if eq .PostType "post"}}
+    <select name="category_id" aria-label="{{.t.T "分类目录"}}" data-searchable-select data-search-placeholder="{{.t.T "输入分类名筛选…"}}" data-search-empty="{{.t.T "没有匹配的分类"}}">
+      <option value="0">{{.t.T "不限分类"}}</option>
+      {{range .AllCategories}}
+      <option value="{{.ID}}" {{if eq $.CategoryFilterID .ID}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+    <select name="tag_id" aria-label="{{.t.T "标签"}}" data-searchable-select data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">
+      <option value="0">{{.t.T "不限标签"}}</option>
+      {{range .AllTags}}
+      <option value="{{.ID}}" {{if eq $.TagFilterID .ID}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+    {{end}}
+    <input type="search" name="q" value="{{.Keyword}}" placeholder="{{.t.T "搜索"}}">
+    <button type="submit" class="btn-secondary">{{.t.T "查询"}}</button>
+  </form>
 </div>
 <div class="table-scroll">
   <table class="data-table posts-table">
-    <thead><tr><th>ID</th><th>{{.t.T "标题"}}</th><th>{{.t.T "状态"}}</th><th>{{.t.T "发布时间"}}</th><th>{{.t.T "浏览"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+    <thead>
+    <tr>
+      <th class="post-id-head">ID</th>
+      <th class="post-title-head">{{.t.T "标题"}}</th>
+      <th class="post-published-head">{{.t.T "发布时间"}}</th>
+      {{if ne .PostType "page"}}
+      <th class="post-category-head">{{.t.T "分类目录"}}</th>
+      <th class="post-tags-head">{{.t.T "标签"}}</th>
+      {{end}}
+      <th class="post-stats-head">{{printf "%s / %s" (.t.T "评论") (.t.T "浏览")}}</th>
+      <th class="post-actions-head">{{.t.T "操作"}}</th>
+    </tr>
+    </thead>
     <tbody>
     {{range .Posts}}
     <tr>
       {{$viewURL := postURL .}}
-      {{if eq $.PostType "page"}}{{$viewURL = pageURL .}}{{end}}
       <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
       <td class="post-title-cell" data-label="{{$.t.T "标题"}}">
         <div class="post-title-panel">
-          <div class="post-title-line">
-            {{if $viewURL}}
+          <div class="post-title-main">
             <a href="{{$viewURL}}" target="_blank" rel="noreferrer">{{if .Title}}{{.Title}}{{else}}{{$.t.T "（无标题）"}}{{end}}</a>
-            {{else}}
-            {{if .Title}}{{.Title}}{{else}}{{$.t.T "（无标题）"}}{{end}}
+            {{if ne .Status "published"}}
+            <span class="post-status-badge is-draft">{{if eq .Status "draft"}}{{$.t.T "草稿"}}{{else}}{{.Status}}{{end}}</span>
             {{end}}
           </div>
           <div class="post-meta-list">
-            {{if .Slug}}<div class="post-meta-item"><small>Slug：{{.Slug}}</small></div>{{end}}
-            {{if $viewURL}}<div class="post-meta-item"><small>{{$.t.T "路径"}}：<a href="{{$viewURL}}" target="_blank" rel="noreferrer">{{$viewURL}}</a></small></div>{{end}}
+            <div class="post-inline-meta">
+              <span class="post-inline-meta-item">#{{.ID}}</span>
+              <time class="post-inline-meta-item" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
+            </div>
           </div>
         </div>
       </td>
-      <td class="post-status-cell" data-label="{{$.t.T "状态"}}"><span class="post-status-badge {{if eq .Status "published"}}is-published{{else}}is-draft{{end}}">{{if eq .Status "published"}}{{$.t.T "已发布"}}{{else}}{{$.t.T "草稿"}}{{end}}</span></td>
-      <td class="post-published-cell" data-label="{{$.t.T "发布时间"}}"><time class="post-published-time" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time></td>
-      <td class="post-views-cell" data-label="{{$.t.T "浏览"}}"><span class="post-views-value">{{.Views}}</span></td>
+      <td class="post-published-cell" data-label="{{$.t.T "发布时间"}}">
+        <time class="post-published-time" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
+      </td>
+      {{if ne $.PostType "page"}}
+      <td class="post-category-cell" data-label="{{$.t.T "分类目录"}}">
+        <div class="post-taxonomy-list is-inline">
+          <span class="post-taxonomy-inline">
+          {{range $i, $category := .Categories}}
+          {{if gt $i 0}}<span class="post-taxonomy-sep">, </span>{{end}}<a class="post-taxonomy-chip" href="{{$.CategoriesPageURL}}?edit_category={{$category.ID}}">{{$category.Name}}</a>
+          {{else}}
+          <span class="post-empty-value">—</span>
+          {{end}}
+          </span>
+        </div>
+      </td>
+      <td class="post-tags-cell" data-label="{{$.t.T "标签"}}">
+        <div class="post-taxonomy-list is-inline">
+          <span class="post-taxonomy-inline">
+          {{range $i, $tag := .Tags}}
+          {{if gt $i 0}}<span class="post-taxonomy-sep">, </span>{{end}}<a class="post-taxonomy-chip" href="{{$.TagsPageURL}}?edit_tag={{$tag.ID}}">{{$tag.Name}}</a>
+          {{else}}
+          <span class="post-empty-value">—</span>
+          {{end}}
+          </span>
+        </div>
+      </td>
+      {{end}}
+      <td class="post-stats-cell" data-label="{{printf "%s / %s" ($.t.T "评论") ($.t.T "浏览")}}">
+        <div class="post-stats-list">
+          <span class="post-stat-chip">
+            <strong>{{.CommentCount}}</strong>
+            <span>{{$.t.T "评论"}}</span>
+          </span>
+          <span class="post-stat-chip">
+            <strong>{{.Views}}</strong>
+            <span>{{$.t.T "浏览"}}</span>
+          </span>
+        </div>
+      </td>
       <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
         <a class="post-action-link" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
         <form class="inline" method="post" action="/admin/post/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除?"}}')">
@@ -40,7 +112,7 @@
       </td>
     </tr>
     {{else}}
-    <tr><td colspan="6">{{.t.T "暂无内容"}}</td></tr>
+    <tr><td colspan="{{if eq .PostType "page"}}5{{else}}7{{end}}">{{.t.T "暂无内容"}}</td></tr>
     {{end}}
     </tbody>
   </table>
@@ -48,10 +120,10 @@
 <p class="total">{{if eq .PostType "page"}}{{.t.N64 "共 %d 个页面" "共 %d 个页面" .Total .Total}}{{else}}{{.t.N64 "共 %d 篇文章" "共 %d 篇文章" .Total .Total}}{{end}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/posts?type={{.PostType}}&page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
+  {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/posts?type={{.PostType}}&page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
+  {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
-{{template "admin_footer" .}}
+{{- template "admin_footer" . -}}
 {{end}}

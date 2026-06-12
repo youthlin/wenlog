@@ -1,10 +1,67 @@
 {{define "admin_terms.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{.t.T "分类 / 标签管理"}}</h1>
+<h1>{{if eq .CurrentTermsSection "tag"}}{{.t.T "标签管理"}}{{else}}{{.t.T "分类管理"}}{{end}}</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 {{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
 
-<div class="cards settings-cards">
+<div class="terms-toolbar">
+  <form class="terms-search-form" method="get" action="{{.CurrentTermsPageURL}}">
+    <input type="search" name="q" value="{{.Keyword}}" placeholder="{{.t.T "搜索"}}">
+    <button type="submit" class="btn-secondary">{{.t.T "搜索"}}</button>
+    {{if .Keyword}}<a class="terms-search-reset" href="{{.CurrentTermsPageURL}}">{{.t.T "取消"}}</a>{{end}}
+  </form>
+</div>
+
+{{if eq .CurrentTermsSection "tag"}}
+<div class="terms-main">
+  <section class="card settings-card">
+    <h3>{{if .EditingTag}}{{.t.T "编辑标签"}}{{else}}{{.t.T "新建标签"}}{{end}}</h3>
+    <form class="edit-form" method="post" action="/admin/tag">
+      {{template "csrf_field" .}}
+      {{with .TagForm}}{{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}{{end}}
+      <label>{{.t.T "名称"}}<input type="text" name="name" value="{{with .TagForm}}{{.Name}}{{end}}" required></label>
+      <label>Slug<input type="text" name="slug" value="{{with .TagForm}}{{.Slug}}{{end}}" placeholder="{{.t.T "留空时自动生成"}}"></label>
+      <p>
+        <button type="submit" class="btn">{{if .EditingTag}}{{.t.T "保存标签"}}{{else}}{{.t.T "创建标签"}}{{end}}</button>
+        {{if .EditingTag}}<a href="{{.TagsPageURL}}">{{.t.T "取消"}}</a>{{end}}
+      </p>
+    </form>
+  </section>
+</div>
+
+<div class="terms-section">
+  <section class="card settings-card">
+    <h3>{{.t.T "标签列表"}}</h3>
+    <div class="table-scroll">
+      <table class="data-table terms-table tags-table">
+        <thead><tr><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "文章"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+        <tbody>
+        {{range .Tags}}
+        <tr>
+          <td class="post-title-cell term-name-cell" data-label="{{$.t.T "名称"}}">
+            <div class="post-title-panel term-title-panel">
+              <a class="post-title-line term-name-link" href="{{$.TagsPageURL}}?edit_tag={{.ID}}">{{.Name}}</a>
+            </div>
+          </td>
+          <td class="term-slug-cell" data-label="Slug">{{if .Slug}}<a class="term-meta-link" href="{{index $.TagPublicURLs .ID}}" target="_blank" rel="noreferrer">{{.Slug}}</a>{{else}}<span class="term-meta-text">-</span>{{end}}</td>
+          <td class="term-count-cell" data-label="{{$.t.T "文章"}}"><a class="term-count-link" href="{{index $.TagPostListURLs .ID}}">{{.PostCount}}</a></td>
+          <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
+            <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该标签吗？"}}')">
+              {{template "csrf_field" $}}
+              <button type="submit" class="link-danger term-action-link">{{$.t.T "删除"}}</button>
+            </form>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="4">{{.t.T "暂无标签"}}</td></tr>
+        {{end}}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{{else}}
+<div class="terms-main">
   <section class="card settings-card">
     <h3>{{if .EditingCategory}}{{.t.T "编辑分类"}}{{else}}{{.t.T "新建分类"}}{{end}}</h3>
     <form class="edit-form" method="post" action="/admin/category">
@@ -23,21 +80,7 @@
       <label>{{.t.T "描述"}}<textarea name="description" rows="4">{{with .CategoryForm}}{{.Description}}{{end}}</textarea></label>
       <p>
         <button type="submit" class="btn">{{if .EditingCategory}}{{.t.T "保存分类"}}{{else}}{{.t.T "创建分类"}}{{end}}</button>
-        {{if .EditingCategory}}<a href="/admin/terms">{{.t.T "取消"}}</a>{{end}}
-      </p>
-    </form>
-  </section>
-
-  <section class="card settings-card">
-    <h3>{{if .EditingTag}}{{.t.T "编辑标签"}}{{else}}{{.t.T "新建标签"}}{{end}}</h3>
-    <form class="edit-form" method="post" action="/admin/tag">
-      {{template "csrf_field" .}}
-      {{with .TagForm}}{{if .ID}}<input type="hidden" name="id" value="{{.ID}}">{{end}}{{end}}
-      <label>{{.t.T "名称"}}<input type="text" name="name" value="{{with .TagForm}}{{.Name}}{{end}}" required></label>
-      <label>Slug<input type="text" name="slug" value="{{with .TagForm}}{{.Slug}}{{end}}" placeholder="{{.t.T "留空时自动生成"}}"></label>
-      <p>
-        <button type="submit" class="btn">{{if .EditingTag}}{{.t.T "保存标签"}}{{else}}{{.t.T "创建标签"}}{{end}}</button>
-        {{if .EditingTag}}<a href="/admin/terms">{{.t.T "取消"}}</a>{{end}}
+        {{if .EditingCategory}}<a href="{{.CategoriesPageURL}}">{{.t.T "取消"}}</a>{{end}}
       </p>
     </form>
   </section>
@@ -48,27 +91,22 @@
     <h3>{{.t.T "分类列表"}}</h3>
     <div class="table-scroll">
       <table class="data-table terms-table categories-table">
-        <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "父分类"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+        <thead><tr><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "父分类"}}</th><th>{{.t.T "文章"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
         <tbody>
         {{range .Categories}}
         <tr>
-          <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
           <td class="post-title-cell term-name-cell" data-label="{{$.t.T "名称"}}">
-            <div class="post-title-panel">
-              <div class="post-title-line">{{.Name}}</div>
-              <div class="post-meta-list">
-                <div class="post-meta-item"><small>Slug：{{if .Slug}}{{.Slug}}{{else}}-{{end}}</small></div>
-                <div class="post-meta-item"><small>{{$.t.T "父分类"}}：{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</small></div>
-              </div>
+            <div class="post-title-panel term-title-panel">
+              <a class="post-title-line term-name-link" href="{{$.CategoriesPageURL}}?edit_category={{.ID}}">{{.Name}}</a>
             </div>
           </td>
-          <td class="term-slug-cell" data-label="Slug"><span class="admin-meta-badge">{{if .Slug}}{{.Slug}}{{else}}-{{end}}</span></td>
-          <td class="term-parent-cell" data-label="{{$.t.T "父分类"}}"><span class="admin-meta-badge">{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</span></td>
+          <td class="term-slug-cell" data-label="Slug">{{if .Slug}}<a class="term-meta-link" href="{{index $.CategoryPublicURLs .ID}}" target="_blank" rel="noreferrer">{{.Slug}}</a>{{else}}<span class="term-meta-text">-</span>{{end}}</td>
+          <td class="term-parent-cell" data-label="{{$.t.T "父分类"}}"><span class="term-meta-text">{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</span></td>
+          <td class="term-count-cell" data-label="{{$.t.T "文章"}}"><a class="term-count-link" href="{{index $.CategoryPostListURLs .ID}}">{{.PostCount}}</a></td>
           <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
-            <a class="post-action-link" href="/admin/terms?edit_category={{.ID}}">{{$.t.T "编辑"}}</a>
             <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？"}}')">
               {{template "csrf_field" $}}
-              <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+              <button type="submit" class="link-danger term-action-link">{{$.t.T "删除"}}</button>
             </form>
           </td>
         </tr>
@@ -79,40 +117,15 @@
       </table>
     </div>
   </section>
-
-  <section class="card settings-card">
-    <h3>{{.t.T "标签列表"}}</h3>
-    <div class="table-scroll">
-      <table class="data-table terms-table tags-table">
-        <thead><tr><th>ID</th><th>{{.t.T "名称"}}</th><th>Slug</th><th>{{.t.T "操作"}}</th></tr></thead>
-        <tbody>
-        {{range .Tags}}
-        <tr>
-          <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
-          <td class="post-title-cell term-name-cell" data-label="{{$.t.T "名称"}}">
-            <div class="post-title-panel">
-              <div class="post-title-line">{{.Name}}</div>
-              <div class="post-meta-list">
-                <div class="post-meta-item"><small>Slug：{{if .Slug}}{{.Slug}}{{else}}-{{end}}</small></div>
-              </div>
-            </div>
-          </td>
-          <td class="term-slug-cell" data-label="Slug"><span class="admin-meta-badge">{{if .Slug}}{{.Slug}}{{else}}-{{end}}</span></td>
-          <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
-            <a class="post-action-link" href="/admin/terms?edit_tag={{.ID}}">{{$.t.T "编辑"}}</a>
-            <form class="inline" method="post" action="/admin/tag/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该标签吗？"}}')">
-              {{template "csrf_field" $}}
-              <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
-            </form>
-          </td>
-        </tr>
-        {{else}}
-        <tr><td colspan="4">{{.t.T "暂无标签"}}</td></tr>
-        {{end}}
-        </tbody>
-      </table>
-    </div>
-  </section>
 </div>
+{{end}}
+<p class="total">{{if eq .CurrentTermsSection "tag"}}{{.t.N64 "共 %d 个标签" "共 %d 个标签" .Total .Total}}{{else}}{{.t.N64 "共 %d 个分类" "共 %d 个分类" .Total .Total}}{{end}}</p>
+{{if gt .Pages 1}}
+<nav class="pagination">
+  {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
+  <span class="page-info">{{.Page}} / {{.Pages}}</span>
+  {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
+</nav>
+{{end}}
 {{template "admin_footer" .}}
 {{end}}

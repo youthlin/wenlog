@@ -2,8 +2,8 @@
 {{template "admin_header" .}}
 <h1>{{.t.T "评论管理"}}</h1>
 <nav class="filter-tabs">
-  <a href="/admin/comments?status=pending" {{if eq .FilterStatus "pending"}}class="active"{{end}}>{{.t.T "待审"}} ({{.Counts.Pending}})</a>
   <a href="/admin/comments?status=approved" {{if eq .FilterStatus "approved"}}class="active"{{end}}>{{.t.T "已批准"}} ({{.Counts.Approved}})</a>
+  <a href="/admin/comments?status=pending" {{if eq .FilterStatus "pending"}}class="active"{{end}}>{{.t.T "待审"}} ({{.Counts.Pending}})</a>
   <a href="/admin/comments?status=spam" {{if eq .FilterStatus "spam"}}class="active"{{end}}>{{.t.T "垃圾"}} ({{.Counts.Spam}})</a>
 </nav>
 

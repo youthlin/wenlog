@@ -2,23 +2,23 @@
 //
 // 技术方案说明（记录在包内，便于后续维护）：
 //
-// 1. 站点允许配置“文章永久链接结构”以及“分类/标签页面前缀”，页面仍然保持单段
-//    /{slug}，这样可以继续复用现有页面模型与导航逻辑。
-// 2. 文章永久链接结构兼容一组常见 WordPress 占位符：
-//    %year% %monthnum% %day% %hour% %minute% %second%
-//    %post_id% %postname% %category% %author%
-//    同时允许夹杂任意固定文本，比如 /%year%%post_id%.html。
-// 3. 包内部把结构串编译成两份产物：
-//    - 生成模板：渲染文章对象时按占位符替换；
-//    - 解析正则：收到请求路径时反向提取出 post_id、postname、日期、分类、作者等条件。
-// 4. 解析出来的结构化条件会交给 store 层查询数据库，真正决定“这条 URL 指向哪篇文章”的
-//    不是 nginx/apache，而是应用自己的路由 + 规则解析 + 数据库查询。对于 Go 服务来说，
-//    只要请求最终都进了当前进程，就完全可以自行实现 WordPress 风格固定链接。
-// 5. 为了兼容模板、feed、评论跳转、导出等到处都会生成文章 URL 的场景，这个包维护一份
-//    进程级当前规则。启动时从 settings 载入；后台修改设置后立即刷新。这样整个进程内的
-//    链接生成与请求解析始终使用同一份规则。
-// 6. 当前 %category% 取“文章主分类”的 slug（按分类 ID 最小值稳定选择），不展开父分类
-//    层级路径；%author% 取后台用户的 username；%postname% 取文章 slug。
+//  1. 站点允许配置“文章永久链接结构”以及“分类/标签页面前缀”，页面仍然保持单段
+//     /{slug}，这样可以继续复用现有页面模型与导航逻辑。
+//  2. 文章永久链接结构兼容一组常见 WordPress 占位符：
+//     %year% %monthnum% %day% %hour% %minute% %second%
+//     %post_id% %postname% %category% %author%
+//     同时允许夹杂任意固定文本，比如 /%year%%post_id%.html。
+//  3. 包内部把结构串编译成两份产物：
+//     - 生成模板：渲染文章对象时按占位符替换；
+//     - 解析正则：收到请求路径时反向提取出 post_id、postname、日期、分类、作者等条件。
+//  4. 解析出来的结构化条件会交给 store 层查询数据库，真正决定“这条 URL 指向哪篇文章”的
+//     不是 nginx/apache，而是应用自己的路由 + 规则解析 + 数据库查询。对于 Go 服务来说，
+//     只要请求最终都进了当前进程，就完全可以自行实现 WordPress 风格固定链接。
+//  5. 为了兼容模板、feed、评论跳转、导出等到处都会生成文章 URL 的场景，这个包维护一份
+//     进程级当前规则。启动时从 settings 载入；后台修改设置后立即刷新。这样整个进程内的
+//     链接生成与请求解析始终使用同一份规则。
+//  6. 当前 %category% 取“文章主分类”的 slug（按分类 ID 最小值稳定选择），不展开父分类
+//     层级路径；%author% 取后台用户的 username；%postname% 取文章 slug。
 package permalink
 
 import (
@@ -193,6 +193,9 @@ func CurrentPatternUsesToken(token string) bool {
 
 // Post 返回文章的永久链接路径。
 func Post(p *model.Post) string {
+	if p.PostType == "page" {
+		return Page(p)
+	}
 	currentPattern.mu.RLock()
 	cp := currentPattern.cp
 	currentPattern.mu.RUnlock()
