@@ -390,11 +390,14 @@ func (s *Store) DeleteTag(id uint) error {
 
 // --- 评论管理 ---
 
-// AdminListComments 按状态返回评论(分页)。status 为空返回全部。
-func (s *Store) AdminListComments(status string, page, pageSize int) ([]model.Comment, int64, error) {
+// AdminListComments 按状态返回评论(分页)。status 为空返回全部。postID 为 0 时不按文章过滤。
+func (s *Store) AdminListComments(status string, postID uint, page, pageSize int) ([]model.Comment, int64, error) {
 	q := s.db.Model(&model.Comment{})
 	if status != "" {
 		q = q.Where("status = ?", status)
+	}
+	if postID > 0 {
+		q = q.Where("post_id = ?", postID)
 	}
 	var total int64
 	if err := q.Count(&total).Error; err != nil {

@@ -94,7 +94,7 @@
       <td class="post-stats-cell" data-label="{{printf "%s / %s" ($.t.T "评论") ($.t.T "浏览")}}">
         <div class="post-stats-list">
           <span class="post-stat-chip">
-            <strong>{{.CommentCount}}</strong>
+            {{if gt .CommentCount 0}}<a href="/admin/comments?post_id={{.ID}}">{{end}}<strong>{{.CommentCount}}</strong>{{if gt .CommentCount 0}}</a>{{end}}
             <span>{{$.t.T "评论"}}</span>
           </span>
           <span class="post-stat-chip">

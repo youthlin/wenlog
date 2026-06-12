@@ -1746,8 +1746,9 @@ func (h *Admin) ListComments(c *gin.Context) {
 	default:
 		status = model.CommentApproved
 	}
+	postID := uint(atoiDefault(c.Query("post_id"), 0))
 	page := atoiDefault(c.Query("page"), 1)
-	comments, total, err := h.st.AdminListComments(status, page, adminPageSize)
+	comments, total, err := h.st.AdminListComments(status, postID, page, adminPageSize)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -1777,6 +1778,12 @@ func (h *Admin) ListComments(c *gin.Context) {
 	data["CommentPostLinks"] = commentPostLinks
 	data["Total"] = total
 	data["FilterStatus"] = status
+	data["FilterPostID"] = postID
+	if postID > 0 {
+		if post, ok := postsByID[postID]; ok {
+			data["FilterPostTitle"] = post.Title
+		}
+	}
 	data["Counts"] = h.st.AdminCommentCounts()
 	data["Page"] = page
 	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))

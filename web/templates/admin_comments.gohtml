@@ -1,10 +1,11 @@
 {{define "admin_comments.gohtml"}}
 {{template "admin_header" .}}
 <h1>{{.t.T "评论管理"}}</h1>
+{{if .FilterPostID}}<p class="filter-info">{{.t.T "文章"}}：<a href="/admin/post/{{.FilterPostID}}">{{.FilterPostTitle}}</a> <a href="/admin/comments?status={{.FilterStatus}}" class="filter-clear">{{.t.T "清除"}}</a></p>{{end}}
 <nav class="filter-tabs">
-  <a href="/admin/comments?status=approved" {{if eq .FilterStatus "approved"}}class="active"{{end}}>{{.t.T "已批准"}} ({{.Counts.Approved}})</a>
-  <a href="/admin/comments?status=pending" {{if eq .FilterStatus "pending"}}class="active"{{end}}>{{.t.T "待审"}} ({{.Counts.Pending}})</a>
-  <a href="/admin/comments?status=spam" {{if eq .FilterStatus "spam"}}class="active"{{end}}>{{.t.T "垃圾"}} ({{.Counts.Spam}})</a>
+  <a href="/admin/comments?status=approved{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}" {{if eq .FilterStatus "approved"}}class="active"{{end}}>{{.t.T "已批准"}} ({{.Counts.Approved}})</a>
+  <a href="/admin/comments?status=pending{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}" {{if eq .FilterStatus "pending"}}class="active"{{end}}>{{.t.T "待审"}} ({{.Counts.Pending}})</a>
+  <a href="/admin/comments?status=spam{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}" {{if eq .FilterStatus "spam"}}class="active"{{end}}>{{.t.T "垃圾"}} ({{.Counts.Spam}})</a>
 </nav>
 
 <form method="post" action="/admin/comments/batch" id="batch-form" class="batch-bar">
@@ -101,9 +102,9 @@
 <p class="total">{{.t.N64 "共 %d 条评论" "共 %d 条评论" .Total .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/comments?status={{.FilterStatus}}&page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
+  {{if gt .Page 1}}<a href="/admin/comments?status={{.FilterStatus}}{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}&page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/comments?status={{.FilterStatus}}&page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
+  {{if lt .Page .Pages}}<a href="/admin/comments?status={{.FilterStatus}}{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}&page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
 <script src="/assets/admin.js"></script>
