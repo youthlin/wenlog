@@ -77,6 +77,14 @@ go run ./cmd/server -set-admin "用户名:密码"
 go run ./cmd/server
 ```
 
+**重启服务**请使用内置的 daemon 模式，不要用 `go run ./cmd/server &` 丢到 bash 后台——bash 会话结束后进程会被杀掉：
+
+```bash
+go run ./cmd/server restart
+```
+
+程序会自动在后台启动或重启，不依赖当前 shell 会话。
+
 默认访问：
 
 - 前台：`http://localhost:8888/`

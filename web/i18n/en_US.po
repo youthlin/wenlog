@@ -2,135 +2,144 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-12 08:09+0800\n"
+"POT-Creation-Date: 2026-06-12 18:54+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:3
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:6
 msgid "上传中..."
 msgstr "Uploading..."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:4
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:7
 msgid "上传失败"
 msgstr "Upload failed"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:8
 msgid "已插入图片 Markdown"
 msgstr "Image Markdown inserted"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:9
 msgid "已插入已有图片"
 msgstr "Existing image inserted"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:7
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:10
 msgid "加载文件失败"
 msgstr "Failed to load files"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:11
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:33
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 msgid "预览"
 msgstr "Preview"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:12
 msgid "继续编辑"
 msgstr "Continue editing"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:10
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:6
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:49
 msgid "打开菜单"
 msgstr "Open menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:7
 msgid "收起菜单"
 msgstr "Collapse menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:27
 msgid "%s・后台"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:33
 msgid "查看站点"
 msgstr "View site"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:42
 msgid "后台导航"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:45
 #, fuzzy
 msgid "概览"
 msgstr "Views"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:47
 msgid "工作台"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:43
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:51
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:21
 msgid "内容"
 msgstr "Content"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:45
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:53
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:72
 msgid "文章"
 msgstr "Posts"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:46
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:54
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:73
 msgid "页面"
 msgstr "Pages"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:47
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:7
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:56
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:74
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:56
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:42
 msgid "评论"
 msgstr "Comments"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:58
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:34
+msgid "分类"
+msgstr "Categories"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:39
+msgid "标签"
+msgstr "Tags"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:63
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:75
 msgid "设置"
 msgstr "Settings"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:53
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:66
 msgid "常规"
 msgstr "General"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:68
 msgid "用户"
 msgstr "User"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:55
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:70
 msgid "开发"
 msgstr "Developer"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:74
 msgid "工具"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:76
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:4
 msgid "附件管理"
 msgstr "Media"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:77
 msgid "导入导出"
 msgstr "Import / Export"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:69
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:83
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:25
 msgid "界面设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:71
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:72
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:86
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:15
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:27
@@ -138,11 +147,11 @@ msgstr ""
 msgid "语言"
 msgstr "Language"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:78
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:92
 msgid "颜色"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:79
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:93
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:34
@@ -150,65 +159,65 @@ msgstr ""
 msgid "切换主题"
 msgstr "Toggle theme"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:80
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:94
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:23
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:36
 msgid "暗黑"
 msgstr "Dark"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:81
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:95
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:37
 msgid "明亮"
 msgstr "Light"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:96
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:25
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:38
 msgid "红梅"
 msgstr "Red Plum"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:83
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:97
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:39
 msgid "绿竹"
 msgstr "Green Bamboo"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:98
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:40
 msgid "藕粉"
 msgstr "Lotus Pink"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:99
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:41
 msgid "橙黄"
 msgstr "Orange Yellow"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:86
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:100
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:42
 msgid "蔚蓝"
 msgstr "Azure Blue"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:101
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:43
 msgid "韵紫"
 msgstr "Elegant Purple"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:106
 msgid "退出"
 msgstr "Log out"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:5
-msgid "待审"
-msgstr "Pending"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:6
 msgid "已批准"
 msgstr "Approved"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:6
+msgid "待审"
+msgstr "Pending"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:7
 msgid "垃圾"
@@ -231,9 +240,7 @@ msgid "作者"
 msgstr "Author"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:43
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 msgid "操作"
 msgstr "Actions"
@@ -248,27 +255,66 @@ msgstr[1] "%d comments"
 msgid "欢迎回来"
 msgstr "Welcome back"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:5
-msgid "管理博客文章"
-msgstr "Manage blog posts"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:10
+msgid "已发布文章"
+msgstr "Published posts"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:6
-msgid "管理独立页面"
-msgstr "Manage standalone pages"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:18
+msgid "已发布页面"
+msgstr "Published pages"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:7
-msgid "%d 条待审评论"
-msgid_plural "%d 条待审评论"
-msgstr[0] "%d pending comment"
-msgstr[1] "%d pending comments"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:26
+msgid "已批准评论"
+msgstr "Approved comments"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:8
-msgid "上传 WordPress XML 并覆盖导入"
-msgstr "Upload a WordPress XML file and import with overwrite"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:54
+msgid "附件"
+msgstr "Media"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:8
-msgid "导入"
-msgstr "Import"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:49
+msgid "写文章"
+msgstr "New post"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:50
+msgid "新建页面"
+msgstr "New page"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:59
+msgid "最近文章"
+msgstr "Recent posts"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:74
+msgid "最近评论"
+msgstr "Recent comments"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:12
+msgid "%d 篇草稿"
+msgid_plural "%d 篇草稿"
+msgstr[0] "%d draft"
+msgstr[1] "%d drafts"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:28
+msgid "%d 条待审"
+msgid_plural "%d 条待审"
+msgstr[0] "%d pending"
+msgstr[1] "%d pending"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:52
+msgid "审核评论"
+msgstr "Review comments"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:80
+msgid "在"
+msgstr "on"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:69
+msgid "暂无文章"
+msgstr "No posts yet"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:89
+msgid "暂无评论"
+msgstr "No comments yet"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:4
 msgid ""
@@ -370,7 +416,7 @@ msgid "← 返回到"
 msgstr "← Back to"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:36
 msgid "标题"
 msgstr "Title"
 
@@ -409,7 +455,6 @@ msgid "摘要(可选)"
 msgstr "Excerpt (optional)"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:50
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
 msgid "状态"
 msgstr "Status"
 
@@ -438,54 +483,29 @@ msgstr "Save"
 msgid "取消"
 msgstr "Cancel"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:7
 msgid "新建"
 msgstr "New"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:89
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:92
+msgid "搜索"
+msgstr "Search"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:28
+msgid "查询"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:37
 msgid "发布时间"
 msgstr "Published"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:42
 msgid "浏览"
 msgstr "Views"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:3
-msgid "分类 / 标签管理"
-msgstr "Categories / Tags"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:36
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:87
-msgid "名称"
-msgstr "Name"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:37
-msgid "留空时自动生成"
-msgstr "Auto-generate if empty"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
-msgid "父分类"
-msgstr "Parent category"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:17
-msgid "无"
-msgstr "None"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:23
-msgid "描述"
-msgstr "Description"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:48
-msgid "分类列表"
-msgstr "Category list"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:84
-msgid "标签列表"
-msgstr "Tag list"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 msgid "大小"
@@ -499,7 +519,7 @@ msgstr "File"
 msgid "时间"
 msgstr "Time"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:42
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:41
 msgid "共 %d 个文件"
 msgid_plural "共 %d 个文件"
 msgstr[0] "%d file"
@@ -520,11 +540,6 @@ msgstr "Back to top"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:63
 msgid "到底部"
 msgstr "To bottom"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:89
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:92
-msgid "搜索"
-msgstr "Search"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:91
 msgid "输入关键词…"
@@ -637,120 +652,96 @@ msgstr "Failed to initialize content: no available author found"
 msgid "未分类"
 msgstr "Uncategorized"
 
-#: internal/handler/admin.go:71
-msgctxt "admin.post_type.singular"
-msgid "文章"
-msgstr "Post"
-
-#: internal/handler/admin.go:72
-msgctxt "admin.post_type.singular"
-msgid "页面"
-msgstr "Page"
-
-#: internal/handler/admin.go:73
-#, c-format
-msgid "共 %d 篇文章"
-msgid_plural "共 %d 篇文章"
-msgstr[0] "%d post"
-msgstr[1] "%d posts"
-
-#: internal/handler/admin.go:74
-#, c-format
-msgid "共 %d 个页面"
-msgid_plural "共 %d 个页面"
-msgstr[0] "%d page"
-msgstr[1] "%d pages"
-
-#: internal/handler/admin.go:181 internal/handler/admin.go:195
+#: internal/handler/admin.go:173 internal/handler/admin.go:187
 msgid "登录"
 msgstr "Log in"
 
-#: internal/handler/admin.go:183
+#: internal/handler/admin.go:175
 msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
 msgstr "Session secret updated. All logged-in users must sign in again."
 
-#: internal/handler/admin.go:196
+#: internal/handler/admin.go:188
 msgid "用户名或密码错误。"
 msgstr "Invalid username or password."
 
-#: internal/handler/admin.go:217
+#: internal/handler/admin.go:209
 msgid "后台"
 msgstr "Admin"
 
-#: internal/handler/admin.go:223 internal/handler/admin.go:233
-#: internal/handler/admin.go:305
+#: internal/handler/admin.go:234 internal/handler/admin.go:244
+#: internal/handler/admin.go:316
 msgid "WXR 导入 / 导出"
 msgstr "WXR Import / Export"
 
-#: internal/handler/admin.go:241
+#: internal/handler/admin.go:252
 msgid "表单参数有误。"
 msgstr "Invalid form parameters."
 
-#: internal/handler/admin.go:247
+#: internal/handler/admin.go:258
 msgid "请选择导入归属用户。"
 msgstr "Please choose an import owner."
 
-#: internal/handler/admin.go:253
+#: internal/handler/admin.go:264
 msgid "所选用户不存在。"
 msgstr "The selected user does not exist."
 
-#: internal/handler/admin.go:259
+#: internal/handler/admin.go:270
 msgid "请选择要导入的 XML 文件。"
 msgstr "Please choose an XML file to import."
 
-#: internal/handler/admin.go:264
+#: internal/handler/admin.go:275
 msgid "XML 文件不能为空。"
 msgstr "XML file cannot be empty."
 
-#: internal/handler/admin.go:269
+#: internal/handler/admin.go:280
 msgid "XML 文件不能超过 50MB。"
 msgstr "XML file must be smaller than 50MB."
 
-#: internal/handler/admin.go:275
+#: internal/handler/admin.go:286
 msgid "打开上传文件失败。"
 msgstr "Failed to open the uploaded file."
 
-#: internal/handler/admin.go:290
+#: internal/handler/admin.go:301
 #, c-format
 msgid "导入失败: %s"
 msgstr "Import failed: %s"
 
-#: internal/handler/admin.go:294
+#: internal/handler/admin.go:305
 msgid "导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。"
 msgstr ""
 "Import finished. Existing posts/pages/comments with the same IDs were "
 "overwritten via upsert."
 
-#: internal/handler/admin.go:316
+#: internal/handler/admin.go:327
 msgid "导出表单参数有误。"
 msgstr "Invalid export form parameters."
 
-#: internal/handler/admin.go:329
+#: internal/handler/admin.go:340
 msgid "请至少选择一项导出内容。"
 msgstr "Select at least one content type to export."
 
-#: internal/handler/admin.go:343
+#: internal/handler/admin.go:354
 #, c-format
 msgid "导出失败: %s"
 msgstr "Export failed: %s"
 
-#: internal/handler/admin.go:389
+#: internal/handler/admin.go:400
 msgid "常规设置"
 msgstr "General settings"
 
-#: internal/handler/admin.go:392
+#: internal/handler/admin.go:403
 msgid "用户设置"
 msgstr "User settings"
 
-#: internal/handler/admin.go:394
+#: internal/handler/admin.go:405
 msgid "开发设置"
 msgstr "Developer settings"
 
-#: internal/handler/admin.go:427
+#: internal/handler/admin.go:438
 msgid "模板已重新解析。"
 msgstr "Templates reloaded."
 
-#: internal/handler/admin.go:430
+#: internal/handler/admin.go:441
 msgid ""
 "已切换到本地模板 hot 模式；若 `web/templates` 已存在，则会直接复用现有文件，"
 "不覆盖你的改动。"
@@ -758,13 +749,13 @@ msgstr ""
 "Switched to local template hot mode. If `web/templates` already exists, the "
 "existing files are reused without overwriting your changes."
 
-#: internal/handler/admin.go:433
+#: internal/handler/admin.go:444
 msgid "已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。"
 msgstr ""
 "Switched back to embedded templates. The local `web/templates` directory "
 "remains on disk."
 
-#: internal/handler/admin.go:436
+#: internal/handler/admin.go:447
 msgid ""
 "已切换到本地资源 hot 模式；若 `web/assets` 已存在，则会直接复用现有文件，不覆"
 "盖你的改动。"
@@ -772,13 +763,13 @@ msgstr ""
 "Switched to local asset hot mode. If `web/assets` already exists, the "
 "existing files are reused without overwriting your changes."
 
-#: internal/handler/admin.go:439
+#: internal/handler/admin.go:450
 msgid "已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。"
 msgstr ""
 "Switched back to embedded assets. The local `web/assets` directory remains "
 "on disk."
 
-#: internal/handler/admin.go:442
+#: internal/handler/admin.go:453
 msgid ""
 "已切换到本地翻译资源 hot 模式；若 `web/i18n` 已存在，则会直接复用现有文件，不"
 "覆盖你的改动。"
@@ -786,314 +777,344 @@ msgstr ""
 "Switched to local translation hot mode. If `web/i18n` already exists, the "
 "existing files are reused without overwriting your changes."
 
-#: internal/handler/admin.go:445
+#: internal/handler/admin.go:456
 msgid "已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。"
 msgstr ""
 "Switched back to embedded translations. The local `web/i18n` directory "
 "remains on disk."
 
-#: internal/handler/admin.go:489
+#: internal/handler/admin.go:500
 #, c-format
 msgid "固定链接结构不合法: %s"
 msgstr ""
 
-#: internal/handler/admin.go:496
+#: internal/handler/admin.go:507
 #, c-format
 msgid "分类目录前缀不合法: %s"
 msgstr ""
 
-#: internal/handler/admin.go:504
+#: internal/handler/admin.go:515
 #, c-format
 msgid "标签前缀不合法: %s"
 msgstr ""
 
-#: internal/handler/admin.go:514
+#: internal/handler/admin.go:525
 msgid "分类目录前缀和标签前缀不能相同。"
 msgstr ""
 
-#: internal/handler/admin.go:562
+#: internal/handler/admin.go:573
 msgid "Session Secret 不能为空。"
 msgstr "Session secret cannot be empty."
 
-#: internal/handler/admin.go:589
+#: internal/handler/admin.go:600
 msgid "用户名、显示名和邮件不能为空。"
 msgstr "Username, display name, and email are required."
 
-#: internal/handler/admin.go:600
+#: internal/handler/admin.go:611
 msgid "用户名已被占用。"
 msgstr "Username is already taken."
 
-#: internal/handler/admin.go:624
+#: internal/handler/admin.go:635
 msgid "原密码不正确。"
 msgstr "Current password is incorrect."
 
-#: internal/handler/admin.go:630
+#: internal/handler/admin.go:641
 msgid "两次输入的密码不一致。"
 msgstr "The two passwords do not match."
 
-#: internal/handler/admin.go:651
+#: internal/handler/admin.go:662
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr "Template reload is unavailable because hot mode is not enabled."
 
-#: internal/handler/admin.go:657
+#: internal/handler/admin.go:668
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr "Failed to reload templates: %s"
 
-#: internal/handler/admin.go:669
+#: internal/handler/admin.go:680
 msgid "当前模板渲染器不可用。"
 msgstr "Template renderer is unavailable."
 
-#: internal/handler/admin.go:675
+#: internal/handler/admin.go:686
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr "Already in hot mode. No need to extract templates again."
 
-#: internal/handler/admin.go:682
+#: internal/handler/admin.go:693
 #, c-format
 msgid "切换到本地模板失败: %s"
 msgstr "Failed to switch to local templates: %s"
 
-#: internal/handler/admin.go:691
+#: internal/handler/admin.go:702
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr "Failed to extract templates: %s"
 
-#: internal/handler/admin.go:703
+#: internal/handler/admin.go:714
 msgid "当前不是 hot 模式，不能切回内嵌模板。"
 msgstr "Not in hot mode, cannot switch back to embedded templates."
 
-#: internal/handler/admin.go:710
+#: internal/handler/admin.go:721
 #, c-format
 msgid "读取内嵌模板失败: %s"
 msgstr "Failed to read embedded templates: %s"
 
-#: internal/handler/admin.go:716
+#: internal/handler/admin.go:727
 #, c-format
 msgid "切换回内嵌模板失败: %s"
 msgstr "Failed to switch back to embedded templates: %s"
 
-#: internal/handler/admin.go:728
+#: internal/handler/admin.go:739
 msgid "当前资源管理器不可用。"
 msgstr "Asset manager is unavailable."
 
-#: internal/handler/admin.go:734
+#: internal/handler/admin.go:745
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr "Already in hot mode. No need to extract assets again."
 
-#: internal/handler/admin.go:746
+#: internal/handler/admin.go:757
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr "Failed to read embedded assets: %s"
 
-#: internal/handler/admin.go:752
+#: internal/handler/admin.go:763
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr "Failed to extract assets: %s"
 
-#: internal/handler/admin.go:765
+#: internal/handler/admin.go:776
 msgid "当前不是 hot 模式，不能切回内嵌资源。"
 msgstr "Not in hot mode, cannot switch back to embedded assets."
 
-#: internal/handler/admin.go:778
+#: internal/handler/admin.go:789
 msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
 msgstr "Already in hot mode. No need to extract translations again."
 
-#: internal/handler/admin.go:786
+#: internal/handler/admin.go:797
 #, c-format
 msgid "读取内嵌翻译资源失败: %s"
 msgstr "Failed to read embedded translations: %s"
 
-#: internal/handler/admin.go:792
+#: internal/handler/admin.go:803
 #, c-format
 msgid "释放翻译资源失败: %s"
 msgstr "Failed to extract translations: %s"
 
-#: internal/handler/admin.go:800 internal/handler/admin.go:819
+#: internal/handler/admin.go:811 internal/handler/admin.go:830
 #, c-format
 msgid "重新加载翻译资源失败: %s"
 msgstr "Failed to reload translations: %s"
 
-#: internal/handler/admin.go:812
+#: internal/handler/admin.go:823
 msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
 msgstr "Not in hot mode, cannot switch back to embedded translations."
 
-#: internal/handler/admin.go:856
+#: internal/handler/admin.go:867
 msgid "DB Debug"
 msgstr "DB Debug"
 
-#: internal/handler/admin.go:865
+#: internal/handler/admin.go:876
 msgid "仅允许只读 SQL(SELECT/EXPLAIN)。"
 msgstr "Only read-only SQL is allowed (SELECT / EXPLAIN)."
 
-#: internal/handler/admin.go:916
+#: internal/handler/admin.go:927
 msgid "未登录"
 msgstr "Not logged in"
 
-#: internal/handler/admin.go:921
+#: internal/handler/admin.go:932
 msgid "未选择文件"
 msgstr "No file selected"
 
-#: internal/handler/admin.go:925
+#: internal/handler/admin.go:936
 msgid "文件不能超过 10MB"
 msgstr "File must be smaller than 10MB"
 
-#: internal/handler/admin.go:930
+#: internal/handler/admin.go:941
 msgid "打开上传文件失败"
 msgstr "Failed to open uploaded file"
 
-#: internal/handler/admin.go:940
+#: internal/handler/admin.go:951
 msgid "仅支持 png/jpg/gif/webp 图片"
 msgstr "Only png/jpg/gif/webp images are supported"
 
-#: internal/handler/admin.go:944
+#: internal/handler/admin.go:955
 msgid "读取上传文件失败"
 msgstr "Failed to read uploaded file"
 
-#: internal/handler/admin.go:954
+#: internal/handler/admin.go:965
 msgid "创建上传目录失败"
 msgstr "Failed to create upload directory"
 
-#: internal/handler/admin.go:960
+#: internal/handler/admin.go:971
 msgid "保存文件失败"
 msgstr "Failed to save file"
 
-#: internal/handler/admin.go:966
+#: internal/handler/admin.go:977
 msgid "写入文件失败"
 msgstr "Failed to write file"
 
-#: internal/handler/admin.go:976
+#: internal/handler/admin.go:987
 msgid "保存上传记录失败"
 msgstr "Failed to save upload record"
 
-#: internal/handler/admin.go:991
+#: internal/handler/admin.go:1002
 msgid "文件管理"
 msgstr "Files"
 
-#: internal/handler/admin.go:1084
+#: internal/handler/admin.go:1102
 msgid "文章管理"
 msgstr "Posts"
 
-#: internal/handler/admin.go:1086
+#: internal/handler/admin.go:1104
 msgid "页面管理"
 msgstr "Pages"
 
-#: internal/handler/admin.go:1106 internal/handler/admin.go:1485
-msgid "分类/标签"
+#: internal/handler/admin.go:1110
+#, fuzzy, c-format
+msgid "文章管理 · 分类：%s"
+msgstr "Posts"
+
+#: internal/handler/admin.go:1118
+#, fuzzy, c-format
+msgid "文章管理 · 标签：%s"
+msgstr "Posts"
+
+#: internal/handler/admin.go:1125
+#, c-format
+msgid "%s · 搜索：%s"
+msgstr ""
+
+#: internal/handler/admin.go:1250
+msgid "分类管理"
+msgstr ""
+
+#: internal/handler/admin.go:1252
+#, fuzzy
+msgid "标签管理"
 msgstr "Categories / Tags"
 
-#: internal/handler/admin.go:1116
-msgid "分类已保存。"
-msgstr "Category saved."
+#: internal/handler/admin.go:1273
+#, fuzzy
+msgid "加载标签列表失败。"
+msgstr "Tag list"
 
-#: internal/handler/admin.go:1119
-msgid "分类已删除。"
-msgstr "Category deleted."
-
-#: internal/handler/admin.go:1122
+#: internal/handler/admin.go:1292
 msgid "标签已保存。"
 msgstr "Tag saved."
 
-#: internal/handler/admin.go:1125
+#: internal/handler/admin.go:1295
 msgid "标签已删除。"
 msgstr "Tag deleted."
 
-#: internal/handler/admin.go:1166
+#: internal/handler/admin.go:1311
+#, fuzzy
+msgid "加载分类列表失败。"
+msgstr "Category list"
+
+#: internal/handler/admin.go:1327
+msgid "分类已保存。"
+msgstr "Category saved."
+
+#: internal/handler/admin.go:1330
+msgid "分类已删除。"
+msgstr "Category deleted."
+
+#: internal/handler/admin.go:1394
 msgid "分类名称不能为空。"
 msgstr "Category name cannot be empty."
 
-#: internal/handler/admin.go:1174
+#: internal/handler/admin.go:1402
 msgid "分类 slug 不能为空。"
 msgstr "Category slug cannot be empty."
 
-#: internal/handler/admin.go:1183
+#: internal/handler/admin.go:1411
 msgid "分类 slug %q 已存在。"
 msgstr "Category slug %q already exists."
 
-#: internal/handler/admin.go:1223
+#: internal/handler/admin.go:1451
 msgid "标签名称不能为空。"
 msgstr "Tag name cannot be empty."
 
-#: internal/handler/admin.go:1231
+#: internal/handler/admin.go:1459
 msgid "标签 slug 不能为空。"
 msgstr "Tag slug cannot be empty."
 
-#: internal/handler/admin.go:1240
+#: internal/handler/admin.go:1468
 msgid "标签 slug %q 已存在。"
 msgstr "Tag slug %q already exists."
 
-#: internal/handler/admin.go:1264 internal/handler/admin.go:1346
-#: internal/handler/admin.go:1363 internal/handler/admin.go:1380
-#: internal/handler/admin.go:1397
+#: internal/handler/admin.go:1492 internal/handler/admin.go:1574
+#: internal/handler/admin.go:1591 internal/handler/admin.go:1608
+#: internal/handler/admin.go:1625
 msgid "内容管理"
 msgstr "Content"
 
-#: internal/handler/admin.go:1364
+#: internal/handler/admin.go:1592
 #, c-format
 msgid "页面链接 /%s 已存在，请换一个 slug。"
 msgstr "Page path /%s already exists. Please choose another slug."
 
-#: internal/handler/admin.go:1398
+#: internal/handler/admin.go:1626
 #, fuzzy
 msgid "文章 slug %q 已存在，请换一个。"
 msgstr "Tag slug %q already exists."
 
-#: internal/handler/admin.go:1528
+#: internal/handler/admin.go:1755
 msgid "评论管理"
 msgstr "Comments"
 
-#: internal/handler/admin.go:1677
+#: internal/handler/admin.go:1904
 msgid "未找到"
 msgstr "Not found"
 
-#: internal/handler/admin.go:1686
+#: internal/handler/admin.go:1913
 msgid "服务器错误"
 msgstr "Server error"
 
-#: internal/handler/admin.go:1708
+#: internal/handler/admin.go:1935
 msgid "页面 slug 不能为空"
 msgstr "Page slug cannot be empty."
 
-#: internal/handler/admin.go:1711
+#: internal/handler/admin.go:1938
 msgid "页面 slug 只能是单段路径，不能包含 /"
 msgstr "Page slug must be a single path segment and cannot contain /."
 
-#: internal/handler/admin.go:1714
+#: internal/handler/admin.go:1941
 msgid "页面 slug 不能包含空白、? 或 #"
 msgstr "Page slug cannot contain whitespace, ? or #."
 
-#: internal/handler/admin.go:1717
+#: internal/handler/admin.go:1944
 msgid "页面 slug 非法"
 msgstr "Invalid page slug."
 
-#: internal/handler/admin.go:1720
+#: internal/handler/admin.go:1947
 msgid "页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头"
 msgstr ""
 "Page slug may only contain letters, numbers, dots, underscores, and hyphens, "
 "and must start with a letter or number."
 
-#: internal/handler/admin.go:1723
+#: internal/handler/admin.go:1950
 msgid "页面 slug 不能与文章永久链接格式冲突"
 msgstr "Page slug cannot conflict with the post permalink format."
 
-#: internal/handler/admin.go:1726
+#: internal/handler/admin.go:1953
 msgid "页面 slug %q 为保留路由，请换一个"
 msgstr "Page slug %q is a reserved route. Please choose another one."
 
-#: internal/handler/admin.go:1737
+#: internal/handler/admin.go:1964
 msgid "当前固定链接结构使用了 %postname%，文章 slug 不能为空"
 msgstr ""
 
-#: internal/handler/admin.go:1740
+#: internal/handler/admin.go:1967
 #, fuzzy
 msgid "文章 slug 不能包含 /、空白、? 或 #"
 msgstr "Page slug cannot contain whitespace, ? or #."
 
-#: internal/handler/admin.go:1743
+#: internal/handler/admin.go:1970
 #, fuzzy
 msgid "文章 slug 非法"
 msgstr "Invalid page slug."
 
-#: internal/handler/admin.go:1746
+#: internal/handler/admin.go:1973
 #, fuzzy
 msgid "文章 slug %q 为保留路由，请换一个"
 msgstr "Page slug %q is a reserved route. Please choose another one."
@@ -1174,145 +1195,39 @@ msgstr "Something went wrong"
 msgid "服务器内部错误,请稍后重试。"
 msgstr "Internal server error. Please try again later."
 
-#~ msgid "hot：本地 assets 目录"
-#~ msgstr "hot: local assets directory"
+#~ msgid "%d 篇草稿"
+#~ msgid_plural "%d 篇草稿"
+#~ msgstr[0] "%d draft"
+#~ msgstr[1] "%d drafts"
 
-#~ msgid "hot：本地 i18n 目录"
-#~ msgstr "hot: local i18n directory"
+#~ msgid "%d 条待审"
+#~ msgid_plural "%d 条待审"
+#~ msgstr[0] "%d pending"
+#~ msgstr[1] "%d pending"
 
-#~ msgid "hot：本地模板 + 手动重新解析"
-#~ msgstr "hot: local templates + manual reload"
+#~ msgid "上传文件"
+#~ msgstr "Uploads"
 
-#~ msgid "static：内嵌模板"
-#~ msgstr "static: embedded templates"
+#~ msgid "审核评论"
+#~ msgstr "Review comments"
 
-#~ msgid "static：内嵌翻译"
-#~ msgstr "static: embedded translations"
+#~ msgid "暂无文章"
+#~ msgstr "No posts yet"
 
-#~ msgid "static：内嵌资源"
-#~ msgstr "static: embedded assets"
+#~ msgid "在"
+#~ msgstr "on"
 
-#~ msgid "个人资料"
-#~ msgstr "Profile"
-
-#~ msgid "个人资料和密码安全独立成页，避免和博客运行参数混在同一个设置页里。"
-#~ msgstr ""
-#~ "Put profile and password security on their own page instead of mixing "
-#~ "them with blog runtime settings."
-
-#~ msgid "会话设置"
-#~ msgstr "Session settings"
-
-#~ msgid "保存个人资料"
-#~ msgstr "Save profile"
-
-#~ msgid "修改密码"
-#~ msgstr "Change password"
-
-#~ msgid "修改密码前需要先填写当前密码。"
-#~ msgstr "Enter the current password before changing it."
-
-#~ msgid "修改用户名、显示名或邮箱后会立即影响后台展示。"
-#~ msgstr ""
-#~ "Updating username, display name, or email takes effect in the admin UI "
-#~ "immediately."
-
-#~ msgid "密码设置"
-#~ msgstr "Password settings"
-
-#~ msgid "已自定义配置"
-#~ msgstr "Custom"
-
-#~ msgid "当前用户名"
-#~ msgstr "Current username"
-
-#~ msgid "把模板、静态资源和翻译资源集中到独立页面，开发时查找和切换会更直接。"
-#~ msgstr ""
-#~ "Group templates, static assets, and translations on a dedicated page so "
-#~ "development toggles are easier to find and switch."
-
-#~ msgid "文章固定链接"
-#~ msgstr "Post permalink"
-
-#~ msgid "新的 Session Secret"
-#~ msgstr "New session secret"
-
-#~ msgid "显示名"
-#~ msgstr "Display name"
-
-#~ msgid "更新 Session Secret"
-#~ msgstr "Update session secret"
-
-#~ msgid "模板"
-#~ msgstr "Templates"
-
-#~ msgid "模板、资源和翻译开关已拆到“设置 / 开发”。"
-#~ msgstr ""
-#~ "Template, asset, and translation toggles have moved to Settings / "
-#~ "Developer."
-
-#~ msgid "模板切到 hot 后，修改文件需手动重新解析。"
-#~ msgstr ""
-#~ "After switching templates to hot mode, changes need a manual reload."
-
-#~ msgid "模板设置"
-#~ msgstr "Template settings"
-
-#~ msgid "用户资料与密码已拆到“设置 / 用户”。"
-#~ msgstr "Profile and password settings have moved to Settings / User."
-
-#~ msgid "站点名称"
-#~ msgstr "Site name"
-
-#~ msgid "站点设置"
-#~ msgstr "Site settings"
-
-#~ msgid "翻译资源"
-#~ msgstr "Translations"
-
-#~ msgid "翻译资源切换后当前进程会立即重新加载语言包。"
-#~ msgstr ""
-#~ "After switching translations, the current process reloads language "
-#~ "bundles immediately."
-
-#~ msgid "翻译资源设置"
-#~ msgstr "Translation resources"
-
-#~ msgid "请输入新的 Session Secret"
-#~ msgstr "Enter a new session secret"
-
-#~ msgid "资源文件"
-#~ msgstr "Assets"
-
-#~ msgid "资源文件设置"
-#~ msgstr "Asset settings"
-
-#~ msgid "这里保留站点级基础参数，作为后台默认的常规设置入口。"
-#~ msgstr "Keep site-level basics here as the default general settings entry."
-
-#~ msgid "邮件"
-#~ msgstr "Email"
-
-#~ msgid "静态资源切到 hot 后，CSS / JS 修改会直接生效。"
-#~ msgstr ""
-#~ "After switching assets to hot mode, CSS / JS changes take effect "
-#~ "immediately."
-
-#~ msgid "默认或环境变量"
-#~ msgstr "Default or environment value"
-
-#~ msgid "设置 / 常规"
-#~ msgstr "Settings / General"
-
-#~ msgid "设置 / 用户"
-#~ msgstr "Settings / User"
-
-#~ msgid "设置 / 开发"
-#~ msgstr "Settings / Developer"
+#~ msgid "暂无评论"
+#~ msgstr "No comments yet"
 
 #, c-format
 #~ msgid "%d 年 %d 月(%d)"
 #~ msgstr "%d-%02d (%d)"
+
+#~ msgid "%d 条待审评论"
+#~ msgid_plural "%d 条待审评论"
+#~ msgstr[0] "%d pending comment"
+#~ msgstr[1] "%d pending comments"
 
 #~ msgid "%s 后台"
 #~ msgstr "%s Admin"
@@ -1333,8 +1248,29 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "XML 文件"
 #~ msgstr "XML file"
 
+#~ msgid "hot：本地 assets 目录"
+#~ msgstr "hot: local assets directory"
+
+#~ msgid "hot：本地 i18n 目录"
+#~ msgstr "hot: local i18n directory"
+
+#~ msgid "hot：本地模板 + 手动重新解析"
+#~ msgstr "hot: local templates + manual reload"
+
+#~ msgid "static：内嵌模板"
+#~ msgstr "static: embedded templates"
+
+#~ msgid "static：内嵌翻译"
+#~ msgstr "static: embedded translations"
+
+#~ msgid "static：内嵌资源"
+#~ msgstr "static: embedded assets"
+
 #~ msgid "上一页"
 #~ msgstr "Previous"
+
+#~ msgid "上传 WordPress XML 并覆盖导入"
+#~ msgstr "Upload a WordPress XML file and import with overwrite"
 
 #~ msgid "下一页"
 #~ msgstr "Next"
@@ -1342,13 +1278,24 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "个人设置"
 #~ msgstr "Profile"
 
+#~ msgid "个人资料"
+#~ msgstr "Profile"
+
 #~ msgid "个人资料与密码已拆到“账号与安全”页。"
 #~ msgstr ""
 #~ "Profile and password settings have moved to the Account & Security page."
 
+#~ msgid "个人资料和密码安全独立成页，避免和博客运行参数混在同一个设置页里。"
+#~ msgstr ""
+#~ "Put profile and password security on their own page instead of mixing "
+#~ "them with blog runtime settings."
+
 #, c-format
 #~ msgid "以 <strong>%s</strong> 的身份发表评论，"
 #~ msgstr "Commenting as <strong>%s</strong>,"
+
+#~ msgid "会话设置"
+#~ msgstr "Session settings"
 
 #~ msgid "使用内嵌模板资源"
 #~ msgstr "Use embedded templates"
@@ -1358,6 +1305,9 @@ msgstr "Internal server error. Please try again later."
 
 #~ msgid "使用内嵌资源文件"
 #~ msgstr "Use embedded assets"
+
+#~ msgid "保存个人资料"
+#~ msgstr "Save profile"
 
 #~ msgid "保存分类"
 #~ msgstr "Save category"
@@ -1375,6 +1325,32 @@ msgstr "Internal server error. Please try again later."
 #~ "Keep frequently changed site-level settings here, and move less-frequent "
 #~ "dev toggles and account security into separate sections for a clearer "
 #~ "admin hierarchy."
+
+#~ msgid "修改密码"
+#~ msgstr "Change password"
+
+#~ msgid "修改密码前需要先填写当前密码。"
+#~ msgstr "Enter the current password before changing it."
+
+#~ msgid "修改用户名、显示名或邮箱后会立即影响后台展示。"
+#~ msgstr ""
+#~ "Updating username, display name, or email takes effect in the admin UI "
+#~ "immediately."
+
+#, c-format
+#~ msgid "共 %d 个页面"
+#~ msgid_plural "共 %d 个页面"
+#~ msgstr[0] "%d page"
+#~ msgstr[1] "%d pages"
+
+#, c-format
+#~ msgid "共 %d 篇文章"
+#~ msgid_plural "共 %d 篇文章"
+#~ msgstr[0] "%d post"
+#~ msgstr[1] "%d posts"
+
+#~ msgid "分类/标签"
+#~ msgstr "Categories / Tags"
 
 #~ msgid "分类目录"
 #~ msgstr "Categories"
@@ -1427,6 +1403,9 @@ msgstr "Internal server error. Please try again later."
 #~ "You can enter either a post or page post_id. The sidebar widget will read "
 #~ "comments posted by the blog owner under that post_id."
 
+#~ msgid "名称"
+#~ msgstr "Name"
+
 #~ msgid "回复"
 #~ msgstr "Reply"
 
@@ -1435,6 +1414,12 @@ msgstr "Internal server error. Please try again later."
 
 #~ msgid "如:Go, 教程, 随笔"
 #~ msgstr "e.g. Go, tutorial, notes"
+
+#~ msgid "密码设置"
+#~ msgstr "Password settings"
+
+#~ msgid "导入"
+#~ msgstr "Import"
 
 #~ msgid "导入归属用户"
 #~ msgstr "Import owner"
@@ -1446,6 +1431,9 @@ msgstr "Internal server error. Please try again later."
 
 #~ msgid "已发布"
 #~ msgstr "Published"
+
+#~ msgid "已自定义配置"
+#~ msgstr "Custom"
 
 #~ msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
 #~ msgstr ""
@@ -1532,6 +1520,9 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "当前没有可选用户，请先创建管理员账号。"
 #~ msgstr "No users are available. Please create an admin account first."
 
+#~ msgid "当前用户名"
+#~ msgstr "Current username"
+
 #~ msgid "当前翻译模式：hot（本地翻译目录）"
 #~ msgstr "Translation mode: hot (local translations)"
 
@@ -1553,6 +1544,11 @@ msgstr "Internal server error. Please try again later."
 #~ "Keep profile, credentials, and account security actions on one page "
 #~ "instead of mixing them with site-wide settings."
 
+#~ msgid "把模板、静态资源和翻译资源集中到独立页面，开发时查找和切换会更直接。"
+#~ msgstr ""
+#~ "Group templates, static assets, and translations on a dedicated page so "
+#~ "development toggles are easier to find and switch."
+
 #~ msgid ""
 #~ "把模板、静态资源和翻译资源集中在一页管理，适合开发时快速切换本地目录与内嵌"
 #~ "资源。"
@@ -1561,12 +1557,22 @@ msgstr "Internal server error. Please try again later."
 #~ "switching between local directories and embedded resources during "
 #~ "development."
 
+#~ msgid "描述"
+#~ msgstr "Description"
+
 #~ msgid "提交评论"
 #~ msgstr "Submit comment"
 
 #, c-format
 #~ msgid "文件：%s"
 #~ msgstr "File: %s"
+
+#~ msgctxt "admin.post_type.singular"
+#~ msgid "文章"
+#~ msgstr "Post"
+
+#~ msgid "文章固定链接"
+#~ msgstr "Post permalink"
 
 #~ msgid "新密码"
 #~ msgstr "New password"
@@ -1581,8 +1587,17 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "新建标签"
 #~ msgstr "New tag"
 
+#~ msgid "新的 Session Secret"
+#~ msgstr "New session secret"
+
+#~ msgid "无"
+#~ msgstr "None"
+
 #~ msgid "昵称 *"
 #~ msgstr "Name *"
+
+#~ msgid "显示名"
+#~ msgstr "Display name"
 
 #~ msgid "暂无内容"
 #~ msgstr "No content yet"
@@ -1596,17 +1611,14 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "暂无标签"
 #~ msgstr "No tags yet"
 
-#~ msgid "暂无评论"
-#~ msgstr "No comments yet"
+#~ msgid "更新 Session Secret"
+#~ msgstr "Update session secret"
 
 #~ msgid "最近一次导入结果"
 #~ msgstr "Latest import result"
 
 #~ msgid "有回复时邮件通知我"
 #~ msgstr "Email me when someone replies"
-
-#~ msgid "标签"
-#~ msgstr "Tags"
 
 #~ msgid "标签(逗号分隔)"
 #~ msgstr "Tags (comma-separated)"
@@ -1630,8 +1642,29 @@ msgstr "Internal server error. Please try again later."
 #~ "Local `web/templates` directory detected. After editing templates, click "
 #~ "the button below to reload them."
 
+#~ msgid "模板"
+#~ msgstr "Templates"
+
+#~ msgid "模板、资源和翻译开关已拆到“设置 / 开发”。"
+#~ msgstr ""
+#~ "Template, asset, and translation toggles have moved to Settings / "
+#~ "Developer."
+
+#~ msgid "模板切到 hot 后，修改文件需手动重新解析。"
+#~ msgstr ""
+#~ "After switching templates to hot mode, changes need a manual reload."
+
+#~ msgid "模板设置"
+#~ msgstr "Template settings"
+
 #~ msgid "没有找到匹配的文章。"
 #~ msgstr "No matching posts found."
+
+#~ msgid "用户资料与密码已拆到“设置 / 用户”。"
+#~ msgstr "Profile and password settings have moved to Settings / User."
+
+#~ msgid "留空时自动生成"
+#~ msgstr "Auto-generate if empty"
 
 #~ msgid "登出"
 #~ msgstr "Sign out"
@@ -1651,8 +1684,20 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "确认新密码"
 #~ msgstr "Confirm new password"
 
+#~ msgid "站点名称"
+#~ msgstr "Site name"
+
 #~ msgid "站点描述"
 #~ msgstr "Site description"
+
+#~ msgid "站点设置"
+#~ msgstr "Site settings"
+
+#~ msgid "管理博客文章"
+#~ msgstr "Manage blog posts"
+
+#~ msgid "管理独立页面"
+#~ msgstr "Manage standalone pages"
 
 #~ msgid "编辑"
 #~ msgstr "Edit"
@@ -1670,8 +1715,28 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "网站(可选)"
 #~ msgstr "Website (optional)"
 
+#~ msgid "翻译资源"
+#~ msgstr "Translations"
+
+#~ msgid "翻译资源切换后当前进程会立即重新加载语言包。"
+#~ msgstr ""
+#~ "After switching translations, the current process reloads language "
+#~ "bundles immediately."
+
+#~ msgid "翻译资源设置"
+#~ msgstr "Translation resources"
+
 #~ msgid "草稿预览"
 #~ msgstr "Draft preview"
+
+#~ msgid "设置 / 常规"
+#~ msgstr "Settings / General"
+
+#~ msgid "设置 / 开发"
+#~ msgstr "Settings / Developer"
+
+#~ msgid "设置 / 用户"
+#~ msgstr "Settings / User"
 
 #~ msgid "评论已关闭"
 #~ msgstr "Comments closed"
@@ -1682,6 +1747,9 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "说点什么吧…… *"
 #~ msgstr "Say something… *"
 
+#~ msgid "请输入新的 Session Secret"
+#~ msgstr "Enter a new session secret"
+
 #~ msgid "请选择用户"
 #~ msgstr "Please select a user"
 
@@ -1690,6 +1758,12 @@ msgstr "Internal server error. Please try again later."
 
 #~ msgid "资源与热更新"
 #~ msgstr "Resources & Hot Reload"
+
+#~ msgid "资源文件"
+#~ msgstr "Assets"
+
+#~ msgid "资源文件设置"
+#~ msgstr "Asset settings"
 
 #~ msgid "资源相关切换已拆到“资源与热更新”页。"
 #~ msgstr ""
@@ -1706,6 +1780,9 @@ msgstr "Internal server error. Please try again later."
 
 #~ msgid "这里保留博客运行时最常修改的基础参数。"
 #~ msgstr "Keep the most frequently changed runtime settings here."
+
+#~ msgid "这里保留站点级基础参数，作为后台默认的常规设置入口。"
+#~ msgstr "Keep site-level basics here as the default general settings entry."
 
 #~ msgid "选择分类…"
 #~ msgstr "Select category…"
@@ -1737,5 +1814,17 @@ msgstr "Internal server error. Please try again later."
 #~ msgid "阅读全文 →"
 #~ msgstr "Read more →"
 
+#~ msgid "静态资源切到 hot 后，CSS / JS 修改会直接生效。"
+#~ msgstr ""
+#~ "After switching assets to hot mode, CSS / JS changes take effect "
+#~ "immediately."
+
+#~ msgctxt "admin.post_type.singular"
+#~ msgid "页面"
+#~ msgstr "Page"
+
 #~ msgid "驳回"
 #~ msgstr "Unapprove"
+
+#~ msgid "默认或环境变量"
+#~ msgstr "Default or environment value"

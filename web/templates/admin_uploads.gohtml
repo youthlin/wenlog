@@ -7,11 +7,10 @@
 <p class="tip" id="upload_status"></p>
 <div class="table-scroll">
   <table class="data-table uploads-table">
-	    <thead><tr><th>ID</th><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+	    <thead><tr><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
 	    <tbody>
 	    {{range .Uploads}}
 	    <tr>
-      <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
       <td class="upload-preview-cell" data-label="{{$.t.T "预览"}}">{{if .MimeType}}<img src="{{.Path}}" alt="" class="upload-thumb">{{else}}<span class="upload-thumb upload-thumb-placeholder">-</span>{{end}}</td>
       <td class="post-title-cell upload-file-cell" data-label="{{$.t.T "文件"}}">
         <div class="post-title-panel upload-file-panel">
@@ -24,8 +23,8 @@
           </div>
         </div>
       </td>
-	      <td class="upload-size-cell" data-label="{{$.t.T "大小"}}"><span class="admin-meta-badge">{{.Size}} B</span></td>
-	      <td class="upload-time-cell" data-label="{{$.t.T "时间"}}"><time class="admin-meta-badge" datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time></td>
+	      <td class="upload-size-cell" data-label="{{$.t.T "大小"}}">{{fmtFileSize .Size}}</td>
+	      <td class="upload-time-cell" data-label="{{$.t.T "时间"}}"><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time></td>
 	      <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
 	        <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该文件?"}}')">
 	          {{template "csrf_field" $}}
@@ -34,7 +33,7 @@
 	      </td>
 	    </tr>
 	    {{else}}
-	    <tr><td colspan="6">{{.t.T "暂无文件"}}</td></tr>
+	    <tr><td colspan="5">{{.t.T "暂无文件"}}</td></tr>
 	    {{end}}
 	    </tbody>
   </table>

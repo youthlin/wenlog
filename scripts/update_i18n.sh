@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 I18N_DIR="${I18N_DIR:-$ROOT_DIR/web/i18n}"
 TEMPLATE_DIR="${TEMPLATE_DIR:-$ROOT_DIR/web/templates}"
-XTEMPLATE_PKG="${XTEMPLATE_PKG:-github.com/youthlin/t/cmd/xtemplate@v0.1.0}"
+XTEMPLATE_PKG="${XTEMPLATE_PKG:-$HOME/go/src/github.com/youthlin/t/cmd/xtemplate}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -30,7 +30,6 @@ GO_POT="$TMP_DIR/go.pot"
 TEMPLATE_POT="$TMP_DIR/templates.pot"
 MERGED_POT="$I18N_DIR/messages.pot"
 XTEMPLATE_ERR="$TMP_DIR/xtemplate.stderr"
-XTEMPLATE_FUNCS='postURL,pageURL,categoryURL,tagURL,safeHTML,escapeHTML,listHTML,detailHTML,hasMore,gravatar,gravatarPrimary,gravatarFallback,fmtDate,fmtDateTime,year,add,sub,seq'
 
 # 同时纳入已跟踪与未跟踪(但未被 .gitignore 忽略)的 Go 文件，
 # 这样重构拆出的新文件在 git add 前也能参与 i18n 抽取。
@@ -70,7 +69,6 @@ fi
 go run "$XTEMPLATE_PKG" \
   -i "$TEMPLATE_DIR/*.gohtml" \
   -k 'T;N:1,2;N64:1,2;X:1c,2;XN:1c,2,3;XN64:1c,2,3' \
-  -f "$XTEMPLATE_FUNCS" \
   -o "$TEMPLATE_POT" \
   2>"$XTEMPLATE_ERR"
 

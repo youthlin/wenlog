@@ -206,7 +206,26 @@ func (h *Admin) Logout(c *gin.Context) {
 // Dashboard 后台首页。
 func (h *Admin) Dashboard(c *gin.Context) {
 	tr := i18n.Get(c)
-	c.HTML(http.StatusOK, "admin_dashboard.gohtml", h.base(c, tr.T("后台")))
+	data := h.base(c, tr.T("后台"))
+	data["Stats"] = h.st.DashboardStats()
+	data["RecentPosts"] = h.st.RecentPosts(5)
+	comments := h.st.RecentComments(5)
+	data["RecentComments"] = comments
+	if len(comments) > 0 {
+		postIDs := make([]uint, 0, len(comments))
+		for _, c := range comments {
+			postIDs = append(postIDs, c.PostID)
+		}
+		postsByID, err := h.st.AdminPostsByIDs(postIDs)
+		if err == nil {
+			titles := make(map[uint]string, len(postsByID))
+			for id, p := range postsByID {
+				titles[id] = p.Title
+			}
+			data["CommentPostTitles"] = titles
+		}
+	}
+	c.HTML(http.StatusOK, "admin_dashboard.gohtml", data)
 }
 
 // ImportPage 显示 WXR 导入/导出页。

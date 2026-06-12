@@ -4,6 +4,7 @@ package render
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	stdhtml "html"
 	"html/template"
 	"io/fs"
@@ -156,6 +157,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"gravatarFallback": gravatarFallback,
 		"fmtDate":          func(t time.Time) string { return t.Format("2006-01-02") },
 		"fmtDateTime":      func(t time.Time) string { return t.Format("2006-01-02 15:04") },
+		"fmtFileSize":      fmtFileSize,
 		"year":             func(t time.Time) int { return t.Year() },
 		"add":              func(a, b int) int { return a + b },
 		"sub":              func(a, b int) int { return a - b },
@@ -243,6 +245,20 @@ func seq(n int) []int {
 		s[i] = i + 1
 	}
 	return s
+}
+
+// fmtFileSize 将字节数格式化为可读字符串。
+func fmtFileSize(size int64) string {
+	const unit = 1024
+	if size < unit {
+		return fmt.Sprintf("%d B", size)
+	}
+	div, exp := int64(unit), 0
+	for n := size / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
 }
 
 // gravatar 由邮箱生成 cravatar(国内镜像)头像 URL。

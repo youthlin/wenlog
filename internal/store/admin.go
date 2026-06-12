@@ -588,6 +588,32 @@ type CommentCounts struct {
 	Spam     int64
 }
 
+// DashboardStats 是后台概览工作台所需的统计数据。
+type DashboardStats struct {
+	PostsPublished int64
+	PostsDraft     int64
+	PagesPublished int64
+	PagesDraft     int64
+	Comments       CommentCounts
+	CategoryCount  int64
+	TagCount       int64
+	UploadCount    int64
+}
+
+// DashboardStats 返回概览工作台所需的各项统计数据。
+func (s *Store) DashboardStats() DashboardStats {
+	var ds DashboardStats
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).Count(&ds.PostsPublished)
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusDraft).Count(&ds.PostsDraft)
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ?", model.PostTypePage, model.StatusPublished).Count(&ds.PagesPublished)
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ?", model.PostTypePage, model.StatusDraft).Count(&ds.PagesDraft)
+	ds.Comments = s.AdminCommentCounts()
+	s.db.Model(&model.Category{}).Count(&ds.CategoryCount)
+	s.db.Model(&model.Tag{}).Count(&ds.TagCount)
+	s.db.Model(&model.Upload{}).Count(&ds.UploadCount)
+	return ds
+}
+
 // AdminCommentCounts 返回三种状态的评论数(后台标签角标)。
 func (s *Store) AdminCommentCounts() CommentCounts {
 	var cc CommentCounts
