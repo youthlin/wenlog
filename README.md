@@ -62,7 +62,7 @@ go run ./cmd/server
 ### 2. 可选:手动重置管理员密码
 
 ```bash
-go run ./cmd/server -set-admin "youthlin:你的密码"
+go run ./cmd/server -reset-password "youthlin:你的密码"
 ```
 
 ### 3. 在后台导入 / 导出 WordPress 数据

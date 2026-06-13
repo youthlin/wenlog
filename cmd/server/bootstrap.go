@@ -31,15 +31,17 @@ var (
 	bootstrapMsgResetPasswd   = gettext.Mark.T("已为用户 %s 重置密码\n")
 	bootstrapMsgInitialAdmin  = gettext.Mark.T("已自动创建管理员, 用户名: admin 密码: %s\n")
 	bootstrapErrNoAuthor      = gettext.Mark.T("初始化内容失败: 未找到可用作者")
+	bootstrapErrUserNotFound  = gettext.Mark.T("用户不存在: %s\n")
+	bootstrapMsgAdminList     = gettext.Mark.T("当前管理员列表:\n")
 )
 
-var setUser = flag.String("set-admin", "",
-	"设置后台管理员密码:格式 username[:password],密码不填会自动生成并打印,设置后退出")
+var resetPassword = flag.String("reset-password", "",
+	"重置用户密码:格式 username[:password],密码不填会自动生成并打印,设置后退出")
 
-// setPasswd 如果有 -set-admin 参数 执行密码重置 并退出。
+// setPasswd 如果有 -reset-password 参数 执行密码重置 并退出。
 func setPasswd(st *store.Store) bool {
 	t := gettext.Global()
-	spec := *setUser
+	spec := *resetPassword
 	if spec == "" { // 没有传该参数
 		return false
 	}
@@ -56,7 +58,14 @@ func setPasswd(st *store.Store) bool {
 	}
 	err = st.SetUserPassword(username, string(hash))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, t.T(bootstrapErrSetPasswd), err)
+		fmt.Fprintf(os.Stderr, t.T(bootstrapErrUserNotFound), username)
+		admins, listErr := st.ListUsersByRole(model.RoleAdmin)
+		if listErr == nil && len(admins) > 0 {
+			fmt.Fprint(os.Stderr, t.T(bootstrapMsgAdminList))
+			for _, a := range admins {
+				fmt.Fprintf(os.Stderr, "  %s (%s)\n", a.Username, a.DisplayName)
+			}
+		}
 		os.Exit(1)
 	}
 	fmt.Printf(t.T(bootstrapMsgResetPasswd), username)

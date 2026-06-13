@@ -66,7 +66,7 @@
 ### 设置后台管理员密码
 
 ```bash
-go run ./cmd/server -set-admin "用户名:密码"
+go run ./cmd/server -reset-password "用户名:密码"
 ```
 
 如果不传密码部分，程序会生成随机密码并打印。普通首次启动时，如果数据库里还没有任何用户，服务也会自动创建 `admin` 用户并把密码打印到控制台。

@@ -87,6 +87,13 @@ func (s *Store) ListUsers() ([]model.User, error) {
 	return users, errors.Wrap(err, "list users")
 }
 
+// ListUsersByRole 按角色查询用户列表。
+func (s *Store) ListUsersByRole(role string) ([]model.User, error) {
+	var users []model.User
+	err := s.db.Where("role = ?", role).Order("display_name ASC").Order("username ASC").Find(&users).Error
+	return users, errors.Wrapf(err, "list users by role=%s", role)
+}
+
 // CountUsers 返回用户总数(首次启动判断是否需建管理员)。
 func (s *Store) CountUsers() (count int64, err error) {
 	err = s.db.Model(&model.User{}).Count(&count).Error
