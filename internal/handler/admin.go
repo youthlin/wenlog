@@ -2019,8 +2019,31 @@ func (h *Admin) ListComments(c *gin.Context) {
 	}
 	data["Counts"] = h.st.AdminCommentCounts()
 	data["Page"] = page
-	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	data["Pages"] = pages
+	if page > 1 {
+		data["PrevPageURL"] = adminCommentPageURL(mine, status, postID, page-1)
+	}
+	if page < pages {
+		data["NextPageURL"] = adminCommentPageURL(mine, status, postID, page+1)
+	}
 	c.HTML(http.StatusOK, "admin_comments.gohtml", data)
+}
+
+func adminCommentPageURL(mine bool, status string, postID uint, page int) string {
+	if page < 1 {
+		page = 1
+	}
+	q := url.Values{}
+	q.Set("page", strconv.Itoa(page))
+	if mine {
+		return "/admin/my-comments?" + q.Encode()
+	}
+	q.Set("status", status)
+	if postID > 0 {
+		q.Set("post_id", strconv.FormatUint(uint64(postID), 10))
+	}
+	return "/admin/comments?" + q.Encode()
 }
 
 // EditComment 修改评论内容和作者元信息。

@@ -112,9 +112,9 @@
 <p class="total">{{.t.N64 "共 %d 条评论" "共 %d 条评论" .Total .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="{{if .Mine}}/admin/my-comments{{else}}/admin/comments?status={{.FilterStatus}}{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}{{end}}&page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
+  {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="{{if .Mine}}/admin/my-comments{{else}}/admin/comments?status={{.FilterStatus}}{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}{{end}}&page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
+  {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
 {{if not .Mine}}<script src="/assets/admin.js"></script>{{end}}
