@@ -804,10 +804,31 @@ func (s *Store) DeleteCommentByUser(commentID, userID uint) error {
 
 // --- 用户数据导出 ---
 
+// ExportUser 导出用的用户信息(不暴露 DB 内部字段)。
+type ExportUser struct {
+	Username    string    `json:"username"`
+	DisplayName string    `json:"display_name"`
+	Email       string    `json:"email"`
+	Role        string    `json:"role"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// ExportComment 导出用的评论信息(不暴露 DB 内部字段)。
+type ExportComment struct {
+	ID        uint      `json:"id"`
+	PostID    uint      `json:"post_id"`
+	Author    string    `json:"author"`
+	Email     string    `json:"email"`
+	URL       string    `json:"url,omitempty"`
+	Content   string    `json:"content"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // UserExportData 包含用户个人数据用于导出。
 type UserExportData struct {
-	User     model.User
-	Comments []model.Comment
+	User     ExportUser      `json:"user"`
+	Comments []ExportComment `json:"comments"`
 }
 
 // ExportUserData 返回用户的个人数据(用于 GDPR 导出)。
@@ -816,11 +837,29 @@ func (s *Store) ExportUserData(userID uint) (*UserExportData, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get user for export")
 	}
-	// 不导出密码哈希
-	u.PasswordHash = ""
+	eu := ExportUser{
+		Username:    u.Username,
+		DisplayName: u.DisplayName,
+		Email:       u.Email,
+		Role:        u.Role,
+		CreatedAt:   u.CreatedAt,
+	}
 	var comments []model.Comment
 	if err := s.db.Where("user_id = ?", userID).Order("created_at DESC").Find(&comments).Error; err != nil {
 		return nil, errors.Wrap(err, "list user comments for export")
 	}
-	return &UserExportData{User: *u, Comments: comments}, nil
+	ec := make([]ExportComment, 0, len(comments))
+	for _, c := range comments {
+		ec = append(ec, ExportComment{
+			ID:        c.ID,
+			PostID:    c.PostID,
+			Author:    c.Author,
+			Email:     c.Email,
+			URL:       c.URL,
+			Content:   c.Content,
+			Status:    c.Status,
+			CreatedAt: c.CreatedAt,
+		})
+	}
+	return &UserExportData{User: eu, Comments: ec}, nil
 }

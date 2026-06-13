@@ -178,6 +178,7 @@ func (h *Admin) LoginForm(c *gin.Context) {
 	if c.Query("message") == "session-secret-updated" {
 		data["Notice"] = tr.T("Session Secret 已更新，所有登录用户都需要重新登录。")
 	}
+	data["RegistrationOpen"] = h.isRegistrationOpen()
 	c.HTML(http.StatusOK, "admin_login.gohtml", data)
 }
 
@@ -224,7 +225,6 @@ func (h *Admin) Register(c *gin.Context) {
 	username := strings.TrimSpace(c.PostForm("username"))
 	password := c.PostForm("password")
 	email := strings.TrimSpace(c.PostForm("email"))
-	displayName := strings.TrimSpace(c.PostForm("display_name"))
 
 	if username == "" || password == "" || email == "" {
 		data := h.base(c, tr.T("注册"))
@@ -251,9 +251,7 @@ func (h *Admin) Register(c *gin.Context) {
 		return
 	}
 
-	if displayName == "" {
-		displayName = username
-	}
+	displayName := username
 	if err := h.st.UpsertUserPassword(username, displayName, string(hash)); err != nil {
 		h.serverError(c, err)
 		return
@@ -1964,7 +1962,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 	}
 	postID := uint(atoiDefault(c.Query("post_id"), 0))
 	page := atoiDefault(c.Query("page"), 1)
-	mine := c.Query("mine") == "1"
+	mine := c.Query("mine") == "1" || strings.HasPrefix(c.Request.URL.Path, "/admin/my-comments")
 
 	var comments []model.Comment
 	var total int64
@@ -2154,7 +2152,20 @@ func (h *Admin) DeleteMyComment(c *gin.Context) {
 
 // --- 用户管理 ---
 
-// ExportData 导出当前用户个人数据(JSON)。
+// ExportDataPage 导出数据页面(GET)。
+func (h *Admin) ExportDataPage(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	data := h.base(c, tr.T("导出数据"))
+	data["CurrentUser"] = u
+	c.HTML(http.StatusOK, "admin_export_data.gohtml", data)
+}
+
+// ExportData 导出当前用户个人数据(JSON, POST)。
 func (h *Admin) ExportData(c *gin.Context) {
 	u := h.currentUser(c)
 	if u == nil {
@@ -2173,7 +2184,20 @@ func (h *Admin) ExportData(c *gin.Context) {
 	}
 }
 
-// DeleteAccount 注销当前用户账号。
+// DeleteAccountPage 注销账号页面(GET)。
+func (h *Admin) DeleteAccountPage(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	data := h.base(c, tr.T("注销账号"))
+	data["CurrentUser"] = u
+	c.HTML(http.StatusOK, "admin_delete_account.gohtml", data)
+}
+
+// DeleteAccount 注销当前用户账号(POST)。
 func (h *Admin) DeleteAccount(c *gin.Context) {
 	tr := i18n.Get(c)
 	u := h.currentUser(c)

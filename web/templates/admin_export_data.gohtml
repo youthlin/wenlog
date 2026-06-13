@@ -1,0 +1,16 @@
+{{define "admin_export_data.gohtml"}}
+{{template "admin_header" .}}
+<h1>{{.t.T "导出数据"}}</h1>
+{{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+{{if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
+<div class="settings-main">
+  <section class="card settings-card">
+    <p>{{.t.T "你可以导出你的个人数据，包括个人资料和评论记录，格式为 JSON。"}}</p>
+    <form class="edit-form" method="post" action="/admin/export-data">
+      {{template "csrf_field" .}}
+      <p><button type="submit" class="btn">{{.t.T "导出我的数据"}}</button></p>
+    </form>
+  </section>
+</div>
+{{template "admin_footer" .}}
+{{end}}

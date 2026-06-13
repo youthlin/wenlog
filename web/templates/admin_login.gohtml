@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.t.T "登录"}} · {{.SiteName}} {{.t.T "后台"}}</title>
+<title>{{.SiteName}} · {{.t.T "登录"}}</title>
 <link rel="stylesheet" href="/assets/admin.css">
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
@@ -31,12 +31,13 @@
       </select>
     </label>
   </div>
-  <h1>{{.SiteName}} {{.t.T "后台"}}</h1>
+  <h1>{{.SiteName}} · {{.t.T "登录"}}</h1>
   {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
   {{if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
   <p><input type="text" name="username" placeholder="{{.t.T "用户名"}}" required autofocus></p>
   <p><input type="password" name="password" placeholder="{{.t.T "密码"}}" required></p>
   <p><button type="submit">{{.t.T "登录"}}</button></p>
+  {{if .RegistrationOpen}}<p class="auth-alt">{{.t.T "没有账号？"}} <a href="/admin/register">{{.t.T "去注册"}}</a></p>{{end}}
   <p id="backtoblog">{{.t.T "← 返回到"}} <a href="/">{{.SiteName}}</a></p>
 </form>
 <script src="/assets/theme.js"></script>
