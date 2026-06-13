@@ -1,0 +1,48 @@
+{{define "admin_register.gohtml"}}<!DOCTYPE html>
+<html lang="{{.htmlLang}}" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.t.T "注册"}} · {{.SiteName}} {{.t.T "后台"}}</title>
+<link rel="stylesheet" href="/assets/admin.css">
+<script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+</head>
+<body class="admin login-page">
+<form class="login-box" method="post" action="/admin/register">
+  <div class="login-tools">
+    <label class="lang-select-wrap">
+      <span class="sr-only">{{.t.T "语言"}}</span>
+      <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+        <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
+        <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+      </select>
+    </label>
+    <label class="theme-select-wrap">
+      <span class="sr-only">{{.t.T "切换主题"}}</span>
+      <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
+        <option value="dark">{{.t.T "暗黑"}}</option>
+        <option value="light">{{.t.T "明亮"}}</option>
+        <option value="red-plum">{{.t.T "红梅"}}</option>
+        <option value="bamboo">{{.t.T "绿竹"}}</option>
+        <option value="lotus">{{.t.T "藕粉"}}</option>
+        <option value="orange">{{.t.T "橙黄"}}</option>
+        <option value="azure">{{.t.T "蔚蓝"}}</option>
+        <option value="purple">{{.t.T "韵紫"}}</option>
+      </select>
+    </label>
+  </div>
+  <h1>{{.SiteName}} {{.t.T "后台"}}</h1>
+  {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
+  {{if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
+  <p><input type="text" name="username" placeholder="{{.t.T "用户名"}}" required autofocus></p>
+  <p><input type="text" name="display_name" placeholder="{{.t.T "显示名"}}"></p>
+  <p><input type="email" name="email" placeholder="{{.t.T "邮箱"}}" required></p>
+  <p><input type="password" name="password" placeholder="{{.t.T "密码"}}" required></p>
+  <p><button type="submit">{{.t.T "注册"}}</button></p>
+  <p id="backtoblog">{{.t.T "← 返回到"}} <a href="/">{{.SiteName}}</a></p>
+  <p class="auth-alt">{{.t.T "已有账号？"}} <a href="/admin/login">{{.t.T "登录"}}</a></p>
+</form>
+<script src="/assets/theme.js"></script>
+</body>
+</html>
+{{end}}

@@ -29,8 +29,8 @@
           <button type="submit" class="link-btn">{{.t.T "退出"}}</button>
         </form>
         {{else}}
-        <a href="/login">{{.t.T "登录"}}</a>
-        {{if .RegistrationOpen}}<a href="/register">{{.t.T "注册"}}</a>{{end}}
+        <a href="/admin/login">{{.t.T "登录"}}</a>
+        {{if .RegistrationOpen}}<a href="/admin/register">{{.t.T "注册"}}</a>{{end}}
         {{end}}
         <label class="lang-select-wrap">
           <span class="sr-only">{{.t.T "语言"}}</span>

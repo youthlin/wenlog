@@ -30,10 +30,6 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.GET("/feed", pub.Feed)
 
 	// 前台认证路由(无需登录)。
-	r.GET("/register", pub.RegisterForm)
-	r.POST("/register", pub.Register)
-	r.GET("/login", pub.LoginForm)
-	r.POST("/login", pub.Login)
 	r.POST("/logout", pub.Logout)
 	r.GET("/forgot-password", pub.ForgotPasswordForm)
 	r.POST("/forgot-password", pub.ForgotPassword)
@@ -48,6 +44,8 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	r.GET("/admin/login", adm.LoginForm)
 	r.POST("/admin/login", adm.Login)
+	r.GET("/admin/register", adm.RegisterForm)
+	r.POST("/admin/register", adm.Register)
 
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")

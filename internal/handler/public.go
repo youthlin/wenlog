@@ -106,12 +106,6 @@ func (h *Public) loadSettings() publicSettings {
 	}
 }
 
-// isRegistrationOpen 返回当前是否开放前台注册。
-func (h *Public) isRegistrationOpen() bool {
-	s := h.loadSettings()
-	return s.RegistrationOpen
-}
-
 // DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。
 func (h *Public) DynamicOrLegacy(c *gin.Context) {
 	syncPostPermalink(h.st)

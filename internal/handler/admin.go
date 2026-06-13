@@ -203,6 +203,78 @@ func (h *Admin) Logout(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/admin/login")
 }
 
+// RegisterForm 后台注册页(对齐 /admin/login 样式)。
+func (h *Admin) RegisterForm(c *gin.Context) {
+	tr := i18n.Get(c)
+	if !h.isRegistrationOpen() {
+		c.Redirect(http.StatusSeeOther, "/admin/login")
+		return
+	}
+	data := h.base(c, tr.T("注册"))
+	c.HTML(http.StatusOK, "admin_register.gohtml", data)
+}
+
+// Register 处理后注册。
+func (h *Admin) Register(c *gin.Context) {
+	tr := i18n.Get(c)
+	if !h.isRegistrationOpen() {
+		c.Redirect(http.StatusSeeOther, "/admin/login")
+		return
+	}
+	username := strings.TrimSpace(c.PostForm("username"))
+	password := c.PostForm("password")
+	email := strings.TrimSpace(c.PostForm("email"))
+	displayName := strings.TrimSpace(c.PostForm("display_name"))
+
+	if username == "" || password == "" || email == "" {
+		data := h.base(c, tr.T("注册"))
+		data["Error"] = tr.T("用户名、密码和邮箱不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+
+	exists, err := h.st.UserExistsByUsername(username, 0)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		data := h.base(c, tr.T("注册"))
+		data["Error"] = tr.T("用户名已被占用。")
+		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+
+	if displayName == "" {
+		displayName = username
+	}
+	if err := h.st.UpsertUserPassword(username, displayName, string(hash)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+
+	// 注册后自动登录。
+	u, err := h.st.GetUserByUsername(username)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	middleware.SetSessionUser(c, u.ID, u.Role)
+	c.Redirect(http.StatusSeeOther, "/admin/")
+}
+
+// isRegistrationOpen 返回当前是否开放注册。
+func (h *Admin) isRegistrationOpen() bool {
+	settings, _ := h.st.GetSettings(consts.SettingsRegistrationOpen)
+	return settings[consts.SettingsRegistrationOpen] == "true"
+}
+
 // Dashboard 后台首页。
 func (h *Admin) Dashboard(c *gin.Context) {
 	tr := i18n.Get(c)
