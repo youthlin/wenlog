@@ -23,15 +23,6 @@
         {{range .Menu}}<a href="{{pageURL .}}">{{.Title}}</a>{{end}}
       </div>
       <div class="site-nav-utility" aria-label="{{.t.T "界面设置"}}">
-        {{if .CurrentUser}}
-        <a href="/admin">{{.t.T "后台"}}</a>
-        <form class="inline" method="post" action="/logout" style="display:inline">
-          <button type="submit" class="link-btn">{{.t.T "退出"}}</button>
-        </form>
-        {{else}}
-        <a href="/admin/login">{{.t.T "登录"}}</a>
-        {{if .RegistrationOpen}}<a href="/admin/register">{{.t.T "注册"}}</a>{{end}}
-        {{end}}
         <label class="lang-select-wrap">
           <span class="sr-only">{{.t.T "语言"}}</span>
           <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
@@ -94,6 +85,25 @@
 
 {{define "sidebar"}}
 <aside class="sidebar">
+  <section class="widget widget-user">
+    {{if .CurrentUser}}
+    <h3>{{.t.T "%s, 你好" .CurrentUser.DisplayName}}</h3>
+    <div class="widget-user-actions">
+      <a href="/admin">{{.t.T "控制台"}}</a>
+      <form class="inline" method="post" action="/admin/logout" style="display:inline">
+        {{template "csrf_field" .}}
+        <button type="submit" class="link-btn">{{.t.T "退出"}}</button>
+      </form>
+    </div>
+    {{else}}
+    <h3>{{.t.T "欢迎"}}</h3>
+    <div class="widget-user-actions">
+      <a href="/admin/login">{{.t.T "登录"}}</a>
+      {{if .RegistrationOpen}}<a href="/admin/register">{{.t.T "注册"}}</a>{{end}}
+    </div>
+    {{end}}
+  </section>
+
   <section class="widget widget-search">
     <h3>{{.t.T "搜索"}}</h3>
     <form method="get" action="/search">

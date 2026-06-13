@@ -30,7 +30,6 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.GET("/feed", pub.Feed)
 
 	// 前台认证路由(无需登录)。
-	r.POST("/logout", pub.Logout)
 	r.GET("/forgot-password", pub.ForgotPasswordForm)
 	r.POST("/forgot-password", pub.ForgotPassword)
 	r.GET("/reset-password", pub.ResetPasswordForm)
@@ -50,7 +49,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")
 	g.Use(middleware.AuthRequired(), middleware.CSRFMiddleware())
-	g.GET("/", adm.Dashboard)
+	g.GET("/", adm.Dashboard) // 工作台
 	g.POST("/logout", adm.Logout)
 
 	// 个人资料(所有角色可访问)。

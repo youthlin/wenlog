@@ -671,6 +671,14 @@ type DashboardStats struct {
 	UploadCount    int64
 }
 
+// ReaderStats 是读者概览工作台所需的统计数据。
+type ReaderStats struct {
+	CommentCount       int64
+	PendingCommentCount int64
+	CommentedPostCount int64
+	CommentedPageCount int64
+}
+
 // DashboardStats 返回概览工作台所需的各项统计数据。
 func (s *Store) DashboardStats() DashboardStats {
 	var ds DashboardStats
@@ -683,6 +691,30 @@ func (s *Store) DashboardStats() DashboardStats {
 	s.db.Model(&model.Tag{}).Count(&ds.TagCount)
 	s.db.Model(&model.Upload{}).Count(&ds.UploadCount)
 	return ds
+}
+
+// AuthorDashboardStats 返回指定作者的统计数据。
+func (s *Store) AuthorDashboardStats(authorID uint) DashboardStats {
+	var ds DashboardStats
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ? AND author_id = ?", model.PostTypePost, model.StatusPublished, authorID).Count(&ds.PostsPublished)
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ? AND author_id = ?", model.PostTypePost, model.StatusDraft, authorID).Count(&ds.PostsDraft)
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ? AND author_id = ?", model.PostTypePage, model.StatusPublished, authorID).Count(&ds.PagesPublished)
+	s.db.Model(&model.Post{}).Where("post_type = ? AND status = ? AND author_id = ?", model.PostTypePage, model.StatusDraft, authorID).Count(&ds.PagesDraft)
+	return ds
+}
+
+// ReaderDashboardStats 返回指定读者的统计数据。
+func (s *Store) ReaderDashboardStats(userID uint) ReaderStats {
+	var rs ReaderStats
+	s.db.Model(&model.Comment{}).Where("user_id = ? AND status != ?", userID, model.CommentDeleted).Count(&rs.CommentCount)
+	s.db.Model(&model.Comment{}).Where("user_id = ? AND status = ?", userID, model.CommentPending).Count(&rs.PendingCommentCount)
+	s.db.Model(&model.Comment{}).Where("user_id = ? AND status != ?", userID, model.CommentDeleted).
+		Joins("JOIN posts ON posts.id = comments.post_id AND posts.post_type = ?", model.PostTypePost).
+		Distinct("comments.post_id").Count(&rs.CommentedPostCount)
+	s.db.Model(&model.Comment{}).Where("user_id = ? AND status != ?", userID, model.CommentDeleted).
+		Joins("JOIN posts ON posts.id = comments.post_id AND posts.post_type = ?", model.PostTypePage).
+		Distinct("comments.post_id").Count(&rs.CommentedPageCount)
+	return rs
 }
 
 // AdminCommentCounts 返回三种状态的评论数(后台标签角标)。

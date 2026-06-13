@@ -78,6 +78,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"PostPermalinkPattern": currentPostPermalink,
 	}
 	if c != nil {
+		data["User"] = h.currentUser(c)
 		data["CSRFToken"] = middleware.CSRFToken(c)
 		data["CurrentAdminNav"] = adminNavKey(c)
 		s := sessions.Default(c)
@@ -115,8 +116,14 @@ func adminNavKey(c *gin.Context) string {
 		return "tags"
 	case "/admin/settings", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload":
 		return "settings"
-	case "/admin/profile", "/admin/profile/password", "/admin/my-comments", "/admin/my-comments/:id/delete", "/admin/export-data", "/admin/delete-account":
+	case "/admin/profile", "/admin/profile/password":
 		return "profile"
+	case "/admin/my-comments", "/admin/my-comments/:id/delete":
+		return "profile-comments"
+	case "/admin/export-data":
+		return "profile-export"
+	case "/admin/delete-account":
+		return "profile-delete"
 	case "/admin/debug":
 		return "debug"
 	case "/admin/uploads", "/admin/uploads.json", "/admin/upload", "/admin/upload/:id/delete":
@@ -276,9 +283,24 @@ func (h *Admin) isRegistrationOpen() bool {
 // Dashboard 后台首页。
 func (h *Admin) Dashboard(c *gin.Context) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("后台"))
-	data["Stats"] = h.st.DashboardStats()
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	data := h.base(c, tr.T("欢迎"))
+	switch u.Role {
+	case model.RoleAdmin:
+		data["Stats"] = h.st.DashboardStats()
+	case model.RoleAuthor:
+		data["AuthorStats"] = h.st.AuthorDashboardStats(u.ID)
+	default:
+		data["ReaderStats"] = h.st.ReaderDashboardStats(u.ID)
+	}
+
+	// 最近文章
 	data["RecentPosts"] = h.st.RecentPosts(5)
+	// 最近评论
 	comments := h.st.RecentComments(5)
 	data["RecentComments"] = comments
 	if len(comments) > 0 {
@@ -289,10 +311,13 @@ func (h *Admin) Dashboard(c *gin.Context) {
 		postsByID, err := h.st.AdminPostsByIDs(postIDs)
 		if err == nil {
 			titles := make(map[uint]string, len(postsByID))
+			urls := make(map[uint]string, len(postsByID))
 			for id, p := range postsByID {
 				titles[id] = p.Title
+				urls[id] = permalink.Post(&p)
 			}
 			data["CommentPostTitles"] = titles
+			data["CommentPostURLs"] = urls
 		}
 	}
 	c.HTML(http.StatusOK, "admin_dashboard.gohtml", data)
@@ -1999,11 +2024,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 	commentPostLinks := make(map[uint]string, len(postsByID))
 	for id, post := range postsByID {
 		commentPostTitles[id] = post.Title
-		if post.PostType == model.PostTypePage {
-			commentPostLinks[id] = permalink.Page(&post)
-		} else {
-			commentPostLinks[id] = permalink.Post(&post)
-		}
+		commentPostLinks[id] = permalink.Post(&post)
 	}
 	data["Comments"] = comments
 	data["CommentPostTitles"] = commentPostTitles

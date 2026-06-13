@@ -1,6 +1,6 @@
 {{define "admin_comments.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{if .Mine}}{{.t.T "我的评论"}}{{else}}{{.t.T "评论管理"}}{{end}}</h1>
+<h1>{{ .Title }}</h1>
 {{if .FilterPostID}}<p class="filter-info">{{.t.T "文章"}}：<a href="/admin/post/{{.FilterPostID}}">{{.FilterPostTitle}}</a> <a href="/admin/comments?status={{.FilterStatus}}" class="filter-clear">{{.t.T "清除"}}</a></p>{{end}}
 {{if not .Mine}}
 <nav class="filter-tabs">

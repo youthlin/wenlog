@@ -1,46 +1,50 @@
 {{define "admin_dashboard.gohtml"}}
 {{- template "admin_header" . -}}
+{{ if .User }}
+<h1>{{.t.T "%s, 欢迎回来" .User.DisplayName}}</h1>
+{{ else }}
 <h1>{{.t.T "欢迎回来"}}</h1>
+{{ end }}
 
-{{- $stats := .Stats -}}
+{{- if .Stats -}}
 <div class="dashboard-stats">
   <a class="stat-card" href="/admin/posts?type=post">
     <span class="stat-icon">📝</span>
-    <span class="stat-value">{{$stats.PostsPublished}}</span>
+    <span class="stat-value">{{.Stats.PostsPublished}}</span>
     <span class="stat-label">{{.t.T "已发布文章"}}</span>
-    {{- if gt $stats.PostsDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" $stats.PostsDraft $stats.PostsDraft}}</span>
+    {{- if gt .Stats.PostsDraft 0}}
+    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "" .Stats.PostsDraft .Stats.PostsDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/posts?type=page">
     <span class="stat-icon">📄</span>
-    <span class="stat-value">{{$stats.PagesPublished}}</span>
+    <span class="stat-value">{{.Stats.PagesPublished}}</span>
     <span class="stat-label">{{.t.T "已发布页面"}}</span>
-    {{- if gt $stats.PagesDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" $stats.PagesDraft $stats.PagesDraft}}</span>
+    {{- if gt .Stats.PagesDraft 0}}
+    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .Stats.PagesDraft .Stats.PagesDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/comments">
     <span class="stat-icon">💬</span>
-    <span class="stat-value">{{$stats.Comments.Approved}}</span>
+    <span class="stat-value">{{.Stats.Comments.Approved}}</span>
     <span class="stat-label">{{.t.T "已批准评论"}}</span>
-    {{- if gt $stats.Comments.Pending 0}}
-    <span class="stat-sub stat-warn">{{.t.N64 "%d 条待审" "%d 条待审" $stats.Comments.Pending $stats.Comments.Pending}}</span>
+    {{- if gt .Stats.Comments.Pending 0}}
+    <span class="stat-sub stat-warn">{{.t.N64 "%d 条待审" "%d 条待审" .Stats.Comments.Pending .Stats.Comments.Pending}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/categories">
     <span class="stat-icon">📁</span>
-    <span class="stat-value">{{$stats.CategoryCount}}</span>
+    <span class="stat-value">{{.Stats.CategoryCount}}</span>
     <span class="stat-label">{{.t.T "分类"}}</span>
   </a>
   <a class="stat-card" href="/admin/tags">
     <span class="stat-icon">🏷️</span>
-    <span class="stat-value">{{$stats.TagCount}}</span>
+    <span class="stat-value">{{.Stats.TagCount}}</span>
     <span class="stat-label">{{.t.T "标签"}}</span>
   </a>
   <a class="stat-card" href="/admin/uploads">
     <span class="stat-icon">🖼️</span>
-    <span class="stat-value">{{$stats.UploadCount}}</span>
+    <span class="stat-value">{{.Stats.UploadCount}}</span>
     <span class="stat-label">{{.t.T "附件"}}</span>
   </a>
 </div>
@@ -48,11 +52,61 @@
 <div class="dashboard-actions">
   <a class="btn" href="/admin/post/new?type=post">{{.t.T "写文章"}}</a>
   <a class="btn" href="/admin/post/new?type=page">{{.t.T "新建页面"}}</a>
-  {{- if gt $stats.Comments.Pending 0}}
+  {{- if gt .Stats.Comments.Pending 0}}
   <a class="btn btn-accent" href="/admin/comments?status=pending">{{.t.T "审核评论"}}</a>
   {{- end}}
   <a class="btn" href="/admin/uploads">{{.t.T "附件"}}</a>
 </div>
+{{- end -}}
+
+{{- if .AuthorStats -}}
+<div class="dashboard-stats">
+  <a class="stat-card" href="/admin/posts?type=post">
+    <span class="stat-icon">📝</span>
+    <span class="stat-value">{{.AuthorStats.PostsPublished}}</span>
+    <span class="stat-label">{{.t.T "我的已发布文章"}}</span>
+    {{- if gt .AuthorStats.PostsDraft 0}}
+    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "" .AuthorStats.PostsDraft .AuthorStats.PostsDraft}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/posts?type=page">
+    <span class="stat-icon">📄</span>
+    <span class="stat-value">{{.AuthorStats.PagesPublished}}</span>
+    <span class="stat-label">{{.t.T "我的已发布页面"}}</span>
+    {{- if gt .AuthorStats.PagesDraft 0}}
+    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .AuthorStats.PagesDraft .AuthorStats.PagesDraft}}</span>
+    {{- end}}
+  </a>
+</div>
+
+<div class="dashboard-actions">
+  <a class="btn" href="/admin/post/new?type=post">{{.t.T "写文章"}}</a>
+  <a class="btn" href="/admin/post/new?type=page">{{.t.T "新建页面"}}</a>
+</div>
+{{- end -}}
+
+{{- if .ReaderStats -}}
+<div class="dashboard-stats">
+  <a class="stat-card" href="/admin/my-comments">
+    <span class="stat-icon">💬</span>
+    <span class="stat-value">{{.ReaderStats.CommentCount}}</span>
+    <span class="stat-label">{{.t.T "我的评论"}}</span>
+    {{- if gt .ReaderStats.PendingCommentCount 0}}
+    <span class="stat-sub stat-warn">{{.t.N64 "%d 条待审" "%d 条待审" .ReaderStats.PendingCommentCount .ReaderStats.PendingCommentCount}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/posts?type=post">
+    <span class="stat-icon">📝</span>
+    <span class="stat-value">{{.ReaderStats.CommentedPostCount}}</span>
+    <span class="stat-label">{{.t.T "我评论的文章"}}</span>
+  </a>
+  <a class="stat-card" href="/admin/posts?type=page">
+    <span class="stat-icon">📄</span>
+    <span class="stat-value">{{.ReaderStats.CommentedPageCount}}</span>
+    <span class="stat-label">{{.t.T "我评论的页面"}}</span>
+  </a>
+</div>
+{{- end -}}
 
 <div class="dashboard-grid">
   <div class="dashboard-panel">
@@ -61,7 +115,10 @@
     <ul class="dashboard-list">
       {{- range .RecentPosts}}
       <li>
-        <a class="dashboard-list-link" href="/admin/post/{{.ID}}">{{.Title}}</a>
+        <a class="dashboard-list-link" href="{{postURL .}}">{{.Title}}</a>
+        {{- if or (eq $.CurrentUserRole "admin") (eq $.User.ID .AuthorID)}}
+        <a class="dashboard-list-edit" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
+        {{- end}}
         <time class="dashboard-list-meta">{{fmtDate .PublishedAt}}</time>
       </li>
       {{- end}}
@@ -76,11 +133,13 @@
     <ul class="dashboard-list">
       {{- range .RecentComments}}
       <li>
-        <a class="dashboard-list-link" href="/admin/comments?status=approved">{{.Author}}</a>
-        <span class="dashboard-list-on">{{$.t.T "在"}}</span>
+        {{- $postURL := index $.CommentPostURLs .PostID}}
         {{- $postTitle := index $.CommentPostTitles .PostID}}
-        <span class="dashboard-list-post">{{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}</span>
-        <time class="dashboard-list-meta">{{fmtDate .CreatedAt}}</time>
+        <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{safeHTML .Content}}</a>
+        <span class="dashboard-list-meta">
+          {{.Author}} {{$.t.T "发表在"}}
+          {{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}
+        </span>
       </li>
       {{- end}}
     </ul>

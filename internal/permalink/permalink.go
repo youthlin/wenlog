@@ -191,7 +191,7 @@ func CurrentPatternUsesToken(token string) bool {
 	return currentPattern.cp.usedTokens[token]
 }
 
-// Post 返回文章的永久链接路径。
+// Post 返回文章或页面的永久链接路径。
 func Post(p *model.Post) string {
 	if p.PostType == "page" {
 		return Page(p)

@@ -14,14 +14,7 @@ import (
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/middleware"
 )
-
-// Logout 前台登出。
-func (h *Public) Logout(c *gin.Context) {
-	middleware.ClearSession(c)
-	c.Redirect(http.StatusSeeOther, "/")
-}
 
 // ForgotPasswordForm 忘记密码页。
 func (h *Public) ForgotPasswordForm(c *gin.Context) {
