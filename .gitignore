@@ -22,5 +22,8 @@ WordPress.*.xml
 .idea/
 .vscode/
 
+# 本地 agent 配置
+.coco/
+
 # skills 本地锁文件（可能包含本机路径）
 skills-lock.json
