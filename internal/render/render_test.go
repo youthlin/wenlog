@@ -3,9 +3,13 @@ package render
 import (
 	"bytes"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/youthlin/blog/web"
 )
 
 func TestGravatar(t *testing.T) {
@@ -86,6 +90,43 @@ func TestStaticRendererReleaseToHotDir(t *testing.T) {
 		t.Fatalf("unexpected template output after release reload: %q", got)
 	}
 }
+
+func TestPaginationTemplateKeepsPageContext(t *testing.T) {
+	tplFS, err := fs.Sub(web.Templates, "templates")
+	if err != nil {
+		t.Fatalf("sub templates fs: %v", err)
+	}
+	tpl, err := parseTemplates(tplFS, "*.gohtml")
+	if err != nil {
+		t.Fatalf("parse templates: %v", err)
+	}
+
+	data := map[string]any{
+		"t": testTranslator{},
+		"Pager": map[string]any{
+			"Page":    2,
+			"Pages":   3,
+			"BaseURL": "/",
+			"Sep":     "?",
+		},
+	}
+
+	var b bytes.Buffer
+	if err := tpl.ExecuteTemplate(&b, "pagination", data); err != nil {
+		t.Fatalf("execute pagination: %v", err)
+	}
+	got := b.String()
+	if !strings.Contains(got, `href="/"`) || !strings.Contains(got, "上一页") {
+		t.Fatalf("pagination should render previous page link, got: %s", got)
+	}
+	if !strings.Contains(got, `href="/?page=3"`) || !strings.Contains(got, "下一页") {
+		t.Fatalf("pagination should render next page link, got: %s", got)
+	}
+}
+
+type testTranslator struct{}
+
+func (testTranslator) T(message string, args ...any) string { return message }
 
 func execTemplate(t *testing.T, tpl interface {
 	ExecuteTemplate(wr io.Writer, name string, data any) error

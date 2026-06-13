@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"net/mail"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -22,21 +23,25 @@ const (
 	commentMinLen   = 2
 	rateWindowSec   = 60 // 限频窗口:60 秒
 	rateMaxInWindow = 3  // 窗口内同 IP 最多 3 条
+
+	pendingCommentIDsSessionKey = "pending_comment_ids"
+	maxPendingCommentIDs        = 100
 )
 
 // commentReq 是评论提交表单。
 type commentReq struct {
-	PostID   uint   `form:"post_id"`
-	ParentID uint   `form:"parent_id"`
-	Author   string `form:"author"`
-	Email    string `form:"email"`
-	URL      string `form:"url"`
-	Content  string `form:"content"`
-	Notify   string `form:"notify"`
-	Website  string `form:"website"` // 蜜罐字段:正常用户不填
+	PostID    uint   `form:"post_id"`
+	ParentID  uint   `form:"parent_id"`
+	ReplyToID uint   `form:"reply_to_id"`
+	Author    string `form:"author"`
+	Email     string `form:"email"`
+	URL       string `form:"url"`
+	Content   string `form:"content"`
+	Notify    string `form:"notify"`
+	Website   string `form:"website"` // 蜜罐字段:正常用户不填
 }
 
-// SubmitComment 处理 POST /comment, 校验 + 防 spam + 存为 pending。
+// SubmitComment 处理 POST /comment, 校验 + 防 spam + 按身份决定审核状态。
 // 支持 Ajax(返回 JSON)与普通表单(重定向)两种方式。
 func (h *Public) SubmitComment(c *gin.Context) {
 	tr := i18n.Get(c)
@@ -99,6 +104,11 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		h.commentResp(c, false, tr.T("该文章评论已关闭。"), req.PostID)
 		return
 	}
+	parentID, replyToID, err := h.st.ResolveCommentReply(req.PostID, req.ReplyToID, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
+	if err != nil {
+		h.commentResp(c, false, tr.T("目标评论不存在。"), req.PostID)
+		return
+	}
 
 	// 4. 限频:同 IP 60 秒内最多 3 条。
 	ip := c.ClientIP()
@@ -108,16 +118,17 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		return
 	}
 
-	// 5. 存为待审。
+	// 5. 存储评论:管理员或本文作者免审,其他评论仍进入待审。
 	cm := &model.Comment{
 		PostID:        req.PostID,
-		ParentID:      req.ParentID,
+		ParentID:      parentID,
+		ReplyToID:     replyToID,
 		Author:        req.Author,
 		Email:         req.Email,
 		URL:           strings.TrimSpace(req.URL),
 		IP:            ip,
 		Content:       req.Content,
-		Status:        model.CommentPending,
+		Status:        commentStatusForUser(loggedInUser, target),
 		NotifyOnReply: req.Notify != "",
 		CreatedAt:     time.Now(),
 	}
@@ -129,17 +140,82 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	h.commentResp(c, true, tr.T("评论已提交,等待审核后显示。"), req.PostID)
+	msg := tr.T("评论已提交,等待审核后显示。")
+	if cm.Status == model.CommentApproved {
+		msg = tr.T("评论已发布。")
+	} else {
+		rememberPendingComment(c, cm.ID)
+	}
+	commentPage := h.st.VisibleCommentPageForViewerID(cm.ID, commentPageSize, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
+	h.commentResp(c, true, msg, req.PostID, gin.H{"comment_page": commentPage})
+}
+
+func commentStatusForUser(u *model.User, target *model.Post) string {
+	if u == nil || target == nil {
+		return model.CommentPending
+	}
+	if u.Role == model.RoleAdmin || (target.AuthorID != 0 && target.AuthorID == u.ID) {
+		return model.CommentApproved
+	}
+	return model.CommentPending
+}
+
+func currentCommentUserID(u *model.User) uint {
+	if u == nil {
+		return 0
+	}
+	return u.ID
+}
+
+func pendingCommentIDs(c *gin.Context) []uint {
+	s := sessions.Default(c)
+	raw, _ := s.Get(pendingCommentIDsSessionKey).(string)
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	ids := make([]uint, 0, len(parts))
+	for _, part := range parts {
+		n, err := strconv.ParseUint(strings.TrimSpace(part), 10, 64)
+		if err == nil && n > 0 {
+			ids = append(ids, uint(n))
+		}
+	}
+	return ids
+}
+
+func rememberPendingComment(c *gin.Context, id uint) {
+	if id == 0 {
+		return
+	}
+	ids := pendingCommentIDs(c)
+	ids = append(ids, id)
+	if len(ids) > maxPendingCommentIDs {
+		ids = ids[len(ids)-maxPendingCommentIDs:]
+	}
+	parts := make([]string, 0, len(ids))
+	for _, pendingID := range ids {
+		parts = append(parts, strconv.FormatUint(uint64(pendingID), 10))
+	}
+	s := sessions.Default(c)
+	s.Set(pendingCommentIDsSessionKey, strings.Join(parts, ","))
+	_ = s.Save()
 }
 
 // commentResp 根据请求类型返回 JSON 或重定向。
-func (h *Public) commentResp(c *gin.Context, ok bool, msg string, postID uint) {
+func (h *Public) commentResp(c *gin.Context, ok bool, msg string, postID uint, extra ...gin.H) {
 	if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
 		status := http.StatusOK
 		if !ok {
 			status = http.StatusBadRequest
 		}
-		c.JSON(status, gin.H{"ok": ok, "message": msg})
+		payload := gin.H{"ok": ok, "message": msg}
+		for _, fields := range extra {
+			for k, v := range fields {
+				payload[k] = v
+			}
+		}
+		c.JSON(status, payload)
 		return
 	}
 	// 非 Ajax:重定向回文章页。

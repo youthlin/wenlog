@@ -94,27 +94,32 @@ type Category struct {
 
 // Tag 是文章标签。
 type Tag struct {
-	ID   uint   `gorm:"primaryKey"`
-	Name string `gorm:"size:128"`
-	Slug string `gorm:"uniqueIndex;size:191"`
-	PostCount int64 `gorm:"->;-:migration"`
+	ID        uint   `gorm:"primaryKey"`
+	Name      string `gorm:"size:128"`
+	Slug      string `gorm:"uniqueIndex;size:191"`
+	PostCount int64  `gorm:"->;-:migration"`
 }
 
 // Comment 是评论,支持楼中楼(ParentID 指向父评论)。
 type Comment struct {
-	ID       uint   `gorm:"primaryKey"`
-	PostID   uint   `gorm:"index"`
-	ParentID uint   `gorm:"index"`
-	UserID   *uint  `gorm:"index"` // 登录用户评论时关联 User,匿名评论为 nil
-	Author   string `gorm:"size:128"`
-	Email    string `gorm:"size:128"`
-	URL      string `gorm:"size:255"`
-	IP       string `gorm:"size:64"`
-	Content  string `gorm:"type:text"`
+	ID       uint `gorm:"primaryKey"`
+	PostID   uint `gorm:"index"`
+	ParentID uint `gorm:"index"`
+	// ReplyToID 记录当前回复实际指向的评论;ParentID 仍用于两层树形归组。
+	ReplyToID uint   `gorm:"index"`
+	UserID    *uint  `gorm:"index"` // 登录用户评论时关联 User,匿名评论为 nil
+	Author    string `gorm:"size:128"`
+	Email     string `gorm:"size:128"`
+	URL       string `gorm:"size:255"`
+	IP        string `gorm:"size:64"`
+	Content   string `gorm:"type:text"`
 	// Status: approved / pending / spam / deleted。
 	Status        string `gorm:"index;size:16"`
 	NotifyOnReply bool
 	CreatedAt     time.Time `gorm:"index"`
+
+	// ReplyToAuthor 仅用于渲染“回复 @某人”,不入库。
+	ReplyToAuthor string `gorm:"-"`
 }
 
 // Setting 是站点级键值设置,用于后台持久化站点名称/描述等。

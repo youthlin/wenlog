@@ -69,6 +69,72 @@ func TestApprovedCommentsOnly(t *testing.T) {
 	}
 }
 
+func TestVisibleCommentsIncludesOwnPendingOnly(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	uid := uint(7)
+	now := time.Now()
+	db.Create(&model.Post{ID: 1, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now})
+	db.Create(&model.Comment{ID: 1, PostID: 1, Status: model.CommentApproved, Content: "approved", CreatedAt: now.Add(-3 * time.Minute)})
+	db.Create(&model.Comment{ID: 2, PostID: 1, UserID: &uid, Status: model.CommentPending, Content: "own pending", CreatedAt: now.Add(-2 * time.Minute)})
+	db.Create(&model.Comment{ID: 3, PostID: 1, Status: model.CommentPending, Content: "session pending", CreatedAt: now.Add(-1 * time.Minute)})
+	db.Create(&model.Comment{ID: 4, PostID: 1, Status: model.CommentPending, Content: "other pending", CreatedAt: now})
+
+	comments, err := st.VisibleCommentsPageForViewer(1, 1, 10, uid, []uint{3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if comments.TotalComments != 3 || len(comments.Comments) != 3 {
+		t.Fatalf("visible comments count=%d len=%d, want 3", comments.TotalComments, len(comments.Comments))
+	}
+	got := map[uint]bool{}
+	for _, c := range comments.Comments {
+		got[c.ID] = true
+	}
+	for _, id := range []uint{1, 2, 3} {
+		if !got[id] {
+			t.Fatalf("visible comments missing id=%d: %+v", id, got)
+		}
+	}
+	if got[4] {
+		t.Fatalf("other user's pending comment should not be visible: %+v", got)
+	}
+}
+
+func TestResolveCommentReplyKeepsTwoLevelThread(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	now := time.Now()
+	db.Create(&model.Post{ID: 1, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now})
+	db.Create(&model.Comment{ID: 1, PostID: 1, ParentID: 0, Status: model.CommentApproved, Author: "parent", CreatedAt: now})
+	db.Create(&model.Comment{ID: 2, PostID: 1, ParentID: 1, ReplyToID: 1, Status: model.CommentApproved, Author: "child", CreatedAt: now.Add(time.Minute)})
+
+	parentID, replyToID, err := st.ResolveCommentReply(1, 2, 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if parentID != 1 || replyToID != 2 {
+		t.Fatalf("ResolveCommentReply parent=%d replyTo=%d, want parent=1 replyTo=2", parentID, replyToID)
+	}
+
+	if err := st.CreateComment(&model.Comment{ID: 3, PostID: 1, ParentID: parentID, ReplyToID: replyToID, Status: model.CommentApproved, Author: "reply", CreatedAt: now.Add(2 * time.Minute)}); err != nil {
+		t.Fatal(err)
+	}
+	comments, err := st.VisibleCommentsPageForViewer(1, 1, 10, 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reply model.Comment
+	for _, c := range comments.Comments {
+		if c.ID == 3 {
+			reply = c
+		}
+	}
+	if reply.ParentID != 1 || reply.ReplyToID != 2 || reply.ReplyToAuthor != "child" {
+		t.Fatalf("reply = %+v, want parent=1 replyTo=2 replyToAuthor=child", reply)
+	}
+}
+
 func TestNextPostID(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()

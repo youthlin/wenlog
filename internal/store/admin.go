@@ -498,7 +498,7 @@ func (s *Store) AdminListCategories(keyword string, page, pageSize int) ([]model
 		Joins("LEFT JOIN post_categories pc_count ON pc_count.category_id = categories.id").
 		Joins("LEFT JOIN posts ON posts.id = pc_count.post_id AND posts.post_type = ?", model.PostTypePost).
 		Group("categories.id").Order("categories.name ASC").
-		Offset((page-1)*pageSize).Limit(pageSize).Find(&categories).Error
+		Offset((page - 1) * pageSize).Limit(pageSize).Find(&categories).Error
 	return categories, total, errors.Wrap(err, "admin list categories")
 }
 
@@ -523,7 +523,7 @@ func (s *Store) AdminListTags(keyword string, page, pageSize int) ([]model.Tag, 
 		Joins("LEFT JOIN post_tags pt_count ON pt_count.tag_id = tags.id").
 		Joins("LEFT JOIN posts ON posts.id = pt_count.post_id AND posts.post_type = ?", model.PostTypePost).
 		Group("tags.id").Order("tags.name ASC").
-		Offset((page-1)*pageSize).Limit(pageSize).Find(&tags).Error
+		Offset((page - 1) * pageSize).Limit(pageSize).Find(&tags).Error
 	return tags, total, errors.Wrap(err, "admin list tags")
 }
 
@@ -637,7 +637,7 @@ func (s *Store) commentTreeIDs(ids []uint) ([]uint, error) {
 		}
 		var children []uint
 		if err := s.db.Model(&model.Comment{}).
-			Where("parent_id IN ?", frontier).
+			Where("parent_id IN ? OR reply_to_id IN ?", frontier, frontier).
 			Pluck("id", &children).
 			Error; err != nil {
 			return nil, errors.Wrap(err, "list child comments")
@@ -673,10 +673,10 @@ type DashboardStats struct {
 
 // ReaderStats 是读者概览工作台所需的统计数据。
 type ReaderStats struct {
-	CommentCount       int64
+	CommentCount        int64
 	PendingCommentCount int64
-	CommentedPostCount int64
-	CommentedPageCount int64
+	CommentedPostCount  int64
+	CommentedPageCount  int64
 }
 
 // DashboardStats 返回概览工作台所需的各项统计数据。

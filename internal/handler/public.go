@@ -251,7 +251,7 @@ func (h *Public) Page(c *gin.Context) {
 	}
 
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.ApprovedCommentsPage(p.ID, commentPage, commentPageSize)
+	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, h.currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -301,7 +301,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		p.Views++
 	}
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.ApprovedCommentsPage(p.ID, commentPage, commentPageSize)
+	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, h.currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return true

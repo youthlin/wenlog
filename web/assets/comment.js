@@ -9,6 +9,32 @@
   if (!commentsBox) return;
 
   function getForm() { return document.getElementById("comment-form"); }
+  function getFormHome() { return document.getElementById("comment-form-home"); }
+
+  function moveFormHome() {
+    var f = getForm();
+    var home = getFormHome();
+    if (!f || !home || !home.parentNode) return;
+    home.parentNode.insertBefore(f, home.nextSibling);
+    f.querySelector("[name=parent_id]").value = "0";
+    f.querySelector("[name=reply_to_id]").value = "0";
+    var cancel = f.querySelector("[data-cancel-reply]");
+    if (cancel) cancel.hidden = true;
+  }
+
+  function moveFormToComment(commentID, replyToID) {
+    var f = getForm();
+    var target = document.getElementById(commentID);
+    if (!f || !target) return;
+    target.appendChild(f);
+    f.querySelector("[name=parent_id]").value = replyToID;
+    f.querySelector("[name=reply_to_id]").value = replyToID;
+    var cancel = f.querySelector("[data-cancel-reply]");
+    if (cancel) cancel.hidden = false;
+    f.scrollIntoView({ behavior: "smooth", block: "center" });
+    var textarea = f.querySelector("textarea[name=content]");
+    if (textarea) textarea.focus({ preventScroll: true });
+  }
 
   function showMsg(text, ok) {
     var f = getForm();
@@ -28,8 +54,7 @@
     if (!f) return;
     commentsBox.querySelectorAll("[data-reply]").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        f.querySelector("[name=parent_id]").value = btn.getAttribute("data-reply");
-        f.scrollIntoView({ behavior: "smooth" });
+        moveFormToComment(btn.getAttribute("data-reply-target"), btn.getAttribute("data-reply"));
       });
     });
   }
@@ -38,7 +63,7 @@
     var url = new URL(window.location.href);
     url.searchParams.set("cpage", page);
     url.searchParams.set("ajax", "comments");
-    fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+    return fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
       .then(function (r) { return r.text(); })
       .then(function (html) {
         commentsBox.innerHTML = html;
@@ -81,9 +106,11 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.ok) {
-            showMsg(data.message || MSG_SUCCESS, true);
+            var page = parseInt(data.comment_page, 10) || (parseInt(new URL(window.location.href).searchParams.get("cpage"), 10) || 1);
             f.querySelector("[name=content]").value = "";
-            f.querySelector("[name=parent_id]").value = "0";
+            return fetchCommentPage(page, true).then(function () {
+              showMsg(data.message || MSG_SUCCESS, true);
+            });
           } else {
             showMsg(data.message || MSG_FAIL, false);
           }
@@ -91,6 +118,10 @@
         .catch(function () { showMsg(MSG_NETWORK, false); })
         .finally(function () { btn.disabled = false; });
     });
+    var cancel = f.querySelector("[data-cancel-reply]");
+    if (cancel) {
+      cancel.addEventListener("click", moveFormHome);
+    }
     bindReplyButtons();
     bindPager();
   }

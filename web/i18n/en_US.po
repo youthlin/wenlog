@@ -1155,9 +1155,26 @@ msgstr "Comments are closed for this post."
 msgid "评论太频繁,请稍后再试。"
 msgstr "You are commenting too frequently. Please try again later."
 
-#: internal/handler/comment.go:128
+#: internal/handler/comment.go:132
 msgid "评论已提交,等待审核后显示。"
 msgstr "Comment submitted and awaiting moderation."
+
+#: internal/handler/comment.go:134
+msgid "评论已发布。"
+msgstr "Comment published."
+
+#: web/templates/post.gohtml:47 web/templates/post.gohtml:59
+msgid "评论审核中,当前仅自己可见"
+msgstr "Under review, visible only to you."
+
+#: web/templates/post.gohtml:61
+#, c-format
+msgid "回复 @%s"
+msgstr "Replying to @%s"
+
+#: web/templates/post.gohtml:99
+msgid "取消回复"
+msgstr "Cancel reply"
 
 #: internal/handler/public.go:193
 #, c-format

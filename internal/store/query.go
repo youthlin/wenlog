@@ -17,8 +17,8 @@ import (
 // CommentPageResult 是按顶层评论分页后的结果。
 type CommentPageResult struct {
 	Comments      []model.Comment
-	TotalComments int64 // 全部已审核评论总数(含回复)
-	TotalTop      int64 // 顶层评论总数
+	TotalComments int64 // 当前访问者可见评论总数(含回复)
+	TotalTop      int64 // 当前访问者可见顶层评论总数
 	Page          int
 	Pages         int
 }
@@ -298,6 +298,18 @@ func (s *Store) ApprovedComments(postID uint) ([]model.Comment, error) {
 // ApprovedCommentsPage 按“顶层评论”分页返回已审核评论。
 // 顶层评论按 created_at DESC(最新评论在前),子评论跟随父评论并按 created_at ASC。
 func (s *Store) ApprovedCommentsPage(postID uint, page, pageSize int) (*CommentPageResult, error) {
+	return s.VisibleCommentsPageForViewer(postID, page, pageSize, 0, nil)
+}
+
+// VisibleCommentsPage 按“顶层评论”分页返回当前访问者可见的评论。
+// 所有人都能看到 approved 评论;登录用户还能看到自己提交的 pending 评论。
+func (s *Store) VisibleCommentsPage(postID uint, page, pageSize int, currentUserID uint) (*CommentPageResult, error) {
+	return s.VisibleCommentsPageForViewer(postID, page, pageSize, currentUserID, nil)
+}
+
+// VisibleCommentsPageForViewer 按“顶层评论”分页返回当前访问者可见的评论。
+// pendingCommentIDs 用于让匿名访问者在当前会话中看到自己刚提交的待审评论。
+func (s *Store) VisibleCommentsPageForViewer(postID uint, page, pageSize int, currentUserID uint, pendingCommentIDs []uint) (*CommentPageResult, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -306,14 +318,13 @@ func (s *Store) ApprovedCommentsPage(postID uint, page, pageSize int) (*CommentP
 	}
 
 	var totalAll int64
-	if err := s.db.Model(&model.Comment{}).
-		Where("post_id = ? AND status = ?", postID, model.CommentApproved).
+	if err := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
 		Count(&totalAll).Error; err != nil {
-		return nil, errors.Wrap(err, "count approved comments")
+		return nil, errors.Wrap(err, "count visible comments")
 	}
 
-	qTop := s.db.Model(&model.Comment{}).
-		Where("post_id = ? AND status = ? AND parent_id = 0", postID, model.CommentApproved)
+	qTop := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
+		Where("parent_id = 0")
 	var totalTop int64
 	if err := qTop.Count(&totalTop).Error; err != nil {
 		return nil, errors.Wrap(err, "count top comments")
@@ -343,7 +354,8 @@ func (s *Store) ApprovedCommentsPage(postID uint, page, pageSize int) (*CommentP
 		ids[i] = tops[i].ID
 	}
 	var children []model.Comment
-	if err := s.db.Where("post_id = ? AND status = ? AND parent_id IN ?", postID, model.CommentApproved, ids).
+	if err := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
+		Where("parent_id IN ?", ids).
 		Order("created_at ASC").Find(&children).Error; err != nil {
 		return nil, errors.Wrap(err, "list child comments")
 	}
@@ -356,42 +368,141 @@ func (s *Store) ApprovedCommentsPage(postID uint, page, pageSize int) (*CommentP
 		out = append(out, top)
 		out = append(out, index[top.ID]...)
 	}
+	populateReplyToAuthors(s.db, out)
 	return &CommentPageResult{Comments: out, TotalComments: totalAll, TotalTop: totalTop, Page: page, Pages: pages}, nil
+}
+
+func populateReplyToAuthors(db *gorm.DB, comments []model.Comment) {
+	ids := make([]uint, 0)
+	seen := map[uint]bool{}
+	for _, c := range comments {
+		if c.ReplyToID == 0 || c.ReplyToID == c.ParentID || seen[c.ReplyToID] {
+			continue
+		}
+		seen[c.ReplyToID] = true
+		ids = append(ids, c.ReplyToID)
+	}
+	if len(ids) == 0 {
+		return
+	}
+	var targets []model.Comment
+	if err := db.Select("id", "author").Where("id IN ?", ids).Find(&targets).Error; err != nil {
+		return
+	}
+	authors := make(map[uint]string, len(targets))
+	for _, target := range targets {
+		authors[target.ID] = target.Author
+	}
+	for i := range comments {
+		comments[i].ReplyToAuthor = authors[comments[i].ReplyToID]
+	}
+}
+
+func visibleCommentsQuery(q *gorm.DB, postID uint, currentUserID uint, pendingCommentIDs []uint) *gorm.DB {
+	if currentUserID == 0 && len(pendingCommentIDs) == 0 {
+		return q.Where("post_id = ? AND status = ?", postID, model.CommentApproved)
+	}
+	where := "post_id = ? AND (status = ?"
+	args := []any{postID, model.CommentApproved}
+	if currentUserID != 0 {
+		where += " OR (status = ? AND user_id = ?)"
+		args = append(args, model.CommentPending, currentUserID)
+	}
+	if len(pendingCommentIDs) > 0 {
+		where += " OR (status = ? AND id IN ?)"
+		args = append(args, model.CommentPending, pendingCommentIDs)
+	}
+	where += ")"
+	return q.Where(where, args...)
 }
 
 // CommentPageForID 返回某条评论所在的评论页(按顶层评论分页,最新评论在前)。
 // 不存在时返回 1。
 func (s *Store) CommentPageForID(commentID uint, pageSize int) int {
+	return s.VisibleCommentPageForViewerID(commentID, pageSize, 0, nil)
+}
+
+// VisibleCommentPageForID 返回某条可见评论所在的评论页。
+// approved 评论对所有人可见;pending 评论仅对评论人本人可见。
+func (s *Store) VisibleCommentPageForID(commentID uint, pageSize int, currentUserID uint) int {
+	return s.VisibleCommentPageForViewerID(commentID, pageSize, currentUserID, nil)
+}
+
+// VisibleCommentPageForViewerID 返回某条当前访问者可见评论所在的评论页。
+func (s *Store) VisibleCommentPageForViewerID(commentID uint, pageSize int, currentUserID uint, pendingCommentIDs []uint) int {
 	if pageSize < 1 {
 		pageSize = 20
 	}
 	var c model.Comment
-	if err := s.db.Select("id", "post_id", "parent_id", "created_at", "status").
+	if err := s.db.Select("id", "post_id", "parent_id", "created_at", "status", "user_id").
 		First(&c, commentID).
 		Error; err != nil {
 		return 1
 	}
-	if c.Status != model.CommentApproved {
+	if c.Status != model.CommentApproved && !commentVisibleToViewer(c, currentUserID, pendingCommentIDs) {
 		return 1
 	}
 	rootID := c.ID
 	rootCreatedAt := c.CreatedAt
 	if c.ParentID != 0 {
 		var parent model.Comment
-		if err := s.db.Select("id", "created_at").
+		if err := s.db.Select("id", "created_at", "status", "user_id").
 			First(&parent, c.ParentID).
 			Error; err != nil {
+			return 1
+		}
+		if parent.Status != model.CommentApproved && !commentVisibleToViewer(parent, currentUserID, pendingCommentIDs) {
 			return 1
 		}
 		rootID = parent.ID
 		rootCreatedAt = parent.CreatedAt
 	}
 	var newer int64
-	_ = s.db.Model(&model.Comment{}).
-		Where("post_id = ? AND status = ? AND parent_id = 0", c.PostID, model.CommentApproved).
+	_ = visibleCommentsQuery(s.db.Model(&model.Comment{}), c.PostID, currentUserID, pendingCommentIDs).
+		Where("parent_id = 0").
 		Where("created_at > ? OR (created_at = ? AND id > ?)", rootCreatedAt, rootCreatedAt, rootID).
 		Count(&newer).Error
 	return int(newer)/pageSize + 1
+}
+
+func commentVisibleToViewer(c model.Comment, currentUserID uint, pendingCommentIDs []uint) bool {
+	if c.Status != model.CommentPending {
+		return false
+	}
+	if currentUserID != 0 && c.UserID != nil && *c.UserID == currentUserID {
+		return true
+	}
+	for _, id := range pendingCommentIDs {
+		if id == c.ID {
+			return true
+		}
+	}
+	return false
+}
+
+// ResolveCommentReply 校验回复目标,并返回两层展示所需的 parent_id 与实际 reply_to_id。
+func (s *Store) ResolveCommentReply(postID uint, replyToID uint, currentUserID uint, pendingCommentIDs []uint) (uint, uint, error) {
+	if replyToID == 0 {
+		return 0, 0, nil
+	}
+	var target model.Comment
+	if err := s.db.Select("id", "post_id", "parent_id", "status", "user_id").First(&target, replyToID).Error; err != nil {
+		return 0, 0, errors.Wrap(err, "get reply target")
+	}
+	if target.PostID != postID || (target.Status != model.CommentApproved && !commentVisibleToViewer(target, currentUserID, pendingCommentIDs)) {
+		return 0, 0, errors.New("reply target not visible")
+	}
+	if target.ParentID == 0 {
+		return target.ID, target.ID, nil
+	}
+	var parent model.Comment
+	if err := s.db.Select("id", "post_id", "status", "user_id").First(&parent, target.ParentID).Error; err != nil {
+		return 0, 0, errors.Wrap(err, "get reply parent")
+	}
+	if parent.PostID != postID || (parent.Status != model.CommentApproved && !commentVisibleToViewer(parent, currentUserID, pendingCommentIDs)) {
+		return 0, 0, errors.New("reply parent not visible")
+	}
+	return parent.ID, target.ID, nil
 }
 
 // MenuPages 返回导航菜单页面(按 menu_order),用于头部导航。

@@ -111,3 +111,22 @@ func TestSpecialPageFallsBackWithoutStoredPage(t *testing.T) {
 		t.Fatalf("unexpected post type: %+v", p)
 	}
 }
+
+func TestCommentStatusForUser(t *testing.T) {
+	target := &model.Post{AuthorID: 2}
+	tests := []struct {
+		name string
+		user *model.User
+		want string
+	}{
+		{name: "anonymous", user: nil, want: model.CommentPending},
+		{name: "subscriber", user: &model.User{ID: 3, Role: model.RoleSubscriber}, want: model.CommentPending},
+		{name: "admin", user: &model.User{ID: 3, Role: model.RoleAdmin}, want: model.CommentApproved},
+		{name: "post author", user: &model.User{ID: 2, Role: model.RoleAuthor}, want: model.CommentApproved},
+	}
+	for _, tt := range tests {
+		if got := commentStatusForUser(tt.user, target); got != tt.want {
+			t.Fatalf("%s: commentStatusForUser()=%q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
