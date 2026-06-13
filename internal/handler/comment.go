@@ -121,6 +121,10 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		NotifyOnReply: req.Notify != "",
 		CreatedAt:     time.Now(),
 	}
+	if loggedInUser != nil {
+		uid := loggedInUser.ID
+		cm.UserID = &uid
+	}
 	if err := h.st.CreateComment(cm); err != nil {
 		h.serverError(c, err)
 		return

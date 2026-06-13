@@ -21,6 +21,11 @@ const (
 
 	FormatHTML     = "html"
 	FormatMarkdown = "markdown"
+
+	// 用户角色常量。
+	RoleAdmin      = "admin"
+	RoleAuthor     = "author"
+	RoleSubscriber = "subscriber"
 )
 
 // User 是后台登录用户。
@@ -30,6 +35,7 @@ type User struct {
 	PasswordHash string `gorm:"size:255"`
 	DisplayName  string `gorm:"size:128"`
 	Email        string `gorm:"size:128"`
+	Role         string `gorm:"size:16;default:subscriber"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -97,6 +103,7 @@ type Comment struct {
 	ID       uint   `gorm:"primaryKey"`
 	PostID   uint   `gorm:"index"`
 	ParentID uint   `gorm:"index"`
+	UserID   *uint  `gorm:"index"` // 登录用户评论时关联 User,匿名评论为 nil
 	Author   string `gorm:"size:128"`
 	Email    string `gorm:"size:128"`
 	URL      string `gorm:"size:255"`

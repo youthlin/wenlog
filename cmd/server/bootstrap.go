@@ -71,6 +71,10 @@ func ensureInitialAdmin(st *store.Store) error {
 		return err
 	}
 	if n > 0 {
+		// 确保现有 admin 用户拥有 admin 角色(兼容旧数据迁移)
+		if err := st.EnsureAdminRole("admin"); err != nil {
+			return err
+		}
 		return nil
 	}
 	password := util.GenerateRandomString(12)
@@ -79,6 +83,10 @@ func ensureInitialAdmin(st *store.Store) error {
 		return err
 	}
 	if err := st.UpsertUserPassword("admin", "admin", string(hash)); err != nil {
+		return err
+	}
+	// 新创建的 admin 用户需要显式设为 admin 角色
+	if err := st.EnsureAdminRole("admin"); err != nil {
 		return err
 	}
 	fmt.Printf(t.T(bootstrapMsgInitialAdmin), password)

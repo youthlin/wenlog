@@ -1,0 +1,14 @@
+{{define "auth_register.gohtml"}}
+{{template "header" .}}
+<h1>{{.t.T "注册"}}</h1>
+{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+<form method="post" action="/register" class="auth-form">
+  <label>{{.t.T "用户名"}}<input type="text" name="username" required autocomplete="username"></label>
+  <label>{{.t.T "显示名"}}<input type="text" name="display_name" autocomplete="name"></label>
+  <label>{{.t.T "邮箱"}}<input type="email" name="email" required autocomplete="email"></label>
+  <label>{{.t.T "密码"}}<input type="password" name="password" required autocomplete="new-password"></label>
+  <button type="submit">{{.t.T "注册"}}</button>
+</form>
+<p class="auth-alt">{{.t.T "已有账号？"}} <a href="/login">{{.t.T "登录"}}</a></p>
+{{template "footer" .}}
+{{end}}

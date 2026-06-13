@@ -78,6 +78,10 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 	if c != nil {
 		data["CSRFToken"] = middleware.CSRFToken(c)
 		data["CurrentAdminNav"] = adminNavKey(c)
+		s := sessions.Default(c)
+		if role, ok := s.Get(middleware.SessionRoleKey).(string); ok {
+			data["CurrentUserRole"] = role
+		}
 	}
 	return i18n.Inject(c, data)
 }
@@ -115,6 +119,8 @@ func adminNavKey(c *gin.Context) string {
 		return "uploads"
 	case "/admin/import", "/admin/export":
 		return "import"
+	case "/admin/users", "/admin/user/:id/role", "/admin/user/:id/delete":
+		return "users"
 	default:
 		return ""
 	}
@@ -177,7 +183,7 @@ func (h *Admin) LoginForm(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_login.gohtml", data)
 }
 
-// Login 处理登录 当前只有管理员一种用户 所以登录就能进入管理后台
+// Login 处理登录。
 func (h *Admin) Login(c *gin.Context) {
 	tr := i18n.Get(c)
 	username := strings.TrimSpace(c.PostForm("username"))
@@ -189,17 +195,13 @@ func (h *Admin) Login(c *gin.Context) {
 		c.HTML(http.StatusUnauthorized, "admin_login.gohtml", data)
 		return
 	}
-	s := sessions.Default(c)
-	s.Set(middleware.SessionUserKey, u.ID)
-	_ = s.Save()
+	middleware.SetSessionUser(c, u.ID, u.Role)
 	c.Redirect(http.StatusSeeOther, "/admin/")
 }
 
 // Logout 退出登录。
 func (h *Admin) Logout(c *gin.Context) {
-	s := sessions.Default(c)
-	s.Clear()
-	_ = s.Save()
+	middleware.ClearSession(c)
 	c.Redirect(http.StatusSeeOther, "/admin/login")
 }
 
@@ -1900,6 +1902,52 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+}
+
+// --- 用户管理 ---
+
+// ListUsers 后台用户列表(admin only)。
+func (h *Admin) ListUsers(c *gin.Context) {
+	tr := i18n.Get(c)
+	page := atoiDefault(c.Query("page"), 1)
+	users, total, err := h.st.AdminListUsers(page, adminPageSize)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	data := h.base(c, tr.T("用户管理"))
+	data["Users"] = users
+	data["Total"] = total
+	data["Page"] = page
+	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	c.HTML(http.StatusOK, "admin_users.gohtml", data)
+}
+
+// UpdateUserRole 修改用户角色(admin only)。
+func (h *Admin) UpdateUserRole(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	role := c.PostForm("role")
+	switch role {
+	case model.RoleAdmin, model.RoleAuthor, model.RoleSubscriber:
+	default:
+		c.Redirect(http.StatusSeeOther, "/admin/users")
+		return
+	}
+	if err := h.st.UpdateUserRole(uint(id), role); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/users")
+}
+
+// DeleteUser 删除用户(admin only)。
+func (h *Admin) DeleteUser(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := h.st.DeleteUser(uint(id)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/users")
 }
 
 // --- 辅助 ---

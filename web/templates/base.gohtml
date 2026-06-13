@@ -23,6 +23,15 @@
         {{range .Menu}}<a href="{{pageURL .}}">{{.Title}}</a>{{end}}
       </div>
       <div class="site-nav-utility" aria-label="{{.t.T "界面设置"}}">
+        {{if .CurrentUser}}
+        <a href="/profile">{{.CurrentUser.DisplayName}}</a>
+        <form class="inline" method="post" action="/logout" style="display:inline">
+          <button type="submit" class="link-btn">{{.t.T "退出"}}</button>
+        </form>
+        {{else}}
+        <a href="/login">{{.t.T "登录"}}</a>
+        <a href="/register">{{.t.T "注册"}}</a>
+        {{end}}
         <label class="lang-select-wrap">
           <span class="sr-only">{{.t.T "语言"}}</span>
           <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">

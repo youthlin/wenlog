@@ -58,12 +58,12 @@ func (s *Store) CountUsers() (count int64, err error) {
 	return
 }
 
-// UpsertUserPassword 设置/更新用户密码(按 username)。
+// UpsertUserPassword 设置/更新用户密码(按 username)。新建用户默认角色为 subscriber。
 func (s *Store) UpsertUserPassword(username, displayName, passwordHash string) error {
 	var u model.User
 	err := s.db.Where("username = ?", username).First(&u).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		u = model.User{Username: username, DisplayName: displayName, PasswordHash: passwordHash}
+		u = model.User{Username: username, DisplayName: displayName, PasswordHash: passwordHash, Role: model.RoleSubscriber}
 		err = s.db.Create(&u).Error
 		return errors.Wrapf(err, "创建用户失败, username=%s", username)
 	}
@@ -663,4 +663,96 @@ func (s *Store) GetUpload(id uint) (*model.Upload, error) {
 // DeleteUpload 删除上传元数据记录。
 func (s *Store) DeleteUpload(id uint) error {
 	return errors.Wrap(s.db.Delete(&model.Upload{}, id).Error, "delete upload")
+}
+
+// --- 用户管理(角色) ---
+
+// AdminListUsers 分页返回用户列表。
+func (s *Store) AdminListUsers(page, pageSize int) ([]model.User, int64, error) {
+	q := s.db.Model(&model.User{})
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "count users")
+	}
+	var users []model.User
+	err := q.Order("created_at ASC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
+	return users, total, errors.Wrap(err, "admin list users")
+}
+
+// UpdateUserRole 修改用户角色。
+func (s *Store) UpdateUserRole(id uint, role string) error {
+	return errors.Wrap(
+		s.db.Model(&model.User{}).Where("id = ?", id).Update("role", role).Error,
+		"update user role")
+}
+
+// DeleteUser 删除用户及其关联数据(评论匿名化保留)。
+func (s *Store) DeleteUser(id uint) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// 将该用户的评论设为匿名(清除 UserID)
+		if err := tx.Model(&model.Comment{}).Where("user_id = ?", id).
+			Update("user_id", nil).Error; err != nil {
+			return errors.Wrap(err, "anonymize user comments")
+		}
+		if err := tx.Delete(&model.User{}, id).Error; err != nil {
+			return errors.Wrap(err, "delete user")
+		}
+		return nil
+	})
+}
+
+// EnsureAdminRole 确保指定用户拥有 admin 角色(用于现有用户升级)。
+func (s *Store) EnsureAdminRole(username string) error {
+	return errors.Wrap(
+		s.db.Model(&model.User{}).Where("username = ?", username).
+			Update("role", model.RoleAdmin).Error,
+		"ensure admin role")
+}
+
+// --- 评论按用户查询 ---
+
+// ListCommentsByUser 返回指定用户的所有评论(分页)。
+func (s *Store) ListCommentsByUser(userID uint, page, pageSize int) ([]model.Comment, int64, error) {
+	q := s.db.Model(&model.Comment{}).Where("user_id = ?", userID)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, errors.Wrap(err, "count user comments")
+	}
+	var comments []model.Comment
+	err := q.Order("created_at DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&comments).Error
+	return comments, total, errors.Wrap(err, "list user comments")
+}
+
+// DeleteCommentByUser 删除用户自己的某条评论(软删除,设为 deleted 状态)。
+func (s *Store) DeleteCommentByUser(commentID, userID uint) error {
+	result := s.db.Model(&model.Comment{}).
+		Where("id = ? AND user_id = ?", commentID, userID).
+		Update("status", model.CommentDeleted)
+	if result.RowsAffected == 0 {
+		return errors.New("comment not found or not owned by user")
+	}
+	return errors.Wrap(result.Error, "delete user comment")
+}
+
+// --- 用户数据导出 ---
+
+// UserExportData 包含用户个人数据用于导出。
+type UserExportData struct {
+	User     model.User
+	Comments []model.Comment
+}
+
+// ExportUserData 返回用户的个人数据(用于 GDPR 导出)。
+func (s *Store) ExportUserData(userID uint) (*UserExportData, error) {
+	u, err := s.GetUserByID(userID)
+	if err != nil {
+		return nil, errors.Wrap(err, "get user for export")
+	}
+	// 不导出密码哈希
+	u.PasswordHash = ""
+	var comments []model.Comment
+	if err := s.db.Where("user_id = ?", userID).Order("created_at DESC").Find(&comments).Error; err != nil {
+		return nil, errors.Wrap(err, "list user comments for export")
+	}
+	return &UserExportData{User: *u, Comments: comments}, nil
 }
