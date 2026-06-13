@@ -47,6 +47,15 @@
               <a class="admin-nav-link{{if eq .CurrentAdminNav "dashboard"}} is-active{{end}}" href="/admin/"><span>{{.t.T "工作台"}}</span></a>
             </div>
           </div>
+          <div class="nav-group">
+            <span class="nav-group-title">{{.t.T "个人"}}</span>
+            <div class="nav-group-links">
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile"}} is-active{{end}}" href="/admin/profile"><span>{{.t.T "个人资料"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "comments"}} is-active{{end}}" href="/admin/my-comments"><span>{{.t.T "我的评论"}}</span></a>
+              <a class="admin-nav-link" href="/admin/export-data"><span>{{.t.T "导出数据"}}</span></a>
+              <a class="admin-nav-link" href="/admin/delete-account"><span>{{.t.T "注销账号"}}</span></a>
+            </div>
+          </div>
           {{if or (eq .CurrentUserRole "admin") (eq .CurrentUserRole "author")}}
           <div class="nav-group">
             <span class="nav-group-title">{{.t.T "内容"}}</span>
@@ -67,8 +76,6 @@
             <div class="nav-group-links">
               <a class="admin-nav-link{{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "general")}} is-active{{end}}" href="/admin/settings">
                 <span>{{.t.T "常规"}}</span></a>
-              <a class="admin-nav-link{{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "user")}} is-active{{end}}" href="/admin/settings/user">
-                <span>{{.t.T "用户"}}</span></a>
               <a class="admin-nav-link{{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "developer")}} is-active{{end}}" href="/admin/settings/developer">
                 <span>{{.t.T "开发"}}</span></a>
             </div>

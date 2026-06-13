@@ -29,17 +29,6 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)
 
-	// 前台用户路由(需登录,所有角色可访问)。
-	userGroup := r.Group("")
-	userGroup.Use(middleware.AuthRequiredRedirect("/login"))
-	userGroup.GET("/profile", pub.ProfilePage)
-	userGroup.POST("/profile", pub.SaveProfile)
-	userGroup.POST("/profile/password", pub.ChangePassword)
-	userGroup.GET("/my-comments", pub.MyComments)
-	userGroup.POST("/my-comments/:id/delete", pub.DeleteMyComment)
-	userGroup.GET("/export-data", pub.ExportData)
-	userGroup.POST("/delete-account", pub.DeleteAccount)
-
 	// 前台认证路由(无需登录)。
 	r.GET("/register", pub.RegisterForm)
 	r.POST("/register", pub.Register)
@@ -65,6 +54,17 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	g.Use(middleware.AuthRequired(), middleware.CSRFMiddleware())
 	g.GET("/", adm.Dashboard)
 	g.POST("/logout", adm.Logout)
+
+	// 个人资料(所有角色可访问)。
+	profileGroup := r.Group("/admin")
+	profileGroup.Use(middleware.AuthRequired(), middleware.CSRFMiddleware())
+	profileGroup.GET("/profile", adm.ProfilePage)
+	profileGroup.POST("/profile", adm.SaveProfileSettings)
+	profileGroup.POST("/profile/password", adm.SavePasswordSettings)
+	profileGroup.GET("/my-comments", adm.ListComments)
+	profileGroup.POST("/my-comments/:id/delete", adm.DeleteMyComment)
+	profileGroup.GET("/export-data", adm.ExportData)
+	profileGroup.POST("/delete-account", adm.DeleteAccount)
 
 	// admin + author: 内容管理。
 	contentGroup := r.Group("/admin")
@@ -96,7 +96,6 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.Use(middleware.AuthRequired(), middleware.CSRFMiddleware(),
 		middleware.RequireRole(model.RoleAdmin))
 	adminGroup.GET("/settings", adm.SettingsPage)
-	adminGroup.GET("/settings/user", adm.UserSettingsPage)
 	adminGroup.GET("/settings/developer", adm.DeveloperSettingsPage)
 	adminGroup.POST("/settings/site", adm.SaveSiteSettings)
 	adminGroup.POST("/settings/session", adm.SaveSessionSettings)
@@ -107,8 +106,6 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.POST("/settings/templates/release", adm.ReleaseTemplates)
 	adminGroup.POST("/settings/templates/embed", adm.UseEmbeddedTemplates)
 	adminGroup.POST("/settings/templates/reload", adm.ReloadTemplates)
-	adminGroup.POST("/settings/profile", adm.SaveProfileSettings)
-	adminGroup.POST("/settings/password", adm.SavePasswordSettings)
 	adminGroup.GET("/debug", adm.DebugPage)
 	adminGroup.POST("/debug", adm.DebugPage)
 	adminGroup.GET("/terms", adm.TermsPage)

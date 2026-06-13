@@ -3,8 +3,6 @@
 <h1>
   {{if eq .CurrentSettingsSection "developer"}}
   {{.t.T "开发设置"}}
-  {{else if eq .CurrentSettingsSection "user"}}
-  {{.t.T "用户设置"}}
   {{else}}
   {{.t.T "常规设置"}}
   {{end}}
@@ -74,32 +72,6 @@
         <p><button type="submit" class="btn-secondary">{{.t.T "释放翻译资源目录"}}</button></p>
       </form>
       {{end}}
-    </section>
-  </div>
-</div>
-{{else if eq .CurrentSettingsSection "user"}}
-<div class="settings-main">
-  <div class="settings-stack">
-    <section class="card settings-card">
-      <h3>{{.t.T "个人资料"}}</h3>
-      <form class="edit-form" method="post" action="/admin/settings/profile">
-        {{template "csrf_field" .}}
-        <label>{{.t.T "用户名"}}<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
-        <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
-        <label>{{.t.T "邮件"}}<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
-        <p><button type="submit" class="btn">{{.t.T "保存个人资料"}}</button></p>
-      </form>
-    </section>
-
-    <section class="card settings-card">
-      <h3>{{.t.T "密码设置"}}</h3>
-      <form class="edit-form" method="post" action="/admin/settings/password">
-        {{template "csrf_field" .}}
-        <label>{{.t.T "原密码"}}<input type="password" name="current_password" required></label>
-        <label>{{.t.T "新密码"}}<input type="password" name="new_password" required></label>
-        <label>{{.t.T "确认新密码"}}<input type="password" name="confirm_password" required></label>
-        <p><button type="submit" class="btn">{{.t.T "修改密码"}}</button></p>
-      </form>
     </section>
   </div>
 </div>

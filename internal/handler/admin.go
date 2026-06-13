@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -112,8 +113,10 @@ func adminNavKey(c *gin.Context) string {
 		return "categories"
 	case "/admin/tags", "/admin/tag", "/admin/tag/:id/delete":
 		return "tags"
-	case "/admin/settings", "/admin/settings/user", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/profile", "/admin/settings/password":
+	case "/admin/settings", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload":
 		return "settings"
+	case "/admin/profile", "/admin/profile/password", "/admin/my-comments", "/admin/my-comments/:id/delete", "/admin/export-data", "/admin/delete-account":
+		return "profile"
 	case "/admin/debug":
 		return "debug"
 	case "/admin/uploads", "/admin/uploads.json", "/admin/upload", "/admin/upload/:id/delete":
@@ -143,8 +146,6 @@ func settingsSection(c *gin.Context) string {
 		path = c.Request.URL.Path
 	}
 	switch path {
-	case "/admin/settings/user", "/admin/settings/profile", "/admin/settings/password":
-		return "user"
 	case "/admin/settings/developer", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload":
 		return "developer"
 	default:
@@ -154,8 +155,6 @@ func settingsSection(c *gin.Context) string {
 
 func settingsPageURL(section string) string {
 	switch normalizeSettingsSection(section) {
-	case "user":
-		return "/admin/settings/user"
 	case "developer":
 		return "/admin/settings/developer"
 	default:
@@ -165,8 +164,6 @@ func settingsPageURL(section string) string {
 
 func normalizeSettingsSection(section string) string {
 	switch strings.TrimSpace(section) {
-	case "account", "user":
-		return "user"
 	case "resources", "developer":
 		return "developer"
 	default:
@@ -438,15 +435,9 @@ func (h *Admin) ExportXML(c *gin.Context) {
 	c.Data(http.StatusOK, "application/xml; charset=utf-8", xmlData)
 }
 
-// SettingsPage 后台设置页:站点设置 + 个人设置。
+// SettingsPage 后台设置页:站点设置。
 func (h *Admin) SettingsPage(c *gin.Context) {
 	data := h.settingsDataForSection(c, "general")
-	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
-}
-
-// UserSettingsPage 后台用户设置页。
-func (h *Admin) UserSettingsPage(c *gin.Context) {
-	data := h.settingsDataForSection(c, "user")
 	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
 }
 
@@ -454,6 +445,19 @@ func (h *Admin) UserSettingsPage(c *gin.Context) {
 func (h *Admin) DeveloperSettingsPage(c *gin.Context) {
 	data := h.settingsDataForSection(c, "developer")
 	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
+}
+
+// ProfilePage 后台个人资料页(所有角色可访问)。
+func (h *Admin) ProfilePage(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	data := h.base(c, tr.T("个人资料"))
+	data["CurrentUser"] = u
+	c.HTML(http.StatusOK, "admin_profile.gohtml", data)
 }
 
 func settingsRedirectURL(section, message string) string {
@@ -477,8 +481,6 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	currentSection := normalizeSettingsSection(section)
 	title := tr.T("常规设置")
 	switch currentSection {
-	case "user":
-		title = tr.T("用户设置")
 	case "developer":
 		title = tr.T("开发设置")
 	}
@@ -524,7 +526,6 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["AssetHotReload"] = h.assets != nil && h.assets.Hot()
 	data["I18nHotReload"] = i18n.Hot()
 	data["SettingsGeneralURL"] = settingsPageURL("general")
-	data["SettingsUserURL"] = settingsPageURL("user")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
 	if c != nil && c.Query("message") == "templates-reloaded" {
 		data["Notice"] = tr.T("模板已重新解析。")
@@ -731,9 +732,9 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	displayName := strings.TrimSpace(c.PostForm("display_name"))
 	email := strings.TrimSpace(c.PostForm("email"))
 	if username == "" || displayName == "" || email == "" {
-		data := h.settingsDataForTab(c, "account")
+		data := h.profileData(c, u)
 		data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
 	exists, err := h.st.UserExistsByUsername(username, u.ID)
@@ -742,16 +743,16 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		return
 	}
 	if exists {
-		data := h.settingsDataForTab(c, "account")
+		data := h.profileData(c, u)
 		data["Error"] = tr.T("用户名已被占用。")
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
 	if err := h.st.UpdateUserProfile(u.ID, username, displayName, email); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, settingsRedirectURL("account", ""))
+	c.Redirect(http.StatusSeeOther, "/admin/profile")
 }
 
 // SavePasswordSettings 修改当前用户密码。
@@ -766,15 +767,15 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 	confirm := c.PostForm("confirm_password")
 	currentPassword := c.PostForm("current_password")
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
-		data := h.settingsDataForTab(c, "account")
+		data := h.profileData(c, u)
 		data["Error"] = tr.T("原密码不正确。")
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
 	if password == "" || password != confirm {
-		data := h.settingsDataForTab(c, "account")
+		data := h.profileData(c, u)
 		data["Error"] = tr.T("两次输入的密码不一致。")
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -786,7 +787,15 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, settingsRedirectURL("account", ""))
+	c.Redirect(http.StatusSeeOther, "/admin/profile")
+}
+
+// profileData 构建个人资料页数据。
+func (h *Admin) profileData(c *gin.Context, u *model.User) gin.H {
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("个人资料"))
+	data["CurrentUser"] = u
+	return data
 }
 
 // ReloadTemplates 手动重新解析本地模板文件。仅热更新模式支持。
@@ -1872,7 +1881,7 @@ func (h *Admin) DeletePost(c *gin.Context) {
 
 // --- 评论 ---
 
-// ListComments 后台评论列表。
+// ListComments 后台评论列表。支持 mine=1 参数过滤当前用户的评论。
 func (h *Admin) ListComments(c *gin.Context) {
 	tr := i18n.Get(c)
 	status := c.DefaultQuery("status", model.CommentApproved)
@@ -1883,12 +1892,30 @@ func (h *Admin) ListComments(c *gin.Context) {
 	}
 	postID := uint(atoiDefault(c.Query("post_id"), 0))
 	page := atoiDefault(c.Query("page"), 1)
-	comments, total, err := h.st.AdminListComments(status, postID, page, adminPageSize)
+	mine := c.Query("mine") == "1"
+
+	var comments []model.Comment
+	var total int64
+	var err error
+
+	if mine {
+		u := h.currentUser(c)
+		if u == nil {
+			h.notFound(c)
+			return
+		}
+		comments, total, err = h.st.ListCommentsByUser(u.ID, page, adminPageSize)
+	} else {
+		comments, total, err = h.st.AdminListComments(status, postID, page, adminPageSize)
+	}
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
 	data := h.base(c, tr.T("评论管理"))
+	if mine {
+		data["Title"] = tr.T("我的评论")
+	}
 	postIDs := make([]uint, 0, len(comments))
 	for _, comment := range comments {
 		postIDs = append(postIDs, comment.PostID)
@@ -1914,6 +1941,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 	data["Total"] = total
 	data["FilterStatus"] = status
 	data["FilterPostID"] = postID
+	data["Mine"] = mine
 	if postID > 0 {
 		if post, ok := postsByID[postID]; ok {
 			data["FilterPostTitle"] = post.Title
@@ -2037,7 +2065,65 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
 }
 
+// DeleteMyComment 删除当前用户的评论。
+func (h *Admin) DeleteMyComment(c *gin.Context) {
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	commentID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := h.st.DeleteCommentByUser(uint(commentID), u.ID); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/my-comments")
+}
+
 // --- 用户管理 ---
+
+// ExportData 导出当前用户个人数据(JSON)。
+func (h *Admin) ExportData(c *gin.Context) {
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	data, err := h.st.ExportUserData(u.ID)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	c.Header("Content-Disposition", "attachment; filename=personal-data.json")
+	if err := json.NewEncoder(c.Writer).Encode(data); err != nil {
+		h.log.Error("export data", "err", err)
+	}
+}
+
+// DeleteAccount 注销当前用户账号。
+func (h *Admin) DeleteAccount(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	confirm := c.PostForm("confirm")
+	if confirm != "DELETE" {
+		data := h.base(c, tr.T("注销账号"))
+		data["CurrentUser"] = u
+		data["Error"] = tr.T("请输入 DELETE 确认注销。")
+		c.HTML(http.StatusBadRequest, "admin_delete_account.gohtml", data)
+		return
+	}
+	if err := h.st.DeleteUser(u.ID); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	middleware.ClearSession(c)
+	c.Redirect(http.StatusSeeOther, "/admin/login")
+}
 
 // ListUsers 后台用户列表(admin only)。
 func (h *Admin) ListUsers(c *gin.Context) {

@@ -24,7 +24,7 @@
       </div>
       <div class="site-nav-utility" aria-label="{{.t.T "界面设置"}}">
         {{if .CurrentUser}}
-        <a href="/profile">{{.CurrentUser.DisplayName}}</a>
+        <a href="/admin">{{.t.T "后台"}}</a>
         <form class="inline" method="post" action="/logout" style="display:inline">
           <button type="submit" class="link-btn">{{.t.T "退出"}}</button>
         </form>
