@@ -1094,6 +1094,14 @@ msgstr ""
 msgid "取消回复"
 msgstr ""
 
+#: web/templates/admin_profile.gohtml:16
+msgid "用户名仅管理员可修改。"
+msgstr ""
+
+#: web/templates/admin_users.gohtml:14
+msgid "未设置显示名"
+msgstr ""
+
 #: internal/handler/public.go:193
 #, c-format
 msgid "搜索:%s"

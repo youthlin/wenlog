@@ -9,7 +9,12 @@
       <h3>{{.t.T "个人资料"}}</h3>
       <form class="edit-form" method="post" action="/admin/profile">
         {{template "csrf_field" .}}
+        {{if .CanEditUsername}}
         <label>{{.t.T "用户名"}}<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
+        {{else}}
+        <label>{{.t.T "用户名"}}<input type="text" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" disabled></label>
+        <p class="form-hint">{{.t.T "用户名仅管理员可修改。"}}</p>
+        {{end}}
         <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
         <label>{{.t.T "邮件"}}<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
         <p><button type="submit" class="btn">{{.t.T "保存个人资料"}}</button></p>

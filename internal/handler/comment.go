@@ -26,6 +26,10 @@ const (
 
 	pendingCommentIDsSessionKey = "pending_comment_ids"
 	maxPendingCommentIDs        = 100
+
+	commenterAuthorSessionKey = "commenter_author"
+	commenterEmailSessionKey  = "commenter_email"
+	commenterURLSessionKey    = "commenter_url"
 )
 
 // commentReq 是评论提交表单。
@@ -61,6 +65,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	req.Author = strings.TrimSpace(req.Author)
 	req.Content = strings.TrimSpace(req.Content)
 	req.Email = strings.TrimSpace(req.Email)
+	req.URL = strings.TrimSpace(req.URL)
 	loggedInUser := h.commentUser(c)
 	if loggedInUser != nil {
 		req.Author = strings.TrimSpace(loggedInUser.DisplayName)
@@ -125,7 +130,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		ReplyToID:     replyToID,
 		Author:        req.Author,
 		Email:         req.Email,
-		URL:           strings.TrimSpace(req.URL),
+		URL:           req.URL,
 		IP:            ip,
 		Content:       req.Content,
 		Status:        commentStatusForUser(loggedInUser, target),
@@ -145,6 +150,9 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		msg = tr.T("评论已发布。")
 	} else {
 		rememberPendingComment(c, cm.ID)
+	}
+	if loggedInUser == nil {
+		rememberCommenter(c, req)
 	}
 	commentPage := h.st.VisibleCommentPageForViewerID(cm.ID, commentPageSize, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
 	h.commentResp(c, true, msg, req.PostID, gin.H{"comment_page": commentPage})
@@ -200,6 +208,31 @@ func rememberPendingComment(c *gin.Context, id uint) {
 	s := sessions.Default(c)
 	s.Set(pendingCommentIDsSessionKey, strings.Join(parts, ","))
 	_ = s.Save()
+}
+
+func rememberedCommenter(c *gin.Context) gin.H {
+	s := sessions.Default(c)
+	return gin.H{
+		"Author": sessionString(s, commenterAuthorSessionKey),
+		"Email":  sessionString(s, commenterEmailSessionKey),
+		"URL":    sessionString(s, commenterURLSessionKey),
+	}
+}
+
+func rememberCommenter(c *gin.Context, req commentReq) {
+	s := sessions.Default(c)
+	s.Set(commenterAuthorSessionKey, strings.TrimSpace(req.Author))
+	s.Set(commenterEmailSessionKey, strings.TrimSpace(req.Email))
+	s.Set(commenterURLSessionKey, strings.TrimSpace(req.URL))
+	_ = s.Save()
+}
+
+func sessionString(s sessions.Session, key string) string {
+	if s == nil {
+		return ""
+	}
+	v, _ := s.Get(key).(string)
+	return v
 }
 
 // commentResp 根据请求类型返回 JSON 或重定向。

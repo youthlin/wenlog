@@ -7,11 +7,16 @@
     <thead><tr><th>{{.t.T "用户名"}}</th><th>{{.t.T "显示名"}}</th><th>{{.t.T "邮箱"}}</th><th>{{.t.T "角色"}}</th><th>{{.t.T "注册时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
     <tbody>
     {{range .Users}}
-    <tr>
-      <td>{{.Username}}</td>
-      <td>{{.DisplayName}}</td>
-      <td>{{.Email}}</td>
-      <td>
+    <tr class="users-row">
+      <td class="user-name-cell" data-label="{{$.t.T "用户"}}">
+        <div class="user-panel">
+          <div class="user-name-line">{{.Username}}</div>
+          <div class="user-display-line">{{if .DisplayName}}{{.DisplayName}}{{else}}{{$.t.T "未设置显示名"}}{{end}}</div>
+        </div>
+      </td>
+      <td class="user-display-cell" data-label="{{$.t.T "显示名"}}">{{.DisplayName}}</td>
+      <td class="user-email-cell" data-label="{{$.t.T "邮箱"}}"><a href="mailto:{{.Email}}">{{.Email}}</a></td>
+      <td class="user-role-cell" data-label="{{$.t.T "角色"}}">
         <form class="inline" method="post" action="/admin/user/{{.ID}}/role">
           {{template "csrf_field" $}}
           <select name="role" onchange="this.form.submit()">
@@ -21,9 +26,9 @@
           </select>
         </form>
       </td>
-      <td><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDate .CreatedAt}}</time></td>
-      <td>
-        <a href="/admin/user/{{.ID}}/edit" class="btn btn-sm">{{$.t.T "编辑"}}</a>
+      <td class="user-created-cell" data-label="{{$.t.T "注册时间"}}"><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDate .CreatedAt}}</time></td>
+      <td class="actions user-actions-cell" data-label="{{$.t.T "操作"}}">
+        <a href="/admin/user/{{.ID}}/edit" class="user-action-link">{{$.t.T "编辑"}}</a>
         <form class="inline" method="post" action="/admin/user/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该用户?"}}')">
           {{template "csrf_field" $}}
           <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>

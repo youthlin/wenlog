@@ -263,6 +263,7 @@ func (h *Public) Page(c *gin.Context) {
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
+	data["RememberedCommenter"] = rememberedCommenter(c)
 	if c.Query("ajax") == "comments" {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return
@@ -314,6 +315,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
+	data["RememberedCommenter"] = rememberedCommenter(c)
 	data["PrevPost"] = h.st.PrevPost(p.PublishedAt)
 	data["NextPost"] = h.st.NextPost(p.PublishedAt)
 	if c.Query("ajax") == "comments" {

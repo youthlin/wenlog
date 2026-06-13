@@ -815,7 +815,7 @@ func (h *Admin) SaveSessionSettings(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/admin/login?message=session-secret-updated")
 }
 
-// SaveProfileSettings 保存当前用户用户名/显示名/邮箱。
+// SaveProfileSettings 保存当前用户个人资料。非管理员不能自助修改用户名。
 func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	tr := i18n.Get(c)
 	u := h.currentUser(c)
@@ -826,22 +826,31 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	username := strings.TrimSpace(c.PostForm("username"))
 	displayName := strings.TrimSpace(c.PostForm("display_name"))
 	email := strings.TrimSpace(c.PostForm("email"))
+	if !canEditOwnUsername(u) {
+		username = u.Username
+	}
 	if username == "" || displayName == "" || email == "" {
 		data := h.profileData(c, u)
-		data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
+		if canEditOwnUsername(u) {
+			data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
+		} else {
+			data["Error"] = tr.T("显示名和邮件不能为空。")
+		}
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
-	exists, err := h.st.UserExistsByUsername(username, u.ID)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if exists {
-		data := h.profileData(c, u)
-		data["Error"] = tr.T("用户名已被占用。")
-		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
-		return
+	if canEditOwnUsername(u) {
+		exists, err := h.st.UserExistsByUsername(username, u.ID)
+		if err != nil {
+			h.serverError(c, err)
+			return
+		}
+		if exists {
+			data := h.profileData(c, u)
+			data["Error"] = tr.T("用户名已被占用。")
+			c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+			return
+		}
 	}
 	if err := h.st.UpdateUserProfile(u.ID, username, displayName, email); err != nil {
 		h.serverError(c, err)
@@ -890,7 +899,12 @@ func (h *Admin) profileData(c *gin.Context, u *model.User) gin.H {
 	tr := i18n.Get(c)
 	data := h.base(c, tr.T("个人资料"))
 	data["CurrentUser"] = u
+	data["CanEditUsername"] = canEditOwnUsername(u)
 	return data
+}
+
+func canEditOwnUsername(u *model.User) bool {
+	return u != nil && u.Role == model.RoleAdmin
 }
 
 // ReloadTemplates 手动重新解析本地模板文件。仅热更新模式支持。

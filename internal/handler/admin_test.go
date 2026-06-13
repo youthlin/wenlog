@@ -9,6 +9,8 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/youthlin/blog/internal/model"
 )
@@ -128,5 +130,60 @@ func TestCommentStatusForUser(t *testing.T) {
 		if got := commentStatusForUser(tt.user, target); got != tt.want {
 			t.Fatalf("%s: commentStatusForUser()=%q, want %q", tt.name, got, tt.want)
 		}
+	}
+}
+
+func TestCanEditOwnUsername(t *testing.T) {
+	tests := []struct {
+		name string
+		user *model.User
+		want bool
+	}{
+		{name: "nil", user: nil, want: false},
+		{name: "admin", user: &model.User{Role: model.RoleAdmin}, want: true},
+		{name: "author", user: &model.User{Role: model.RoleAuthor}, want: false},
+		{name: "subscriber", user: &model.User{Role: model.RoleSubscriber}, want: false},
+	}
+	for _, tt := range tests {
+		if got := canEditOwnUsername(tt.user); got != tt.want {
+			t.Fatalf("%s: canEditOwnUsername()=%v, want %v", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestRememberCommenter(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.Use(sessions.Sessions("test_session", cookie.NewStore([]byte("secret"))))
+	r.GET("/set", func(c *gin.Context) {
+		rememberCommenter(c, commentReq{
+			Author: " Alice ",
+			Email:  " alice@example.com ",
+			URL:    " https://example.com ",
+		})
+		c.Status(http.StatusNoContent)
+	})
+	r.GET("/get", func(c *gin.Context) {
+		got := rememberedCommenter(c)
+		if got["Author"] != "Alice" || got["Email"] != "alice@example.com" || got["URL"] != "https://example.com" {
+			t.Fatalf("rememberedCommenter()=%v", got)
+		}
+		c.Status(http.StatusNoContent)
+	})
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/set", nil))
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("set status=%d", w.Code)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/get", nil)
+	for _, cookie := range w.Result().Cookies() {
+		req.AddCookie(cookie)
+	}
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("get status=%d", w.Code)
 	}
 }

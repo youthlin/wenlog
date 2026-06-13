@@ -1176,6 +1176,14 @@ msgstr "Replying to @%s"
 msgid "取消回复"
 msgstr "Cancel reply"
 
+#: web/templates/admin_profile.gohtml:16
+msgid "用户名仅管理员可修改。"
+msgstr "Only administrators can change usernames."
+
+#: web/templates/admin_users.gohtml:14
+msgid "未设置显示名"
+msgstr "No display name set"
+
 #: internal/handler/public.go:193
 #, c-format
 msgid "搜索:%s"

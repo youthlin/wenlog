@@ -328,6 +328,8 @@ img { max-width: 100%; }
 .comment-head { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .comment-head .avatar { border-radius: 50%; }
 .comment-author { font-weight: 600; color: var(--fg); }
+.comment-id { color: var(--muted); font-weight: 600; }
+.comment-id:hover, .comment-reply-to:hover { color: var(--accent); }
 .comment-pending-badge { color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 999px; padding: 1px 8px; }
 .comment-body { margin-top: 4px; white-space: pre-wrap; }
 .comment-reply-to { color: var(--accent); font-size: 13px; margin-right: 6px; }
