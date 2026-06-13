@@ -54,7 +54,7 @@ func setPasswd(st *store.Store) bool {
 		fmt.Fprintf(os.Stderr, t.T(bootstrapErrPasswdHash), err)
 		os.Exit(1)
 	}
-	err = st.UpsertUserPassword(username, username, string(hash))
+	err = st.SetUserPassword(username, string(hash))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, t.T(bootstrapErrSetPasswd), err)
 		os.Exit(1)

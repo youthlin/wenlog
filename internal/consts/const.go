@@ -24,4 +24,14 @@ const (
 	SettingsSayingPageIDDefault = 456
 	// 会话密钥
 	SettingsSessionSecret = "session_secret"
+	// 是否开放注册
+	SettingsRegistrationOpen = "registration_open"
+	// SMTP 邮件配置
+	SettingsSMTPHost     = "smtp_host"
+	SettingsSMTPPort     = "smtp_port"
+	SettingsSMTPUser     = "smtp_user"
+	SettingsSMTPPassword = "smtp_password"
+	SettingsSMTPFrom     = "smtp_from"
+	// 站点 URL(用于生成重置密码链接)
+	SettingsSiteURL = "site_url"
 )

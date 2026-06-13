@@ -46,6 +46,10 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.GET("/login", pub.LoginForm)
 	r.POST("/login", pub.Login)
 	r.POST("/logout", pub.Logout)
+	r.GET("/forgot-password", pub.ForgotPasswordForm)
+	r.POST("/forgot-password", pub.ForgotPassword)
+	r.GET("/reset-password", pub.ResetPasswordForm)
+	r.POST("/reset-password", pub.ResetPassword)
 
 	// 兜底动态路由: 页面 slug + 任意层级文章永久链接 + 旧链接兼容。
 	r.NoRoute(pub.DynamicOrLegacy)
@@ -112,6 +116,10 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.POST("/import", adm.ImportXML)
 	adminGroup.POST("/export", adm.ExportXML)
 	adminGroup.GET("/users", adm.ListUsers)
+	adminGroup.GET("/user/new", adm.NewUserForm)
+	adminGroup.POST("/user/new", adm.CreateUser)
+	adminGroup.GET("/user/:id/edit", adm.EditUserForm)
+	adminGroup.POST("/user/:id/edit", adm.UpdateUser)
 	adminGroup.POST("/user/:id/role", adm.UpdateUserRole)
 	adminGroup.POST("/user/:id/delete", adm.DeleteUser)
 }

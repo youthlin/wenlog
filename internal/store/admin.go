@@ -4,6 +4,7 @@ package store
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cockroachdb/errors"
 	"gorm.io/gorm"
@@ -31,6 +32,41 @@ func (s *Store) GetUserByID(id uint) (*model.User, error) {
 		return nil, err
 	}
 	return &u, nil
+}
+
+// GetUserByEmail 按邮箱查用户。
+func (s *Store) GetUserByEmail(email string) (*model.User, error) {
+	var u model.User
+	if err := s.db.Where("email = ?", email).First(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+// SetResetToken 为用户设置密码重置令牌及过期时间。
+func (s *Store) SetResetToken(userID uint, token string, expiry time.Time) error {
+	return errors.Wrap(
+		s.db.Model(&model.User{}).Where("id = ?", userID).
+			Updates(map[string]any{"reset_token": token, "reset_token_expiry": expiry}).Error,
+		"set reset token")
+}
+
+// GetUserByResetToken 按重置令牌查用户(需校验未过期)。
+func (s *Store) GetUserByResetToken(token string) (*model.User, error) {
+	var u model.User
+	err := s.db.Where("reset_token = ? AND reset_token_expiry > ?", token, time.Now()).First(&u).Error
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+// ClearResetToken 清除用户的重置令牌。
+func (s *Store) ClearResetToken(userID uint) error {
+	return errors.Wrap(
+		s.db.Model(&model.User{}).Where("id = ?", userID).
+			Updates(map[string]any{"reset_token": "", "reset_token_expiry": time.Time{}}).Error,
+		"clear reset token")
 }
 
 // UserExistsByUsername 检查用户名是否已被其他用户占用。
@@ -76,6 +112,31 @@ func (s *Store) UpsertUserPassword(username, displayName, passwordHash string) e
 	}
 	err = s.db.Save(&u).Error
 	return errors.Wrapf(err, "更改密码失败, username=%s", username)
+}
+
+// SetUserPassword 仅更新已存在用户的密码(按 username)。用户不存在时返回错误。
+func (s *Store) SetUserPassword(username, passwordHash string) error {
+	result := s.db.Model(&model.User{}).Where("username = ?", username).
+		Update("password_hash", passwordHash)
+	if result.Error != nil {
+		return errors.Wrapf(result.Error, "set user password, username=%s", username)
+	}
+	if result.RowsAffected == 0 {
+		return errors.Newf("用户不存在: %s", username)
+	}
+	return nil
+}
+
+// CreateUser 创建新用户(管理员手动添加)。
+func (s *Store) CreateUser(username, displayName, email, passwordHash, role string) error {
+	u := model.User{
+		Username:     username,
+		DisplayName:  displayName,
+		Email:        email,
+		PasswordHash: passwordHash,
+		Role:         role,
+	}
+	return errors.Wrapf(s.db.Create(&u).Error, "create user, username=%s", username)
 }
 
 // UpdateUserProfile 更新用户用户名、显示名与邮箱。

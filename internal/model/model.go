@@ -30,14 +30,16 @@ const (
 
 // User 是后台登录用户。
 type User struct {
-	ID           uint   `gorm:"primaryKey"`
-	Username     string `gorm:"uniqueIndex;size:64"`
-	PasswordHash string `gorm:"size:255"`
-	DisplayName  string `gorm:"size:128"`
-	Email        string `gorm:"size:128"`
-	Role         string `gorm:"size:16;default:subscriber"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID               uint   `gorm:"primaryKey"`
+	Username         string `gorm:"uniqueIndex;size:64"`
+	PasswordHash     string `gorm:"size:255"`
+	DisplayName      string `gorm:"size:128"`
+	Email            string `gorm:"size:128;index"`
+	Role             string `gorm:"size:16;default:subscriber"`
+	ResetToken       string `gorm:"size:128;index"`
+	ResetTokenExpiry time.Time
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 // Post 既表示文章(post)也表示页面(page),由 PostType 区分。

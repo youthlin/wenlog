@@ -1,0 +1,32 @@
+{{define "admin_user_form.gohtml"}}
+{{template "admin_header" .}}
+{{if .EditUser}}
+<h1>{{.t.T "编辑用户"}}</h1>
+{{else}}
+<h1>{{.t.T "新增用户"}}</h1>
+{{end}}
+
+{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+
+<form class="edit-form" method="post" action="{{if .EditUser}}/admin/user/{{.EditUser.ID}}/edit{{else}}/admin/user/new{{end}}">
+  {{template "csrf_field" .}}
+  <label>{{.t.T "用户名"}}<input type="text" name="username" value="{{if .EditUser}}{{.EditUser.Username}}{{end}}" required></label>
+  {{if not .EditUser}}
+  <label>{{.t.T "密码"}}<input type="password" name="password" required></label>
+  {{end}}
+  <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .EditUser}}{{.EditUser.DisplayName}}{{end}}"></label>
+  <label>{{.t.T "邮箱"}}<input type="email" name="email" value="{{if .EditUser}}{{.EditUser.Email}}{{end}}" required></label>
+  <label>{{.t.T "角色"}}
+    <select name="role">
+      <option value="admin" {{if and .EditUser (eq .EditUser.Role "admin")}}selected{{end}}>{{.t.T "管理员"}}</option>
+      <option value="author" {{if and .EditUser (eq .EditUser.Role "author")}}selected{{end}}>{{.t.T "作者"}}</option>
+      <option value="subscriber" {{if and .EditUser (eq .EditUser.Role "subscriber")}}selected{{end}}>{{.t.T "订阅者"}}</option>
+    </select>
+  </label>
+  <p>
+    <button type="submit" class="btn">{{if .EditUser}}{{.t.T "保存"}}{{else}}{{.t.T "创建用户"}}{{end}}</button>
+    <a href="/admin/users" class="btn btn-secondary">{{.t.T "取消"}}</a>
+  </p>
+</form>
+{{template "admin_footer" .}}
+{{end}}

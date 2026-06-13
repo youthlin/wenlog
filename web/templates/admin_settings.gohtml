@@ -125,7 +125,25 @@
         </div>
         <label>{{.t.T "博主动态 post_id"}}<input type="number" min="1" name="saying_page_id" value="{{.SayingPageIDValue}}" required></label>
         <p class="tip">{{.t.T "可填写文章或页面的 post_id；侧栏小组件会读取该 post_id 下博主本人发表的评论。"}}</p>
+        <label class="checkbox-label"><input type="checkbox" name="registration_open" {{if .RegistrationOpenValue}}checked{{end}}> {{.t.T "开放注册"}}</label>
+        <p class="tip">{{.t.T "开启后前台显示注册入口，新用户注册后默认为订阅者角色。"}}</p>
         <p><button type="submit" class="btn">{{.t.T "保存站点设置"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "SMTP 邮件设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/site">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "配置 SMTP 后可使用忘记密码等邮件功能。留空则禁用邮件发送。"}}</p>
+        <label>{{.t.T "SMTP 服务器"}}<input type="text" name="smtp_host" value="{{.SMTPHostValue}}" placeholder="smtp.example.com"></label>
+        <label>{{.t.T "SMTP 端口"}}<input type="number" name="smtp_port" value="{{.SMTPPortValue}}" placeholder="587"></label>
+        <label>{{.t.T "SMTP 用户名"}}<input type="text" name="smtp_user" value="{{.SMTPUserValue}}" placeholder="user@example.com"></label>
+        <label>{{.t.T "SMTP 密码"}}<input type="password" name="smtp_password" value="{{.SMTPPasswordValue}}" placeholder="{{.t.T "留空则不修改"}}"></label>
+        <label>{{.t.T "发件人地址"}}<input type="email" name="smtp_from" value="{{.SMTPFromValue}}" placeholder="noreply@example.com"></label>
+        <label>{{.t.T "站点 URL"}}<input type="url" name="site_url" value="{{.SiteURLValue}}" placeholder="https://example.com"></label>
+        <p class="tip">{{.t.T "用于生成重置密码等邮件中的链接。留空则自动从请求推断。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存 SMTP 设置"}}</button></p>
       </form>
     </section>
 

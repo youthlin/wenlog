@@ -32,14 +32,15 @@ type Public struct {
 const commentPageSize = 20
 
 type publicSettings struct {
-	SiteName        string
-	SiteDescription string
-	PostPermalink   string
-	CategoryPrefix  string
-	TagPrefix       string
-	PageSize        int
-	FeedSize        int
-	SayingPostID    uint
+	SiteName         string
+	SiteDescription  string
+	PostPermalink    string
+	CategoryPrefix   string
+	TagPrefix        string
+	PageSize         int
+	FeedSize         int
+	SayingPostID     uint
+	RegistrationOpen bool
 }
 
 // NewPublic 构造前台处理器。
@@ -70,6 +71,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"CurrentUserID":      currentUserID,
 		"CurrentUser":        currentUser,
 		"CSRFToken":          csrfToken,
+		"RegistrationOpen":   s.RegistrationOpen,
 		"RecentComments":     h.st.RecentComments(8),
 		"RecentCommentItems": h.st.RecentCommentItems(8, commentPageSize),
 		"RecentPosts":        h.st.RecentPosts(8),
@@ -89,17 +91,25 @@ func (h *Public) loadSettings() publicSettings {
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
+		consts.SettingsRegistrationOpen,
 	)
 	return publicSettings{
-		SiteName:        firstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
-		SiteDescription: settings[consts.SettingsSiteDesc],
-		PostPermalink:   postPermalink,
-		CategoryPrefix:  permalink.CurrentCategoryPrefix(),
-		TagPrefix:       permalink.CurrentTagPrefix(),
-		PageSize:        positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
-		FeedSize:        positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
-		SayingPostID:    uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
+		SiteName:         firstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
+		SiteDescription:  settings[consts.SettingsSiteDesc],
+		PostPermalink:    postPermalink,
+		CategoryPrefix:   permalink.CurrentCategoryPrefix(),
+		TagPrefix:        permalink.CurrentTagPrefix(),
+		PageSize:         positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
+		FeedSize:         positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
+		SayingPostID:     uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
+		RegistrationOpen: settings[consts.SettingsRegistrationOpen] == "true",
 	}
+}
+
+// isRegistrationOpen 返回当前是否开放前台注册。
+func (h *Public) isRegistrationOpen() bool {
+	s := h.loadSettings()
+	return s.RegistrationOpen
 }
 
 // DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。

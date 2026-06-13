@@ -1,7 +1,7 @@
 {{define "admin_users.gohtml"}}
 {{template "admin_header" .}}
 <h1>{{.t.T "用户管理"}}</h1>
-<p class="total">{{.t.N64 "共 %d 位用户" "共 %d 位用户" .Total .Total}}</p>
+<p class="total">{{.t.N64 "共 %d 位用户" "共 %d 位用户" .Total .Total}} · <a href="/admin/user/new" class="btn">{{.t.T "新增用户"}}</a></p>
 <div class="table-scroll">
   <table class="data-table users-table">
     <thead><tr><th>{{.t.T "用户名"}}</th><th>{{.t.T "显示名"}}</th><th>{{.t.T "邮箱"}}</th><th>{{.t.T "角色"}}</th><th>{{.t.T "注册时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
@@ -23,6 +23,7 @@
       </td>
       <td><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDate .CreatedAt}}</time></td>
       <td>
+        <a href="/admin/user/{{.ID}}/edit" class="btn btn-sm">{{$.t.T "编辑"}}</a>
         <form class="inline" method="post" action="/admin/user/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该用户?"}}')">
           {{template "csrf_field" $}}
           <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>

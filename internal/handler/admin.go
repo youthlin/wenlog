@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -240,13 +241,22 @@ func (h *Admin) ImportPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_import.gohtml", data)
 }
 
-// ImportXML 处理后台上传的 WXR XML,并把文章/页面归属到指定用户。
+// ImportXML 处理后台上传的 WXR XML。
+// 两步流程: 1) 上传 XML 预览作者映射; 2) 确认映射后执行导入。
 func (h *Admin) ImportXML(c *gin.Context) {
 	tr := i18n.Get(c)
 	data, ok := h.importPageData(c, tr.T("WXR 导入 / 导出"))
 	if !ok {
 		return
 	}
+
+	// 第二步: 确认作者映射并执行导入
+	if c.PostForm("confirm") == "1" {
+		h.importXMLConfirm(c, data)
+		return
+	}
+
+	// 第一步: 上传 XML 预览作者
 	var form struct {
 		UserID uint `form:"user_id"`
 	}
@@ -257,11 +267,11 @@ func (h *Admin) ImportXML(c *gin.Context) {
 	}
 	data["SelectedUserID"] = form.UserID
 	if form.UserID == 0 {
-		data["Error"] = tr.T("请选择导入归属用户。")
+		data["Error"] = tr.T("请选择默认归属用户。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
-	user, err := h.st.GetUserByID(form.UserID)
+	_, err := h.st.GetUserByID(form.UserID)
 	if err != nil {
 		data["Error"] = tr.T("所选用户不存在。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
@@ -290,25 +300,91 @@ func (h *Admin) ImportXML(c *gin.Context) {
 		return
 	}
 	defer file.Close()
-	stats, err := wpimport.ImportReader(h.st.DB(), file, wpimport.Options{
-		TargetUserID:  user.ID,
+
+	// 读取 XML 内容到内存(用于后续导入)
+	xmlBytes, err := io.ReadAll(file)
+	if err != nil {
+		data["Error"] = tr.T("读取上传文件失败。")
+		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
+		return
+	}
+
+	// 提取 XML 中的作者列表
+	authors, err := wpimport.PreviewAuthors(bytes.NewReader(xmlBytes))
+	if err != nil {
+		data["Error"] = tr.T("解析 XML 失败: %s", err.Error())
+		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
+		return
+	}
+
+	// 将 XML 内容暂存到 session(用于第二步导入)
+	s := sessions.Default(c)
+	s.Set("import_xml_data", xmlBytes)
+	s.Set("import_default_user_id", form.UserID)
+	s.Set("import_file_name", fh.Filename)
+	if err := s.Save(); err != nil {
+		data["Error"] = tr.T("保存会话失败。")
+		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
+		return
+	}
+
+	data["ImportAuthors"] = authors
+	data["ImportFileName"] = fh.Filename
+	data["ImportDefaultUserID"] = form.UserID
+	c.HTML(http.StatusOK, "admin_import.gohtml", data)
+}
+
+// importXMLConfirm 第二步: 确认作者映射后执行导入。
+func (h *Admin) importXMLConfirm(c *gin.Context, data gin.H) {
+	tr := i18n.Get(c)
+	s := sessions.Default(c)
+
+	xmlBytes, ok := s.Get("import_xml_data").([]byte)
+	if !ok || len(xmlBytes) == 0 {
+		data["Error"] = tr.T("会话已过期，请重新上传 XML 文件。")
+		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
+		return
+	}
+	defaultUserID, _ := s.Get("import_default_user_id").(uint)
+	fileName, _ := s.Get("import_file_name").(string)
+
+	// 清除 session 中的暂存数据
+	s.Delete("import_xml_data")
+	s.Delete("import_default_user_id")
+	s.Delete("import_file_name")
+	_ = s.Save()
+
+	// 解析作者映射: author_<name> = user_id
+	authorMapping := make(map[string]uint)
+	for _, key := range c.Request.PostForm {
+		for _, val := range key {
+			if strings.HasPrefix(val, "author_") {
+				authorName := strings.TrimPrefix(val, "author_")
+				userIDStr := c.PostForm(val)
+				if uid, err := strconv.ParseUint(userIDStr, 10, 64); err == nil && uid > 0 {
+					authorMapping[authorName] = uint(uid)
+				}
+			}
+		}
+	}
+
+	stats, err := wpimport.ImportReader(h.st.DB(), bytes.NewReader(xmlBytes), wpimport.Options{
+		TargetUserID:  defaultUserID,
 		IncludeDrafts: true,
+		AuthorMapping: authorMapping,
 	})
 	if err != nil {
 		h.log.Error("import xml",
 			slog.Any("error", err),
-			slog.String("file", fh.Filename),
-			slog.Uint64("user_id", uint64(user.ID)),
+			slog.String("file", fileName),
 		)
 		data["Error"] = tr.T("导入失败: %s", err.Error())
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
 	data["Success"] = tr.T("导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。")
-	data["TargetUser"] = user
 	data["ImportStats"] = stats
-	data["ImportedFileName"] = fh.Filename
-	data["SelectedUserID"] = user.ID
+	data["ImportedFileName"] = fileName
 	c.HTML(http.StatusOK, "admin_import.gohtml", data)
 }
 
@@ -418,6 +494,13 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
 		consts.SettingsSessionSecret,
+		consts.SettingsRegistrationOpen,
+		consts.SettingsSMTPHost,
+		consts.SettingsSMTPPort,
+		consts.SettingsSMTPUser,
+		consts.SettingsSMTPPassword,
+		consts.SettingsSMTPFrom,
+		consts.SettingsSiteURL,
 	)
 	data["SiteNameValue"] = firstNonEmptyAdmin(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault)
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
@@ -427,6 +510,13 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
 	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
+	data["RegistrationOpenValue"] = settings[consts.SettingsRegistrationOpen] == "true"
+	data["SMTPHostValue"] = settings[consts.SettingsSMTPHost]
+	data["SMTPPortValue"] = settings[consts.SettingsSMTPPort]
+	data["SMTPUserValue"] = settings[consts.SettingsSMTPUser]
+	data["SMTPPasswordValue"] = settings[consts.SettingsSMTPPassword]
+	data["SMTPFromValue"] = settings[consts.SettingsSMTPFrom]
+	data["SiteURLValue"] = settings[consts.SettingsSiteURL]
 	if strings.TrimSpace(settings[consts.SettingsSessionSecret]) != "" {
 		data["SessionSecretConfigured"] = true
 	}
@@ -559,6 +649,49 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	if err := h.st.SetSetting(consts.SettingsSayingPageID, strconv.Itoa(sayingPageID)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	registrationOpen := c.PostForm("registration_open") == "on"
+	if registrationOpen {
+		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "true"); err != nil {
+			h.serverError(c, err)
+			return
+		}
+	} else {
+		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
+			h.serverError(c, err)
+			return
+		}
+	}
+	// SMTP 设置
+	smtpHost := strings.TrimSpace(c.PostForm("smtp_host"))
+	smtpPort := strings.TrimSpace(c.PostForm("smtp_port"))
+	smtpUser := strings.TrimSpace(c.PostForm("smtp_user"))
+	smtpPassword := c.PostForm("smtp_password")
+	smtpFrom := strings.TrimSpace(c.PostForm("smtp_from"))
+	siteURL := strings.TrimSpace(c.PostForm("site_url"))
+	if err := h.st.SetSetting(consts.SettingsSMTPHost, smtpHost); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsSMTPPort, smtpPort); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsSMTPUser, smtpUser); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsSMTPPassword, smtpPassword); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsSMTPFrom, smtpFrom); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsSiteURL, siteURL); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1944,6 +2077,126 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 func (h *Admin) DeleteUser(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err := h.st.DeleteUser(uint(id)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/users")
+}
+
+// NewUserForm 新增用户表单(admin only)。
+func (h *Admin) NewUserForm(c *gin.Context) {
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("新增用户"))
+	c.HTML(http.StatusOK, "admin_user_form.gohtml", data)
+}
+
+// CreateUser 创建新用户(admin only)。
+func (h *Admin) CreateUser(c *gin.Context) {
+	tr := i18n.Get(c)
+	username := strings.TrimSpace(c.PostForm("username"))
+	password := c.PostForm("password")
+	email := strings.TrimSpace(c.PostForm("email"))
+	displayName := strings.TrimSpace(c.PostForm("display_name"))
+	role := c.PostForm("role")
+
+	if username == "" || password == "" || email == "" {
+		data := h.base(c, tr.T("新增用户"))
+		data["Error"] = tr.T("用户名、密码和邮箱不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+		return
+	}
+	switch role {
+	case model.RoleAdmin, model.RoleAuthor, model.RoleSubscriber:
+	default:
+		role = model.RoleSubscriber
+	}
+
+	exists, err := h.st.UserExistsByUsername(username, 0)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		data := h.base(c, tr.T("新增用户"))
+		data["Error"] = tr.T("用户名已被占用。")
+		c.HTML(http.StatusConflict, "admin_user_form.gohtml", data)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if displayName == "" {
+		displayName = username
+	}
+	if err := h.st.CreateUser(username, displayName, email, string(hash), role); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/admin/users")
+}
+
+// EditUserForm 编辑用户表单(admin only)。
+func (h *Admin) EditUserForm(c *gin.Context) {
+	tr := i18n.Get(c)
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	u, err := h.st.GetUserByID(uint(id))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	data := h.base(c, tr.T("编辑用户"))
+	data["EditUser"] = u
+	c.HTML(http.StatusOK, "admin_user_form.gohtml", data)
+}
+
+// UpdateUser 更新用户信息(admin only, 不含密码)。
+func (h *Admin) UpdateUser(c *gin.Context) {
+	tr := i18n.Get(c)
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	username := strings.TrimSpace(c.PostForm("username"))
+	email := strings.TrimSpace(c.PostForm("email"))
+	displayName := strings.TrimSpace(c.PostForm("display_name"))
+	role := c.PostForm("role")
+
+	if username == "" || email == "" {
+		u, _ := h.st.GetUserByID(uint(id))
+		data := h.base(c, tr.T("编辑用户"))
+		data["EditUser"] = u
+		data["Error"] = tr.T("用户名和邮箱不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+		return
+	}
+	switch role {
+	case model.RoleAdmin, model.RoleAuthor, model.RoleSubscriber:
+	default:
+		role = model.RoleSubscriber
+	}
+
+	exists, err := h.st.UserExistsByUsername(username, uint(id))
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		u, _ := h.st.GetUserByID(uint(id))
+		data := h.base(c, tr.T("编辑用户"))
+		data["EditUser"] = u
+		data["Error"] = tr.T("用户名已被占用。")
+		c.HTML(http.StatusConflict, "admin_user_form.gohtml", data)
+		return
+	}
+
+	if displayName == "" {
+		displayName = username
+	}
+	if err := h.st.UpdateUserProfile(uint(id), username, displayName, email); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.UpdateUserRole(uint(id), role); err != nil {
 		h.serverError(c, err)
 		return
 	}

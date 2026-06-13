@@ -16,10 +16,12 @@ import (
 
 // Options 是导入选项。
 type Options struct {
-	// TargetUserID 指定导入后的文章/页面归属用户。
+	// TargetUserID 指定导入后的文章/页面归属用户(默认,未在 AuthorMapping 中映射的作者使用此值)。
 	TargetUserID uint
 	// IncludeDrafts 为 false 时跳过非 publish 内容。
 	IncludeDrafts bool
+	// AuthorMapping 将 XML 中的 dc:creator 映射到系统用户 ID。未映射的作者使用 TargetUserID。
+	AuthorMapping map[string]uint
 }
 
 // Stats 是导入结果统计。
@@ -39,6 +41,25 @@ func ImportReader(db *gorm.DB, r io.Reader, opts Options) (*Stats, error) {
 		return nil, err
 	}
 	return ImportDocument(db, doc, opts)
+}
+
+// PreviewAuthors 从 XML reader 中提取所有 dc:creator 值(去重)。
+func PreviewAuthors(r io.Reader) ([]string, error) {
+	doc, err := wxr.Parse(r)
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	var authors []string
+	for _, it := range doc.Items {
+		c := strings.TrimSpace(it.Creator)
+		if c == "" || seen[c] {
+			continue
+		}
+		seen[c] = true
+		authors = append(authors, c)
+	}
+	return authors, nil
 }
 
 // ImportDocument 把解析后的 WXR 文档 upsert 到数据库。
@@ -128,7 +149,12 @@ func importItems(db *gorm.DB, doc *wxr.Document, opts Options, s *Stats) error {
 		if it.Status != "publish" && !opts.IncludeDrafts {
 			continue
 		}
-		if err := importOneItem(db, it, opts.TargetUserID, s); err != nil {
+		// 根据作者映射确定归属用户
+		authorID := opts.TargetUserID
+		if mapped, ok := opts.AuthorMapping[it.Creator]; ok {
+			authorID = mapped
+		}
+		if err := importOneItem(db, it, authorID, s); err != nil {
 			return errors.Wrapf(err, "import item id=%d", it.PostID)
 		}
 	}
