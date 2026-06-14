@@ -66,18 +66,18 @@
     <div class="import-result">
       <h4>{{.t.T "最近一次导入结果"}}</h4>
       <p class="tip">{{.t.T "文件：%s" .ImportedFileName}}</p>
-	  <div class="table-scroll table-scroll-compact">
-	    <table class="data-table">
-	      <tbody>
-	        <tr><th>{{.t.T "文章"}}</th><td>{{.ImportStats.Posts}}</td></tr>
-	        <tr><th>{{.t.T "页面"}}</th><td>{{.ImportStats.Pages}}</td></tr>
-	        <tr><th>{{.t.T "评论"}}</th><td>{{.ImportStats.Comments}}</td></tr>
-	        <tr><th>{{.t.T "分类目录"}}</th><td>{{.ImportStats.Categories}}</td></tr>
-	        <tr><th>{{.t.T "标签"}}</th><td>{{.ImportStats.Tags}}</td></tr>
-	        <tr><th>{{.t.T "设置"}}</th><td>{{.ImportStats.Settings}}</td></tr>
-	      </tbody>
-	    </table>
-	  </div>
+      <div class="table-scroll table-scroll-compact import-stats-wrap">
+        <table class="data-table import-stats-table">
+          <tbody>
+            <tr><th>{{.t.T "文章"}}</th><td>{{.ImportStats.Posts}}</td></tr>
+            <tr><th>{{.t.T "页面"}}</th><td>{{.ImportStats.Pages}}</td></tr>
+            <tr><th>{{.t.T "评论"}}</th><td>{{.ImportStats.Comments}}</td></tr>
+            <tr><th>{{.t.T "分类目录"}}</th><td>{{.ImportStats.Categories}}</td></tr>
+            <tr><th>{{.t.T "标签"}}</th><td>{{.ImportStats.Tags}}</td></tr>
+            <tr><th>{{.t.T "设置"}}</th><td>{{.ImportStats.Settings}}</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     {{end}}
   </section>

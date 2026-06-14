@@ -3,6 +3,7 @@ package importer
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
@@ -98,6 +99,14 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 	if p.Views != 42 {
 		t.Fatalf("views = %d, want 42", p.Views)
 	}
+	wantPublishedAt := time.Date(2024, 1, 2, 3, 4, 5, 0, time.Local)
+	if !p.PublishedAt.Equal(wantPublishedAt) {
+		t.Fatalf("published_at = %s, want %s", p.PublishedAt, wantPublishedAt)
+	}
+	wantModifiedAt := time.Date(2024, 1, 3, 3, 4, 5, 0, time.Local)
+	if !p.ModifiedAt.Equal(wantModifiedAt) {
+		t.Fatalf("modified_at = %s, want %s", p.ModifiedAt, wantModifiedAt)
+	}
 	if len(p.Categories) != 1 || p.Categories[0].Slug != "go" {
 		t.Fatalf("categories = %+v, want slug go", p.Categories)
 	}
@@ -115,12 +124,79 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 	if comments[0].UserID == nil || *comments[0].UserID != 7 {
 		t.Fatalf("comment user_id = %v, want 7", comments[0].UserID)
 	}
+	wantCommentCreatedAt := time.Date(2024, 1, 4, 3, 4, 5, 0, time.Local)
+	if !comments[0].CreatedAt.Equal(wantCommentCreatedAt) {
+		t.Fatalf("comment created_at = %s, want %s", comments[0].CreatedAt, wantCommentCreatedAt)
+	}
 	setting, err := st.GetSetting("site_name")
 	if err != nil {
 		t.Fatalf("get setting: %v", err)
 	}
 	if setting != "测试站" {
 		t.Fatalf("site_name = %q, want 测试站", setting)
+	}
+}
+
+func TestImportReaderUsesGMTDatesWhenLocalDatesAreMissing(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	if err := db.Create(&model.User{ID: 7, Username: "admin", DisplayName: "管理员"}).Error; err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	xml := `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/">
+  <channel>
+    <item>
+      <title>GMT 时间文章</title>
+      <pubDate>Tue, 02 Jan 2024 03:04:05 +0000</pubDate>
+      <dc:creator>someone</dc:creator>
+      <content:encoded><![CDATA[<p>Hello</p>]]></content:encoded>
+      <wp:post_id>321</wp:post_id>
+      <wp:post_date>0000-00-00 00:00:00</wp:post_date>
+      <wp:post_date_gmt>2024-01-02 03:04:05</wp:post_date_gmt>
+      <wp:post_modified>0000-00-00 00:00:00</wp:post_modified>
+      <wp:post_modified_gmt>2024-01-03 03:04:05</wp:post_modified_gmt>
+      <wp:status>publish</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <wp:comment>
+        <wp:comment_id>901</wp:comment_id>
+        <wp:comment_author>Alice</wp:comment_author>
+        <wp:comment_date>0000-00-00 00:00:00</wp:comment_date>
+        <wp:comment_date_gmt>2024-01-04 03:04:05</wp:comment_date_gmt>
+        <wp:comment_content><![CDATA[GMT 评论]]></wp:comment_content>
+        <wp:comment_approved>1</wp:comment_approved>
+      </wp:comment>
+    </item>
+  </channel>
+</rss>`
+	if _, err := ImportReader(db, strings.NewReader(xml), Options{TargetUserID: 7, IncludeDrafts: true}); err != nil {
+		t.Fatalf("import xml: %v", err)
+	}
+	p, err := st.AdminGetPost(321)
+	if err != nil {
+		t.Fatalf("load imported post: %v", err)
+	}
+	wantPublishedAt := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
+	if !p.PublishedAt.Equal(wantPublishedAt) {
+		t.Fatalf("published_at = %s, want %s", p.PublishedAt, wantPublishedAt)
+	}
+	wantModifiedAt := time.Date(2024, 1, 3, 3, 4, 5, 0, time.UTC)
+	if !p.ModifiedAt.Equal(wantModifiedAt) {
+		t.Fatalf("modified_at = %s, want %s", p.ModifiedAt, wantModifiedAt)
+	}
+	comments, err := st.ApprovedComments(321)
+	if err != nil {
+		t.Fatalf("load comments: %v", err)
+	}
+	if len(comments) != 1 {
+		t.Fatalf("comments = %+v, want one", comments)
+	}
+	wantCommentCreatedAt := time.Date(2024, 1, 4, 3, 4, 5, 0, time.UTC)
+	if !comments[0].CreatedAt.Equal(wantCommentCreatedAt) {
+		t.Fatalf("comment created_at = %s, want %s", comments[0].CreatedAt, wantCommentCreatedAt)
 	}
 }
 

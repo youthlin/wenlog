@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -163,6 +164,7 @@ type xmlComment struct {
 	URL      string `xml:"http://wordpress.org/export/1.2/ comment_author_url"`
 	IP       string `xml:"http://wordpress.org/export/1.2/ comment_author_IP"`
 	Date     string `xml:"http://wordpress.org/export/1.2/ comment_date"`
+	DateGMT  string `xml:"http://wordpress.org/export/1.2/ comment_date_gmt"`
 	Content  string `xml:"http://wordpress.org/export/1.2/ comment_content"`
 	Approved string `xml:"http://wordpress.org/export/1.2/ comment_approved"`
 	Type     string `xml:"http://wordpress.org/export/1.2/ comment_type"`
@@ -172,12 +174,15 @@ type xmlComment struct {
 type xmlItem struct {
 	Title         string       `xml:"title"`
 	Link          string       `xml:"link"`
+	PubDate       string       `xml:"pubDate"`
 	Creator       string       `xml:"http://purl.org/dc/elements/1.1/ creator"`
 	Content       string       `xml:"http://purl.org/rss/1.0/modules/content/ encoded"`
 	Excerpt       string       `xml:"http://wordpress.org/export/1.2/excerpt/ encoded"`
 	PostID        int          `xml:"http://wordpress.org/export/1.2/ post_id"`
 	PostDate      string       `xml:"http://wordpress.org/export/1.2/ post_date"`
+	PostDateGMT   string       `xml:"http://wordpress.org/export/1.2/ post_date_gmt"`
 	PostModified  string       `xml:"http://wordpress.org/export/1.2/ post_modified"`
+	ModifiedGMT   string       `xml:"http://wordpress.org/export/1.2/ post_modified_gmt"`
 	PostName      string       `xml:"http://wordpress.org/export/1.2/ post_name"`
 	Status        string       `xml:"http://wordpress.org/export/1.2/ status"`
 	PostType      string       `xml:"http://wordpress.org/export/1.2/ post_type"`
@@ -216,13 +221,24 @@ func Parse(r io.Reader) (*Document, error) {
 		doc.Settings = append(doc.Settings, Setting{Key: s.Key, Value: s.Value})
 	}
 	for _, it := range rss.Channel.Items {
+		postDate := parseWPTime(it.PostDate)
+		if postDate.IsZero() {
+			postDate = parseWPGMTTime(it.PostDateGMT)
+		}
+		if postDate.IsZero() {
+			postDate = parseRSSPubDate(it.PubDate)
+		}
+		postModified := parseWPTime(it.PostModified)
+		if postModified.IsZero() {
+			postModified = parseWPGMTTime(it.ModifiedGMT)
+		}
 		item := Item{
 			Title: it.Title, Link: it.Link, Creator: it.Creator, PostID: it.PostID,
 			PostName: it.PostName, PostType: it.PostType, Status: it.Status,
 			Content: it.Content, Excerpt: it.Excerpt, MenuOrder: it.MenuOrder,
 			CommentStatus: it.CommentStatus,
-			PostDate:      parseWPTime(it.PostDate),
-			PostModified:  parseWPTime(it.PostModified),
+			PostDate:      postDate,
+			PostModified:  postModified,
 		}
 		for _, c := range it.Cats {
 			item.Terms = append(item.Terms, TermRef{Domain: c.Domain, Nicename: c.Nicename, Name: c.Name})
@@ -231,9 +247,13 @@ func Parse(r io.Reader) (*Document, error) {
 			item.Metas = append(item.Metas, Meta{Key: m.Key, Value: m.Value})
 		}
 		for _, cm := range it.Comments {
+			commentDate := parseWPTime(cm.Date)
+			if commentDate.IsZero() {
+				commentDate = parseWPGMTTime(cm.DateGMT)
+			}
 			item.Comments = append(item.Comments, Comment{
 				ID: cm.ID, UserID: cm.UserID, Author: cm.Author, Email: cm.Email, URL: cm.URL,
-				IP: cm.IP, Date: parseWPTime(cm.Date), Content: cm.Content,
+				IP: cm.IP, Date: commentDate, Content: cm.Content,
 				Approved: cm.Approved, Type: cm.Type, Parent: cm.Parent,
 			})
 		}
@@ -254,7 +274,8 @@ func ParseFile(path string) (*Document, error) {
 
 // parseWPTime 解析 WP 时间字符串,失败返回零值。
 func parseWPTime(s string) time.Time {
-	if s == "" {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "0000-00-00 00:00:00" {
 		return time.Time{}
 	}
 	t, err := time.ParseInLocation(wpTimeLayout, s, time.Local)
@@ -262,4 +283,29 @@ func parseWPTime(s string) time.Time {
 		return time.Time{}
 	}
 	return t
+}
+
+func parseWPGMTTime(s string) time.Time {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "0000-00-00 00:00:00" {
+		return time.Time{}
+	}
+	t, err := time.ParseInLocation(wpTimeLayout, s, time.UTC)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
+}
+
+func parseRSSPubDate(s string) time.Time {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return time.Time{}
+	}
+	for _, layout := range []string{time.RFC1123Z, time.RFC1123, time.RFC1123Z, time.RFC822Z, time.RFC822, time.RFC3339} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
 }

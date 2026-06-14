@@ -1032,6 +1032,10 @@ a { color: var(--accent); }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
 .settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
 .import-result { margin-top: 16px; }
+.import-stats-wrap { overflow: visible; }
+.import-stats-table { table-layout: fixed; }
+.import-stats-table th { width: 45%; }
+.import-stats-table td { text-align: right; font-variant-numeric: tabular-nums; }
 .debug-result { margin-top: 20px; }
 .debug-json { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; overflow: auto; max-height: 60vh; }
 
@@ -1115,6 +1119,7 @@ a { color: var(--accent); }
   .admin-main { padding-top: 0; }
   .form-row { flex-direction: column; gap: 0; }
   .table-scroll .data-table { min-width: 720px; }
+  .table-scroll .import-stats-table { min-width: 0; }
   .table-scroll .terms-table { min-width: 680px; }
   .table-scroll .tags-table { min-width: 620px; }
   .table-scroll .comments-table { min-width: 860px; }
