@@ -67,6 +67,13 @@ const maxImportXMLSize = 50 << 20
 const defaultPublicPageSize = 10
 const defaultFeedSize = 20
 
+const (
+	importXMLDataSessionKey       = "import_xml_data"
+	importXMLPathSessionKey       = "import_xml_path"
+	importDefaultUserIDSessionKey = "import_default_user_id"
+	importFileNameSessionKey      = "import_file_name"
+)
+
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(h.st)
 	v, _ := h.st.GetSetting(consts.SettingsSiteName)
@@ -409,12 +416,8 @@ func (h *Admin) ImportXML(c *gin.Context) {
 		return
 	}
 
-	// 将 XML 内容暂存到 session(用于第二步导入)
-	s := sessions.Default(c)
-	s.Set("import_xml_data", xmlBytes)
-	s.Set("import_default_user_id", form.UserID)
-	s.Set("import_file_name", fh.Filename)
-	if err := s.Save(); err != nil {
+	// 将 XML 内容暂存到临时文件,session 中只保存路径,避免大文件撑爆 Cookie session。
+	if err := saveImportXMLPreview(c, xmlBytes, form.UserID, fh.Filename); err != nil {
 		data["Error"] = tr.T("保存会话失败。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
@@ -431,31 +434,25 @@ func (h *Admin) importXMLConfirm(c *gin.Context, data gin.H) {
 	tr := i18n.Get(c)
 	s := sessions.Default(c)
 
-	xmlBytes, ok := s.Get("import_xml_data").([]byte)
+	xmlBytes, defaultUserID, fileName, xmlPath, ok := importXMLPreviewFromSession(s)
 	if !ok || len(xmlBytes) == 0 {
+		clearImportXMLPreview(s, xmlPath)
 		data["Error"] = tr.T("会话已过期，请重新上传 XML 文件。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
-	defaultUserID, _ := s.Get("import_default_user_id").(uint)
-	fileName, _ := s.Get("import_file_name").(string)
 
 	// 清除 session 中的暂存数据
-	s.Delete("import_xml_data")
-	s.Delete("import_default_user_id")
-	s.Delete("import_file_name")
-	_ = s.Save()
+	clearImportXMLPreview(s, xmlPath)
 
 	// 解析作者映射: author_<name> = user_id
 	authorMapping := make(map[string]uint)
-	for _, key := range c.Request.PostForm {
-		for _, val := range key {
-			if strings.HasPrefix(val, "author_") {
-				authorName := strings.TrimPrefix(val, "author_")
-				userIDStr := c.PostForm(val)
-				if uid, err := strconv.ParseUint(userIDStr, 10, 64); err == nil && uid > 0 {
-					authorMapping[authorName] = uint(uid)
-				}
+	for key := range c.Request.PostForm {
+		if strings.HasPrefix(key, "author_") {
+			authorName := strings.TrimPrefix(key, "author_")
+			userIDStr := c.PostForm(key)
+			if uid, err := strconv.ParseUint(userIDStr, 10, 64); err == nil && uid > 0 {
+				authorMapping[authorName] = uint(uid)
 			}
 		}
 	}
@@ -478,6 +475,61 @@ func (h *Admin) importXMLConfirm(c *gin.Context, data gin.H) {
 	data["ImportStats"] = stats
 	data["ImportedFileName"] = fileName
 	c.HTML(http.StatusOK, "admin_import.gohtml", data)
+}
+
+func saveImportXMLPreview(c *gin.Context, xmlBytes []byte, defaultUserID uint, fileName string) error {
+	s := sessions.Default(c)
+	if oldPath, _ := s.Get(importXMLPathSessionKey).(string); oldPath != "" {
+		_ = os.Remove(oldPath)
+	}
+	tmp, err := os.CreateTemp("", "blog-import-*.xml")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.Write(xmlBytes); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	s.Delete(importXMLDataSessionKey)
+	s.Set(importXMLPathSessionKey, tmpPath)
+	s.Set(importDefaultUserIDSessionKey, defaultUserID)
+	s.Set(importFileNameSessionKey, fileName)
+	if err := s.Save(); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	return nil
+}
+
+func importXMLPreviewFromSession(s sessions.Session) ([]byte, uint, string, string, bool) {
+	defaultUserID, _ := s.Get(importDefaultUserIDSessionKey).(uint)
+	fileName, _ := s.Get(importFileNameSessionKey).(string)
+	if xmlPath, _ := s.Get(importXMLPathSessionKey).(string); strings.TrimSpace(xmlPath) != "" {
+		xmlBytes, err := os.ReadFile(xmlPath)
+		return xmlBytes, defaultUserID, fileName, xmlPath, err == nil && len(xmlBytes) > 0
+	}
+	// 兼容旧版本已写入 session 的预览数据,下一步确认时会被清理掉。
+	if xmlBytes, ok := s.Get(importXMLDataSessionKey).([]byte); ok {
+		return xmlBytes, defaultUserID, fileName, "", len(xmlBytes) > 0
+	}
+	return nil, defaultUserID, fileName, "", false
+}
+
+func clearImportXMLPreview(s sessions.Session, xmlPath string) {
+	if strings.TrimSpace(xmlPath) != "" {
+		_ = os.Remove(xmlPath)
+	}
+	s.Delete(importXMLDataSessionKey)
+	s.Delete(importXMLPathSessionKey)
+	s.Delete(importDefaultUserIDSessionKey)
+	s.Delete(importFileNameSessionKey)
+	_ = s.Save()
 }
 
 // ExportXML 导出可被当前后台重新导入的 XML。
