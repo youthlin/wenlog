@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-contrib/sessions"
@@ -738,7 +739,35 @@ func (h *Admin) ProfilePage(c *gin.Context) {
 	}
 	data := h.base(c, tr.T("个人资料"))
 	data["CurrentUser"] = u
+	data["CanEditUsername"] = canEditOwnUsername(u)
+	applyProfileMessage(c, data)
 	c.HTML(http.StatusOK, "admin_profile.gohtml", data)
+}
+
+func profileRedirectURL(message string) string {
+	if strings.TrimSpace(message) == "" {
+		return "/admin/profile"
+	}
+	v := url.Values{}
+	v.Set("message", message)
+	return "/admin/profile?" + v.Encode()
+}
+
+func applyProfileMessage(c *gin.Context, data gin.H) {
+	if c == nil {
+		return
+	}
+	tr := i18n.Get(c)
+	switch c.Query("message") {
+	case "profile-saved":
+		data["Notice"] = tr.T("个人资料已保存。")
+	case "email-verification-sent":
+		data["Notice"] = tr.T("个人资料已保存；邮箱变更验证邮件已发送，请检查新邮箱并完成验证。")
+	case "email-verified":
+		data["Notice"] = tr.T("邮箱已验证并更新。")
+	case "password-saved":
+		data["Notice"] = tr.T("密码已修改。")
+	}
 }
 
 func settingsRedirectURL(section, message string) string {
@@ -1100,6 +1129,14 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
+	addr, err := mail.ParseAddress(email)
+	if err != nil {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("邮箱格式不正确。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	email = strings.TrimSpace(addr.Address)
 	if canEditOwnUsername(u) {
 		exists, err := h.st.UserExistsByUsername(username, u.ID)
 		if err != nil {
@@ -1113,11 +1150,86 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 			return
 		}
 	}
+	if !sameEmail(email, u.Email) {
+		smtpCfg := smtpConfigFromStore(h.st)
+		if !smtpCfg.Configured() {
+			data := h.profileData(c, u)
+			data["Error"] = tr.T("修改邮箱需要先配置 SMTP 邮件设置，以便发送验证邮件。")
+			c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+			return
+		}
+		exists, err := h.st.UserExistsByEmail(email, u.ID)
+		if err != nil {
+			h.serverError(c, err)
+			return
+		}
+		if exists {
+			data := h.profileData(c, u)
+			data["Error"] = tr.T("邮箱已被注册。")
+			c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+			return
+		}
+		token, err := randomHexToken(32)
+		if err != nil {
+			h.serverError(c, err)
+			return
+		}
+		if err := h.st.SavePendingEmailChange(u.ID, email, token, time.Now().Add(24*time.Hour)); err != nil {
+			h.serverError(c, err)
+			return
+		}
+		siteURL := siteURLFromRequest(h.st, c)
+		verifyURL := strings.TrimRight(siteURL, "/") + "/admin/profile/email/verify?token=" + url.QueryEscape(token)
+		subject := tr.T("[%s] 邮箱变更验证", siteNameFromStore(h.st))
+		body := tr.T("您好 %s，\n\n请点击以下链接验证并更新你的邮箱（24 小时内有效）：\n\n%s\n\n如果你没有请求修改邮箱，请忽略此邮件。\n", displayName, verifyURL)
+		if err := smtpCfg.Send(email, subject, body); err != nil {
+			if h.log != nil {
+				h.log.Error("send profile email verification", "error", err, "to", email, "user_id", u.ID)
+			}
+			data := h.profileData(c, u)
+			data["Error"] = tr.T("邮箱验证邮件发送失败，请稍后重试或联系管理员。")
+			c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
+			return
+		}
+		if err := h.st.UpdateUserProfile(u.ID, username, displayName, u.Email); err != nil {
+			h.serverError(c, err)
+			return
+		}
+		c.Redirect(http.StatusSeeOther, profileRedirectURL("email-verification-sent"))
+		return
+	}
 	if err := h.st.UpdateUserProfile(u.ID, username, displayName, email); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/profile")
+	c.Redirect(http.StatusSeeOther, profileRedirectURL("profile-saved"))
+}
+
+// VerifyProfileEmail 完成个人资料邮箱变更验证。
+func (h *Admin) VerifyProfileEmail(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	token := strings.TrimSpace(c.Query("token"))
+	if token == "" {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("邮箱验证链接无效或已过期，请重新提交邮箱变更。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	updated, err := h.st.CompletePendingEmailChange(u.ID, token)
+	if err != nil {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("邮箱验证链接无效或已过期，请重新提交邮箱变更。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	data := h.profileData(c, updated)
+	data["Notice"] = tr.T("邮箱已验证并更新。")
+	c.HTML(http.StatusOK, "admin_profile.gohtml", data)
 }
 
 // SavePasswordSettings 修改当前用户密码。
@@ -1152,7 +1264,7 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/profile")
+	c.Redirect(http.StatusSeeOther, profileRedirectURL("password-saved"))
 }
 
 // profileData 构建个人资料页数据。
@@ -2205,9 +2317,9 @@ func normalizeTermSlug(s string) string {
 	var b strings.Builder
 	for _, r := range s {
 		switch {
-		case r == ' ' || r == '\t':
+		case unicode.IsSpace(r):
 			b.WriteByte('-')
-		case r == '-' || r == '_' || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r > 127:
+		case r == '-' || r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r):
 			b.WriteRune(r)
 		}
 	}
@@ -2540,7 +2652,7 @@ func (h *Admin) ExportData(c *gin.Context) {
 	}
 }
 
-// DeleteAccountPage 注销账号页面(GET)。
+// DeleteAccountPage 删除账号页面(GET)。
 func (h *Admin) DeleteAccountPage(c *gin.Context) {
 	tr := i18n.Get(c)
 	u := h.currentUser(c)
@@ -2548,12 +2660,12 @@ func (h *Admin) DeleteAccountPage(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	data := h.base(c, tr.T("注销账号"))
+	data := h.base(c, tr.T("删除账号"))
 	data["CurrentUser"] = u
 	c.HTML(http.StatusOK, "admin_delete_account.gohtml", data)
 }
 
-// DeleteAccount 注销当前用户账号(POST)。
+// DeleteAccount 删除当前用户账号(POST)。
 func (h *Admin) DeleteAccount(c *gin.Context) {
 	tr := i18n.Get(c)
 	u := h.currentUser(c)
@@ -2563,12 +2675,12 @@ func (h *Admin) DeleteAccount(c *gin.Context) {
 	}
 	confirm := c.PostForm("confirm")
 	if confirm != "DELETE" {
-		h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("请输入 DELETE 确认注销。"))
+		h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("请输入 DELETE 确认删除。"))
 		return
 	}
 	if err := h.st.DeleteUser(u.ID); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
-			h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("不能注销唯一的管理员账号。请先创建或指定另一个管理员。"))
+			h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("不能删除唯一的管理员账号。请先创建或指定另一个管理员。"))
 			return
 		}
 		h.serverError(c, err)
@@ -2580,7 +2692,7 @@ func (h *Admin) DeleteAccount(c *gin.Context) {
 
 func (h *Admin) renderDeleteAccountError(c *gin.Context, u *model.User, status int, msg string) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("注销账号"))
+	data := h.base(c, tr.T("删除账号"))
 	data["CurrentUser"] = u
 	data["Error"] = msg
 	c.HTML(status, "admin_delete_account.gohtml", data)
@@ -2634,7 +2746,7 @@ func (h *Admin) DeleteUser(c *gin.Context) {
 	tr := i18n.Get(c)
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	if uint(id) == h.currentUserID(c) {
-		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能在用户管理中删除自己；如需注销请到个人注销账号页面。"))
+		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能在用户管理中删除自己；如需删除自己的账号，请到个人删除账号页面。"))
 		return
 	}
 	if err := h.st.DeleteUser(uint(id)); err != nil {

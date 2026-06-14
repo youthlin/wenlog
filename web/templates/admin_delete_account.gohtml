@@ -1,17 +1,17 @@
 {{define "admin_delete_account.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{.t.T "注销账号"}}</h1>
+<h1>{{.t.T "删除账号"}}</h1>
 {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
 <div class="settings-main">
   <section class="card settings-card">
-    <p class="warning">{{.t.T "注销后你的账号将被永久删除，评论将匿名化保留。此操作不可撤销。"}}</p>
+    <p class="warning">{{.t.T "删除后你的账号将被永久删除，评论将匿名化保留。此操作不可撤销。"}}</p>
     {{if and .CurrentUser (eq .CurrentUser.Role .RoleAdmin)}}
-    <p class="warn-banner">{{.t.T "如果这是唯一的管理员账号，系统会阻止注销。请先创建或指定另一个管理员。"}}</p>
+    <p class="warn-banner">{{.t.T "如果这是唯一的管理员账号，系统会阻止删除。请先创建或指定另一个管理员。"}}</p>
     {{end}}
     <form class="edit-form" method="post" action="/admin/delete-account">
       {{template "csrf_field" .}}
       <label>{{.t.T "请输入 DELETE 确认"}}<input type="text" name="confirm" required></label>
-      <p><button type="submit" class="btn link-danger">{{.t.T "确认注销"}}</button></p>
+      <p><button type="submit" class="btn link-danger">{{.t.T "确认删除"}}</button></p>
     </form>
   </section>
 </div>

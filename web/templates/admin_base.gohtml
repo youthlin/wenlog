@@ -53,7 +53,7 @@
               <a class="admin-nav-link{{if eq .CurrentAdminNav "profile"}} is-active{{end}}" href="/admin/profile"><span>{{.t.T "个人资料"}}</span></a>
               <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-comments"}} is-active{{end}}" href="/admin/my-comments"><span>{{.t.T "我的评论"}}</span></a>
               <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-export"}} is-active{{end}}" href="/admin/export-data"><span>{{.t.T "导出数据"}}</span></a>
-              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-delete"}} is-active{{end}}" href="/admin/delete-account"><span>{{.t.T "注销账号"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-delete"}} is-active{{end}}" href="/admin/delete-account"><span>{{.t.T "删除账号"}}</span></a>
             </div>
           </div>
           {{if or (eq .CurrentUserRole "admin") (eq .CurrentUserRole "author")}}
@@ -78,6 +78,8 @@
                 <span>{{.t.T "常规"}}</span></a>
               <a class="admin-nav-link{{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "developer")}} is-active{{end}}" href="/admin/settings/developer">
                 <span>{{.t.T "开发"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "users"}} is-active{{end}}" href="/admin/users">
+                <span>{{.t.T "用户"}}</span></a>
             </div>
           </div>
           <div class="nav-group">
@@ -85,12 +87,6 @@
             <div class="nav-group-links">
               <a class="admin-nav-link {{if eq .CurrentAdminNav "uploads"}}is-active{{end}}" href="/admin/uploads"><span>{{.t.T "附件管理"}}</span></a>
               <a class="admin-nav-link {{if eq .CurrentAdminNav "import"}}is-active{{end}}" href="/admin/import"><span>{{.t.T "导入导出"}}</span></a>
-            </div>
-          </div>
-          <div class="nav-group">
-            <span class="nav-group-title">{{.t.T "管理"}}</span>
-            <div class="nav-group-links">
-              <a class="admin-nav-link {{if eq .CurrentAdminNav "users"}}is-active{{end}}" href="/admin/users"><span>{{.t.T "用户管理"}}</span></a>
             </div>
           </div>
           {{end}}

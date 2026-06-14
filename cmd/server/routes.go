@@ -59,6 +59,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	profileGroup.Use(middleware.AuthRequired(), middleware.CSRFMiddleware())
 	profileGroup.GET("/profile", adm.ProfilePage)
 	profileGroup.POST("/profile", adm.SaveProfileSettings)
+	profileGroup.GET("/profile/email/verify", adm.VerifyProfileEmail)
 	profileGroup.POST("/profile/password", adm.SavePasswordSettings)
 	profileGroup.GET("/my-comments", adm.ListComments)
 	profileGroup.POST("/my-comments/:id/delete", adm.DeleteMyComment)

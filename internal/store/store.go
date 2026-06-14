@@ -45,6 +45,7 @@ func (s *Store) migrate() error {
 	err := s.db.AutoMigrate(
 		&model.User{},
 		&model.PendingRegistration{},
+		&model.PendingEmailChange{},
 		&model.Post{},
 		&model.Category{},
 		&model.Tag{},

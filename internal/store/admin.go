@@ -18,6 +18,9 @@ var ErrLastAdmin = errors.New("at least one admin user is required")
 // ErrPendingRegistrationNotFound 表示注册验证链接不存在或已过期。
 var ErrPendingRegistrationNotFound = errors.New("pending registration not found")
 
+// ErrPendingEmailChangeNotFound 表示邮箱变更验证链接不存在或已过期。
+var ErrPendingEmailChangeNotFound = errors.New("pending email change not found")
+
 func termQueryLike(keyword string) string {
 	return "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
 }
@@ -156,6 +159,50 @@ func (s *Store) CompletePendingRegistration(token, passwordHash string) (*model.
 		return tx.Delete(&model.PendingRegistration{}, pr.ID).Error
 	})
 	return &out, errors.Wrap(err, "complete pending registration")
+}
+
+// SavePendingEmailChange 保存待验证的新邮箱。同用户或同邮箱的旧请求会被新请求替换。
+func (s *Store) SavePendingEmailChange(userID uint, email, token string, expiry time.Time) error {
+	return errors.Wrap(s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ? OR email = ?", userID, email).Delete(&model.PendingEmailChange{}).Error; err != nil {
+			return err
+		}
+		return tx.Create(&model.PendingEmailChange{
+			UserID:      userID,
+			Email:       email,
+			Token:       token,
+			TokenExpiry: expiry,
+		}).Error
+	}), "save pending email change")
+}
+
+// CompletePendingEmailChange 验证 token 后更新用户邮箱。
+func (s *Store) CompletePendingEmailChange(userID uint, token string) (*model.User, error) {
+	var out model.User
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var pending model.PendingEmailChange
+		if err := tx.Where("user_id = ? AND token = ? AND token_expiry > ?", userID, token, time.Now()).First(&pending).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrPendingEmailChangeNotFound
+			}
+			return err
+		}
+		var count int64
+		if err := tx.Model(&model.User{}).Where("email = ? AND id <> ?", pending.Email, userID).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return ErrPendingEmailChangeNotFound
+		}
+		if err := tx.Model(&model.User{}).Where("id = ?", userID).Update("email", pending.Email).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&model.PendingEmailChange{}, pending.ID).Error; err != nil {
+			return err
+		}
+		return tx.First(&out, userID).Error
+	})
+	return &out, errors.Wrap(err, "complete pending email change")
 }
 
 // ListUsers 返回全部用户(按显示名/用户名排序),供后台导入等场景选择。

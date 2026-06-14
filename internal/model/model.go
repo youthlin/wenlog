@@ -54,6 +54,17 @@ type PendingRegistration struct {
 	UpdatedAt   time.Time
 }
 
+// PendingEmailChange 保存待验证的新邮箱。用户点击验证链接后才会真正更新 User.Email。
+type PendingEmailChange struct {
+	ID          uint   `gorm:"primaryKey"`
+	UserID      uint   `gorm:"index"`
+	Email       string `gorm:"size:128;index"`
+	Token       string `gorm:"uniqueIndex;size:128"`
+	TokenExpiry time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 // Post 既表示文章(post)也表示页面(page),由 PostType 区分。
 type Post struct {
 	// ID 沿用 WordPress 原始 post_id,是永久链接的核心。

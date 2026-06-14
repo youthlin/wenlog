@@ -148,6 +148,40 @@ func TestPendingRegistrationReplacesDuplicateRequest(t *testing.T) {
 	}
 }
 
+func TestPendingEmailChangeUpdatesUserAfterVerification(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	if err := db.Create(&model.User{ID: 1, Username: "user", DisplayName: "用户", Email: "old@example.com"}).Error; err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	if err := st.SavePendingEmailChange(1, "new@example.com", "email-token", time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("save pending email change: %v", err)
+	}
+	u, err := st.CompletePendingEmailChange(1, "email-token")
+	if err != nil {
+		t.Fatalf("complete pending email change: %v", err)
+	}
+	if u.Email != "new@example.com" {
+		t.Fatalf("email = %q, want new@example.com", u.Email)
+	}
+	if _, err := st.CompletePendingEmailChange(1, "email-token"); !errors.Is(err, ErrPendingEmailChangeNotFound) {
+		t.Fatalf("repeat complete error = %v, want ErrPendingEmailChangeNotFound", err)
+	}
+}
+
+func TestPendingEmailChangeReplacesDuplicateRequest(t *testing.T) {
+	st := newTestStore(t)
+	if err := st.SavePendingEmailChange(1, "new@example.com", "old-email-token", time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("save old pending email change: %v", err)
+	}
+	if err := st.SavePendingEmailChange(1, "new@example.com", "new-email-token", time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("save new pending email change: %v", err)
+	}
+	if _, err := st.CompletePendingEmailChange(1, "old-email-token"); !errors.Is(err, ErrPendingEmailChangeNotFound) {
+		t.Fatalf("old token error = %v, want ErrPendingEmailChangeNotFound", err)
+	}
+}
+
 func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()

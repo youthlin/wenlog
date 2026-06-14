@@ -90,9 +90,10 @@ func TestReleaseDirFromFS(t *testing.T) {
 
 func TestNormalizeTermSlug(t *testing.T) {
 	tests := map[string]string{
-		" Go 教程 ":       "go-教程",
-		"Hello, World!": "hello-world",
-		"中文 标签":         "中文-标签",
+		" Go 教程 ":              "go-教程",
+		"Hello, World!":        "hello-world",
+		"中文 标签":                "中文-标签",
+		"《细说\"Hello, World\"》": "细说hello-world",
 	}
 	for in, want := range tests {
 		if got := normalizeTermSlug(in); got != want {
