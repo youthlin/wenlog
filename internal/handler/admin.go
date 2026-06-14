@@ -643,6 +643,12 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	if c != nil && c.Query("message") == "i18n-embedded" {
 		data["Notice"] = tr.T("已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。")
 	}
+	if c != nil && c.Query("message") == "smtp-saved" {
+		data["Notice"] = tr.T("SMTP 设置已保存。")
+	}
+	if c != nil && c.Query("message") == "smtp-test-sent" {
+		data["Notice"] = tr.T("测试邮件已发送，请检查收件箱。")
+	}
 	if u := h.currentUser(c); u != nil {
 		data["CurrentUser"] = u
 	}
@@ -760,39 +766,91 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 			return
 		}
 	}
-	// SMTP 设置
+	syncPostPermalink(h.st)
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", ""))
+}
+
+// SaveSMTPSettings 只保存 SMTP 邮件设置,避免触发站点设置必填项校验。
+func (h *Admin) SaveSMTPSettings(c *gin.Context) {
+	if err := h.saveSMTPSettings(c); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "smtp-saved"))
+}
+
+func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 	smtpHost := strings.TrimSpace(c.PostForm("smtp_host"))
 	smtpPort := strings.TrimSpace(c.PostForm("smtp_port"))
 	smtpUser := strings.TrimSpace(c.PostForm("smtp_user"))
 	smtpPassword := c.PostForm("smtp_password")
+	if strings.TrimSpace(smtpPassword) == "" {
+		settings, _ := h.st.GetSettings(consts.SettingsSMTPPassword)
+		smtpPassword = settings[consts.SettingsSMTPPassword]
+	}
 	smtpFrom := strings.TrimSpace(c.PostForm("smtp_from"))
 	siteURL := strings.TrimSpace(c.PostForm("site_url"))
-	if err := h.st.SetSetting(consts.SettingsSMTPHost, smtpHost); err != nil {
+	settings := map[string]string{
+		consts.SettingsSMTPHost:     smtpHost,
+		consts.SettingsSMTPPort:     smtpPort,
+		consts.SettingsSMTPUser:     smtpUser,
+		consts.SettingsSMTPPassword: smtpPassword,
+		consts.SettingsSMTPFrom:     smtpFrom,
+		consts.SettingsSiteURL:      siteURL,
+	}
+	for key, value := range settings {
+		if err := h.st.SetSetting(key, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// TestSMTPSettings 保存当前表单中的 SMTP 配置后发送测试邮件。
+func (h *Admin) TestSMTPSettings(c *gin.Context) {
+	tr := i18n.Get(c)
+	if err := h.saveSMTPSettings(c); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsSMTPPort, smtpPort); err != nil {
-		h.serverError(c, err)
+	to := strings.TrimSpace(c.PostForm("test_email"))
+	if to == "" {
+		if u := h.currentUser(c); u != nil {
+			to = strings.TrimSpace(u.Email)
+		}
+	}
+	if to == "" {
+		data := h.settingsDataForTab(c, "general")
+		data["Error"] = tr.T("测试收件人不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsSMTPUser, smtpUser); err != nil {
-		h.serverError(c, err)
+	if _, err := mail.ParseAddress(to); err != nil {
+		data := h.settingsDataForTab(c, "general")
+		data["Error"] = tr.T("测试收件人邮箱格式不正确。")
+		data["SMTPTestEmailValue"] = to
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsSMTPPassword, smtpPassword); err != nil {
-		h.serverError(c, err)
+	smtpCfg := smtpConfigFromStore(h.st)
+	if !smtpCfg.Configured() {
+		data := h.settingsDataForTab(c, "general")
+		data["Error"] = tr.T("SMTP 未配置完整，请填写服务器、端口和发件人地址。")
+		data["SMTPTestEmailValue"] = to
+		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsSMTPFrom, smtpFrom); err != nil {
-		h.serverError(c, err)
+	siteName := siteNameFromStore(h.st)
+	subject := tr.T("[%s] SMTP 测试邮件", siteName)
+	body := tr.T("这是一封来自 %s 的 SMTP 测试邮件。\n\n如果你收到这封邮件，说明 SMTP 配置已生效。\n", siteName)
+	if err := smtpCfg.Send(to, subject, body); err != nil {
+		data := h.settingsDataForTab(c, "general")
+		data["Error"] = tr.T("测试邮件发送失败: %s", err.Error())
+		data["SMTPTestEmailValue"] = to
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsSiteURL, siteURL); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	syncPostPermalink(h.st)
-	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", ""))
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "smtp-test-sent"))
 }
 
 // SaveSessionSettings 修改 session secret。修改后所有登录用户都需要重新登录。

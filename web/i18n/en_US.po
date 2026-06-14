@@ -1184,6 +1184,53 @@ msgstr "Only administrators can change usernames."
 msgid "未设置显示名"
 msgstr "No display name set"
 
+#: internal/handler/admin.go
+msgid "SMTP 设置已保存。"
+msgstr "SMTP settings saved."
+
+#: internal/handler/admin.go
+msgid "测试邮件已发送，请检查收件箱。"
+msgstr "Test email sent. Please check your inbox."
+
+#: internal/handler/admin.go
+msgid "测试收件人不能为空。"
+msgstr "Test recipient cannot be empty."
+
+#: internal/handler/admin.go
+msgid "测试收件人邮箱格式不正确。"
+msgstr "Invalid test recipient email address."
+
+#: internal/handler/admin.go
+msgid "SMTP 未配置完整，请填写服务器、端口和发件人地址。"
+msgstr "SMTP is incomplete. Please fill in server, port, and sender address."
+
+#: internal/handler/admin.go
+#, c-format
+msgid "测试邮件发送失败: %s"
+msgstr "Failed to send test email: %s"
+
+#: internal/handler/admin.go
+#, c-format
+msgid "[%s] SMTP 测试邮件"
+msgstr "[%s] SMTP test email"
+
+#: internal/handler/admin.go
+#, c-format
+msgid "这是一封来自 %s 的 SMTP 测试邮件。\n\n如果你收到这封邮件，说明 SMTP 配置已生效。\n"
+msgstr "This is an SMTP test email from %s.\n\nIf you received this email, the SMTP configuration is working.\n"
+
+#: web/templates/admin_settings.gohtml
+msgid "测试收件人"
+msgstr "Test recipient"
+
+#: web/templates/admin_settings.gohtml
+msgid "测试前会先保存上方 SMTP 设置。"
+msgstr "The SMTP settings above will be saved before testing."
+
+#: web/templates/admin_settings.gohtml
+msgid "发送测试邮件"
+msgstr "Send test email"
+
 #: internal/handler/public.go:193
 #, c-format
 msgid "搜索:%s"

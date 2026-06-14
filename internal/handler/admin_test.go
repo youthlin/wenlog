@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/blog/internal/store"
 )
 
 func TestAllowDebugSQL(t *testing.T) {
@@ -209,3 +212,36 @@ func TestCommentReplyMailHelpers(t *testing.T) {
 }
 
 func nowForTest() time.Time { return time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC) }
+
+func TestSaveSMTPSettingsDoesNotRequireSiteFields(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	st, err := store.Open(t.TempDir() + "/test.db")
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	h := &Admin{st: st}
+
+	form := url.Values{}
+	form.Set("smtp_host", "smtp.example.com")
+	form.Set("smtp_port", "587")
+	form.Set("smtp_user", "user@example.com")
+	form.Set("smtp_password", "secret")
+	form.Set("smtp_from", "noreply@example.com")
+	form.Set("site_url", "https://example.com")
+	w := httptest.NewRecorder()
+	r := gin.New()
+	r.POST("/admin/settings/smtp", h.SaveSMTPSettings)
+	req := httptest.NewRequest(http.MethodPost, "/admin/settings/smtp", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusSeeOther {
+		t.Fatalf("SaveSMTPSettings status=%d, want %d", w.Code, http.StatusSeeOther)
+	}
+	settings, err := st.GetSettings(consts.SettingsSMTPHost, consts.SettingsSMTPPort, consts.SettingsSMTPFrom, consts.SettingsSiteURL)
+	if err != nil {
+		t.Fatalf("get settings: %v", err)
+	}
+	if settings[consts.SettingsSMTPHost] != "smtp.example.com" || settings[consts.SettingsSMTPPort] != "587" || settings[consts.SettingsSMTPFrom] != "noreply@example.com" || settings[consts.SettingsSiteURL] != "https://example.com" {
+		t.Fatalf("smtp settings=%v", settings)
+	}
+}

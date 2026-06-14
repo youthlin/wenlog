@@ -105,7 +105,7 @@
 
     <section class="card settings-card">
       <h3>{{.t.T "SMTP 邮件设置"}}</h3>
-      <form class="edit-form" method="post" action="/admin/settings/site">
+      <form class="edit-form" method="post" action="/admin/settings/smtp">
         {{template "csrf_field" .}}
         <p class="tip">{{.t.T "配置 SMTP 后可使用忘记密码等邮件功能。留空则禁用邮件发送。"}}</p>
         <label>{{.t.T "SMTP 服务器"}}<input type="text" name="smtp_host" value="{{.SMTPHostValue}}" placeholder="smtp.example.com"></label>
@@ -115,7 +115,9 @@
         <label>{{.t.T "发件人地址"}}<input type="email" name="smtp_from" value="{{.SMTPFromValue}}" placeholder="noreply@example.com"></label>
         <label>{{.t.T "站点 URL"}}<input type="url" name="site_url" value="{{.SiteURLValue}}" placeholder="https://example.com"></label>
         <p class="tip">{{.t.T "用于生成重置密码等邮件中的链接。留空则自动从请求推断。"}}</p>
-        <p><button type="submit" class="btn">{{.t.T "保存 SMTP 设置"}}</button></p>
+        <label>{{.t.T "测试收件人"}}<input type="email" name="test_email" value="{{if .SMTPTestEmailValue}}{{.SMTPTestEmailValue}}{{else}}{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}{{end}}" placeholder="you@example.com"></label>
+        <p class="tip">{{.t.T "测试前会先保存上方 SMTP 设置。"}}</p>
+        <p class="form-actions"><button type="submit" class="btn">{{.t.T "保存 SMTP 设置"}}</button><button type="submit" class="btn-secondary" formaction="/admin/settings/smtp/test">{{.t.T "发送测试邮件"}}</button></p>
       </form>
     </section>
 

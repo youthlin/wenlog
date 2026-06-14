@@ -97,6 +97,8 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.GET("/settings", adm.SettingsPage)
 	adminGroup.GET("/settings/developer", adm.DeveloperSettingsPage)
 	adminGroup.POST("/settings/site", adm.SaveSiteSettings)
+	adminGroup.POST("/settings/smtp", adm.SaveSMTPSettings)
+	adminGroup.POST("/settings/smtp/test", adm.TestSMTPSettings)
 	adminGroup.POST("/settings/session", adm.SaveSessionSettings)
 	adminGroup.POST("/settings/assets/release", adm.ReleaseAssets)
 	adminGroup.POST("/settings/assets/embed", adm.UseEmbeddedAssets)
