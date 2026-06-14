@@ -141,6 +141,7 @@ func importTerms(db *gorm.DB, doc *wxr.Document, s *Stats) error {
 
 // importItems 导入文章和页面(及其评论、关联、meta)。
 func importItems(db *gorm.DB, doc *wxr.Document, opts Options, s *Stats) error {
+	wpAuthorIDToTargetUserID := authorIDMapping(doc, opts)
 	for i := range doc.Items {
 		it := &doc.Items[i]
 		if it.PostType != model.PostTypePost && it.PostType != model.PostTypePage {
@@ -154,14 +155,29 @@ func importItems(db *gorm.DB, doc *wxr.Document, opts Options, s *Stats) error {
 		if mapped, ok := opts.AuthorMapping[it.Creator]; ok {
 			authorID = mapped
 		}
-		if err := importOneItem(db, it, authorID, s); err != nil {
+		if err := importOneItem(db, it, authorID, wpAuthorIDToTargetUserID, s); err != nil {
 			return errors.Wrapf(err, "import item id=%d", it.PostID)
 		}
 	}
 	return nil
 }
 
-func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, s *Stats) error {
+func authorIDMapping(doc *wxr.Document, opts Options) map[int]uint {
+	result := make(map[int]uint)
+	for _, author := range doc.Authors {
+		if author.ID <= 0 {
+			continue
+		}
+		uid := opts.TargetUserID
+		if mapped, ok := opts.AuthorMapping[author.Login]; ok && mapped > 0 {
+			uid = mapped
+		}
+		result[author.ID] = uid
+	}
+	return result
+}
+
+func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, wpAuthorIDToTargetUserID map[int]uint, s *Stats) error {
 	content := wxr.CleanContent(it.Content)
 	excerpt := strings.TrimSpace(it.Excerpt)
 
@@ -216,6 +232,9 @@ func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, s *Stats) error
 			Author: c.Author, Email: c.Email, URL: c.URL, IP: c.IP,
 			Content: c.Content, Status: cstatus, NotifyOnReply: false,
 			CreatedAt: c.Date,
+		}
+		if userID, ok := wpAuthorIDToTargetUserID[c.UserID]; ok && userID > 0 {
+			cm.UserID = &userID
 		}
 		if err := db.Clauses(clause.OnConflict{
 			Columns: []clause.Column{{Name: "id"}}, UpdateAll: true,

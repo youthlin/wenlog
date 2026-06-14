@@ -77,7 +77,7 @@ func collectExportContext(db *gorm.DB, opts ExportOptions) (*exportContext, erro
 	ctx := &exportContext{postIDs: map[uint]bool{}, comments: map[uint][]model.Comment{}, stats: &ExportStats{}}
 	if opts.Posts || opts.Pages {
 		var posts []model.Post
-		q := db.Preload("Categories").Preload("Tags").Order("id ASC")
+		q := db.Preload("Author").Preload("Categories").Preload("Tags").Order("id ASC")
 		switch {
 		case opts.Posts && opts.Pages:
 			q = q.Where("post_type IN ?", []string{model.PostTypePost, model.PostTypePage})
@@ -171,10 +171,18 @@ type exportRSS struct {
 type exportXMLChannel struct {
 	Title      string              `xml:"title"`
 	Link       string              `xml:"link"`
+	Authors    []exportXMLAuthor   `xml:"wp:author,omitempty"`
 	Categories []exportXMLCategory `xml:"wp:category,omitempty"`
 	Tags       []exportXMLTag      `xml:"wp:tag,omitempty"`
 	Settings   []exportXMLSetting  `xml:"blog_setting,omitempty"`
 	Items      []exportXMLItem     `xml:"item,omitempty"`
+}
+
+type exportXMLAuthor struct {
+	ID          int    `xml:"wp:author_id"`
+	Login       string `xml:"wp:author_login"`
+	Email       string `xml:"wp:author_email,omitempty"`
+	DisplayName string `xml:"wp:author_display_name,omitempty"`
 }
 
 type exportXMLCategory struct {
@@ -209,6 +217,7 @@ type exportXMLMeta struct {
 
 type exportXMLComment struct {
 	ID       int    `xml:"wp:comment_id"`
+	UserID   int    `xml:"wp:comment_user_id,omitempty"`
 	Author   string `xml:"wp:comment_author"`
 	Email    string `xml:"wp:comment_author_email,omitempty"`
 	URL      string `xml:"wp:comment_author_url,omitempty"`
@@ -259,10 +268,24 @@ func buildExportRSS(ctx *exportContext, opts ExportOptions) exportRSS {
 	for _, s := range ctx.settings {
 		ch.Settings = append(ch.Settings, exportXMLSetting{Key: s.Key, Value: s.Value})
 	}
+	seenAuthor := map[uint]bool{}
+	for _, p := range ctx.posts {
+		if p.AuthorID == 0 || seenAuthor[p.AuthorID] {
+			continue
+		}
+		seenAuthor[p.AuthorID] = true
+		ch.Authors = append(ch.Authors, exportXMLAuthor{
+			ID:          int(p.AuthorID),
+			Login:       p.Author.Username,
+			Email:       p.Author.Email,
+			DisplayName: firstNonEmpty(p.Author.DisplayName, p.Author.Username),
+		})
+	}
 	for _, p := range ctx.posts {
 		item := exportXMLItem{
 			Title:         p.Title,
 			Link:          exportPostLink(&p, opts.SiteURL),
+			Creator:       p.Author.Username,
 			Content:       p.Content,
 			Excerpt:       p.Excerpt,
 			PostID:        int(p.ID),
@@ -282,8 +305,13 @@ func buildExportRSS(ctx *exportContext, opts ExportOptions) exportRSS {
 			item.Categories = append(item.Categories, exportXMLCategoryRef{Domain: "post_tag", Nicename: t.Slug, Name: t.Name})
 		}
 		for _, c := range ctx.comments[p.ID] {
+			var commentUserID int
+			if c.UserID != nil {
+				commentUserID = int(*c.UserID)
+			}
 			item.Comments = append(item.Comments, exportXMLComment{
 				ID:       int(c.ID),
+				UserID:   commentUserID,
 				Author:   c.Author,
 				Email:    c.Email,
 				URL:      c.URL,

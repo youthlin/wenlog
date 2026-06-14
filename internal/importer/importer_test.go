@@ -37,6 +37,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
   <channel>
     <title>test</title>
     <link>https://example.com</link>
+    <wp:author><wp:author_id>5</wp:author_id><wp:author_login>someone</wp:author_login><wp:author_email>someone@example.com</wp:author_email><wp:author_display_name>Someone</wp:author_display_name></wp:author>
     <blog_setting><blog_key>site_name</blog_key><blog_value>测试站</blog_value></blog_setting>
     <wp:category><wp:term_id>10</wp:term_id><wp:category_nicename>go</wp:category_nicename><wp:cat_name>Go</wp:cat_name><wp:category_parent></wp:category_parent><wp:category_description></wp:category_description></wp:category>
     <wp:tag><wp:term_id>20</wp:term_id><wp:tag_slug>backend</wp:tag_slug><wp:tag_name>Backend</wp:tag_name></wp:tag>
@@ -58,6 +59,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
       <wp:postmeta><wp:meta_key>views</wp:meta_key><wp:meta_value>42</wp:meta_value></wp:postmeta>
       <wp:comment>
         <wp:comment_id>900</wp:comment_id>
+        <wp:comment_user_id>5</wp:comment_user_id>
         <wp:comment_author>Alice</wp:comment_author>
         <wp:comment_author_email>alice@example.com</wp:comment_author_email>
         <wp:comment_author_url>https://example.com/alice</wp:comment_author_url>
@@ -109,6 +111,9 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 	}
 	if len(comments) != 1 || comments[0].ID != 900 {
 		t.Fatalf("comments = %+v, want only id 900", comments)
+	}
+	if comments[0].UserID == nil || *comments[0].UserID != 7 {
+		t.Fatalf("comment user_id = %v, want 7", comments[0].UserID)
 	}
 	setting, err := st.GetSetting("site_name")
 	if err != nil {
@@ -201,5 +206,102 @@ func TestExportXMLRoundTrip(t *testing.T) {
 	}
 	if setting != "导出测试站" {
 		t.Fatalf("site_name = %q, want 导出测试站", setting)
+	}
+}
+
+func TestExportXMLRoundTripMapsMultipleAuthorsAndCommentUsers(t *testing.T) {
+	src := newTestStore(t)
+	db := src.DB()
+	users := []model.User{
+		{ID: 9, Username: "writer", DisplayName: "作者", Email: "writer@example.com"},
+		{ID: 10, Username: "editor", DisplayName: "编辑", Email: "editor@example.com"},
+	}
+	for _, u := range users {
+		if err := db.Create(&u).Error; err != nil {
+			t.Fatalf("seed user: %v", err)
+		}
+	}
+	posts := []model.Post{
+		{ID: 2001, Title: "作者文章", Slug: "writer-post", Content: "<p>writer</p>", AuthorID: 9, Status: model.StatusPublished, PostType: model.PostTypePost, ContentFormat: model.FormatHTML, CommentStatus: "open"},
+		{ID: 2002, Title: "编辑页面", Slug: "editor-page", Content: "<p>editor</p>", AuthorID: 10, Status: model.StatusPublished, PostType: model.PostTypePage, ContentFormat: model.FormatHTML, CommentStatus: "open"},
+	}
+	for _, p := range posts {
+		if err := db.Create(&p).Error; err != nil {
+			t.Fatalf("seed post: %v", err)
+		}
+	}
+	writerID := uint(9)
+	editorID := uint(10)
+	comments := []model.Comment{
+		{ID: 601, PostID: 2001, UserID: &writerID, Author: "作者", Email: "writer@example.com", Content: "作者自己的评论", Status: model.CommentApproved},
+		{ID: 602, PostID: 2002, UserID: &editorID, Author: "编辑", Email: "editor@example.com", Content: "编辑自己的评论", Status: model.CommentApproved},
+	}
+	for _, c := range comments {
+		if err := db.Create(&c).Error; err != nil {
+			t.Fatalf("seed comment: %v", err)
+		}
+	}
+
+	xmlData, stats, err := ExportXML(db, ExportOptions{Posts: true, Pages: true, Comments: true, SiteTitle: "多作者站", SiteURL: "https://example.com"})
+	if err != nil {
+		t.Fatalf("export xml: %v", err)
+	}
+	if stats.Posts != 1 || stats.Pages != 1 || stats.Comments != 2 {
+		t.Fatalf("unexpected export stats: %+v", stats)
+	}
+	xmlText := string(xmlData)
+	for _, want := range []string{"<wp:author_id>9</wp:author_id>", "<wp:author_id>10</wp:author_id>", "<wp:comment_user_id>9</wp:comment_user_id>", "<wp:comment_user_id>10</wp:comment_user_id>"} {
+		if !strings.Contains(xmlText, want) {
+			t.Fatalf("export xml missing %q:\n%s", want, xmlText)
+		}
+	}
+
+	dst := newTestStore(t)
+	dstDB := dst.DB()
+	for _, u := range []model.User{
+		{ID: 77, Username: "target-writer", DisplayName: "目标作者"},
+		{ID: 88, Username: "target-editor", DisplayName: "目标编辑"},
+	} {
+		if err := dstDB.Create(&u).Error; err != nil {
+			t.Fatalf("seed target user: %v", err)
+		}
+	}
+	importStats, err := ImportReader(dstDB, strings.NewReader(xmlText), Options{
+		TargetUserID:  77,
+		IncludeDrafts: true,
+		AuthorMapping: map[string]uint{"writer": 77, "editor": 88},
+	})
+	if err != nil {
+		t.Fatalf("re-import xml: %v", err)
+	}
+	if importStats.Posts != 1 || importStats.Pages != 1 || importStats.Comments != 2 {
+		t.Fatalf("unexpected import stats: %+v", importStats)
+	}
+	importedWriterPost, err := dst.AdminGetPost(2001)
+	if err != nil {
+		t.Fatalf("load writer post: %v", err)
+	}
+	if importedWriterPost.AuthorID != 77 {
+		t.Fatalf("writer post author_id = %d, want 77", importedWriterPost.AuthorID)
+	}
+	importedEditorPage, err := dst.AdminGetPost(2002)
+	if err != nil {
+		t.Fatalf("load editor page: %v", err)
+	}
+	if importedEditorPage.AuthorID != 88 {
+		t.Fatalf("editor page author_id = %d, want 88", importedEditorPage.AuthorID)
+	}
+	var importedComments []model.Comment
+	if err := dstDB.Order("id ASC").Find(&importedComments).Error; err != nil {
+		t.Fatalf("load imported comments: %v", err)
+	}
+	if len(importedComments) != 2 {
+		t.Fatalf("imported comments = %+v, want two comments", importedComments)
+	}
+	if importedComments[0].UserID == nil || *importedComments[0].UserID != 77 {
+		t.Fatalf("writer comment user_id = %v, want 77", importedComments[0].UserID)
+	}
+	if importedComments[1].UserID == nil || *importedComments[1].UserID != 88 {
+		t.Fatalf("editor comment user_id = %v, want 88", importedComments[1].UserID)
 	}
 }

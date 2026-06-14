@@ -26,6 +26,7 @@ type Document struct {
 
 // Author 对应 wp:author。
 type Author struct {
+	ID          int
 	Login       string
 	Email       string
 	DisplayName string
@@ -69,6 +70,7 @@ type Setting struct {
 // Comment 对应 wp:comment。
 type Comment struct {
 	ID       int
+	UserID   int
 	Author   string
 	Email    string
 	URL      string
@@ -122,6 +124,7 @@ type xmlSetting struct {
 }
 
 type xmlAuthor struct {
+	ID          int    `xml:"http://wordpress.org/export/1.2/ author_id"`
 	Login       string `xml:"http://wordpress.org/export/1.2/ author_login"`
 	Email       string `xml:"http://wordpress.org/export/1.2/ author_email"`
 	DisplayName string `xml:"http://wordpress.org/export/1.2/ author_display_name"`
@@ -154,6 +157,7 @@ type xmlMeta struct {
 
 type xmlComment struct {
 	ID       int    `xml:"http://wordpress.org/export/1.2/ comment_id"`
+	UserID   int    `xml:"http://wordpress.org/export/1.2/ comment_user_id"`
 	Author   string `xml:"http://wordpress.org/export/1.2/ comment_author"`
 	Email    string `xml:"http://wordpress.org/export/1.2/ comment_author_email"`
 	URL      string `xml:"http://wordpress.org/export/1.2/ comment_author_url"`
@@ -197,7 +201,7 @@ func Parse(r io.Reader) (*Document, error) {
 		Link:  rss.Channel.Link,
 	}
 	for _, a := range rss.Channel.Authors {
-		doc.Authors = append(doc.Authors, Author{Login: a.Login, Email: a.Email, DisplayName: a.DisplayName})
+		doc.Authors = append(doc.Authors, Author{ID: a.ID, Login: a.Login, Email: a.Email, DisplayName: a.DisplayName})
 	}
 	for _, c := range rss.Channel.Categories {
 		doc.Categories = append(doc.Categories, Category{
@@ -228,7 +232,7 @@ func Parse(r io.Reader) (*Document, error) {
 		}
 		for _, cm := range it.Comments {
 			item.Comments = append(item.Comments, Comment{
-				ID: cm.ID, Author: cm.Author, Email: cm.Email, URL: cm.URL,
+				ID: cm.ID, UserID: cm.UserID, Author: cm.Author, Email: cm.Email, URL: cm.URL,
 				IP: cm.IP, Date: parseWPTime(cm.Date), Content: cm.Content,
 				Approved: cm.Approved, Type: cm.Type, Parent: cm.Parent,
 			})
