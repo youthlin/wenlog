@@ -17,6 +17,19 @@
   {{end}}
 
   <label>{{.t.T "正文(Markdown)"}}</label>
+  <div class="markdown-toolbar" aria-label="{{.t.T "Markdown 工具栏"}}">
+    <button type="button" class="btn-secondary" data-md-action="heading">H2</button>
+    <button type="button" class="btn-secondary" data-md-action="bold"><strong>B</strong></button>
+    <button type="button" class="btn-secondary" data-md-action="italic"><em>I</em></button>
+    <button type="button" class="btn-secondary" data-md-action="quote">{{.t.T "引用"}}</button>
+    <button type="button" class="btn-secondary" data-md-action="ul">{{.t.T "列表"}}</button>
+    <button type="button" class="btn-secondary" data-md-action="ol">1.</button>
+    <button type="button" class="btn-secondary" data-md-action="code">{{.t.T "代码"}}</button>
+    <button type="button" class="btn-secondary" data-md-action="codeblock">{{.t.T "代码块"}}</button>
+    <button type="button" class="btn-secondary" data-md-action="link">{{.t.T "链接"}}</button>
+    <button type="button" class="btn-secondary" data-md-action="more">more</button>
+    <button type="button" class="btn-secondary" data-md-action="hr">---</button>
+  </div>
   <div class="editor-tools">
     <label class="btn-secondary upload-btn">{{.t.T "上传图片"}}<input type="file" id="upload_file" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
     <button type="button" class="btn-secondary" id="pick_upload_btn">{{.t.T "选择已上传图片"}}</button>
@@ -30,11 +43,21 @@
     </div>
     <div class="upload-picker-list" id="upload_picker_list"></div>
   </div>
-  <div class="md-editor">
-    <textarea name="content_md" id="content_md" rows="20" required>{{if .Post}}{{.Post.ContentMD}}{{end}}</textarea>
-    <div class="md-preview" id="md_preview" hidden></div>
+  <div class="draft-restore" id="draft_restore" hidden>
+    <span>{{.t.T "检测到本地自动保存的草稿。"}}</span>
+    <button type="button" class="btn-secondary" id="restore_draft_btn">{{.t.T "恢复草稿"}}</button>
+    <button type="button" class="btn-secondary" id="discard_draft_btn">{{.t.T "忽略"}}</button>
   </div>
-  <p><button type="button" class="btn-secondary" id="preview_btn">{{.t.T "预览"}}</button> <span class="tip">{{.t.T "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"}}</span></p>
+  <div class="md-view-tabs" aria-label="{{.t.T "编辑器视图"}}">
+    <button type="button" class="btn-secondary active" data-md-view="edit">{{.t.T "编辑"}}</button>
+    <button type="button" class="btn-secondary" data-md-view="split">{{.t.T "分栏预览"}}</button>
+    <button type="button" class="btn-secondary" data-md-view="preview">{{.t.T "预览"}}</button>
+  </div>
+  <div class="md-editor is-edit" data-md-editor>
+    <textarea name="content_md" id="content_md" rows="20" required>{{if .Post}}{{.Post.ContentMD}}{{end}}</textarea>
+    <div class="md-preview" id="md_preview"></div>
+  </div>
+  <p><span class="tip" id="draft_status">{{.t.T "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"}}</span></p>
 
   <label>{{.t.T "摘要(可选)"}}<textarea name="excerpt" rows="3">{{if .Post}}{{.Post.Excerpt}}{{end}}</textarea></label>
 
