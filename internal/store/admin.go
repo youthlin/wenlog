@@ -293,9 +293,18 @@ func (s *Store) AdminListPosts(postType string, page, pageSize int, categoryID, 
 		Where("comments.post_id = posts.id")
 	err := q.Select("posts.*, (?) AS comment_count", commentCount).
 		Preload("Categories").Preload("Tags").Preload("Author").
-		Order("published_at DESC").
+		Scopes(adminPostOrder(postType)).
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&posts).Error
 	return posts, total, errors.Wrap(err, "admin list posts")
+}
+
+func adminPostOrder(postType string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if postType == model.PostTypePage {
+			return db.Order("menu_order ASC").Order("id ASC")
+		}
+		return db.Order("published_at DESC").Order("id DESC")
+	}
 }
 
 // AdminGetPost 按 ID 取文章(任意状态,含分类标签)。

@@ -34,6 +34,9 @@
     <tr>
       <th class="post-id-head">ID</th>
       <th class="post-title-head">{{.t.T "标题"}}</th>
+      {{if eq .PostType "page"}}
+      <th class="post-menu-order-head">{{.t.T "顺序"}}</th>
+      {{end}}
       <th class="post-published-head">{{.t.T "发布时间"}}</th>
       {{if ne .PostType "page"}}
       <th class="post-category-head">{{.t.T "分类目录"}}</th>
@@ -59,11 +62,15 @@
           <div class="post-meta-list">
             <div class="post-inline-meta">
               <span class="post-inline-meta-item">#{{.ID}}</span>
+              {{if eq $.PostType "page"}}<span class="post-inline-meta-item">{{$.t.T "顺序"}} {{.MenuOrder}}</span>{{end}}
               <time class="post-inline-meta-item" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
             </div>
           </div>
         </div>
       </td>
+      {{if eq $.PostType "page"}}
+      <td class="post-menu-order-cell" data-label="{{$.t.T "顺序"}}"><span class="post-menu-order-badge">{{.MenuOrder}}</span></td>
+      {{end}}
       <td class="post-published-cell" data-label="{{$.t.T "发布时间"}}">
         <time class="post-published-time" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
       </td>
@@ -112,7 +119,7 @@
       </td>
     </tr>
     {{else}}
-    <tr><td colspan="{{if eq .PostType "page"}}5{{else}}7{{end}}">{{.t.T "暂无内容"}}</td></tr>
+    <tr><td colspan="{{if eq .PostType "page"}}6{{else}}7{{end}}">{{.t.T "暂无内容"}}</td></tr>
     {{end}}
     </tbody>
   </table>

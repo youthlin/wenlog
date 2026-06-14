@@ -2,6 +2,7 @@ package store
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cockroachdb/errors"
 
@@ -102,6 +103,38 @@ func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
 	}
 	if _, err := st.GetUserByID(2); err == nil {
 		t.Fatal("expected deleted admin2 to be missing")
+	}
+}
+
+func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+	posts := []model.Post{
+		{ID: 1, Title: "文章", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now.Add(3 * time.Hour)},
+		{ID: 2, Title: "页面 30", PostType: model.PostTypePage, Status: model.StatusPublished, MenuOrder: 30, PublishedAt: now.Add(2 * time.Hour)},
+		{ID: 3, Title: "页面 10", PostType: model.PostTypePage, Status: model.StatusPublished, MenuOrder: 10, PublishedAt: now.Add(1 * time.Hour)},
+		{ID: 4, Title: "页面 20", PostType: model.PostTypePage, Status: model.StatusPublished, MenuOrder: 20, PublishedAt: now},
+	}
+	for _, p := range posts {
+		if err := db.Create(&p).Error; err != nil {
+			t.Fatalf("seed post: %v", err)
+		}
+	}
+
+	pages, total, err := st.AdminListPosts(model.PostTypePage, 1, 10, 0, 0, "")
+	if err != nil {
+		t.Fatalf("AdminListPosts pages: %v", err)
+	}
+	if total != 3 {
+		t.Fatalf("total = %d, want 3", total)
+	}
+	got := []uint{pages[0].ID, pages[1].ID, pages[2].ID}
+	want := []uint{3, 4, 2}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("page order = %v, want %v", got, want)
+		}
 	}
 }
 
