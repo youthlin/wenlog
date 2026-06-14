@@ -83,9 +83,16 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"Title":                title,
 		"PendingCount":         h.st.PendingCommentCount(),
 		"PostPermalinkPattern": currentPostPermalink,
+		"RoleAdmin":            model.RoleAdmin,
+		"RoleAuthor":           model.RoleAuthor,
+		"RoleSubscriber":       model.RoleSubscriber,
 	}
 	if c != nil {
-		data["User"] = h.currentUser(c)
+		currentUser := h.currentUser(c)
+		data["User"] = currentUser
+		if currentUser != nil {
+			data["CurrentUserID"] = currentUser.ID
+		}
 		data["CSRFToken"] = middleware.CSRFToken(c)
 		data["CurrentAdminNav"] = adminNavKey(c)
 		s := sessions.Default(c)
@@ -2412,18 +2419,27 @@ func (h *Admin) DeleteAccount(c *gin.Context) {
 	}
 	confirm := c.PostForm("confirm")
 	if confirm != "DELETE" {
-		data := h.base(c, tr.T("注销账号"))
-		data["CurrentUser"] = u
-		data["Error"] = tr.T("请输入 DELETE 确认注销。")
-		c.HTML(http.StatusBadRequest, "admin_delete_account.gohtml", data)
+		h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("请输入 DELETE 确认注销。"))
 		return
 	}
 	if err := h.st.DeleteUser(u.ID); err != nil {
+		if errors.Is(err, store.ErrLastAdmin) {
+			h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("不能注销唯一的管理员账号。请先创建或指定另一个管理员。"))
+			return
+		}
 		h.serverError(c, err)
 		return
 	}
 	middleware.ClearSession(c)
 	c.Redirect(http.StatusSeeOther, "/admin/login")
+}
+
+func (h *Admin) renderDeleteAccountError(c *gin.Context, u *model.User, status int, msg string) {
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("注销账号"))
+	data["CurrentUser"] = u
+	data["Error"] = msg
+	c.HTML(status, "admin_delete_account.gohtml", data)
 }
 
 // ListUsers 后台用户列表(admin only)。
@@ -2445,6 +2461,7 @@ func (h *Admin) ListUsers(c *gin.Context) {
 
 // UpdateUserRole 修改用户角色(admin only)。
 func (h *Admin) UpdateUserRole(c *gin.Context) {
+	tr := i18n.Get(c)
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	role := c.PostForm("role")
 	switch role {
@@ -2453,7 +2470,15 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/admin/users")
 		return
 	}
+	if uint(id) == h.currentUserID(c) && role != model.RoleAdmin {
+		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能降低自己的管理员权限。请让其他管理员操作。"))
+		return
+	}
 	if err := h.st.UpdateUserRole(uint(id), role); err != nil {
+		if errors.Is(err, store.ErrLastAdmin) {
+			h.renderUsersError(c, http.StatusBadRequest, tr.T("不能将唯一的管理员改为其他角色。请先创建或指定另一个管理员。"))
+			return
+		}
 		h.serverError(c, err)
 		return
 	}
@@ -2462,8 +2487,17 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 
 // DeleteUser 删除用户(admin only)。
 func (h *Admin) DeleteUser(c *gin.Context) {
+	tr := i18n.Get(c)
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if uint(id) == h.currentUserID(c) {
+		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能在用户管理中删除自己；如需注销请到个人注销账号页面。"))
+		return
+	}
 	if err := h.st.DeleteUser(uint(id)); err != nil {
+		if errors.Is(err, store.ErrLastAdmin) {
+			h.renderUsersError(c, http.StatusBadRequest, tr.T("不能删除唯一的管理员账号。请先创建或指定另一个管理员。"))
+			return
+		}
 		h.serverError(c, err)
 		return
 	}
@@ -2561,6 +2595,14 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	default:
 		role = model.RoleSubscriber
 	}
+	if uint(id) == h.currentUserID(c) && role != model.RoleAdmin {
+		u, _ := h.st.GetUserByID(uint(id))
+		data := h.base(c, tr.T("编辑用户"))
+		data["EditUser"] = u
+		data["Error"] = tr.T("不能降低自己的管理员权限。请让其他管理员操作。")
+		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+		return
+	}
 
 	exists, err := h.st.UserExistsByUsername(username, uint(id))
 	if err != nil {
@@ -2584,10 +2626,35 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		return
 	}
 	if err := h.st.UpdateUserRole(uint(id), role); err != nil {
+		if errors.Is(err, store.ErrLastAdmin) {
+			u, _ := h.st.GetUserByID(uint(id))
+			data := h.base(c, tr.T("编辑用户"))
+			data["EditUser"] = u
+			data["Error"] = tr.T("不能将唯一的管理员改为其他角色。请先创建或指定另一个管理员。")
+			c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+			return
+		}
 		h.serverError(c, err)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/admin/users")
+}
+
+func (h *Admin) renderUsersError(c *gin.Context, status int, msg string) {
+	tr := i18n.Get(c)
+	page := atoiDefault(c.Query("page"), 1)
+	users, total, err := h.st.AdminListUsers(page, adminPageSize)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	data := h.base(c, tr.T("用户管理"))
+	data["Users"] = users
+	data["Total"] = total
+	data["Page"] = page
+	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	data["Error"] = msg
+	c.HTML(status, "admin_users.gohtml", data)
 }
 
 // --- 辅助 ---

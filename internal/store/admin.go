@@ -12,6 +12,9 @@ import (
 	"github.com/youthlin/blog/internal/model"
 )
 
+// ErrLastAdmin 表示操作会导致系统没有任何管理员。
+var ErrLastAdmin = errors.New("at least one admin user is required")
+
 func termQueryLike(keyword string) string {
 	return "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
 }
@@ -781,14 +784,42 @@ func (s *Store) AdminListUsers(page, pageSize int) ([]model.User, int64, error) 
 
 // UpdateUserRole 修改用户角色。
 func (s *Store) UpdateUserRole(id uint, role string) error {
-	return errors.Wrap(
-		s.db.Model(&model.User{}).Where("id = ?", id).Update("role", role).Error,
-		"update user role")
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		var u model.User
+		if err := tx.First(&u, id).Error; err != nil {
+			return errors.Wrap(err, "load user before role update")
+		}
+		if u.Role == model.RoleAdmin && role != model.RoleAdmin {
+			adminCount, err := countAdmins(tx)
+			if err != nil {
+				return err
+			}
+			if adminCount <= 1 {
+				return ErrLastAdmin
+			}
+		}
+		return errors.Wrap(
+			tx.Model(&model.User{}).Where("id = ?", id).Update("role", role).Error,
+			"update user role")
+	})
 }
 
 // DeleteUser 删除用户及其关联数据(评论匿名化保留)。
 func (s *Store) DeleteUser(id uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
+		var u model.User
+		if err := tx.First(&u, id).Error; err != nil {
+			return errors.Wrap(err, "load user before delete")
+		}
+		if u.Role == model.RoleAdmin {
+			adminCount, err := countAdmins(tx)
+			if err != nil {
+				return err
+			}
+			if adminCount <= 1 {
+				return ErrLastAdmin
+			}
+		}
 		// 将该用户的评论设为匿名(清除 UserID)
 		if err := tx.Model(&model.Comment{}).Where("user_id = ?", id).
 			Update("user_id", nil).Error; err != nil {
@@ -799,6 +830,14 @@ func (s *Store) DeleteUser(id uint) error {
 		}
 		return nil
 	})
+}
+
+func countAdmins(db *gorm.DB) (int64, error) {
+	var count int64
+	if err := db.Model(&model.User{}).Where("role = ?", model.RoleAdmin).Count(&count).Error; err != nil {
+		return 0, errors.Wrap(err, "count admin users")
+	}
+	return count, nil
 }
 
 // EnsureAdminRole 确保指定用户拥有 admin 角色(用于现有用户升级)。

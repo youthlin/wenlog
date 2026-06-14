@@ -5,6 +5,9 @@
 <div class="settings-main">
   <section class="card settings-card">
     <p class="warning">{{.t.T "注销后你的账号将被永久删除，评论将匿名化保留。此操作不可撤销。"}}</p>
+    {{if and .CurrentUser (eq .CurrentUser.Role .RoleAdmin)}}
+    <p class="warn-banner">{{.t.T "如果这是唯一的管理员账号，系统会阻止注销。请先创建或指定另一个管理员。"}}</p>
+    {{end}}
     <form class="edit-form" method="post" action="/admin/delete-account">
       {{template "csrf_field" .}}
       <label>{{.t.T "请输入 DELETE 确认"}}<input type="text" name="confirm" required></label>

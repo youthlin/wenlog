@@ -3,6 +3,8 @@ package store
 import (
 	"testing"
 
+	"github.com/cockroachdb/errors"
+
 	"github.com/youthlin/blog/internal/model"
 )
 
@@ -38,6 +40,68 @@ func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {
 	}
 	if u.Username != "newname" || u.DisplayName != "新显示名" || u.Email != "new@example.com" {
 		t.Fatalf("unexpected updated user: %+v", u)
+	}
+}
+
+func TestLastAdminCannotBeDemotedOrDeleted(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	if err := db.Create(&model.User{ID: 1, Username: "admin", Role: model.RoleAdmin}).Error; err != nil {
+		t.Fatalf("seed admin: %v", err)
+	}
+
+	if err := st.UpdateUserRole(1, model.RoleAuthor); !errors.Is(err, ErrLastAdmin) {
+		t.Fatalf("UpdateUserRole error = %v, want ErrLastAdmin", err)
+	}
+	u, err := st.GetUserByID(1)
+	if err != nil {
+		t.Fatalf("load admin: %v", err)
+	}
+	if u.Role != model.RoleAdmin {
+		t.Fatalf("role = %q, want admin", u.Role)
+	}
+
+	if err := st.DeleteUser(1); !errors.Is(err, ErrLastAdmin) {
+		t.Fatalf("DeleteUser error = %v, want ErrLastAdmin", err)
+	}
+	var count int64
+	if err := db.Model(&model.User{}).Where("id = ?", 1).Count(&count).Error; err != nil {
+		t.Fatalf("count admin: %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("admin count = %d, want 1", count)
+	}
+}
+
+func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	for _, u := range []model.User{
+		{ID: 1, Username: "admin1", Role: model.RoleAdmin},
+		{ID: 2, Username: "admin2", Role: model.RoleAdmin},
+		{ID: 3, Username: "admin3", Role: model.RoleAdmin},
+	} {
+		if err := db.Create(&u).Error; err != nil {
+			t.Fatalf("seed admin: %v", err)
+		}
+	}
+
+	if err := st.UpdateUserRole(1, model.RoleAuthor); err != nil {
+		t.Fatalf("UpdateUserRole with another admin: %v", err)
+	}
+	u, err := st.GetUserByID(1)
+	if err != nil {
+		t.Fatalf("load demoted user: %v", err)
+	}
+	if u.Role != model.RoleAuthor {
+		t.Fatalf("role = %q, want author", u.Role)
+	}
+
+	if err := st.DeleteUser(2); err != nil {
+		t.Fatalf("DeleteUser with another admin: %v", err)
+	}
+	if _, err := st.GetUserByID(2); err == nil {
+		t.Fatal("expected deleted admin2 to be missing")
 	}
 }
 
