@@ -7,7 +7,10 @@ import (
 	"net"
 	"net/smtp"
 	"strings"
+	"time"
 )
+
+const smtpTimeout = 10 * time.Second
 
 // Config 是 SMTP 配置。
 type Config struct {
@@ -31,30 +34,24 @@ func (c Config) Send(to, subject, body string) error {
 
 	msg := buildMessage(c.From, to, subject, body)
 	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)
-
-	auth := smtp.PlainAuth("", c.User, c.Password, c.Host)
-
-	// 先尝试 STARTTLS
-	conn, err := net.Dial("tcp", addr)
+	client, conn, err := c.newClient(addr)
 	if err != nil {
-		return fmt.Errorf("连接 SMTP 服务器失败: %w", err)
+		return err
 	}
 	defer conn.Close()
-
-	client, err := smtp.NewClient(conn, c.Host)
-	if err != nil {
-		return fmt.Errorf("创建 SMTP 客户端失败: %w", err)
-	}
 	defer client.Quit()
+	_ = conn.SetDeadline(time.Now().Add(smtpTimeout))
 
-	if ok, _ := client.Extension("STARTTLS"); ok {
+	if !c.implicitTLS() {
 		tlsConfig := &tls.Config{ServerName: c.Host}
-		if err := client.StartTLS(tlsConfig); err != nil {
-			return fmt.Errorf("STARTTLS 失败: %w", err)
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			if err := client.StartTLS(tlsConfig); err != nil {
+				return fmt.Errorf("STARTTLS 失败: %w", err)
+			}
 		}
 	}
 
-	if auth != nil {
+	if auth := c.auth(); auth != nil {
 		if err := client.Auth(auth); err != nil {
 			return fmt.Errorf("SMTP 认证失败: %w", err)
 		}
@@ -80,6 +77,39 @@ func (c Config) Send(to, subject, body string) error {
 	}
 
 	return nil
+}
+
+func (c Config) newClient(addr string) (*smtp.Client, net.Conn, error) {
+	var (
+		conn net.Conn
+		err  error
+	)
+	dialer := &net.Dialer{Timeout: smtpTimeout}
+	if c.implicitTLS() {
+		conn, err = tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{ServerName: c.Host})
+	} else {
+		conn, err = dialer.Dial("tcp", addr)
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("连接 SMTP 服务器失败: %w", err)
+	}
+	client, err := smtp.NewClient(conn, c.Host)
+	if err != nil {
+		_ = conn.Close()
+		return nil, nil, fmt.Errorf("创建 SMTP 客户端失败: %w", err)
+	}
+	return client, conn, nil
+}
+
+func (c Config) implicitTLS() bool {
+	return c.Port == 465
+}
+
+func (c Config) auth() smtp.Auth {
+	if strings.TrimSpace(c.User) == "" {
+		return nil
+	}
+	return smtp.PlainAuth("", c.User, c.Password, c.Host)
 }
 
 func buildMessage(from, to, subject, body string) string {
