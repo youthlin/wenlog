@@ -44,6 +44,7 @@ func (s *Store) DB() *gorm.DB { return s.db }
 func (s *Store) migrate() error {
 	err := s.db.AutoMigrate(
 		&model.User{},
+		&model.PendingRegistration{},
 		&model.Post{},
 		&model.Category{},
 		&model.Tag{},

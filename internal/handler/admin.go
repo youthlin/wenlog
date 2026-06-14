@@ -2,6 +2,8 @@ package handler
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -233,10 +235,11 @@ func (h *Admin) RegisterForm(c *gin.Context) {
 		return
 	}
 	data := h.base(c, tr.T("注册"))
+	data["SMTPConfigured"] = smtpConfigFromStore(h.st).Configured()
 	c.HTML(http.StatusOK, "admin_register.gohtml", data)
 }
 
-// Register 处理后注册。
+// Register 处理注册申请,先发送邮箱验证链接,验证通过后再创建账号。
 func (h *Admin) Register(c *gin.Context) {
 	tr := i18n.Get(c)
 	if !h.isRegistrationOpen() {
@@ -244,13 +247,31 @@ func (h *Admin) Register(c *gin.Context) {
 		return
 	}
 	username := strings.TrimSpace(c.PostForm("username"))
-	password := c.PostForm("password")
 	email := strings.TrimSpace(c.PostForm("email"))
 
-	if username == "" || password == "" || email == "" {
-		data := h.base(c, tr.T("注册"))
-		data["Error"] = tr.T("用户名、密码和邮箱不能为空。")
+	data := h.base(c, tr.T("注册"))
+	data["RegisterUsername"] = username
+	data["RegisterEmail"] = email
+	data["SMTPConfigured"] = smtpConfigFromStore(h.st).Configured()
+
+	if username == "" || email == "" {
+		data["Error"] = tr.T("用户名和邮箱不能为空。")
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+	addr, err := mail.ParseAddress(email)
+	if err != nil {
+		data["Error"] = tr.T("邮箱格式不正确。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+	email = strings.TrimSpace(addr.Address)
+	data["RegisterEmail"] = email
+
+	smtpCfg := smtpConfigFromStore(h.st)
+	if !smtpCfg.Configured() {
+		data["Error"] = tr.T("站点尚未配置 SMTP，暂时无法发送验证邮件。")
+		c.HTML(http.StatusServiceUnavailable, "admin_register.gohtml", data)
 		return
 	}
 
@@ -260,32 +281,138 @@ func (h *Admin) Register(c *gin.Context) {
 		return
 	}
 	if exists {
-		data := h.base(c, tr.T("注册"))
 		data["Error"] = tr.T("用户名已被占用。")
 		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
 		return
 	}
+	exists, err = h.st.UserExistsByEmail(email, 0)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		data["Error"] = tr.T("邮箱已被注册。")
+		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
+		return
+	}
 
+	token, err := randomHexToken(32)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SavePendingRegistration(username, email, token, time.Now().Add(24*time.Hour)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+
+	siteURL := siteURLFromRequest(h.st, c)
+	verifyURL := strings.TrimRight(siteURL, "/") + "/admin/register/verify?token=" + url.QueryEscape(token)
+	siteName, _ := data["SiteName"].(string)
+	subject := tr.T("[%s] 注册邮箱验证", siteName)
+	body := tr.T("您好 %s，\n\n请点击以下链接验证邮箱并设置登录密码（24 小时内有效）：\n\n%s\n\n如果您没有请求注册，请忽略此邮件。\n", username, verifyURL)
+	if err := smtpCfg.Send(email, subject, body); err != nil {
+		if h.log != nil {
+			h.log.Error("send registration verification email", "error", err, "to", email)
+		}
+		data["Error"] = tr.T("验证邮件发送失败，请稍后重试或联系管理员。")
+		c.HTML(http.StatusInternalServerError, "admin_register.gohtml", data)
+		return
+	}
+
+	data["RegisterUsername"] = ""
+	data["RegisterEmail"] = ""
+	data["Notice"] = tr.T("验证邮件已发送，请检查邮箱并在 24 小时内完成注册。")
+	c.HTML(http.StatusOK, "admin_register.gohtml", data)
+}
+
+// RegisterVerifyForm 展示邮箱验证后的密码设置页。
+func (h *Admin) RegisterVerifyForm(c *gin.Context) {
+	tr := i18n.Get(c)
+	if !h.isRegistrationOpen() {
+		c.Redirect(http.StatusSeeOther, "/admin/login")
+		return
+	}
+	token := strings.TrimSpace(c.Query("token"))
+	data := h.base(c, tr.T("完成注册"))
+	data["VerifyMode"] = true
+	data["VerifyToken"] = token
+	if token == "" {
+		data["Error"] = tr.T("注册链接无效或已过期，请重新注册。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+	pending, err := h.st.GetPendingRegistrationByToken(token)
+	if err != nil {
+		data["Error"] = tr.T("注册链接无效或已过期，请重新注册。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+	if exists, err := h.st.UserExistsByUsername(pending.Username, 0); err != nil {
+		h.serverError(c, err)
+		return
+	} else if exists {
+		data["Error"] = tr.T("用户名已被占用，请重新注册。")
+		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
+		return
+	}
+	if exists, err := h.st.UserExistsByEmail(pending.Email, 0); err != nil {
+		h.serverError(c, err)
+		return
+	} else if exists {
+		data["Error"] = tr.T("邮箱已被注册，请重新注册。")
+		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
+		return
+	}
+	data["RegisterUsername"] = pending.Username
+	data["RegisterEmail"] = pending.Email
+	c.HTML(http.StatusOK, "admin_register.gohtml", data)
+}
+
+// RegisterVerify 完成邮箱验证并创建账号。
+func (h *Admin) RegisterVerify(c *gin.Context) {
+	tr := i18n.Get(c)
+	if !h.isRegistrationOpen() {
+		c.Redirect(http.StatusSeeOther, "/admin/login")
+		return
+	}
+	token := strings.TrimSpace(c.PostForm("token"))
+	password := c.PostForm("password")
+	confirmPassword := c.PostForm("confirm_password")
+	data := h.base(c, tr.T("完成注册"))
+	data["VerifyMode"] = true
+	data["VerifyToken"] = token
+	if token == "" || password == "" {
+		data["Error"] = tr.T("注册链接无效或密码不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+	if password != confirmPassword {
+		data["Error"] = tr.T("两次输入的密码不一致。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-
-	displayName := username
-	if err := h.st.UpsertUserPassword(username, displayName, string(hash)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-
-	// 注册后自动登录。
-	u, err := h.st.GetUserByUsername(username)
+	u, err := h.st.CompletePendingRegistration(token, string(hash))
 	if err != nil {
-		h.serverError(c, err)
+		data["Error"] = tr.T("注册链接无效或已过期，请重新注册。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
 	}
 	middleware.SetSessionUser(c, u.ID, u.Role)
 	c.Redirect(http.StatusSeeOther, "/admin/")
+}
+
+func randomHexToken(n int) (string, error) {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 // isRegistrationOpen 返回当前是否开放注册。
@@ -673,6 +800,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["SMTPPasswordValue"] = settings[consts.SettingsSMTPPassword]
 	data["SMTPFromValue"] = settings[consts.SettingsSMTPFrom]
 	data["SiteURLValue"] = settings[consts.SettingsSiteURL]
+	data["SMTPConfigured"] = smtpConfigFromSettings(settings).Configured()
 	if strings.TrimSpace(settings[consts.SettingsSessionSecret]) != "" {
 		data["SessionSecretConfigured"] = true
 	}
@@ -707,6 +835,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "smtp-test-sent" {
 		data["Notice"] = tr.T("测试邮件已发送，请检查收件箱。")
+	}
+	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
+		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
 	}
 	if u := h.currentUser(c); u != nil {
 		data["CurrentUser"] = u
@@ -814,6 +945,14 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	registrationOpen := c.PostForm("registration_open") == "on"
+	if registrationOpen && !smtpConfigFromStore(h.st).Configured() {
+		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
+			h.serverError(c, err)
+			return
+		}
+		c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "registration-open-requires-smtp"))
+		return
+	}
 	if registrationOpen {
 		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "true"); err != nil {
 			h.serverError(c, err)
@@ -859,6 +998,11 @@ func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 	}
 	for key, value := range settings {
 		if err := h.st.SetSetting(key, value); err != nil {
+			return err
+		}
+	}
+	if !smtpConfigFromSettings(settings).Configured() {
+		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
 			return err
 		}
 	}

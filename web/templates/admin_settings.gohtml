@@ -97,8 +97,15 @@
         </div>
         <label>{{.t.T "博主动态 post_id"}}<input type="number" min="1" name="saying_page_id" value="{{.SayingPageIDValue}}" required></label>
         <p class="tip">{{.t.T "可填写文章或页面的 post_id；侧栏小组件会读取该 post_id 下博主本人发表的评论。"}}</p>
-        <label class="checkbox-label"><input type="checkbox" name="registration_open" {{if .RegistrationOpenValue}}checked{{end}}> {{.t.T "开放注册"}}</label>
-        <p class="tip">{{.t.T "开启后前台显示注册入口，新用户注册后默认为订阅者角色。"}}</p>
+        <div class="inline-setting-row">
+          <span class="inline-setting-title">{{.t.T "开放注册"}}</span>
+          <label class="checkbox-label inline-checkbox"><input type="checkbox" name="registration_open" {{if .RegistrationOpenValue}}checked{{end}} {{if not .SMTPConfigured}}disabled{{end}}> {{.t.T "允许前台注册"}}</label>
+        </div>
+        {{if .SMTPConfigured}}
+        <p class="tip">{{.t.T "开启后前台显示注册入口，新用户需先验证邮箱，完成后默认为订阅者角色。"}}</p>
+        {{else}}
+        <p class="warn-banner">{{.t.T "开放注册需要先配置 SMTP 邮件设置，否则无法发送邮箱验证邮件。"}}</p>
+        {{end}}
         <p><button type="submit" class="btn">{{.t.T "保存站点设置"}}</button></p>
       </form>
     </section>

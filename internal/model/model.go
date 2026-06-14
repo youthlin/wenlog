@@ -42,6 +42,18 @@ type User struct {
 	UpdatedAt        time.Time
 }
 
+// PendingRegistration 保存已提交但尚未验证邮箱的注册请求。
+// 账号只会在邮箱验证并设置密码后创建,避免产生未验证的半成品用户。
+type PendingRegistration struct {
+	ID          uint   `gorm:"primaryKey"`
+	Username    string `gorm:"size:64;index"`
+	Email       string `gorm:"size:128;index"`
+	Token       string `gorm:"uniqueIndex;size:128"`
+	TokenExpiry time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 // Post 既表示文章(post)也表示页面(page),由 PostType 区分。
 type Post struct {
 	// ID 沿用 WordPress 原始 post_id,是永久链接的核心。

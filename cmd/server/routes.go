@@ -45,6 +45,8 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	r.POST("/admin/login", adm.Login)
 	r.GET("/admin/register", adm.RegisterForm)
 	r.POST("/admin/register", adm.Register)
+	r.GET("/admin/register/verify", adm.RegisterVerifyForm)
+	r.POST("/admin/register/verify", adm.RegisterVerify)
 
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")

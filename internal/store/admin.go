@@ -15,6 +15,9 @@ import (
 // ErrLastAdmin 表示操作会导致系统没有任何管理员。
 var ErrLastAdmin = errors.New("at least one admin user is required")
 
+// ErrPendingRegistrationNotFound 表示注册验证链接不存在或已过期。
+var ErrPendingRegistrationNotFound = errors.New("pending registration not found")
+
 func termQueryLike(keyword string) string {
 	return "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
 }
@@ -81,6 +84,78 @@ func (s *Store) UserExistsByUsername(username string, excludeID uint) (bool, err
 	}
 	err := q.Count(&n).Error
 	return n > 0, errors.Wrap(err, "count user by username")
+}
+
+// UserExistsByEmail 检查邮箱是否已被其他用户占用。
+func (s *Store) UserExistsByEmail(email string, excludeID uint) (bool, error) {
+	var n int64
+	q := s.db.Model(&model.User{}).Where("email = ?", email)
+	if excludeID > 0 {
+		q = q.Where("id <> ?", excludeID)
+	}
+	err := q.Count(&n).Error
+	return n > 0, errors.Wrap(err, "count user by email")
+}
+
+// SavePendingRegistration 保存待验证注册请求,同用户名或邮箱的旧请求会被新请求替换。
+func (s *Store) SavePendingRegistration(username, email, token string, expiry time.Time) error {
+	return errors.Wrap(s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("username = ? OR email = ?", username, email).Delete(&model.PendingRegistration{}).Error; err != nil {
+			return err
+		}
+		return tx.Create(&model.PendingRegistration{
+			Username:    username,
+			Email:       email,
+			Token:       token,
+			TokenExpiry: expiry,
+		}).Error
+	}), "save pending registration")
+}
+
+// GetPendingRegistrationByToken 按 token 查询未过期的注册请求。
+func (s *Store) GetPendingRegistrationByToken(token string) (*model.PendingRegistration, error) {
+	var pr model.PendingRegistration
+	err := s.db.Where("token = ? AND token_expiry > ?", token, time.Now()).First(&pr).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrPendingRegistrationNotFound
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "get pending registration")
+	}
+	return &pr, nil
+}
+
+// CompletePendingRegistration 验证 token 后创建订阅者账号并删除待验证请求。
+func (s *Store) CompletePendingRegistration(token, passwordHash string) (*model.User, error) {
+	var out model.User
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var pr model.PendingRegistration
+		if err := tx.Where("token = ? AND token_expiry > ?", token, time.Now()).First(&pr).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrPendingRegistrationNotFound
+			}
+			return err
+		}
+		var count int64
+		if err := tx.Model(&model.User{}).Where("username = ? OR email = ?", pr.Username, pr.Email).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return ErrPendingRegistrationNotFound
+		}
+		out = model.User{
+			Username:     pr.Username,
+			DisplayName:  pr.Username,
+			Email:        pr.Email,
+			PasswordHash: passwordHash,
+			Role:         model.RoleSubscriber,
+		}
+		if err := tx.Create(&out).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&model.PendingRegistration{}, pr.ID).Error
+	})
+	return &out, errors.Wrap(err, "complete pending registration")
 }
 
 // ListUsers 返回全部用户(按显示名/用户名排序),供后台导入等场景选择。

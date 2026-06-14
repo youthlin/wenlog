@@ -168,6 +168,10 @@ func smtpConfigFromStore(st *store.Store) email.Config {
 		consts.SettingsSMTPPassword,
 		consts.SettingsSMTPFrom,
 	)
+	return smtpConfigFromSettings(settings)
+}
+
+func smtpConfigFromSettings(settings map[string]string) email.Config {
 	port := 0
 	if p := settings[consts.SettingsSMTPPort]; p != "" {
 		port, _ = strconv.Atoi(p)

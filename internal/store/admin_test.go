@@ -106,6 +106,48 @@ func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
 	}
 }
 
+func TestPendingRegistrationCreatesUserAfterVerification(t *testing.T) {
+	st := newTestStore(t)
+	expiry := time.Now().Add(time.Hour)
+	if err := st.SavePendingRegistration("newuser", "new@example.com", "token-1", expiry); err != nil {
+		t.Fatalf("save pending registration: %v", err)
+	}
+	pending, err := st.GetPendingRegistrationByToken("token-1")
+	if err != nil {
+		t.Fatalf("get pending registration: %v", err)
+	}
+	if pending.Username != "newuser" || pending.Email != "new@example.com" {
+		t.Fatalf("pending registration = %+v", pending)
+	}
+
+	u, err := st.CompletePendingRegistration("token-1", "hashed-password")
+	if err != nil {
+		t.Fatalf("complete pending registration: %v", err)
+	}
+	if u.Username != "newuser" || u.Email != "new@example.com" || u.Role != model.RoleSubscriber || u.PasswordHash != "hashed-password" {
+		t.Fatalf("created user = %+v", u)
+	}
+	if _, err := st.GetPendingRegistrationByToken("token-1"); !errors.Is(err, ErrPendingRegistrationNotFound) {
+		t.Fatalf("pending registration after complete error = %v, want ErrPendingRegistrationNotFound", err)
+	}
+}
+
+func TestPendingRegistrationReplacesDuplicateRequest(t *testing.T) {
+	st := newTestStore(t)
+	if err := st.SavePendingRegistration("newuser", "new@example.com", "old-token", time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("save old pending registration: %v", err)
+	}
+	if err := st.SavePendingRegistration("newuser", "new@example.com", "new-token", time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("save new pending registration: %v", err)
+	}
+	if _, err := st.GetPendingRegistrationByToken("old-token"); !errors.Is(err, ErrPendingRegistrationNotFound) {
+		t.Fatalf("old token error = %v, want ErrPendingRegistrationNotFound", err)
+	}
+	if _, err := st.GetPendingRegistrationByToken("new-token"); err != nil {
+		t.Fatalf("new token should exist: %v", err)
+	}
+}
+
 func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()
