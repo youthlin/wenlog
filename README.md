@@ -82,14 +82,12 @@ go run ./cmd/server -reset-password "youthlin:你的密码"
 | `BLOG_ADDR` | `:8888` | 监听地址 |
 | `BLOG_DB` | `data/blog.db` | SQLite 路径 |
 | `BLOG_PUBLIC_DIR` | `public` | 静态图片目录(含 wp-content) |
-| `BLOG_SITE_NAME` | `霖博客` | 站点标题 |
-| `BLOG_SESSION_SECRET` | `change-me-in-production` | 启动时的 session secret 默认值; 后续可在后台修改 |
 | `BLOG_LOG_JSON` | `false` | 是否 JSON 日志 |
 
 说明:
 
-- `SiteURL` 不再单独配置, RSS/导出等绝对链接基于当前请求 Host 生成
-- 列表分页数量、Feed 输出数量已改为后台设置项,不再通过环境变量控制
+- 站点标题、规范站点 URL、session secret、列表分页数量、Feed 输出数量均在后台设置页维护
+- RSS/导出等普通绝对链接在未配置规范站点 URL 时会基于当前请求 Host 生成；注册验证、邮箱变更、密码重置等安全邮件必须先配置规范站点 URL
 
 ## 功能
 
@@ -107,7 +105,7 @@ go run ./cmd/server -reset-password "youthlin:你的密码"
 
 ```bash
 go build -o blog ./cmd/server
-BLOG_SESSION_SECRET=$(openssl rand -hex 16) ./blog
+./blog
 ```
 
 模板与 css/js 已通过 `embed` 打包进二进制,无需随附。

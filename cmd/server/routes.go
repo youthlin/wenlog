@@ -6,6 +6,7 @@ import (
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/blog/internal/store"
 )
 
 // registerPublicRoutes 注册前台路由。
@@ -40,7 +41,7 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 }
 
 // registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。
-func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
+func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store) {
 	r.GET("/admin/login", adm.LoginForm)
 	r.POST("/admin/login", adm.Login)
 	r.GET("/admin/register", adm.RegisterForm)
@@ -50,13 +51,13 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")
-	g.Use(middleware.AuthRequired(), middleware.CSRFMiddleware())
+	g.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
 	g.GET("/", adm.Dashboard) // 工作台
 	g.POST("/logout", adm.Logout)
 
 	// 个人资料(所有角色可访问)。
 	profileGroup := r.Group("/admin")
-	profileGroup.Use(middleware.AuthRequired(), middleware.CSRFMiddleware())
+	profileGroup.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
 	profileGroup.GET("/profile", adm.ProfilePage)
 	profileGroup.POST("/profile", adm.SaveProfileSettings)
 	profileGroup.GET("/profile/email/verify", adm.VerifyProfileEmail)
@@ -70,7 +71,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 
 	// admin + author: 内容管理。
 	contentGroup := r.Group("/admin")
-	contentGroup.Use(middleware.AuthRequired(), middleware.CSRFMiddleware(),
+	contentGroup.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware(),
 		middleware.RequireRole(model.RoleAdmin, model.RoleAuthor))
 	contentGroup.GET("/posts", adm.ListPosts)
 	contentGroup.GET("/post/new", adm.EditPostForm)
@@ -95,7 +96,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 
 	// admin only: 设置、工具、用户管理。
 	adminGroup := r.Group("/admin")
-	adminGroup.Use(middleware.AuthRequired(), middleware.CSRFMiddleware(),
+	adminGroup.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware(),
 		middleware.RequireRole(model.RoleAdmin))
 	adminGroup.GET("/settings", adm.SettingsPage)
 	adminGroup.GET("/settings/developer", adm.DeveloperSettingsPage)
@@ -103,6 +104,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.POST("/settings/smtp", adm.SaveSMTPSettings)
 	adminGroup.POST("/settings/smtp/test", adm.TestSMTPSettings)
 	adminGroup.POST("/settings/session", adm.SaveSessionSettings)
+	adminGroup.POST("/settings/metrics", adm.SaveMetricsAuthSettings)
 	adminGroup.POST("/settings/assets/release", adm.ReleaseAssets)
 	adminGroup.POST("/settings/assets/embed", adm.UseEmbeddedAssets)
 	adminGroup.POST("/settings/i18n/release", adm.ReleaseI18n)

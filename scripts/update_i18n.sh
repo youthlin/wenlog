@@ -17,6 +17,7 @@ require_cmd xgettext
 require_cmd msgcat
 require_cmd msguniq
 require_cmd msgmerge
+require_cmd msgattrib
 require_cmd go
 require_cmd python3
 require_cmd git
@@ -37,6 +38,9 @@ mapfile -t ALL_GO_FILES < <(cd "$ROOT_DIR" && git ls-files --cached --others --e
 GO_FILES=()
 for file in "${ALL_GO_FILES[@]}"; do
   if [[ "$file" == *_test.go ]]; then
+    continue
+  fi
+  if ! grep -Eq '(^|[^[:alnum:]_])(gettext\.Mark\.)?(T|N|N64|X|XN|XN64)\(' "$ROOT_DIR/$file"; then
     continue
   fi
   GO_FILES+=("$file")
@@ -110,6 +114,9 @@ for po in "${PO_FILES[@]}"; do
     "$po"
   cp "$normalized_po" "$po"
   msgmerge --update --backup=none "$po" "$MERGED_POT"
+  # 删除 obsolete 条目，避免同一 msgid 被重新抽取后与历史 #~ 条目重复，
+  # 进而导致 msgfmt --check-format 报 duplicate message definition。
+  msgattrib --no-obsolete --output-file="$po" "$po"
 done
 
 python3 - "$MERGED_POT" <<'PY'

@@ -20,6 +20,7 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/cockroachdb/errors"
 	ginrender "github.com/gin-gonic/gin/render"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/wxr"
@@ -189,20 +190,31 @@ func (r *Renderer) Instance(name string, data any) ginrender.Render {
 func listHTML(p *model.Post) template.HTML {
 	above, hasMore := wxr.SplitMore(p.Content)
 	if hasMore {
-		return template.HTML(HighlightCodeBlocks(above))
+		return template.HTML(HighlightCodeBlocks(SanitizeHTML(above)))
 	}
 	if p.Excerpt != "" {
-		return template.HTML(HighlightCodeBlocks(p.Excerpt))
+		return template.HTML(HighlightCodeBlocks(SanitizeHTML(p.Excerpt)))
 	}
-	return template.HTML(HighlightCodeBlocks(p.Content))
+	return template.HTML(HighlightCodeBlocks(SanitizeHTML(p.Content)))
 }
 
 // detailHTML 返回详情页完整正文,把 <!--more--> 替换为锚点。
 func detailHTML(p *model.Post) template.HTML {
-	return template.HTML(HighlightCodeBlocks(wxr.RenderDetail(p.Content, p.ID)))
+	return template.HTML(HighlightCodeBlocks(SanitizeHTML(wxr.RenderDetail(p.Content, p.ID))))
 }
 
 var fencedCodeRe = regexp.MustCompile(`(?s)<pre><code(?: class="language-([^"]+)")?>(.*?)</code></pre>`)
+
+var htmlSanitizer = func() *bluemonday.Policy {
+	p := bluemonday.UGCPolicy()
+	p.AllowAttrs("class").Matching(regexp.MustCompile(`^language-[A-Za-z0-9_+.-]+$`)).OnElements("code")
+	return p
+}()
+
+// SanitizeHTML 清理用户可编辑/导入的正文 HTML,保留常见富文本但移除脚本与事件属性。
+func SanitizeHTML(src string) string {
+	return htmlSanitizer.Sanitize(src)
+}
 
 // HighlightCodeBlocks 为 HTML 中的 <pre><code> 做服务端高亮与行号输出。
 func HighlightCodeBlocks(src string) string {

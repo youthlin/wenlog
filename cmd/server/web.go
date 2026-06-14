@@ -93,8 +93,8 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	assetLocalFS := assetFS()
 	r.StaticFS("/assets", assetLocalFS)
 
-	// 监控与健康检查
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	// 监控与健康检查。/metrics 使用后台可配置密码保护,避免公网暴露指标。
+	r.GET("/metrics", middleware.MetricsBasicAuth(st), gin.WrapH(promhttp.Handler()))
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 
 	// 前台
@@ -103,7 +103,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 
 	// 后台
 	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS)
-	registerAdminRoutes(r, adm)
+	registerAdminRoutes(r, adm, st)
 	return r
 }
 

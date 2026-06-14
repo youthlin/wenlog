@@ -13,7 +13,7 @@
     <span class="stat-value">{{.Stats.PostsPublished}}</span>
     <span class="stat-label">{{.t.T "已发布文章"}}</span>
     {{- if gt .Stats.PostsDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "" .Stats.PostsDraft .Stats.PostsDraft}}</span>
+    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .Stats.PostsDraft .Stats.PostsDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/posts?type=page">
@@ -66,7 +66,7 @@
     <span class="stat-value">{{.AuthorStats.PostsPublished}}</span>
     <span class="stat-label">{{.t.T "我的已发布文章"}}</span>
     {{- if gt .AuthorStats.PostsDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "" .AuthorStats.PostsDraft .AuthorStats.PostsDraft}}</span>
+    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .AuthorStats.PostsDraft .AuthorStats.PostsDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/posts?type=page">
@@ -135,7 +135,7 @@
       <li>
         {{- $postURL := index $.CommentPostURLs .PostID}}
         {{- $postTitle := index $.CommentPostTitles .PostID}}
-        <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{safeHTML .Content}}</a>
+        <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{.Content}}</a>
         <span class="dashboard-list-meta">
           {{.Author}} {{$.t.T "发表在"}}
           {{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}

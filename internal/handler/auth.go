@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -61,9 +62,16 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	// 发送重置邮件
+	// 发送重置邮件。安全邮件必须使用后台配置的规范站点 URL,避免 Host Header Poisoning 泄露 token。
 	smtpCfg := h.loadSMTPConfig()
-	siteURL := h.loadSiteURL(c)
+	siteURL, ok := h.loadConfiguredSiteURL()
+	if !ok {
+		_ = h.st.ClearResetToken(u.ID)
+		data := h.base(c, tr.T("忘记密码"), "", s)
+		data["Error"] = tr.T("站点 URL 未配置，无法发送安全重置链接，请联系管理员。")
+		c.HTML(http.StatusInternalServerError, "auth_forgot_password.gohtml", data)
+		return
+	}
 	resetURL := strings.TrimRight(siteURL, "/") + "/reset-password?token=" + token
 	body := tr.T("您好 %s，\n\n请点击以下链接重置密码（1 小时内有效）：\n\n%s\n\n如果您没有请求重置密码，请忽略此邮件。\n", u.DisplayName, resetURL)
 	subject := tr.T("[%s] 密码重置", s.SiteName)
@@ -190,9 +198,25 @@ func (h *Public) loadSiteURL(c *gin.Context) string {
 	return siteURLFromRequest(h.st, c)
 }
 
-func siteURLFromRequest(st *store.Store, c *gin.Context) string {
+func (h *Public) loadConfiguredSiteURL() (string, bool) {
+	return configuredSiteURL(h.st)
+}
+
+func configuredSiteURL(st *store.Store) (string, bool) {
 	settings, _ := st.GetSettings(consts.SettingsSiteURL)
-	if u := strings.TrimSpace(settings[consts.SettingsSiteURL]); u != "" {
+	u := strings.TrimSpace(settings[consts.SettingsSiteURL])
+	if u == "" {
+		return "", false
+	}
+	parsed, err := url.Parse(u)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return "", false
+	}
+	return strings.TrimRight(u, "/"), true
+}
+
+func siteURLFromRequest(st *store.Store, c *gin.Context) string {
+	if u, ok := configuredSiteURL(st); ok {
 		return u
 	}
 	scheme := "http"

@@ -24,6 +24,8 @@ const (
 	SettingsSayingPageIDDefault = 456
 	// 会话密钥
 	SettingsSessionSecret = "session_secret"
+	// Metrics Basic Auth 密码,用户名固定为 metrics。
+	SettingsMetricsAuthPassword = "metrics_auth_password"
 	// 是否开放注册
 	SettingsRegistrationOpen = "registration_open"
 	// SMTP 邮件配置

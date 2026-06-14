@@ -197,7 +197,7 @@ func (s *Store) CompletePendingEmailChange(userID uint, token string) (*model.Us
 		if count > 0 {
 			return ErrPendingEmailChangeNotFound
 		}
-		if err := tx.Model(&model.User{}).Where("id = ?", userID).Update("email", pending.Email).Error; err != nil {
+		if err := tx.Model(&model.User{}).Where("id = ?", userID).Updates(map[string]any{"email": pending.Email, "session_version": gorm.Expr("session_version + 1")}).Error; err != nil {
 			return err
 		}
 		if err := tx.Delete(&model.PendingEmailChange{}, pending.ID).Error; err != nil {
@@ -242,6 +242,7 @@ func (s *Store) UpsertUserPassword(username, displayName, passwordHash string) e
 		return errors.Wrapf(err, "查询用户失败, username=%s", username)
 	}
 	u.PasswordHash = passwordHash
+	u.SessionVersion++
 	if displayName != "" {
 		u.DisplayName = displayName
 	}
@@ -252,7 +253,7 @@ func (s *Store) UpsertUserPassword(username, displayName, passwordHash string) e
 // SetUserPassword 仅更新已存在用户的密码(按 username)。用户不存在时返回错误。
 func (s *Store) SetUserPassword(username, passwordHash string) error {
 	result := s.db.Model(&model.User{}).Where("username = ?", username).
-		Update("password_hash", passwordHash)
+		Updates(map[string]any{"password_hash": passwordHash, "session_version": gorm.Expr("session_version + 1")})
 	if result.Error != nil {
 		return errors.Wrapf(result.Error, "set user password, username=%s", username)
 	}
@@ -276,10 +277,24 @@ func (s *Store) CreateUser(username, displayName, email, passwordHash, role stri
 
 // UpdateUserProfile 更新用户用户名、显示名与邮箱。
 func (s *Store) UpdateUserProfile(id uint, username, displayName, email string) error {
+	return errors.Wrap(s.db.Transaction(func(tx *gorm.DB) error {
+		var u model.User
+		if err := tx.Select("id", "email").First(&u, id).Error; err != nil {
+			return err
+		}
+		updates := map[string]any{"username": username, "display_name": displayName, "email": email}
+		if !strings.EqualFold(strings.TrimSpace(u.Email), strings.TrimSpace(email)) {
+			updates["session_version"] = gorm.Expr("session_version + 1")
+		}
+		return tx.Model(&model.User{}).Where("id = ?", id).Updates(updates).Error
+	}), "update user profile")
+}
+
+// TouchUserSessionVersion 递增用户会话版本,使该用户既有登录态失效。
+func (s *Store) TouchUserSessionVersion(id uint) error {
 	return errors.Wrap(
-		s.db.Model(&model.User{}).Where("id = ?", id).
-			Updates(map[string]any{"username": username, "display_name": displayName, "email": email}).Error,
-		"update user profile")
+		s.db.Model(&model.User{}).Where("id = ?", id).Update("session_version", gorm.Expr("session_version + 1")).Error,
+		"touch user session version")
 }
 
 // PageSlugExists 检查页面 slug 是否已被其他页面占用。
@@ -308,7 +323,7 @@ func (s *Store) PostSlugExists(slug string, excludeID uint) (bool, error) {
 func (s *Store) UpdateUserPassword(id uint, passwordHash string) error {
 	return errors.Wrap(
 		s.db.Model(&model.User{}).Where("id = ?", id).
-			Update("password_hash", passwordHash).Error,
+			Updates(map[string]any{"password_hash": passwordHash, "session_version": gorm.Expr("session_version + 1")}).Error,
 		"update user password")
 }
 
@@ -397,7 +412,15 @@ func (s *Store) CountPosts() (int64, error) {
 
 // AdminListPosts 返回某类型的全部文章/页面(不限状态),用于后台列表。
 func (s *Store) AdminListPosts(postType string, page, pageSize int, categoryID, tagID uint, keyword string) ([]model.Post, int64, error) {
+	return s.AdminListPostsForAuthor(postType, page, pageSize, categoryID, tagID, keyword, 0)
+}
+
+// AdminListPostsForAuthor 返回后台文章/页面列表;authorID 非 0 时仅返回该作者内容。
+func (s *Store) AdminListPostsForAuthor(postType string, page, pageSize int, categoryID, tagID uint, keyword string, authorID uint) ([]model.Post, int64, error) {
 	q := s.db.Model(&model.Post{}).Where("post_type = ?", postType)
+	if authorID > 0 {
+		q = q.Where("author_id = ?", authorID)
+	}
 	if categoryID > 0 {
 		q = q.Joins("JOIN post_categories pc_admin ON pc_admin.post_id = posts.id").Where("pc_admin.category_id = ?", categoryID)
 	}
@@ -652,7 +675,15 @@ func (s *Store) DeleteTag(id uint) error {
 
 // AdminListComments 按状态返回评论(分页)。status 为空返回全部。postID 为 0 时不按文章过滤。
 func (s *Store) AdminListComments(status string, postID uint, page, pageSize int) ([]model.Comment, int64, error) {
+	return s.AdminListCommentsForAuthor(status, postID, page, pageSize, 0)
+}
+
+// AdminListCommentsForAuthor 按状态返回评论;authorID 非 0 时仅返回该作者文章下的评论。
+func (s *Store) AdminListCommentsForAuthor(status string, postID uint, page, pageSize int, authorID uint) ([]model.Comment, int64, error) {
 	q := s.db.Model(&model.Comment{})
+	if authorID > 0 {
+		q = q.Joins("JOIN posts ON posts.id = comments.post_id").Where("posts.author_id = ?", authorID)
+	}
 	if status != "" {
 		q = q.Where("status = ?", status)
 	}
@@ -932,7 +963,15 @@ func (s *Store) SaveUpload(u *model.Upload) error {
 
 // ListUploads 分页返回上传文件(最新在前)。
 func (s *Store) ListUploads(page, pageSize int) ([]model.Upload, int64, error) {
+	return s.ListUploadsForUser(page, pageSize, 0)
+}
+
+// ListUploadsForUser 分页返回上传文件;uploaderID 非 0 时仅返回该用户上传的文件。
+func (s *Store) ListUploadsForUser(page, pageSize int, uploaderID uint) ([]model.Upload, int64, error) {
 	q := s.db.Model(&model.Upload{})
+	if uploaderID > 0 {
+		q = q.Where("uploader_id = ?", uploaderID)
+	}
 	var total int64
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, errors.Wrap(err, "count uploads")
@@ -988,7 +1027,7 @@ func (s *Store) UpdateUserRole(id uint, role string) error {
 			}
 		}
 		return errors.Wrap(
-			tx.Model(&model.User{}).Where("id = ?", id).Update("role", role).Error,
+			tx.Model(&model.User{}).Where("id = ?", id).Updates(map[string]any{"role": role, "session_version": gorm.Expr("session_version + 1")}).Error,
 			"update user role")
 	})
 }

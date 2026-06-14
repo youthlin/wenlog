@@ -36,6 +36,7 @@ type User struct {
 	DisplayName      string `gorm:"size:128"`
 	Email            string `gorm:"size:128;index"`
 	Role             string `gorm:"size:16;default:subscriber"`
+	SessionVersion   int64  `gorm:"default:0"`
 	ResetToken       string `gorm:"size:128;index"`
 	ResetTokenExpiry time.Time
 	CreatedAt        time.Time

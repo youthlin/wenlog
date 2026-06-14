@@ -3,14 +3,21 @@
 package middleware
 
 import (
+	"crypto/subtle"
 	"log/slog"
+	"net/http"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/youthlin/blog/internal/consts"
+	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/util"
 )
 
 var (
@@ -40,6 +47,34 @@ func Metrics() gin.HandlerFunc {
 		reqDuration.WithLabelValues(c.Request.Method, path, status).
 			Observe(time.Since(start).Seconds())
 	}
+}
+
+// MetricsBasicAuth 用固定用户名 metrics 和后台设置的密码保护 /metrics。
+func MetricsBasicAuth(st *store.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		password := metricsPassword(st)
+		user, pass, ok := c.Request.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte("metrics")) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
+			c.Header("WWW-Authenticate", `Basic realm="metrics"`)
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		c.Next()
+	}
+}
+
+func metricsPassword(st *store.Store) string {
+	if st == nil {
+		return util.GenerateRandomString(32)
+	}
+	password, _ := st.GetSetting(consts.SettingsMetricsAuthPassword)
+	password = strings.TrimSpace(password)
+	if password != "" {
+		return password
+	}
+	password = util.GenerateRandomString(24, util.WithAlphaNumer())
+	_ = st.SetSetting(consts.SettingsMetricsAuthPassword, password)
+	return password
 }
 
 // Logger 输出结构化访问日志。

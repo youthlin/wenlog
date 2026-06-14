@@ -73,6 +73,18 @@
       </form>
       {{end}}
     </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "Metrics 访问设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/metrics">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "/metrics 端点使用 Basic Auth 保护。用户名固定为 metrics，密码可在这里查看和修改。"}}</p>
+        <label>{{.t.T "Metrics 用户名"}}<input type="text" name="metrics_auth_username" value="{{.MetricsAuthUsernameValue}}" readonly></label>
+        <label>{{.t.T "Metrics 密码"}}<input type="text" name="metrics_auth_password" value="{{.MetricsAuthPasswordValue}}" minlength="12" required autocomplete="new-password"></label>
+        <p class="tip">{{.t.T "Prometheus 抓取时请使用 Basic Auth：用户名 metrics，密码为上方配置值。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存 Metrics 密码"}}</button></p>
+      </form>
+    </section>
   </div>
 </div>
 {{else}}
