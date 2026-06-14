@@ -1885,6 +1885,7 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 	data["TagsPageURL"] = termsPageURL("tag")
 	data["CategoryParents"] = categoryParentNames(cats)
 	data["CategoryParentOptions"] = cats
+	data["CategoryCanDelete"] = categoryCanDelete(cats)
 	data["CategoryForm"] = model.Category{}
 	data["CategoryPostListURLs"] = categoryPostListURLs(cats)
 	data["CategoryPublicURLs"] = categoryPublicURLs(cats)
@@ -1953,7 +1954,10 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 		data["Notice"] = tr.T("分类已保存。")
 	}
 	if c.Query("message") == "category-deleted" {
-		data["Notice"] = tr.T("分类已删除。")
+		data["Notice"] = tr.T("分类已删除，文章已迁移到父分类或未分类。")
+	}
+	if c.Query("message") == "category-delete-blocked" {
+		data["Error"] = tr.T("未分类是默认分类，不能删除。")
 	}
 	if editID := atoiDefault(c.Query("edit_category"), 0); editID > 0 {
 		for _, cat := range cats {
@@ -2052,6 +2056,10 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 func (h *Admin) DeleteCategory(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err := h.st.DeleteCategory(uint(id)); err != nil {
+		if errors.Is(err, store.ErrCannotDeleteUncategorized) {
+			c.Redirect(http.StatusSeeOther, termsRedirectURL("category", "category-delete-blocked"))
+			return
+		}
 		h.serverError(c, err)
 		return
 	}
@@ -2117,7 +2125,8 @@ func (h *Admin) EditPostForm(c *gin.Context) {
 	pt := c.DefaultQuery("type", model.PostTypePost)
 	data := h.base(c, tr.T("内容管理"))
 	data["PostType"] = pt
-	data["AllCategories"] = h.st.AllCategories()
+	allCategories := h.st.AllCategories()
+	data["AllCategories"] = allCategories
 	data["SelectedCats"] = map[uint]bool{}
 	data["TagsCSV"] = ""
 	if idStr := c.Param("id"); idStr != "" && idStr != "new" {
@@ -2141,6 +2150,8 @@ func (h *Admin) EditPostForm(c *gin.Context) {
 			tagNames = append(tagNames, t.Name)
 		}
 		data["TagsCSV"] = strings.Join(tagNames, ", ")
+	} else if pt == model.PostTypePost {
+		data["SelectedCats"] = defaultCategorySelection(allCategories)
 	}
 	c.HTML(http.StatusOK, "admin_post_edit.gohtml", data)
 }
@@ -2174,6 +2185,19 @@ func (h *Admin) SavePost(c *gin.Context) {
 	if f.Status != model.StatusDraft {
 		f.Status = model.StatusPublished
 	}
+	allCategories := h.st.AllCategories()
+	if f.PostType == model.PostTypePost && !hasSelectedCategory(f.CategoryIDs, allCategories) {
+		data := h.base(c, tr.T("内容管理"))
+		data["Error"] = tr.T("请至少选择一个分类目录。")
+		data["PostType"] = f.PostType
+		data["AllCategories"] = allCategories
+		data["SelectedCats"] = selectedCats(f.CategoryIDs)
+		data["TagsCSV"] = f.Tags
+		data["Post"] = &model.Post{ID: f.ID, Title: strings.TrimSpace(f.Title), Slug: strings.TrimSpace(f.Slug), ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
+		data["IsEdit"] = f.ID > 0
+		c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+		return
+	}
 
 	now := time.Now()
 	var p *model.Post
@@ -2200,7 +2224,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 			data := h.base(c, tr.T("内容管理"))
 			data["Error"] = err.Error()
 			data["PostType"] = f.PostType
-			data["AllCategories"] = h.st.AllCategories()
+			data["AllCategories"] = allCategories
 			data["SelectedCats"] = map[uint]bool{}
 			data["TagsCSV"] = f.Tags
 			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
@@ -2217,7 +2241,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 			data := h.base(c, tr.T("内容管理"))
 			data["Error"] = tr.T("页面链接 /%s 已存在，请换一个 slug。", p.Slug)
 			data["PostType"] = f.PostType
-			data["AllCategories"] = h.st.AllCategories()
+			data["AllCategories"] = allCategories
 			data["SelectedCats"] = map[uint]bool{}
 			data["TagsCSV"] = f.Tags
 			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
@@ -2234,7 +2258,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 			data := h.base(c, tr.T("内容管理"))
 			data["Error"] = err.Error()
 			data["PostType"] = f.PostType
-			data["AllCategories"] = h.st.AllCategories()
+			data["AllCategories"] = allCategories
 			data["SelectedCats"] = selectedCats(f.CategoryIDs)
 			data["TagsCSV"] = f.Tags
 			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
@@ -2251,7 +2275,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 			data := h.base(c, tr.T("内容管理"))
 			data["Error"] = tr.T("文章 slug %q 已存在，请换一个。", p.Slug)
 			data["PostType"] = f.PostType
-			data["AllCategories"] = h.st.AllCategories()
+			data["AllCategories"] = allCategories
 			data["SelectedCats"] = selectedCats(f.CategoryIDs)
 			data["TagsCSV"] = f.Tags
 			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
@@ -2326,12 +2350,51 @@ func normalizeTermSlug(s string) string {
 	return strings.Trim(b.String(), "-")
 }
 
+func defaultCategorySelection(categories []model.Category) map[uint]bool {
+	out := map[uint]bool{}
+	if len(categories) == 0 {
+		return out
+	}
+	for _, cat := range categories {
+		if cat.Slug == "uncategorized" {
+			out[cat.ID] = true
+			return out
+		}
+	}
+	out[categories[0].ID] = true
+	return out
+}
+
+func hasSelectedCategory(selected []uint, categories []model.Category) bool {
+	if len(selected) == 0 || len(categories) == 0 {
+		return false
+	}
+	valid := make(map[uint]bool, len(categories))
+	for _, cat := range categories {
+		valid[cat.ID] = true
+	}
+	for _, id := range selected {
+		if valid[id] {
+			return true
+		}
+	}
+	return false
+}
+
 func categoryParentNames(categories []model.Category) map[uint]string {
 	byID := make(map[uint]string, len(categories))
 	for _, cat := range categories {
 		byID[cat.ID] = cat.Name
 	}
 	return byID
+}
+
+func categoryCanDelete(categories []model.Category) map[uint]bool {
+	out := make(map[uint]bool, len(categories))
+	for _, cat := range categories {
+		out[cat.ID] = cat.Slug != "uncategorized"
+	}
+	return out
 }
 
 func (h *Admin) termsFormError(c *gin.Context, section, msg string, cat model.Category, tag model.Tag, editingCategory, editingTag bool) {

@@ -214,6 +214,79 @@ func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
 	}
 }
 
+func TestDeleteCategoryMovesPostsToParent(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	parent := model.Category{ID: 1, Name: "Parent", Slug: "parent"}
+	child := model.Category{ID: 2, Name: "Child", Slug: "child", ParentID: parent.ID}
+	post := model.Post{ID: 10, Title: "Post", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()}
+	if err := db.Create(&parent).Error; err != nil {
+		t.Fatalf("seed parent: %v", err)
+	}
+	if err := db.Create(&child).Error; err != nil {
+		t.Fatalf("seed child: %v", err)
+	}
+	if err := db.Create(&post).Error; err != nil {
+		t.Fatalf("seed post: %v", err)
+	}
+	if err := db.Model(&post).Association("Categories").Replace([]model.Category{child}); err != nil {
+		t.Fatalf("seed post category: %v", err)
+	}
+
+	if err := st.DeleteCategory(child.ID); err != nil {
+		t.Fatalf("DeleteCategory: %v", err)
+	}
+	loaded, err := st.AdminGetPost(post.ID)
+	if err != nil {
+		t.Fatalf("load post: %v", err)
+	}
+	if len(loaded.Categories) != 1 || loaded.Categories[0].ID != parent.ID {
+		t.Fatalf("categories after delete = %+v, want parent", loaded.Categories)
+	}
+}
+
+func TestDeleteCategoryMovesPostsToUncategorizedWithoutParent(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	uncategorized := model.Category{ID: 1, Name: "未分类", Slug: "uncategorized"}
+	cat := model.Category{ID: 2, Name: "Go", Slug: "go"}
+	post := model.Post{ID: 10, Title: "Post", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()}
+	for _, c := range []model.Category{uncategorized, cat} {
+		if err := db.Create(&c).Error; err != nil {
+			t.Fatalf("seed category: %v", err)
+		}
+	}
+	if err := db.Create(&post).Error; err != nil {
+		t.Fatalf("seed post: %v", err)
+	}
+	if err := db.Model(&post).Association("Categories").Replace([]model.Category{cat}); err != nil {
+		t.Fatalf("seed post category: %v", err)
+	}
+
+	if err := st.DeleteCategory(cat.ID); err != nil {
+		t.Fatalf("DeleteCategory: %v", err)
+	}
+	loaded, err := st.AdminGetPost(post.ID)
+	if err != nil {
+		t.Fatalf("load post: %v", err)
+	}
+	if len(loaded.Categories) != 1 || loaded.Categories[0].Slug != "uncategorized" {
+		t.Fatalf("categories after delete = %+v, want uncategorized", loaded.Categories)
+	}
+}
+
+func TestDeleteCategoryRejectsUncategorized(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	uncategorized := model.Category{ID: 1, Name: "未分类", Slug: "uncategorized"}
+	if err := db.Create(&uncategorized).Error; err != nil {
+		t.Fatalf("seed uncategorized: %v", err)
+	}
+	if err := st.DeleteCategory(uncategorized.ID); !errors.Is(err, ErrCannotDeleteUncategorized) {
+		t.Fatalf("DeleteCategory error = %v, want ErrCannotDeleteUncategorized", err)
+	}
+}
+
 func TestPageSlugExists(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()

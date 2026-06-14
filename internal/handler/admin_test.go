@@ -102,6 +102,27 @@ func TestNormalizeTermSlug(t *testing.T) {
 	}
 }
 
+func TestDefaultCategorySelectionPrefersUncategorized(t *testing.T) {
+	cats := []model.Category{
+		{ID: 2, Name: "Go", Slug: "go"},
+		{ID: 3, Name: "未分类", Slug: "uncategorized"},
+	}
+	selected := defaultCategorySelection(cats)
+	if !selected[3] || selected[2] {
+		t.Fatalf("defaultCategorySelection=%v, want only uncategorized selected", selected)
+	}
+}
+
+func TestHasSelectedCategoryRequiresExistingCategory(t *testing.T) {
+	cats := []model.Category{{ID: 2, Name: "Go", Slug: "go"}}
+	if !hasSelectedCategory([]uint{2}, cats) {
+		t.Fatal("existing selected category should be valid")
+	}
+	if hasSelectedCategory([]uint{9}, cats) {
+		t.Fatal("unknown selected category should be invalid")
+	}
+}
+
 func TestSpecialPageFallsBackWithoutStoredPage(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := &Public{}

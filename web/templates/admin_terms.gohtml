@@ -104,10 +104,14 @@
           <td class="term-parent-cell" data-label="{{$.t.T "父分类"}}"><span class="term-meta-text">{{if .ParentID}}{{index $.CategoryParents .ParentID}}{{else}}-{{end}}</span></td>
           <td class="term-count-cell" data-label="{{$.t.T "文章"}}"><a class="term-count-link" href="{{index $.CategoryPostListURLs .ID}}">{{.PostCount}}</a></td>
           <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
-            <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？"}}')">
+            {{if index $.CategoryCanDelete .ID}}
+            <form class="inline" method="post" action="/admin/category/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该分类吗？该分类下的文章会迁移到父分类；没有父分类时会迁移到未分类。"}}')">
               {{template "csrf_field" $}}
               <button type="submit" class="link-danger term-action-link">{{$.t.T "删除"}}</button>
             </form>
+            {{else}}
+            <span class="term-meta-text">{{$.t.T "默认分类不可删除"}}</span>
+            {{end}}
           </td>
         </tr>
         {{else}}

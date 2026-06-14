@@ -21,6 +21,9 @@ var ErrPendingRegistrationNotFound = errors.New("pending registration not found"
 // ErrPendingEmailChangeNotFound 表示邮箱变更验证链接不存在或已过期。
 var ErrPendingEmailChangeNotFound = errors.New("pending email change not found")
 
+// ErrCannotDeleteUncategorized 表示不允许删除兜底分类。
+var ErrCannotDeleteUncategorized = errors.New("cannot delete uncategorized category")
+
 func termQueryLike(keyword string) string {
 	return "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
 }
@@ -561,10 +564,49 @@ func (s *Store) SaveTag(tag *model.Tag) error {
 	return errors.Wrap(s.db.Save(tag).Error, "save tag")
 }
 
-// DeleteCategory 删除分类并清理关联与子分类父级。
+// DeleteCategory 删除分类:兜底分类不可删;文章迁移到父分类,没有父分类则迁移到“未分类”。
 func (s *Store) DeleteCategory(id uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.Category{}).Where("parent_id = ?", id).Update("parent_id", 0).Error; err != nil {
+		var cat model.Category
+		if err := tx.First(&cat, id).Error; err != nil {
+			return errors.Wrap(err, "load category")
+		}
+		if cat.Slug == "uncategorized" {
+			return ErrCannotDeleteUncategorized
+		}
+
+		fallbackID := cat.ParentID
+		if fallbackID > 0 {
+			var n int64
+			if err := tx.Model(&model.Category{}).Where("id = ?", fallbackID).Count(&n).Error; err != nil {
+				return errors.Wrap(err, "count parent category")
+			}
+			if n == 0 {
+				fallbackID = 0
+			}
+		}
+		if fallbackID == 0 {
+			fallback, err := ensureUncategorizedCategory(tx)
+			if err != nil {
+				return err
+			}
+			fallbackID = fallback.ID
+		}
+
+		if fallbackID != id {
+			if err := tx.Exec(`
+				INSERT INTO post_categories (post_id, category_id)
+				SELECT pc.post_id, ?
+				FROM post_categories pc
+				WHERE pc.category_id = ?
+				  AND NOT EXISTS (
+				    SELECT 1 FROM post_categories existing
+				    WHERE existing.post_id = pc.post_id AND existing.category_id = ?
+				  )`, fallbackID, id, fallbackID).Error; err != nil {
+				return errors.Wrap(err, "move category relations")
+			}
+		}
+		if err := tx.Model(&model.Category{}).Where("parent_id = ?", id).Update("parent_id", fallbackID).Error; err != nil {
 			return errors.Wrap(err, "detach child categories")
 		}
 		if err := tx.Exec("DELETE FROM post_categories WHERE category_id = ?", id).Error; err != nil {
@@ -575,6 +617,22 @@ func (s *Store) DeleteCategory(id uint) error {
 		}
 		return nil
 	})
+}
+
+func ensureUncategorizedCategory(tx *gorm.DB) (*model.Category, error) {
+	var cat model.Category
+	err := tx.Where("slug = ?", "uncategorized").First(&cat).Error
+	if err == nil {
+		return &cat, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, errors.Wrap(err, "find uncategorized category")
+	}
+	cat = model.Category{Name: "未分类", Slug: "uncategorized"}
+	if err := tx.Create(&cat).Error; err != nil {
+		return nil, errors.Wrap(err, "create uncategorized category")
+	}
+	return &cat, nil
 }
 
 // DeleteTag 删除标签并清理文章关联。

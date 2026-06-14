@@ -170,6 +170,67 @@
     };
   }
 
+  function normalizeSlug(text, mode) {
+    var value = String(text || "").trim().toLowerCase();
+    var out = "";
+    var pendingDash = false;
+    for (var i = 0; i < value.length; i++) {
+      var ch = value.charAt(i);
+      if (/\s/.test(ch)) {
+        pendingDash = out.length > 0;
+        continue;
+      }
+      if (ch === "-" || ch === "_" || (mode === "page" && ch === ".") || /[a-z0-9]/.test(ch) || /[\p{L}\p{N}]/u.test(ch)) {
+        if (pendingDash && out.charAt(out.length - 1) !== "-" && ch !== "-" && ch !== "_") out += "-";
+        out += ch;
+        pendingDash = false;
+      }
+    }
+    out = out.replace(/^-+|-+$/g, "");
+    if (mode === "page") out = out.replace(/^[^a-z0-9]+/i, "");
+    return out;
+  }
+
+  function initSlugSync() {
+    var title = document.querySelector("[data-slug-source]");
+    var slug = document.querySelector("[data-slug-target]");
+    if (!title || !slug) return;
+    var mode = slug.getAttribute("data-slug-mode") || "post";
+    var auto = !slug.value;
+    slug.addEventListener("input", function () { auto = !slug.value; });
+    title.addEventListener("input", function () {
+      if (!auto) return;
+      slug.value = normalizeSlug(title.value, mode);
+      triggerInput(slug);
+    });
+    slug.addEventListener("blur", function () {
+      var normalized = normalizeSlug(slug.value, mode);
+      if (normalized !== slug.value) {
+        slug.value = normalized;
+        triggerInput(slug);
+      }
+    });
+  }
+
+  function initCategoryRequired() {
+    var box = document.querySelector("[data-category-required]");
+    if (!box) return;
+    var form = box.closest("form");
+    var message = box.getAttribute("data-category-required-message") || "Please select at least one category.";
+    var inputs = Array.prototype.slice.call(box.querySelectorAll('input[name="category_ids"]'));
+    if (!form || inputs.length === 0) return;
+    function setValidity() {
+      var checked = inputs.some(function (input) { return input.checked; });
+      inputs[0].setCustomValidity(checked ? "" : message);
+    }
+    inputs.forEach(function (input) { input.addEventListener("change", setValidity); });
+    form.addEventListener("submit", function () {
+      setValidity();
+      if (!inputs.some(function (input) { return input.checked; })) inputs[0].reportValidity();
+    });
+    setValidity();
+  }
+
   var ta = document.getElementById("content_md");
   var editor = document.querySelector("[data-md-editor]");
   var pv = document.getElementById("md_preview");
@@ -230,6 +291,7 @@
     if (discardBtn) discardBtn.addEventListener("click", function () {
       localStorage.removeItem(key);
       if (box) box.hidden = true;
+      if (status) status.textContent = "已忽略本地草稿。";
     });
     var saveDraft = debounce(function () {
       localStorage.setItem(key, ta.value);
@@ -269,6 +331,9 @@
     });
     initDraftRestore();
   }
+
+  initSlugSync();
+  initCategoryRequired();
 
   if (ta && fileInput) {
     fileInput.addEventListener("change", function () {

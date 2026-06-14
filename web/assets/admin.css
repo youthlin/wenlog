@@ -919,6 +919,8 @@ a { color: var(--accent); }
 .markdown-toolbar .btn-secondary,
 .md-view-tabs .btn-secondary,
 .draft-restore .btn-secondary { padding: 6px 10px; min-height: 34px; }
+.markdown-toolbar .tip { margin-left: 4px; }
+.toolbar-tip { margin: -4px 0 12px; }
 .md-view-tabs .btn-secondary.active { color: color-mix(in srgb, var(--accent) 86%, var(--fg)); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .draft-restore { padding: 10px 12px; border: 1px solid rgba(255,193,7,.3); border-radius: 8px; background: rgba(255,193,7,.12); color: var(--fg); }
 .draft-restore span { color: #9a6700; }
