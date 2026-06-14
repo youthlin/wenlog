@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -11,10 +13,13 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
+	"github.com/youthlin/blog/internal/consts"
+	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/store"
 )
 
 // 评论限制常量。
@@ -134,7 +139,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		IP:            ip,
 		Content:       req.Content,
 		Status:        commentStatusForUser(loggedInUser, target),
-		NotifyOnReply: req.Notify != "",
+		NotifyOnReply: req.Notify != "" && h.mailEnabled(),
 		CreatedAt:     time.Now(),
 	}
 	if loggedInUser != nil {
@@ -154,8 +159,71 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	if loggedInUser == nil {
 		rememberCommenter(c, req)
 	}
+	if cm.Status == model.CommentApproved {
+		h.notifyCommentReply(c, cm)
+	}
 	commentPage := h.st.VisibleCommentPageForViewerID(cm.ID, commentPageSize, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
 	h.commentResp(c, true, msg, req.PostID, gin.H{"comment_page": commentPage})
+}
+
+func (h *Public) notifyCommentReply(c *gin.Context, reply *model.Comment) {
+	notifyApprovedCommentReply(h.st, h.log, h.loadSMTPConfig(), siteURLFromRequest(h.st, c), siteNameFromStore(h.st), reply)
+}
+
+func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, reply *model.Comment) {
+	if st == nil || reply == nil || reply.Status != model.CommentApproved || reply.ReplyToID == 0 || !smtpCfg.Configured() {
+		return
+	}
+	target, err := st.GetCommentByID(reply.ReplyToID)
+	if err != nil || target == nil || !target.NotifyOnReply || target.Email == "" {
+		return
+	}
+	if target.Status == model.CommentSpam || target.Status == model.CommentDeleted {
+		return
+	}
+	if sameEmail(target.Email, reply.Email) {
+		return
+	}
+	if _, err := mail.ParseAddress(target.Email); err != nil {
+		return
+	}
+	post, err := st.PostMeta(reply.PostID)
+	if err != nil {
+		return
+	}
+	commentURL := strings.TrimRight(siteURL, "/") + commentAnchorURL(post, reply.ID)
+	subject, body := commentReplyMail(siteName, post.Title, target.Author, reply.Author, reply.Content, commentURL)
+	go func() {
+		if err := smtpCfg.Send(target.Email, subject, body); err != nil && log != nil {
+			log.Error("send comment reply email", "error", err, "to", target.Email, "comment_id", reply.ID)
+		}
+	}()
+}
+
+func siteNameFromStore(st *store.Store) string {
+	settings, _ := st.GetSettings(consts.SettingsSiteName)
+	if name := strings.TrimSpace(settings[consts.SettingsSiteName]); name != "" {
+		return name
+	}
+	return consts.SettingsSiteNameDefault
+}
+
+func sameEmail(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
+func commentAnchorURL(p *model.Post, commentID uint) string {
+	if p.PostType == model.PostTypePage {
+		return permalink.Page(p) + "#comment-" + strconv.FormatUint(uint64(commentID), 10)
+	}
+	return permalink.Post(p) + "#comment-" + strconv.FormatUint(uint64(commentID), 10)
+}
+
+func commentReplyMail(siteName, postTitle, targetAuthor, replyAuthor, replyContent, commentURL string) (string, string) {
+	subject := fmt.Sprintf("[%s] 你的评论有新回复", siteName)
+	body := fmt.Sprintf("您好 %s，\n\n%s 回复了你在《%s》下的评论：\n\n%s\n\n查看回复：\n%s\n\n如果你不想再收到通知，可联系站点管理员关闭该评论的回复通知。\n",
+		targetAuthor, replyAuthor, postTitle, replyContent, commentURL)
+	return subject, body
 }
 
 func commentStatusForUser(u *model.User, target *model.Post) string {

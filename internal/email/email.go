@@ -18,9 +18,14 @@ type Config struct {
 	From     string // 发件人地址
 }
 
+// Configured 返回当前配置是否足以展示/启用邮件能力。
+func (c Config) Configured() bool {
+	return strings.TrimSpace(c.Host) != "" && c.Port > 0 && strings.TrimSpace(c.From) != ""
+}
+
 // Send 发送纯文本邮件。
 func (c Config) Send(to, subject, body string) error {
-	if c.Host == "" || c.Port == 0 {
+	if !c.Configured() {
 		return fmt.Errorf("SMTP 未配置")
 	}
 

@@ -135,6 +135,34 @@ func TestResolveCommentReplyKeepsTwoLevelThread(t *testing.T) {
 	}
 }
 
+func TestCommentsByIDs(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	db.Create(&model.Comment{ID: 1, PostID: 1, Author: "a"})
+	db.Create(&model.Comment{ID: 2, PostID: 1, Author: "b"})
+	db.Create(&model.Comment{ID: 3, PostID: 1, Author: "c"})
+
+	comments, err := st.CommentsByIDs([]uint{1, 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(comments) != 2 {
+		t.Fatalf("CommentsByIDs len=%d, want 2", len(comments))
+	}
+	got := map[uint]bool{}
+	for _, comment := range comments {
+		got[comment.ID] = true
+	}
+	if !got[1] || !got[3] || got[2] {
+		t.Fatalf("CommentsByIDs returned IDs=%v", got)
+	}
+
+	comments, err = st.CommentsByIDs(nil)
+	if err != nil || len(comments) != 0 {
+		t.Fatalf("CommentsByIDs nil=(%v,%v), want empty nil error", comments, err)
+	}
+}
+
 func TestNextPostID(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()

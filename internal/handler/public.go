@@ -72,6 +72,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"CurrentUser":        currentUser,
 		"CSRFToken":          csrfToken,
 		"RegistrationOpen":   s.RegistrationOpen,
+		"MailEnabled":        h.mailEnabled(),
 		"RecentComments":     h.st.RecentComments(8),
 		"RecentCommentItems": h.st.RecentCommentItems(8, commentPageSize),
 		"RecentPosts":        h.st.RecentPosts(8),
@@ -81,6 +82,10 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"Categories":         h.st.AllCategories(),
 		"Tags":               h.st.AllTags(),
 	})
+}
+
+func (h *Public) mailEnabled() bool {
+	return h.loadSMTPConfig().Configured()
 }
 
 func (h *Public) loadSettings() publicSettings {

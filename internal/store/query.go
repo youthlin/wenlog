@@ -534,6 +534,27 @@ func (s *Store) CreateComment(c *model.Comment) error {
 	return errors.Wrap(s.db.Create(c).Error, "create comment")
 }
 
+// GetCommentByID 返回单条评论。
+func (s *Store) GetCommentByID(id uint) (*model.Comment, error) {
+	var c model.Comment
+	if err := s.db.First(&c, id).Error; err != nil {
+		return nil, errors.Wrap(err, "get comment by id")
+	}
+	return &c, nil
+}
+
+// CommentsByIDs 返回指定 ID 的评论列表。
+func (s *Store) CommentsByIDs(ids []uint) ([]model.Comment, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var comments []model.Comment
+	if err := s.db.Where("id IN ?", ids).Find(&comments).Error; err != nil {
+		return nil, errors.Wrap(err, "comments by ids")
+	}
+	return comments, nil
+}
+
 // RecentCommentCountByIP 返回某 IP 在最近一段时间内的评论数(用于限频)。
 func (s *Store) RecentCommentCountByIP(ip string, sinceUnix int64) (int64, error) {
 	var n int64

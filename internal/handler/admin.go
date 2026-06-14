@@ -2147,6 +2147,15 @@ func (h *Admin) BatchComments(c *gin.Context) {
 			ids = append(ids, uint(n))
 		}
 	}
+	var notifyCandidates []model.Comment
+	if action == "approve" {
+		comments, _ := h.st.CommentsByIDs(ids)
+		for _, comment := range comments {
+			if comment.Status != model.CommentApproved {
+				notifyCandidates = append(notifyCandidates, comment)
+			}
+		}
+	}
 	var err error
 	switch action {
 	case "approve":
@@ -2165,6 +2174,9 @@ func (h *Admin) BatchComments(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	if action == "approve" {
+		h.notifyApprovedCommentReplies(c, notifyCandidates)
+	}
 	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
 }
 
@@ -2172,6 +2184,12 @@ func (h *Admin) BatchComments(c *gin.Context) {
 func (h *Admin) ModerateComment(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	action := c.Param("action")
+	var notifyCandidate *model.Comment
+	if action == "approve" {
+		if comment, err := h.st.GetCommentByID(uint(id)); err == nil && comment.Status != model.CommentApproved {
+			notifyCandidate = comment
+		}
+	}
 	var err error
 	switch action {
 	case "approve":
@@ -2190,7 +2208,26 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	if action == "approve" && notifyCandidate != nil {
+		h.notifyApprovedCommentReplies(c, []model.Comment{*notifyCandidate})
+	}
 	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+}
+
+func (h *Admin) notifyApprovedCommentReplies(c *gin.Context, comments []model.Comment) {
+	if len(comments) == 0 {
+		return
+	}
+	smtpCfg := smtpConfigFromStore(h.st)
+	if !smtpCfg.Configured() {
+		return
+	}
+	siteURL := siteURLFromRequest(h.st, c)
+	siteName := siteNameFromStore(h.st)
+	for i := range comments {
+		comments[i].Status = model.CommentApproved
+		notifyApprovedCommentReply(h.st, h.log, smtpCfg, siteURL, siteName, &comments[i])
+	}
 }
 
 // DeleteMyComment 删除当前用户的评论。

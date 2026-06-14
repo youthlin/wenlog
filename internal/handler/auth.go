@@ -14,6 +14,7 @@ import (
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/store"
 )
 
 // ForgotPasswordForm 忘记密码页。
@@ -156,7 +157,11 @@ func (h *Public) ResetPassword(c *gin.Context) {
 
 // loadSMTPConfig 从设置中读取 SMTP 配置。
 func (h *Public) loadSMTPConfig() email.Config {
-	settings, _ := h.st.GetSettings(
+	return smtpConfigFromStore(h.st)
+}
+
+func smtpConfigFromStore(st *store.Store) email.Config {
+	settings, _ := st.GetSettings(
 		consts.SettingsSMTPHost,
 		consts.SettingsSMTPPort,
 		consts.SettingsSMTPUser,
@@ -178,7 +183,11 @@ func (h *Public) loadSMTPConfig() email.Config {
 
 // loadSiteURL 获取站点 URL,优先设置项,其次从请求推断。
 func (h *Public) loadSiteURL(c *gin.Context) string {
-	settings, _ := h.st.GetSettings(consts.SettingsSiteURL)
+	return siteURLFromRequest(h.st, c)
+}
+
+func siteURLFromRequest(st *store.Store, c *gin.Context) string {
+	settings, _ := st.GetSettings(consts.SettingsSiteURL)
 	if u := strings.TrimSpace(settings[consts.SettingsSiteURL]); u != "" {
 		return u
 	}

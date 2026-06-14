@@ -6,8 +6,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -187,3 +189,23 @@ func TestRememberCommenter(t *testing.T) {
 		t.Fatalf("get status=%d", w.Code)
 	}
 }
+
+func TestCommentReplyMailHelpers(t *testing.T) {
+	if !sameEmail(" Alice@Example.com ", "alice@example.COM") {
+		t.Fatal("sameEmail should normalize spaces and case")
+	}
+	postURL := commentAnchorURL(&model.Post{ID: 42, PostType: model.PostTypePost, PublishedAt: nowForTest()}, 9)
+	if !strings.HasSuffix(postURL, "#comment-9") {
+		t.Fatalf("post comment anchor=%q", postURL)
+	}
+	pageURL := commentAnchorURL(&model.Post{ID: 7, PostType: model.PostTypePage, Slug: "guestbook"}, 11)
+	if pageURL != "/guestbook#comment-11" {
+		t.Fatalf("page comment anchor=%q", pageURL)
+	}
+	subject, body := commentReplyMail("站点", "文章", "Alice", "Bob", "回复内容", "https://example.com/post#comment-1")
+	if !strings.Contains(subject, "站点") || !strings.Contains(body, "Alice") || !strings.Contains(body, "Bob") || !strings.Contains(body, "https://example.com/post#comment-1") {
+		t.Fatalf("commentReplyMail subject=%q body=%q", subject, body)
+	}
+}
+
+func nowForTest() time.Time { return time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC) }
