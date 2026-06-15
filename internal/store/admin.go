@@ -693,7 +693,7 @@ func (s *Store) AdminListCategories(keyword string, page, pageSize int) ([]model
 	applyKeyword := func(db *gorm.DB) *gorm.DB {
 		if kw := strings.TrimSpace(keyword); kw != "" {
 			like := termQueryLike(kw)
-			return db.Where("LOWER(name) LIKE ? OR LOWER(slug) LIKE ? OR LOWER(description) LIKE ?", like, like, like)
+			return db.Where("LOWER(categories.name) LIKE ? OR LOWER(categories.slug) LIKE ? OR LOWER(categories.description) LIKE ?", like, like, like)
 		}
 		return db
 	}
@@ -718,7 +718,7 @@ func (s *Store) AdminListTags(keyword string, page, pageSize int) ([]model.Tag, 
 	applyKeyword := func(db *gorm.DB) *gorm.DB {
 		if kw := strings.TrimSpace(keyword); kw != "" {
 			like := termQueryLike(kw)
-			return db.Where("LOWER(name) LIKE ? OR LOWER(slug) LIKE ?", like, like)
+			return db.Where("LOWER(tags.name) LIKE ? OR LOWER(tags.slug) LIKE ?", like, like)
 		}
 		return db
 	}

@@ -348,12 +348,18 @@ img { max-width: 100%; }
 /* 评论 */
 .comments { margin-top: 40px; }
 .comment-list { list-style: none; padding: 0; }
-.comment { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.comment { padding: 12px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 80px; }
+.comment:target { background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 6px; padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; transition: background 0.6s; }
 .comment-pending { opacity: .86; }
 .comment-children { list-style: none; padding-left: 24px; border-left: 2px solid var(--border); margin-top: 8px; }
 .comment-head { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .comment-head .avatar { border-radius: 50%; }
 .comment-author { font-weight: 600; color: var(--fg); }
+.comment-badge { display: inline-block; width: 16px; height: 16px; line-height: 16px; text-align: center; font-size: 11px; vertical-align: middle; margin-left: 2px; }
+.comment-badge-author::before { content: "✎"; color: #e6a817; }
+.comment-badge-admin::before { content: "⚑"; color: #c0392b; }
+.comment-badge-user::before { content: "●"; color: var(--accent); font-size: 7px; }
+.comment-badge-notify::before { content: "✉"; color: var(--muted); }
 .comment-id { color: var(--muted); font-weight: 600; }
 .comment-id:hover, .comment-reply-to:hover { color: var(--accent); }
 .comment-pending-badge { color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 999px; padding: 1px 8px; }

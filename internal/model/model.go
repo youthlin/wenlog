@@ -142,8 +142,10 @@ type Comment struct {
 	NotifyOnReply bool
 	CreatedAt     time.Time `gorm:"index"`
 
-	// ReplyToAuthor 仅用于渲染“回复 @某人”,不入库。
+	// ReplyToAuthor 仅用于渲染"回复 @某人",不入库。
 	ReplyToAuthor string `gorm:"-"`
+	// CommenterRole 仅用于渲染评论者身份标记(作者/管理员/用户),不入库。
+	CommenterRole string `gorm:"-"`
 }
 
 // Setting 是站点级键值设置,用于后台持久化站点名称/描述等。

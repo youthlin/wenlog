@@ -69,6 +69,8 @@
         commentsBox.innerHTML = html;
         bindReplyButtons();
         bindForm();
+        var comments = document.getElementById("comments");
+        if (comments) comments.scrollIntoView({ behavior: "smooth" });
         if (push) {
           var u = new URL(window.location.href);
           u.searchParams.set("cpage", page);

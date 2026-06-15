@@ -370,6 +370,7 @@ func (s *Store) VisibleCommentsPageForViewer(postID uint, page, pageSize int, cu
 		out = append(out, index[top.ID]...)
 	}
 	populateReplyToAuthors(s.db, out)
+	populateCommenterRoles(s.db, out, postID)
 	return &CommentPageResult{Comments: out, TotalComments: totalAll, TotalTop: totalTop, Page: page, Pages: pages}, nil
 }
 
@@ -396,6 +397,51 @@ func populateReplyToAuthors(db *gorm.DB, comments []model.Comment) {
 	}
 	for i := range comments {
 		comments[i].ReplyToAuthor = authors[comments[i].ReplyToID]
+	}
+}
+
+func populateCommenterRoles(db *gorm.DB, comments []model.Comment, postID uint) {
+	// 收集所有评论者的 UserID
+	userIDs := make([]uint, 0)
+	seen := map[uint]bool{}
+	for _, c := range comments {
+		if c.UserID != nil && !seen[*c.UserID] {
+			seen[*c.UserID] = true
+			userIDs = append(userIDs, *c.UserID)
+		}
+	}
+	if len(userIDs) == 0 {
+		return
+	}
+
+	// 查询用户角色
+	var users []model.User
+	if err := db.Select("id", "role").Where("id IN ?", userIDs).Find(&users).Error; err != nil {
+		return
+	}
+	userRoles := make(map[uint]string, len(users))
+	for _, u := range users {
+		userRoles[u.ID] = u.Role
+	}
+
+	// 查询文章作者
+	var post model.Post
+	if err := db.Select("author_id").Where("id = ?", postID).First(&post).Error; err != nil {
+		return
+	}
+
+	for i := range comments {
+		if comments[i].UserID == nil {
+			continue // 游客,CommenterRole 为空
+		}
+		uid := *comments[i].UserID
+		if uid == post.AuthorID {
+			comments[i].CommenterRole = "author"
+		} else if userRoles[uid] == model.RoleAdmin {
+			comments[i].CommenterRole = "admin"
+		} else {
+			comments[i].CommenterRole = "user"
+		}
 	}
 }
 

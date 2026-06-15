@@ -23,6 +23,7 @@ package permalink
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -305,6 +306,9 @@ func parseTaxonomyPath(path, prefix string) (slug string, ok bool) {
 	slug = strings.TrimPrefix(path, marker)
 	if slug == "" || strings.ContainsRune(slug, '/') {
 		return "", false
+	}
+	if decoded, err := url.PathUnescape(slug); err == nil {
+		slug = decoded
 	}
 	return slug, true
 }
