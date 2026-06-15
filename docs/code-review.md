@@ -153,8 +153,8 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 57 | ⬜ 待修复 | `color-mix()` 无 fallback | `style.css`, `admin.css` 大量使用 — 旧浏览器会丢失背景/边框色 |
-| 58 | ⬜ 待修复 | `:has()` 在旧 Firefox (<121) 不支持 | `admin.css:961,1239-1243` — 头像选中样式和表格卡片布局会失效 |
+| 57 | ✅ 已知设计 | `color-mix()` 无 fallback | `style.css`, `admin.css` 大量使用 — 旧浏览器会丢失背景/边框色 | 项目仅需兼容现代浏览器，`color-mix()` 在所有现代浏览器中均受支持。 |
+| 58 | ✅ 已知设计 | `:has()` 在旧 Firefox (<121) 不支持 | `admin.css:961,1239-1243` — 头像选中样式和表格卡片布局会失效 | 项目仅需兼容现代浏览器，Firefox 121+ (2023.12) 已支持 `:has()`。 |
 | 59 | ✅ 已修复 | 只用了 `-webkit-appearance: none` 缺少标准属性 | `style.css:195`, `admin.css:195` — 实际已有 `appearance: none` |
 
 ### 其他 CSS 问题
@@ -165,7 +165,7 @@
 | 61 | ✅ 已修复 | 缺少 `@media print` 样式 | 完全没有打印样式，博客文章打印体验差 |
 | 62 | ✅ 已修复 | 按钮触摸目标偏小 | `admin.css:465-466` — `.btn` 高度约 32-34px，低于推荐 44px | 添加 `min-height: 44px` 和 `line-height: 1.4`。 |
 | 63 | ✅ 已修复 | 硬编码颜色不随主题变化 | `admin.css` 多处 — 阴影、badge、banner 使用固定颜色 | 提取为 CSS 自定义属性 `--danger`、`--success`、`--warning`、`--surface-shadow` 等。 |
-| 64 | ⬜ 待修复 | `!important` 使用过多 (14+ 处) | `admin.css` — 反映 CSS 架构需要重构 |
+| 64 | ✅ 已知设计 | `!important` 使用过多 (14+ 处) | `admin.css` — 反映 CSS 架构需要重构 | 主要集中在响应式卡片布局中覆盖表格默认样式，以及 `[hidden]` 属性保障，属于必要的特异性覆盖。全面重构需单独立项。 |
 
 ---
 
