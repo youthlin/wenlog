@@ -135,19 +135,19 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 49 | ⬜ 待修复 | 缺少 860px-1080px 之间的中间断点 | `style.css:204-244` — 1024px 平板竖屏时侧边栏 280px 可能偏窄 |
+| 49 | ✅ 已修复 | 缺少 860px-1080px 之间的中间断点 | `style.css:204-244` — 1024px 平板竖屏时侧边栏 280px 可能偏窄 | 添加 1080px 断点，缩小间距和侧边栏宽度。 |
 | 50 | ✅ 已修复 | 登录框在 320px-640px 之间固定 320px 宽度 | `admin.css:1122` — 应使用 `min(320px, calc(100vw - 24px))` |
 
 ### 无障碍 (Accessibility)
 
 | # | 状态 | 严重度 | 问题 | 位置 |
 |---|------|--------|------|------|
-| 51 | ⬜ 待修复 | 🔴 高 | **表单缺少 `<label>` 元素** | `admin_login.gohtml:37-38`, `post.gohtml:93-98`, `auth_forgot_password.gohtml:8` — 登录、评论、忘记密码表单只用 `placeholder` 当标签，不符合 WCAG SC 3.3.2 |
+| 51 | ✅ 已修复 | 🔴 高 | **表单缺少 `<label>` 元素** | `admin_login.gohtml:37-38`, `post.gohtml:93-98`, `auth_forgot_password.gohtml:8` — 登录、评论、忘记密码表单只用 `placeholder` 当标签，不符合 WCAG SC 3.3.2 | 添加 `sr-only` label 和 `aria-label` 属性。 |
 | 52 | ✅ 已修复 | 🔴 高 | **缺少全局 `:focus-visible` 样式** | `style.css`, `admin.css` — 键盘用户难以看到焦点位置，不符合 WCAG SC 2.4.7 |
 | 53 | ✅ 已修复 | 🟡 中 | **浅色主题 muted 文字对比度不足** | `style.css:26` — `#8a94a0` 在 `#fafbfc` 上对比度约 2.8:1，不满足 AA 4.5:1 |
 | 54 | ✅ 已修复 | 🟡 中 | **Badge 红色对比度不足** | `admin.css:332` — `#e74c3c` 在 `#fff` 上约 4.0:1，12px 字号不满足 AA |
 | 55 | ✅ 已修复 | 🟡 中 | **缺少 Skip Navigation 链接** | `base.gohtml`, `admin_base.gohtml` — 不符合 WCAG SC 2.4.1 |
-| 56 | ⬜ 待修复 | 🟡 中 | **自定义 select 缺少方向键导航** | `theme.js:31-184` — 有 `role="listbox"` 但无 `aria-activedescendant` 和方向键处理 |
+| 56 | ✅ 已修复 | 🟡 中 | **自定义 select 缺少方向键导航** | `theme.js:31-184` — 有 `role="listbox"` 但无 `aria-activedescendant` 和方向键处理 | 添加 ArrowUp/Down/Enter/Home/End 键盘导航和 `aria-activedescendant` 支持。 |
 
 ### 浏览器兼容性
 
@@ -163,8 +163,8 @@
 |---|------|------|------|
 | 60 | ✅ 已修复 | 双分号 typo | `style.css:202` — `max-width: 100%;;` |
 | 61 | ✅ 已修复 | 缺少 `@media print` 样式 | 完全没有打印样式，博客文章打印体验差 |
-| 62 | ⬜ 待修复 | 按钮触摸目标偏小 | `admin.css:465-466` — `.btn` 高度约 32-34px，低于推荐 44px |
-| 63 | ⬜ 待修复 | 硬编码颜色不随主题变化 | `admin.css` 多处 — 阴影、badge、banner 使用固定颜色 |
+| 62 | ✅ 已修复 | 按钮触摸目标偏小 | `admin.css:465-466` — `.btn` 高度约 32-34px，低于推荐 44px | 添加 `min-height: 44px` 和 `line-height: 1.4`。 |
+| 63 | ✅ 已修复 | 硬编码颜色不随主题变化 | `admin.css` 多处 — 阴影、badge、banner 使用固定颜色 | 提取为 CSS 自定义属性 `--danger`、`--success`、`--warning`、`--surface-shadow` 等。 |
 | 64 | ⬜ 待修复 | `!important` 使用过多 (14+ 处) | `admin.css` — 反映 CSS 架构需要重构 |
 
 ---

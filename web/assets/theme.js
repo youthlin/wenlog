@@ -110,11 +110,41 @@
         input.select();
       }
 
+      var activeIndex = -1;
+
+      function visibleOptions() {
+        return list.querySelectorAll(".searchable-select-option");
+      }
+
+      function setActive(index) {
+        var opts = visibleOptions();
+        opts.forEach(function (opt, i) {
+          var isActive = i === index;
+          opt.classList.toggle("is-active", isActive);
+          opt.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        if (index >= 0 && index < opts.length) {
+          list.setAttribute("aria-activedescendant", opts[index].id);
+          opts[index].scrollIntoView({ block: "nearest" });
+        } else {
+          list.removeAttribute("aria-activedescendant");
+        }
+      }
+
+      function selectActive() {
+        var opts = visibleOptions();
+        if (activeIndex >= 0 && activeIndex < opts.length) {
+          opts[activeIndex].click();
+        }
+      }
+
       function renderOptions(keyword) {
         var lower = (keyword || "").trim().toLowerCase();
         list.innerHTML = "";
+        activeIndex = -1;
+        list.removeAttribute("aria-activedescendant");
         var matched = 0;
-        Array.prototype.forEach.call(select.options, function (option) {
+        Array.prototype.forEach.call(select.options, function (option, optIdx) {
           if (!option || option.disabled) {
             return;
           }
@@ -126,9 +156,11 @@
           var item = document.createElement("button");
           item.type = "button";
           item.className = "searchable-select-option";
+          item.id = listboxId + "-opt-" + optIdx;
           if (option.selected) {
             item.classList.add("is-active");
             item.setAttribute("aria-selected", "true");
+            activeIndex = matched - 1;
           } else {
             item.setAttribute("aria-selected", "false");
           }
@@ -142,6 +174,9 @@
           });
           list.appendChild(item);
         });
+        if (activeIndex >= 0) {
+          list.setAttribute("aria-activedescendant", listboxId + "-opt-" + select.selectedIndex);
+        }
         empty.hidden = matched > 0;
       }
 
@@ -159,9 +194,44 @@
       });
 
       input.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-          closePanel();
-          trigger.focus();
+        var opts = visibleOptions();
+        switch (event.key) {
+          case "Escape":
+            closePanel();
+            trigger.focus();
+            break;
+          case "ArrowDown":
+            event.preventDefault();
+            if (opts.length > 0) {
+              activeIndex = activeIndex < opts.length - 1 ? activeIndex + 1 : 0;
+              setActive(activeIndex);
+            }
+            break;
+          case "ArrowUp":
+            event.preventDefault();
+            if (opts.length > 0) {
+              activeIndex = activeIndex > 0 ? activeIndex - 1 : opts.length - 1;
+              setActive(activeIndex);
+            }
+            break;
+          case "Enter":
+            event.preventDefault();
+            selectActive();
+            break;
+          case "Home":
+            event.preventDefault();
+            if (opts.length > 0) {
+              activeIndex = 0;
+              setActive(activeIndex);
+            }
+            break;
+          case "End":
+            event.preventDefault();
+            if (opts.length > 0) {
+              activeIndex = opts.length - 1;
+              setActive(activeIndex);
+            }
+            break;
         }
       });
 

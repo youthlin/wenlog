@@ -1,5 +1,7 @@
 :root {
   --max-width: 1080px;
+  --draft-badge-bg: #f0ad4e;
+  --draft-badge-fg: #fff;
 }
 [data-theme="dark"] {
   --fg: #d6dde5;
@@ -200,6 +202,10 @@ img { max-width: 100%; }
 .layout { display: flex; gap: 32px; align-items: flex-start; padding-top: 28px; padding-bottom: 48px; }
 .main-col { flex: 1; min-width: 0; max-width: 100%; }
 .sidebar { width: 280px; flex-shrink: 0; }
+@media (max-width: 1080px) {
+  .layout { gap: 24px; }
+  .sidebar { width: 260px; }
+}
 @media (max-width: 860px) {
   .layout { flex-direction: column; }
   .sidebar { width: 100%; }
@@ -250,7 +256,7 @@ img { max-width: 100%; }
 .post-meta > * { margin-right: 12px; }
 .post-meta .author::before { content: "·"; margin-right: 8px; }
 .post-meta .edit-link { color: var(--accent); }
-.draft-badge { font-size: 13px; background: #f0ad4e; color: #fff; padding: 2px 8px; border-radius: 4px; vertical-align: middle; }
+.draft-badge { font-size: 13px; background: var(--draft-badge-bg); color: var(--draft-badge-fg); padding: 2px 8px; border-radius: 4px; vertical-align: middle; }
 .post-content { word-wrap: break-word; }
 .post-content img { height: auto; }
 .post-content pre { background: var(--pre-bg); color: var(--pre-fg); padding: 14px; overflow-x: auto; border-radius: 6px; border: 1px solid var(--pre-fg);}
