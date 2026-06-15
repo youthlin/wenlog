@@ -75,7 +75,7 @@
 | # | 状态 | 函数 | 位置 | 行数 |
 |---|------|------|------|------|
 | 24 | ✅ 已修复 | `SavePost` | `admin.go:2336-2476` | ~140 行 → 拆分为 `resolvePostForSave`、`postEditError`、`validateAndCheckPageSlug`、`validateAndCheckPostSlug` |
-| 25 | ⬜ 待修复 | `SubmitComment` | `comment.go:55-167` | ~112 行 — 蜜罐检查、输入校验、频率限制、评论创建、通知全在一个函数 |
+| 25 | ✅ 已修复 | `SubmitComment` | `comment.go:55-167` | ~112 行 — 拆分为 `validateCommentInput`、`validateCommentTarget`、`checkCommentRateLimit`。 |
 | 26 | ✅ 已修复 | `SaveSiteSettings` | `admin.go:991-1096` | ~105 行 → 拆分为 `validateSiteSettingsPermalink`、`setSettings` |
 | 27 | ✅ 已修复 | `SaveProfileSettings` | `admin.go:1225-1328` | ~103 行 → 拆分为 `profileError`、`handleEmailChange` |
 | 28 | ✅ 已修复 | `termsDataForSection` | `admin.go:2009-2113` | ~105 行 → 拆分为 `fillTagTermsData`、`fillCategoryTermsData`、`fillPagination` |
@@ -96,7 +96,7 @@
 | 33 | ✅ 已修复 | `firstNonEmpty` 三处重复实现 | `admin.go:1654`, `public.go:500`, `exporter.go:387` | 统一到 `util.FirstNonEmpty`。 |
 | 34 | ✅ 已修复 | `normalizeDefaultAvatar` 两处重复 | `admin.go:961` vs `render.go:308` | 统一到 `util.NormalizeDefaultAvatar`。 |
 | 35 | ✅ 已修复 | `pathExists` 两处重复 | `admin.go:1608` vs `i18n.go:74` | 统一到 `util.PathExists`。 |
-| 36 | ⬜ 待修复 | `normalizeTermSlug` 和 `slugifyTag` 功能相似 | `admin.go:2504` vs `store/admin.go:524` |
+| 36 | ✅ 已修复 | `normalizeTermSlug` 和 `slugifyTag` 功能相似 | `admin.go:2504` vs `store/admin.go:524` | 统一到 `util.Slugify`。 |
 | 37 | ✅ 已修复 | X-Forwarded 头解析逻辑重复 | `request.go:14-36` vs `csrf.go:118-139` | 导出 `middleware.RequestScheme`/`RequestHost` 统一使用。 |
 | 38 | ✅ 已修复 | `currentUser`/`currentUserID` 在 Admin 和 Public 中重复 | `admin.go:1661,2479` vs `public.go:157,170` | 提取为包级 `currentUserID`/`currentUserByStore` 共享函数。 |
 

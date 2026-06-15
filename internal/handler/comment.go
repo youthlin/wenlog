@@ -61,94 +61,28 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		return
 	}
 
-	// 1. 蜜罐:website 字段被填说明是机器人。
-	if strings.TrimSpace(req.Website) != "" {
-		h.commentResp(c, false, tr.T("提交失败。"), req.PostID)
-		return
-	}
-
-	// 2. 基础校验。
-	req.Author = strings.TrimSpace(req.Author)
-	req.Content = strings.TrimSpace(req.Content)
-	req.Email = strings.TrimSpace(req.Email)
-	req.URL = strings.TrimSpace(req.URL)
 	loggedInUser := h.commentUser(c)
-	if loggedInUser != nil {
-		// 登录用户评论需校验 CSRF token,防止跨站伪造。
-		if !middleware.VerifyCSRFToken(c) {
-			h.commentResp(c, false, tr.T("提交失败。"), req.PostID)
-			return
-		}
-		req.Author = strings.TrimSpace(loggedInUser.DisplayName)
-		if req.Author == "" {
-			req.Author = strings.TrimSpace(loggedInUser.Username)
-		}
-		req.Email = strings.TrimSpace(loggedInUser.Email)
-		req.URL = ""
-	}
-	if req.Author == "" || req.Content == "" {
-		h.commentResp(c, false, tr.T("昵称和内容不能为空。"), req.PostID)
+	if !h.validateCommentInput(c, tr, &req, loggedInUser) {
 		return
-	}
-	if n := utf8.RuneCountInString(req.Content); n < commentMinLen || n > commentMaxLen {
-		h.commentResp(c, false, tr.T("评论长度不合适。"), req.PostID)
-		return
-	}
-	if loggedInUser == nil && req.Email == "" {
-		h.commentResp(c, false, tr.T("邮箱不能为空。"), req.PostID)
-		return
-	}
-	if req.Email != "" {
-		if _, err := mail.ParseAddress(req.Email); err != nil {
-			h.commentResp(c, false, tr.T("邮箱格式不正确。"), req.PostID)
-			return
-		}
-	}
-	// 校验评论者 URL 协议,只允许 http/https。
-	if req.URL != "" {
-		u, err := url.Parse(req.URL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
-			h.commentResp(c, false, tr.T("网站地址格式不正确。"), req.PostID)
-			return
-		}
 	}
 
-	// 3. 目标文章/页面必须存在、已发布、评论开放。
-	target, err := h.st.GetPostByID(req.PostID)
-	if err != nil {
-		// 也可能是页面(saying/guestbook),用 PostMeta 兜底校验。
-		meta, err2 := h.st.PostMeta(req.PostID)
-		if err2 != nil || meta.Status != model.StatusPublished {
-			h.commentResp(c, false, tr.T("目标文章不存在。"), req.PostID)
-			return
-		}
-		target = meta
-	}
-	if target.CommentStatus == "closed" {
-		h.commentResp(c, false, tr.T("该文章评论已关闭。"), req.PostID)
+	target, ok := h.validateCommentTarget(c, tr, req.PostID)
+	if !ok {
 		return
 	}
+
 	parentID, replyToID, err := h.st.ResolveCommentReply(req.PostID, req.ReplyToID, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
 	if err != nil {
 		h.commentResp(c, false, tr.T("目标评论不存在。"), req.PostID)
 		return
 	}
 
-	// 4. 限频:同 IP 60 秒内最多 3 条。
-	ip := c.ClientIP()
-	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
-	cnt, err := h.st.RecentCommentCountByIP(ip, since)
-	if err != nil {
-		h.log.Error("rate limit check failed", "error", err, "ip", ip)
-		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), req.PostID)
-		return
-	}
-	if cnt >= rateMaxInWindow {
-		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), req.PostID)
+	if !h.checkCommentRateLimit(c, tr, req.PostID) {
 		return
 	}
 
-	// 5. 存储评论:管理员或本文作者免审,其他评论仍进入待审。
+	// 存储评论:管理员或本文作者免审,其他评论仍进入待审。
+	ip := c.ClientIP()
 	cm := &model.Comment{
 		PostID:        req.PostID,
 		ParentID:      parentID,
@@ -184,6 +118,94 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	}
 	commentPage := h.st.VisibleCommentPageForViewerID(cm.ID, commentPageSize, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
 	h.commentResp(c, true, msg, req.PostID, gin.H{"comment_page": commentPage})
+}
+
+// validateCommentInput 校验评论输入:蜜罐、CSRF、必填项、格式。
+func (h *Public) validateCommentInput(c *gin.Context, tr *gettext.Translations, req *commentReq, loggedInUser *model.User) bool {
+	// 1. 蜜罐:website 字段被填说明是机器人。
+	if strings.TrimSpace(req.Website) != "" {
+		h.commentResp(c, false, tr.T("提交失败。"), req.PostID)
+		return false
+	}
+
+	// 2. 基础校验。
+	req.Author = strings.TrimSpace(req.Author)
+	req.Content = strings.TrimSpace(req.Content)
+	req.Email = strings.TrimSpace(req.Email)
+	req.URL = strings.TrimSpace(req.URL)
+	if loggedInUser != nil {
+		if !middleware.VerifyCSRFToken(c) {
+			h.commentResp(c, false, tr.T("提交失败。"), req.PostID)
+			return false
+		}
+		req.Author = strings.TrimSpace(loggedInUser.DisplayName)
+		if req.Author == "" {
+			req.Author = strings.TrimSpace(loggedInUser.Username)
+		}
+		req.Email = strings.TrimSpace(loggedInUser.Email)
+		req.URL = ""
+	}
+	if req.Author == "" || req.Content == "" {
+		h.commentResp(c, false, tr.T("昵称和内容不能为空。"), req.PostID)
+		return false
+	}
+	if n := utf8.RuneCountInString(req.Content); n < commentMinLen || n > commentMaxLen {
+		h.commentResp(c, false, tr.T("评论长度不合适。"), req.PostID)
+		return false
+	}
+	if loggedInUser == nil && req.Email == "" {
+		h.commentResp(c, false, tr.T("邮箱不能为空。"), req.PostID)
+		return false
+	}
+	if req.Email != "" {
+		if _, err := mail.ParseAddress(req.Email); err != nil {
+			h.commentResp(c, false, tr.T("邮箱格式不正确。"), req.PostID)
+			return false
+		}
+	}
+	if req.URL != "" {
+		u, err := url.Parse(req.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+			h.commentResp(c, false, tr.T("网站地址格式不正确。"), req.PostID)
+			return false
+		}
+	}
+	return true
+}
+
+// validateCommentTarget 校验目标文章/页面存在、已发布、评论开放。
+func (h *Public) validateCommentTarget(c *gin.Context, tr *gettext.Translations, postID uint) (*model.Post, bool) {
+	target, err := h.st.GetPostByID(postID)
+	if err != nil {
+		meta, err2 := h.st.PostMeta(postID)
+		if err2 != nil || meta.Status != model.StatusPublished {
+			h.commentResp(c, false, tr.T("目标文章不存在。"), postID)
+			return nil, false
+		}
+		target = meta
+	}
+	if target.CommentStatus == "closed" {
+		h.commentResp(c, false, tr.T("该文章评论已关闭。"), postID)
+		return nil, false
+	}
+	return target, true
+}
+
+// checkCommentRateLimit 检查同 IP 评论频率限制。
+func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations, postID uint) bool {
+	ip := c.ClientIP()
+	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
+	cnt, err := h.st.RecentCommentCountByIP(ip, since)
+	if err != nil {
+		h.log.Error("rate limit check failed", "error", err, "ip", ip)
+		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
+		return false
+	}
+	if cnt >= rateMaxInWindow {
+		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
+		return false
+	}
+	return true
 }
 
 func (h *Public) notifyCommentReply(c *gin.Context, reply *model.Comment) {
