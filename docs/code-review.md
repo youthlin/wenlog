@@ -92,12 +92,12 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 32 | ⬜ 待修复 | `renderMarkdown` 和 `renderMarkdownForBootstrap` 完全重复 | `admin.go:3259` vs `bootstrap.go:193` |
+| 32 | ✅ 已修复 | `renderMarkdown` 和 `renderMarkdownForBootstrap` 完全重复 | `admin.go:3259` vs `bootstrap.go:193` | 统一到 `render.RenderMarkdown`。 |
 | 33 | ✅ 已修复 | `firstNonEmpty` 三处重复实现 | `admin.go:1654`, `public.go:500`, `exporter.go:387` | 统一到 `util.FirstNonEmpty`。 |
 | 34 | ✅ 已修复 | `normalizeDefaultAvatar` 两处重复 | `admin.go:961` vs `render.go:308` | 统一到 `util.NormalizeDefaultAvatar`。 |
 | 35 | ✅ 已修复 | `pathExists` 两处重复 | `admin.go:1608` vs `i18n.go:74` | 统一到 `util.PathExists`。 |
 | 36 | ⬜ 待修复 | `normalizeTermSlug` 和 `slugifyTag` 功能相似 | `admin.go:2504` vs `store/admin.go:524` |
-| 37 | ⬜ 待修复 | X-Forwarded 头解析逻辑重复 | `request.go:14-36` vs `csrf.go:118-139` |
+| 37 | ✅ 已修复 | X-Forwarded 头解析逻辑重复 | `request.go:14-36` vs `csrf.go:118-139` | 导出 `middleware.RequestScheme`/`RequestHost` 统一使用。 |
 | 38 | ⬜ 待修复 | `currentUser`/`currentUserID` 在 Admin 和 Public 中重复 | `admin.go:1661,2479` vs `public.go:157,170` |
 
 ### 错误处理缺失

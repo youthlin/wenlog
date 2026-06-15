@@ -125,7 +125,7 @@ func (h *Admin) canManagePost(c *gin.Context, p *model.Post) bool {
 	case model.RoleAdmin:
 		return true
 	case model.RoleAuthor:
-		return p.AuthorID == h.currentUserID(c)
+		return p.AuthorID == currentUserID(c)
 	default:
 		return false
 	}
@@ -146,7 +146,7 @@ func (h *Admin) canManageComment(c *gin.Context, commentID uint) bool {
 	if err != nil {
 		return false
 	}
-	return post.AuthorID == h.currentUserID(c)
+	return post.AuthorID == currentUserID(c)
 }
 
 func (h *Admin) filterManageableCommentIDs(c *gin.Context, ids []uint) []uint {
@@ -1681,15 +1681,7 @@ func allowDebugSQL(sqlText string) bool {
 }
 
 func (h *Admin) currentUser(c *gin.Context) *model.User {
-	uid := h.currentUserID(c)
-	if uid == 0 {
-		return nil
-	}
-	u, err := h.st.GetUserByID(uid)
-	if err != nil {
-		return nil
-	}
-	return u
+	return currentUserByStore(h.st, c)
 }
 
 // UploadFile 上传图片并返回可直接插入 Markdown 的地址。
@@ -1769,7 +1761,7 @@ func (h *Admin) UploadsPage(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
 	var uploaderID uint
 	if h.currentUserRole(c) == model.RoleAuthor {
-		uploaderID = h.currentUserID(c)
+		uploaderID = currentUserID(c)
 	}
 	uploads, total, err := h.st.ListUploadsForUser(page, adminPageSize, uploaderID)
 	if err != nil {
@@ -1789,7 +1781,7 @@ func (h *Admin) UploadsJSON(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
 	var uploaderID uint
 	if h.currentUserRole(c) == model.RoleAuthor {
-		uploaderID = h.currentUserID(c)
+		uploaderID = currentUserID(c)
 	}
 	uploads, _, err := h.st.ListUploadsForUser(page, adminPageSize, uploaderID)
 	if err != nil {
@@ -1807,7 +1799,7 @@ func (h *Admin) DeleteUpload(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	if h.currentUserRole(c) != model.RoleAdmin && u.UploaderID != h.currentUserID(c) {
+	if h.currentUserRole(c) != model.RoleAdmin && u.UploaderID != currentUserID(c) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
@@ -1912,7 +1904,7 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
 	var authorID uint
 	if h.currentUserRole(c) == model.RoleAuthor {
-		authorID = h.currentUserID(c)
+		authorID = currentUserID(c)
 	}
 	posts, total, err := h.st.AdminListPostsForAuthor(pt, page, adminPageSize, categoryID, tagID, keyword, authorID)
 	if err != nil {
@@ -2450,7 +2442,7 @@ func (h *Admin) resolvePostForSave(c *gin.Context, f postForm, now time.Time) (*
 	if err != nil {
 		return nil, err
 	}
-	return &model.Post{ID: id, PublishedAt: now, AuthorID: h.currentUserID(c)}, nil
+	return &model.Post{ID: id, PublishedAt: now, AuthorID: currentUserID(c)}, nil
 }
 
 func (h *Admin) postEditError(c *gin.Context, errMsg string, f postForm, allCategories []model.Category, selectedCats map[uint]bool) {
@@ -2505,16 +2497,6 @@ func (h *Admin) validateAndCheckPostSlug(c *gin.Context, tr *gettext.Translation
 }
 
 // currentUserID 从 session 读取当前管理员 ID。
-func (h *Admin) currentUserID(c *gin.Context) uint {
-	s := sessions.Default(c)
-	if v := s.Get(middleware.SessionUserKey); v != nil {
-		if id, ok := v.(uint); ok {
-			return id
-		}
-	}
-	return 0
-}
-
 // parseTags 把逗号分隔的标签串拆为去空白、去重的标签名切片。
 func parseTags(s string) []string {
 	seen := map[string]bool{}
@@ -2656,7 +2638,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 	} else {
 		var authorID uint
 		if h.currentUserRole(c) == model.RoleAuthor {
-			authorID = h.currentUserID(c)
+			authorID = currentUserID(c)
 		}
 		comments, total, err = h.st.AdminListCommentsForAuthor(status, postID, page, adminPageSize, authorID)
 	}
@@ -3010,7 +2992,7 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/admin/users")
 		return
 	}
-	if uint(id) == h.currentUserID(c) && role != model.RoleAdmin {
+	if uint(id) == currentUserID(c) && role != model.RoleAdmin {
 		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能降低自己的管理员权限。请让其他管理员操作。"))
 		return
 	}
@@ -3029,7 +3011,7 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 func (h *Admin) DeleteUser(c *gin.Context) {
 	tr := i18n.Get(c)
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if uint(id) == h.currentUserID(c) {
+	if uint(id) == currentUserID(c) {
 		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能在用户管理中删除自己；如需删除自己的账号，请到个人删除账号页面。"))
 		return
 	}
@@ -3155,7 +3137,7 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	default:
 		role = model.RoleSubscriber
 	}
-	if uint(id) == h.currentUserID(c) && role != model.RoleAdmin {
+	if uint(id) == currentUserID(c) && role != model.RoleAdmin {
 		u, _ := h.st.GetUserByID(uint(id))
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u

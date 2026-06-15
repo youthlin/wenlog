@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
 	"github.com/youthlin/blog/internal/config"
@@ -56,10 +55,10 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 	if strings.TrimSpace(desc) == "" {
 		desc = s.SiteDescription
 	}
-	currentUserID := h.currentUserID(c)
+	uid := currentUserID(c)
 	currentUser := h.currentUser(c)
 	csrfToken := ""
-	if currentUserID != 0 {
+	if uid != 0 {
 		if token, err := middleware.EnsureCSRFToken(c); err == nil {
 			csrfToken = token
 		}
@@ -70,7 +69,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"Description":        desc,
 		"Menu":               menu,
 		"CurrentYear":        currentYear(),
-		"CurrentUserID":      currentUserID,
+		"CurrentUserID":      uid,
 		"CurrentUser":        currentUser,
 		"DefaultAvatar":      s.DefaultAvatar,
 		"CSRFToken":          csrfToken,
@@ -156,28 +155,10 @@ func (h *Public) DynamicOrLegacy(c *gin.Context) {
 
 // currentUser 返回当前登录用户(未登录为 nil)。
 func (h *Public) currentUser(c *gin.Context) *model.User {
-	uid := h.currentUserID(c)
-	if uid == 0 {
-		return nil
-	}
-	u, err := h.st.GetUserByID(uid)
-	if err != nil {
-		return nil
-	}
-	return u
+	return currentUserByStore(h.st, c)
 }
 
 // currentUserID 返回当前登录用户 ID(未登录为 0)。
-func (h *Public) currentUserID(c *gin.Context) uint {
-	s := sessions.Default(c)
-	if v := s.Get(middleware.SessionUserKey); v != nil {
-		if id, ok := v.(uint); ok {
-			return id
-		}
-	}
-	return 0
-}
-
 // Index 首页文章列表。
 func (h *Public) Index(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
@@ -233,7 +214,7 @@ func (h *Public) Post(c *gin.Context) {
 
 // draftForAuthor 返回草稿文章,仅当请求者是该文章作者本人;否则 nil。
 func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
-	uid := h.currentUserID(c)
+	uid := currentUserID(c)
 	if uid == 0 {
 		return nil
 	}
@@ -267,7 +248,7 @@ func (h *Public) Page(c *gin.Context) {
 	}
 
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, h.currentUserID(c), pendingCommentIDs(c))
+	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -318,7 +299,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		p.Views++
 	}
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, h.currentUserID(c), pendingCommentIDs(c))
+	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return true
