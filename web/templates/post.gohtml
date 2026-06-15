@@ -91,12 +91,12 @@
     <input type="hidden" name="reply_to_id" value="0">
     {{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}
     {{if not .CurrentUser}}
-      <p><input type="text" name="author" value="{{.RememberedCommenter.Author}}" placeholder="{{.t.T "昵称 *"}}" autocomplete="name" required></p>
-      <p><input type="email" name="email" value="{{.RememberedCommenter.Email}}" placeholder="{{.t.T "邮箱 *(不公开)"}}" autocomplete="email" required></p>
-      <p><input type="url" name="url" value="{{.RememberedCommenter.URL}}" placeholder="{{.t.T "网站(可选)"}}" autocomplete="url"></p>
+      <p><label class="sr-only" for="comment-author">{{.t.T "昵称"}}</label><input id="comment-author" type="text" name="author" value="{{.RememberedCommenter.Author}}" placeholder="{{.t.T "昵称 *"}}" autocomplete="name" required></p>
+      <p><label class="sr-only" for="comment-email">{{.t.T "邮箱"}}</label><input id="comment-email" type="email" name="email" value="{{.RememberedCommenter.Email}}" placeholder="{{.t.T "邮箱 *(不公开)"}}" autocomplete="email" required></p>
+      <p><label class="sr-only" for="comment-url">{{.t.T "网站"}}</label><input id="comment-url" type="url" name="url" value="{{.RememberedCommenter.URL}}" placeholder="{{.t.T "网站(可选)"}}" autocomplete="url"></p>
     {{end}}
     <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
-    <p><textarea name="content" rows="5" placeholder="{{.t.T "说点什么吧…… *"}}" required></textarea></p>
+    <p><label class="sr-only" for="comment-content">{{.t.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="5" placeholder="{{.t.T "说点什么吧…… *"}}" required></textarea></p>
     {{if .MailEnabled}}<p><label><input type="checkbox" name="notify"> {{.t.T "有回复时邮件通知我"}}</label></p>{{end}}
     <p class="comment-form-actions"><button type="submit">{{.t.T "提交评论"}}</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>{{.t.T "取消回复"}}</button></p>
     <p class="comment-tip">{{.t.T "评论提交后需经审核才会显示。"}}</p>

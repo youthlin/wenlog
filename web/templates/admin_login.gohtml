@@ -34,8 +34,8 @@
   <h1>{{.SiteName}} · {{.t.T "登录"}}</h1>
   {{if .Error}}<p class="err">{{.Error}}</p>{{end}}
   {{if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
-  <p><input type="text" name="username" placeholder="{{.t.T "用户名"}}" required autofocus></p>
-  <p><input type="password" name="password" placeholder="{{.t.T "密码"}}" required></p>
+  <p><label class="sr-only" for="login-username">{{.t.T "用户名"}}</label><input id="login-username" type="text" name="username" placeholder="{{.t.T "用户名"}}" required autofocus></p>
+  <p><label class="sr-only" for="login-password">{{.t.T "密码"}}</label><input id="login-password" type="password" name="password" placeholder="{{.t.T "密码"}}" required></p>
   <p><button type="submit">{{.t.T "登录"}}</button></p>
   {{if .RegistrationOpen}}<p class="auth-alt">{{.t.T "没有账号？"}} <a href="/admin/register">{{.t.T "去注册"}}</a></p>{{end}}
   <p id="backtoblog">{{.t.T "← 返回到"}} <a href="/">{{.SiteName}}</a></p>

@@ -39,14 +39,14 @@
   <p><input type="text" value="{{.RegisterUsername}}" readonly aria-label="{{.t.T "用户名"}}"></p>
   <p><input type="email" value="{{.RegisterEmail}}" readonly aria-label="{{.t.T "邮箱"}}"></p>
   <input type="hidden" name="token" value="{{.VerifyToken}}">
-  <p><input type="password" name="password" placeholder="{{.t.T "密码"}}" required autofocus></p>
-  <p><input type="password" name="confirm_password" placeholder="{{.t.T "确认密码"}}" required></p>
+  <p><input type="password" name="password" placeholder="{{.t.T "密码"}}" required autofocus aria-label="{{.t.T "密码"}}"></p>
+  <p><input type="password" name="confirm_password" placeholder="{{.t.T "确认密码"}}" required aria-label="{{.t.T "确认密码"}}"></p>
   <p><button type="submit">{{.t.T "完成注册"}}</button></p>
   {{else}}
   {{if not .SMTPConfigured}}<p class="err">{{.t.T "站点尚未配置 SMTP，暂时无法注册。"}}</p>{{end}}
   <p class="auth-tip">{{.t.T "先填写用户名和邮箱；验证邮件发送后，再通过邮件链接设置密码并创建账号。"}}</p>
-  <p><input type="text" name="username" value="{{.RegisterUsername}}" placeholder="{{.t.T "用户名"}}" required autofocus></p>
-  <p><input type="email" name="email" value="{{.RegisterEmail}}" placeholder="{{.t.T "邮箱"}}" required></p>
+  <p><input type="text" name="username" value="{{.RegisterUsername}}" placeholder="{{.t.T "用户名"}}" required autofocus aria-label="{{.t.T "用户名"}}"></p>
+  <p><input type="email" name="email" value="{{.RegisterEmail}}" placeholder="{{.t.T "邮箱"}}" required aria-label="{{.t.T "邮箱"}}"></p>
   <p><button type="submit" {{if not .SMTPConfigured}}disabled{{end}}>{{.t.T "发送验证邮件"}}</button></p>
   {{end}}
   <p class="auth-alt">{{.t.T "已有账号？"}} <a href="/admin/login">{{.t.T "登录"}}</a></p>
