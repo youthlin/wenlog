@@ -310,12 +310,34 @@ img { max-width: 100%; }
 .widget-search form { display: flex; gap: 6px; }
 .widget-search button { background: var(--accent); color: #fff; border: 0; padding: 0 14px; border-radius: 5px; cursor: pointer;width: 65px; }
 .widget-user-greeting { margin: 0 0 8px; font-size: 14px; }
-.widget-user-actions { display: flex; gap: 10px; font-size: 13px; }
-.widget-user-actions a { color: var(--accent); }
+.widget-user-actions { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+.widget-user-actions a,
+.widget-user-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 78%, var(--bg));
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.widget-user-actions a:hover,
+.widget-user-actions button:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+.widget-user-actions form { margin: 0; }
 .widget-comment-line { display: flex; align-items: center; gap: 6px; }
 .widget-comment-line a { display: inline-block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .widget-comment-meta { color: var(--muted); font-size: 12px; }
 .widget-comment-meta a { color: var(--muted); }
+.widget-saying-author { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: var(--muted); font-size: 13px; }
+.widget-saying-author .avatar { margin-right: 0; }
 .widget-saying time, .widget-archive time { display: block; color: var(--muted); font-size: 12px; }
 .widget .avatar { vertical-align: middle; border-radius: 50%; margin-right: 6px; }
 

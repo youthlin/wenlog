@@ -19,7 +19,7 @@
   <label>{{.t.T "角色"}}
     <select name="role" {{if and .EditUser (eq .EditUser.ID .CurrentUserID) (eq .EditUser.Role .RoleAdmin)}}disabled{{end}}>
       <option value="admin" {{if and .EditUser (eq .EditUser.Role "admin")}}selected{{end}}>{{.t.T "管理员"}}</option>
-      <option value="author" {{if and .EditUser (eq .EditUser.Role "author")}}selected{{end}}>{{.t.T "作者"}}</option>
+      <option value="author" {{if and .EditUser (eq .EditUser.Role "author")}}selected{{end}}>{{.t.T "协作者"}}</option>
       <option value="subscriber" {{if and .EditUser (eq .EditUser.Role "subscriber")}}selected{{end}}>{{.t.T "订阅者"}}</option>
     </select>
     {{if and .EditUser (eq .EditUser.ID .CurrentUserID) (eq .EditUser.Role .RoleAdmin)}}

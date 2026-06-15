@@ -154,6 +154,8 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"detailHTML":       detailHTML,
 		"hasMore":          func(content string) bool { _, m := wxr.SplitMore(content); return m },
 		"gravatar":         gravatar,
+		"avatarURL":        avatarURL,
+		"avatarPreviewURL": avatarPreviewURL,
 		"gravatarPrimary":  gravatarPrimary,
 		"gravatarFallback": gravatarFallback,
 		"fmtDate":          func(t time.Time) string { return t.Format("2006-01-02") },
@@ -275,7 +277,19 @@ func fmtFileSize(size int64) string {
 
 // gravatar 由邮箱生成 cravatar(国内镜像)头像 URL。
 func gravatar(email string) string {
-	return gravatarFallback(email)
+	return avatarURL(email, "")
+}
+
+func avatarURL(email, defaultAvatar string) string {
+	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=48&d=" + normalizeDefaultAvatar(defaultAvatar)
+}
+
+func avatarPreviewURL(defaultAvatar string) string {
+	url := avatarURL("", defaultAvatar)
+	if normalizeDefaultAvatar(defaultAvatar) == "cravatar" {
+		return url + "&f=y"
+	}
+	return url
 }
 
 func gravatarPrimary(email string) string {
@@ -283,10 +297,19 @@ func gravatarPrimary(email string) string {
 }
 
 func gravatarFallback(email string) string {
-	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=48&d=mp"
+	return avatarURL(email, "")
 }
 
 func avatarHash(email string) string {
 	sum := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 	return hex.EncodeToString(sum[:])
+}
+
+func normalizeDefaultAvatar(v string) string {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "mp", "blank", "cravatar", "identicon", "wavatar", "monsterid", "retro", "robohash":
+		return strings.ToLower(strings.TrimSpace(v))
+	default:
+		return "mp"
+	}
 }

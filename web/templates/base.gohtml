@@ -92,9 +92,9 @@
     <h3>{{.t.T "%s, 你好" .CurrentUser.DisplayName}}</h3>
     <div class="widget-user-actions">
       <a href="/admin">{{.t.T "控制台"}}</a>
-      <form class="inline" method="post" action="/admin/logout" style="display:inline">
+      <form method="post" action="/admin/logout">
         {{template "csrf_field" .}}
-        <button type="submit" class="link-btn">{{.t.T "退出"}}</button>
+        <button type="submit">{{.t.T "退出"}}</button>
       </form>
     </div>
     {{else}}
@@ -117,11 +117,16 @@
   {{if .SayingCommentItems}}
   <section class="widget widget-saying">
     <h3>{{.t.T "博主动态"}}</h3>
+    {{if .SayingPost}}
+    <div class="widget-saying-author">
+      <img class="avatar" src="{{avatarURL .SayingPost.Author.Email .DefaultAvatar}}" alt="" width="32" height="32">
+      <span>{{if .SayingPost.Author.DisplayName}}{{.SayingPost.Author.DisplayName}}{{else}}{{.SayingPost.Author.Username}}{{end}}</span>
+    </div>
+    {{end}}
     <ul>
       {{range .SayingCommentItems}}
       <li>
-        <div class="widget-comment-line"><img class="avatar" src="{{gravatar .Comment.Email}}" alt="" width="24" height="24"><a href="{{.CommentURL}}">{{.Snippet}}</a></div>
-        <div class="widget-comment-meta">{{if .AuthorURL}}<a href="{{.AuthorURL}}" target="_blank" rel="nofollow noopener">{{.Comment.Author}}</a>{{else}}{{.Comment.Author}}{{end}} {{$.t.T "发表在"}} <a href="{{.CommentURL}}">{{.Post.Title}}</a></div>
+        <div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div>
       </li>
       {{end}}
     </ul>
@@ -143,7 +148,7 @@
     <ul>
       {{range .RecentCommentItems}}
       <li>
-        <div class="widget-comment-line"><img class="avatar" src="{{gravatar .Comment.Email}}" alt="" width="24" height="24"><a href="{{.CommentURL}}">{{.Snippet}}</a></div>
+        <div class="widget-comment-line"><img class="avatar" src="{{avatarURL .Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24"><a href="{{.CommentURL}}">{{.Snippet}}</a></div>
         <div class="widget-comment-meta">{{if .AuthorURL}}<a href="{{.AuthorURL}}" target="_blank" rel="nofollow noopener">{{.Comment.Author}}</a>{{else}}{{.Comment.Author}}{{end}} {{$.t.T "发表在"}} <a href="{{.CommentURL}}">{{.Post.Title}}</a></div>
       </li>
       {{end}}

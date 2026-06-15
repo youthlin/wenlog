@@ -42,7 +42,7 @@
     {{if eq .ParentID 0}}
     <li class="comment{{if eq .Status "pending"}} comment-pending{{end}}" id="comment-{{.ID}}">
       <div class="comment-head">
-        <img class="avatar" src="{{gravatar .Email}}" alt="" width="40" height="40">
+        <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="40" height="40">
         <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span><time>{{fmtDateTime .CreatedAt}}</time>
         {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.t.T "评论审核中,当前仅自己可见"}}</span>{{end}}
       </div>
@@ -54,7 +54,7 @@
         {{if eq .ParentID $pid}}
         <li class="comment{{if eq .Status "pending"}} comment-pending{{end}}" id="comment-{{.ID}}">
           <div class="comment-head">
-            <img class="avatar" src="{{gravatar .Email}}" alt="" width="40" height="40">
+            <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="40" height="40">
             <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span><time>{{fmtDateTime .CreatedAt}}</time>
             {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.t.T "评论审核中,当前仅自己可见"}}</span>{{end}}
           </div>

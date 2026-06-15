@@ -40,6 +40,7 @@ type publicSettings struct {
 	PageSize         int
 	FeedSize         int
 	SayingPostID     uint
+	DefaultAvatar    string
 	RegistrationOpen bool
 }
 
@@ -62,7 +63,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 			csrfToken = token
 		}
 	}
-	return i18n.Inject(c, gin.H{
+	data := gin.H{
 		"SiteName":           s.SiteName,
 		"Title":              title,
 		"Description":        desc,
@@ -70,6 +71,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"CurrentYear":        currentYear(),
 		"CurrentUserID":      currentUserID,
 		"CurrentUser":        currentUser,
+		"DefaultAvatar":      s.DefaultAvatar,
 		"CSRFToken":          csrfToken,
 		"RegistrationOpen":   s.RegistrationOpen,
 		"MailEnabled":        h.mailEnabled(),
@@ -81,7 +83,13 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"ArchiveMonths":      h.st.ArchiveMonths(),
 		"Categories":         h.st.AllCategories(),
 		"Tags":               h.st.AllTags(),
-	})
+	}
+	if s.SayingPostID > 0 {
+		if p, err := h.st.PostMeta(s.SayingPostID); err == nil && p.Status == model.StatusPublished {
+			data["SayingPost"] = p
+		}
+	}
+	return i18n.Inject(c, data)
 }
 
 func (h *Public) mailEnabled() bool {
@@ -96,6 +104,7 @@ func (h *Public) loadSettings() publicSettings {
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
+		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
 	)
 	return publicSettings{
@@ -107,6 +116,7 @@ func (h *Public) loadSettings() publicSettings {
 		PageSize:         positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
 		FeedSize:         positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
 		SayingPostID:     uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
+		DefaultAvatar:    normalizeDefaultAvatarSetting(settings[consts.SettingsDefaultAvatar]),
 		RegistrationOpen: settings[consts.SettingsRegistrationOpen] == "true",
 	}
 }

@@ -22,6 +22,9 @@ const (
 	// 博主动态用哪个postid
 	SettingsSayingPageID        = "saying_page_id"
 	SettingsSayingPageIDDefault = 456
+	// Cravatar 默认头像类型
+	SettingsDefaultAvatar        = "default_avatar"
+	SettingsDefaultAvatarDefault = "mp"
 	// 会话密钥
 	SettingsSessionSecret = "session_secret"
 	// Metrics Basic Auth 密码,用户名固定为 metrics。

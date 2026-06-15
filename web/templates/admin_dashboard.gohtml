@@ -6,6 +6,18 @@
 <h1>{{.t.T "欢迎回来"}}</h1>
 {{ end }}
 
+{{if .User}}
+<section class="card dashboard-welcome-card">
+  <a class="dashboard-user-avatar" href="/admin/profile" aria-label="{{.t.T "查看个人资料"}}">
+    <img class="avatar" src="{{avatarURL .User.Email .DefaultAvatar}}" alt="" width="72" height="72">
+  </a>
+  <div class="dashboard-user-main">
+    <a class="dashboard-user-name" href="/admin/profile">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.User.Username}}{{end}}</a>
+    <p>{{.t.T "欢迎来到后台。你可以在个人资料中维护名称和邮箱。"}}</p>
+  </div>
+</section>
+{{end}}
+
 {{- if .Stats -}}
 <div class="dashboard-stats">
   <a class="stat-card" href="/admin/posts?type=post">

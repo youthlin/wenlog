@@ -52,7 +52,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store) {
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")
 	g.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
-	g.GET("/", adm.Dashboard) // 工作台
+	g.GET("/", adm.Dashboard) // 欢迎页
 	g.POST("/logout", adm.Logout)
 
 	// 个人资料(所有角色可访问)。
@@ -83,12 +83,6 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store) {
 	contentGroup.POST("/comment/:id/:action", adm.ModerateComment)
 	contentGroup.POST("/comments/edit/:id", adm.EditComment)
 	contentGroup.POST("/comments/batch", adm.BatchComments)
-	contentGroup.GET("/categories", adm.CategoriesPage)
-	contentGroup.GET("/tags", adm.TagsPage)
-	contentGroup.POST("/category", adm.SaveCategory)
-	contentGroup.POST("/category/:id/delete", adm.DeleteCategory)
-	contentGroup.POST("/tag", adm.SaveTag)
-	contentGroup.POST("/tag/:id/delete", adm.DeleteTag)
 	contentGroup.GET("/uploads", adm.UploadsPage)
 	contentGroup.GET("/uploads.json", adm.UploadsJSON)
 	contentGroup.POST("/upload", adm.UploadFile)
@@ -115,6 +109,12 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store) {
 	adminGroup.GET("/debug", adm.DebugPage)
 	adminGroup.POST("/debug", adm.DebugPage)
 	adminGroup.GET("/terms", adm.TermsPage)
+	adminGroup.GET("/categories", adm.CategoriesPage)
+	adminGroup.GET("/tags", adm.TagsPage)
+	adminGroup.POST("/category", adm.SaveCategory)
+	adminGroup.POST("/category/:id/delete", adm.DeleteCategory)
+	adminGroup.POST("/tag", adm.SaveTag)
+	adminGroup.POST("/tag/:id/delete", adm.DeleteTag)
 	adminGroup.GET("/import", adm.ImportPage)
 	adminGroup.POST("/import", adm.ImportXML)
 	adminGroup.POST("/export", adm.ExportXML)

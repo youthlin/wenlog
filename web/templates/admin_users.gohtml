@@ -22,7 +22,7 @@
           {{template "csrf_field" $}}
           <select name="role" onchange="this.form.submit()" {{if and (eq .ID $.CurrentUserID) (eq .Role $.RoleAdmin)}}disabled{{end}}>
             <option value="admin" {{if eq .Role "admin"}}selected{{end}}>{{$.t.T "管理员"}}</option>
-            <option value="author" {{if eq .Role "author"}}selected{{end}}>{{$.t.T "作者"}}</option>
+            <option value="author" {{if eq .Role "author"}}selected{{end}}>{{$.t.T "协作者"}}</option>
             <option value="subscriber" {{if eq .Role "subscriber"}}selected{{end}}>{{$.t.T "订阅者"}}</option>
           </select>
           {{if and (eq .ID $.CurrentUserID) (eq .Role $.RoleAdmin)}}<span class="form-hint">{{$.t.T "不能直接降低自己的管理员权限"}}</span>{{end}}

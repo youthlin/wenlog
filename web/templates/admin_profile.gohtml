@@ -7,6 +7,15 @@
   <div class="settings-stack">
     <section class="card settings-card">
       <h3>{{.t.T "个人资料"}}</h3>
+      {{if .CurrentUser}}
+      <div class="profile-avatar-panel">
+        <img class="avatar profile-avatar" src="{{avatarURL .CurrentUser.Email .DefaultAvatar}}" alt="" width="80" height="80">
+        <div>
+          <p class="profile-avatar-name">{{if .CurrentUser.DisplayName}}{{.CurrentUser.DisplayName}}{{else}}{{.CurrentUser.Username}}{{end}}</p>
+          <p class="form-hint">{{.t.T "头像由 Cravatar 提供，可前往 cravatar.com 修改。"}}</p>
+        </div>
+      </div>
+      {{end}}
       <form class="edit-form" method="post" action="/admin/profile">
         {{template "csrf_field" .}}
         {{if .CanEditUsername}}

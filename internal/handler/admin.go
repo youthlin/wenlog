@@ -80,10 +80,12 @@ const (
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(h.st)
 	v, _ := h.st.GetSetting(consts.SettingsSiteName)
+	defaultAvatar, _ := h.st.GetSetting(consts.SettingsDefaultAvatar)
 	siteName := firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault)
 	data := gin.H{
 		"SiteName":             siteName,
 		"Title":                title,
+		"DefaultAvatar":        normalizeDefaultAvatarSetting(defaultAvatar),
 		"PendingCount":         h.st.PendingCommentCount(),
 		"PostPermalinkPattern": currentPostPermalink,
 		"RoleAdmin":            model.RoleAdmin,
@@ -867,6 +869,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
+		consts.SettingsDefaultAvatar,
 		consts.SettingsSessionSecret,
 		consts.SettingsRegistrationOpen,
 		consts.SettingsSMTPHost,
@@ -885,6 +888,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
 	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
+	data["DefaultAvatarValue"] = normalizeDefaultAvatarSetting(settings[consts.SettingsDefaultAvatar])
 	data["RegistrationOpenValue"] = settings[consts.SettingsRegistrationOpen] == "true"
 	data["SMTPHostValue"] = settings[consts.SettingsSMTPHost]
 	data["SMTPPortValue"] = settings[consts.SettingsSMTPPort]
@@ -954,6 +958,15 @@ func (h *Admin) ensureMetricsAuthPassword(current string) string {
 	return password
 }
 
+func normalizeDefaultAvatarSetting(v string) string {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "mp", "blank", "cravatar", "identicon", "wavatar", "monsterid", "retro", "robohash":
+		return strings.ToLower(strings.TrimSpace(v))
+	default:
+		return consts.SettingsDefaultAvatarDefault
+	}
+}
+
 func (h *Admin) settingsDataForTab(c *gin.Context, tab string) gin.H {
 	return h.settingsDataForSection(c, tab)
 }
@@ -988,6 +1001,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	}
 	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
 	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
+	defaultAvatar := normalizeDefaultAvatarSetting(c.PostForm("default_avatar"))
 	if err := permalink.ValidatePostPattern(postPermalink); err != nil {
 		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("固定链接结构不合法: %s", err.Error())
@@ -1050,6 +1064,10 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		return
 	}
 	if err := h.st.SetSetting(consts.SettingsSayingPageID, strconv.Itoa(sayingPageID)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SetSetting(consts.SettingsDefaultAvatar, defaultAvatar); err != nil {
 		h.serverError(c, err)
 		return
 	}
