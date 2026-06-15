@@ -65,6 +65,15 @@ func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *r
 const adminPageSize = 20
 const maxImportXMLSize = 50 << 20
 const defaultPublicPageSize = 10
+
+// parseUintParam 解析 URL 参数为 uint,解析失败返回 0 和错误。
+func parseUintParam(s string) (uint, error) {
+	id, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint(id), nil
+}
 const defaultFeedSize = 20
 
 const (
@@ -1793,8 +1802,12 @@ func (h *Admin) UploadsJSON(c *gin.Context) {
 
 // DeleteUpload 删除上传文件及元数据。
 func (h *Admin) DeleteUpload(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	u, err := h.st.GetUpload(uint(id))
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	u, err := h.st.GetUpload(id)
 	if err != nil {
 		h.notFound(c)
 		return
@@ -1805,7 +1818,7 @@ func (h *Admin) DeleteUpload(c *gin.Context) {
 	}
 	absPath := filepath.Join(h.cfg.PublicDir, strings.TrimPrefix(filepath.FromSlash(u.Path), string(filepath.Separator)))
 	_ = os.Remove(absPath)
-	if err := h.st.DeleteUpload(uint(id)); err != nil {
+	if err := h.st.DeleteUpload(id); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2225,8 +2238,12 @@ func (h *Admin) DeleteCategory(c *gin.Context) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.st.DeleteCategory(uint(id)); err != nil {
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if err := h.st.DeleteCategory(id); err != nil {
 		if errors.Is(err, store.ErrCannotDeleteUncategorized) {
 			c.Redirect(http.StatusSeeOther, termsRedirectURL("category", "category-delete-blocked"))
 			return
@@ -2290,8 +2307,12 @@ func (h *Admin) DeleteTag(c *gin.Context) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.st.DeleteTag(uint(id)); err != nil {
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if err := h.st.DeleteTag(id); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2309,8 +2330,12 @@ func (h *Admin) EditPostForm(c *gin.Context) {
 	data["SelectedCats"] = map[uint]bool{}
 	data["TagsCSV"] = ""
 	if idStr := c.Param("id"); idStr != "" && idStr != "new" {
-		id, _ := strconv.ParseUint(idStr, 10, 64)
-		p, err := h.st.AdminGetPost(uint(id))
+		id, err := parseUintParam(idStr)
+		if err != nil {
+			h.notFound(c)
+			return
+		}
+		p, err := h.st.AdminGetPost(id)
 		if err != nil {
 			h.notFound(c)
 			return
@@ -2592,8 +2617,12 @@ func (h *Admin) Preview(c *gin.Context) {
 
 // DeletePost 删除文章/页面。
 func (h *Admin) DeletePost(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	p, err := h.st.AdminGetPost(uint(id))
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	p, err := h.st.AdminGetPost(id)
 	if err != nil {
 		h.notFound(c)
 		return
@@ -2602,7 +2631,7 @@ func (h *Admin) DeletePost(c *gin.Context) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
-	if err := h.st.DeletePost(uint(id)); err != nil {
+	if err := h.st.DeletePost(id); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2708,8 +2737,12 @@ func adminCommentPageURL(mine bool, status string, postID uint, page int) string
 
 // EditComment 修改评论内容和作者元信息。
 func (h *Admin) EditComment(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if !h.canManageComment(c, uint(id)) {
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if !h.canManageComment(c, id) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
@@ -2759,7 +2792,7 @@ func (h *Admin) EditComment(c *gin.Context) {
 		safeRedirect(c, "/admin/comments")
 		return
 	}
-	if err := h.st.UpdateCommentFields(uint(id), fields); err != nil {
+	if err := h.st.UpdateCommentFields(id, fields); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2816,28 +2849,32 @@ func (h *Admin) BatchComments(c *gin.Context) {
 
 // ModerateComment 审核评论(approve/spam/delete)。
 func (h *Admin) ModerateComment(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if !h.canManageComment(c, uint(id)) {
+	id, parseErr := parseUintParam(c.Param("id"))
+	if parseErr != nil {
+		h.notFound(c)
+		return
+	}
+	if !h.canManageComment(c, id) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
 	action := c.Param("action")
 	var notifyCandidate *model.Comment
 	if action == "approve" {
-		if comment, err := h.st.GetCommentByID(uint(id)); err == nil && comment.Status != model.CommentApproved {
+		if comment, e := h.st.GetCommentByID(id); e == nil && comment.Status != model.CommentApproved {
 			notifyCandidate = comment
 		}
 	}
 	var err error
 	switch action {
 	case "approve":
-		err = h.st.SetCommentStatus(uint(id), model.CommentApproved)
+		err = h.st.SetCommentStatus(id, model.CommentApproved)
 	case "pending":
-		err = h.st.SetCommentStatus(uint(id), model.CommentPending)
+		err = h.st.SetCommentStatus(id, model.CommentPending)
 	case "spam":
-		err = h.st.SetCommentStatus(uint(id), model.CommentSpam)
+		err = h.st.SetCommentStatus(id, model.CommentSpam)
 	case "delete":
-		err = h.st.DeleteComment(uint(id))
+		err = h.st.DeleteComment(id)
 	default:
 		h.notFound(c)
 		return
@@ -2876,8 +2913,12 @@ func (h *Admin) DeleteMyComment(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	commentID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.st.DeleteCommentByUser(uint(commentID), u.ID); err != nil {
+	commentID, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if err := h.st.DeleteCommentByUser(commentID, u.ID); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2984,7 +3025,11 @@ func (h *Admin) ListUsers(c *gin.Context) {
 // UpdateUserRole 修改用户角色(admin only)。
 func (h *Admin) UpdateUserRole(c *gin.Context) {
 	tr := i18n.Get(c)
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
 	role := c.PostForm("role")
 	switch role {
 	case model.RoleAdmin, model.RoleAuthor, model.RoleSubscriber:
@@ -2992,11 +3037,11 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/admin/users")
 		return
 	}
-	if uint(id) == currentUserID(c) && role != model.RoleAdmin {
+	if id == currentUserID(c) && role != model.RoleAdmin {
 		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能降低自己的管理员权限。请让其他管理员操作。"))
 		return
 	}
-	if err := h.st.UpdateUserRole(uint(id), role); err != nil {
+	if err := h.st.UpdateUserRole(id, role); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
 			h.renderUsersError(c, http.StatusBadRequest, tr.T("不能将唯一的管理员改为其他角色。请先创建或指定另一个管理员。"))
 			return
@@ -3010,12 +3055,16 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 // DeleteUser 删除用户(admin only)。
 func (h *Admin) DeleteUser(c *gin.Context) {
 	tr := i18n.Get(c)
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if uint(id) == currentUserID(c) {
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if id == currentUserID(c) {
 		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能在用户管理中删除自己；如需删除自己的账号，请到个人删除账号页面。"))
 		return
 	}
-	if err := h.st.DeleteUser(uint(id)); err != nil {
+	if err := h.st.DeleteUser(id); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
 			h.renderUsersError(c, http.StatusBadRequest, tr.T("不能删除唯一的管理员账号。请先创建或指定另一个管理员。"))
 			return
@@ -3096,8 +3145,12 @@ func (h *Admin) CreateUser(c *gin.Context) {
 // EditUserForm 编辑用户表单(admin only)。
 func (h *Admin) EditUserForm(c *gin.Context) {
 	tr := i18n.Get(c)
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	u, err := h.st.GetUserByID(uint(id))
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	u, err := h.st.GetUserByID(id)
 	if err != nil {
 		h.notFound(c)
 		return
@@ -3110,14 +3163,18 @@ func (h *Admin) EditUserForm(c *gin.Context) {
 // UpdateUser 更新用户信息(admin only, 不含密码)。
 func (h *Admin) UpdateUser(c *gin.Context) {
 	tr := i18n.Get(c)
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
 	username := strings.TrimSpace(c.PostForm("username"))
 	email := strings.TrimSpace(c.PostForm("email"))
 	displayName := strings.TrimSpace(c.PostForm("display_name"))
 	role := c.PostForm("role")
 
 	if username == "" || email == "" {
-		u, _ := h.st.GetUserByID(uint(id))
+		u, _ := h.st.GetUserByID(id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("用户名和邮箱不能为空。")
@@ -3125,7 +3182,7 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		return
 	}
 	if err := validateUsernameT(tr.T, username); err != nil {
-		u, _ := h.st.GetUserByID(uint(id))
+		u, _ := h.st.GetUserByID(id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = err.Error()
@@ -3137,8 +3194,8 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	default:
 		role = model.RoleSubscriber
 	}
-	if uint(id) == currentUserID(c) && role != model.RoleAdmin {
-		u, _ := h.st.GetUserByID(uint(id))
+	if id == currentUserID(c) && role != model.RoleAdmin {
+		u, _ := h.st.GetUserByID(id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("不能降低自己的管理员权限。请让其他管理员操作。")
@@ -3146,13 +3203,13 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	exists, err := h.st.UserExistsByUsername(username, uint(id))
+	exists, err := h.st.UserExistsByUsername(username, id)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
 	if exists {
-		u, _ := h.st.GetUserByID(uint(id))
+		u, _ := h.st.GetUserByID(id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("用户名已被占用。")
@@ -3163,13 +3220,13 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	if displayName == "" {
 		displayName = username
 	}
-	if err := h.st.UpdateUserProfile(uint(id), username, displayName, email); err != nil {
+	if err := h.st.UpdateUserProfile(id, username, displayName, email); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.UpdateUserRole(uint(id), role); err != nil {
+	if err := h.st.UpdateUserRole(id, role); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
-			u, _ := h.st.GetUserByID(uint(id))
+			u, _ := h.st.GetUserByID(id)
 			data := h.base(c, tr.T("编辑用户"))
 			data["EditUser"] = u
 			data["Error"] = tr.T("不能将唯一的管理员改为其他角色。请先创建或指定另一个管理员。")
