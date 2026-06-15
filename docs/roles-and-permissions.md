@@ -112,14 +112,8 @@ const (
 | 文件 | 用途 |
 |---|---|
 | `internal/handler/auth.go` | 前台注册/登录/登出 handler |
-| `internal/handler/profile.go` | 个人资料编辑/密码修改 handler |
-| `internal/handler/my_comments.go` | 我的评论列表/删除 handler |
-| `internal/handler/account.go` | 数据导出/账号注销 handler |
 | `web/templates/auth_register.gohtml` | 注册页 |
 | `web/templates/auth_login.gohtml` | 登录页 |
-| `web/templates/profile.gohtml` | 个人资料页 |
-| `web/templates/my_comments.gohtml` | 我的评论页 |
-| `web/templates/account_delete.gohtml` | 注销确认页 |
 | `web/templates/admin_users.gohtml` | 后台用户管理页 |
 
 ### 修改文件
@@ -131,10 +125,13 @@ const (
 | `internal/middleware/auth.go` | RequireRole, SetSessionUser, ClearSession |
 | `cmd/server/routes.go` | 路由按角色分组，新增前台用户路由 |
 | `cmd/server/bootstrap.go` | 启动时确保 admin 角色 |
-| `internal/handler/admin.go` | 登录用新 session API，用户管理 handler，base 数据加 role |
+| `internal/handler/admin.go` | 登录用新 session API，用户管理 handler，base 数据加 role；个人资料编辑/密码修改、我的评论列表/删除、数据导出/账号注销均在此文件中 |
 | `internal/handler/comment.go` | 登录用户评论写入 UserID |
 | `web/templates/admin_base.gohtml` | 侧边栏按角色显示菜单 |
 | `web/templates/base.gohtml` | 导航栏加登录/注册/个人资料入口 |
+| `web/templates/admin_profile.gohtml` | 个人资料页 |
+| `web/templates/admin_my_comments.gohtml` | 我的评论页 |
+| `web/templates/admin_delete_account.gohtml` | 注销确认页 |
 
 ## 5. 后续可扩展方向
 

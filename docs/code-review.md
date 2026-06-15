@@ -123,7 +123,7 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 46 | ⬜ 待修复 | **文档与实际文件清单不一致** | `docs/roles-and-permissions.md` 列出了 `profile.go`、`my_comments.go`、`account.go` 等独立文件，但实际这些功能都合并在 `admin.go` 中 |
+| 46 | ✅ 已修复 | **文档与实际文件清单不一致** | `docs/roles-and-permissions.md` 列出了 `profile.go`、`my_comments.go`、`account.go` 等独立文件，但实际这些功能都合并在 `admin.go` 中 | 更新文档反映实际文件结构。 |
 | 47 | ✅ 已知设计 | **author 可查看所有文章列表** | `routes.go:76` — 文档已说明"当前可看到全部但只能编辑自己的"，是已知设计权衡 |
 | 48 | ✅ 符合设计 | **subscriber 登录后台只能看到 Dashboard** | 侧边栏按角色过滤已实现，subscriber 仍可访问 `/admin/profile`、`/admin/my-comments` 等路由（这些在 profileGroup 中，所有角色可访问），符合设计 |
 
