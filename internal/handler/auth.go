@@ -3,6 +3,7 @@ package handler
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
 )
 
@@ -41,6 +43,8 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 
 	u, err := h.st.GetUserByEmail(emailAddr)
 	if err != nil {
+		// 防时序攻击: 用户不存在时也模拟相近的延迟。
+		time.Sleep(50 * time.Millisecond)
 		// 不暴露用户是否存在,统一提示已发送
 		data := h.base(c, tr.T("忘记密码"), "", s)
 		data["Success"] = tr.T("如果该邮箱已注册，重置密码链接已发送。")
@@ -166,9 +170,26 @@ func (h *Public) ResetPassword(c *gin.Context) {
 	// 清除令牌
 	_ = h.st.ClearResetToken(u.ID)
 
+	// 发送密码变更通知邮件。
+	h.sendPasswordChangeNotification(u)
+
 	data := h.base(c, tr.T("重置密码"), "", s)
 	data["Success"] = tr.T("密码已重置，请使用新密码登录。")
 	c.HTML(http.StatusOK, "auth_reset_password.gohtml", data)
+}
+
+func (h *Public) sendPasswordChangeNotification(u *model.User) {
+	smtpCfg := h.loadSMTPConfig()
+	if !smtpCfg.Configured() || u.Email == "" {
+		return
+	}
+	subject := fmt.Sprintf("[%s] 密码已变更", siteNameFromStore(h.st))
+	body := fmt.Sprintf("您好 %s，\n\n你的账户密码刚刚通过重置链接被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
+	go func() {
+		if err := smtpCfg.Send(u.Email, subject, body); err != nil && h.log != nil {
+			h.log.Error("send password change notification", "error", err, "to", u.Email, "user_id", u.ID)
+		}
+	}()
 }
 
 // loadSMTPConfig 从设置中读取 SMTP 配置。

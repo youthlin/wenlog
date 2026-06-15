@@ -23,6 +23,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/internal/wxr"
 )
 
@@ -281,12 +282,12 @@ func gravatar(email string) string {
 }
 
 func avatarURL(email, defaultAvatar string) string {
-	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=48&d=" + normalizeDefaultAvatar(defaultAvatar)
+	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=48&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
 }
 
 func avatarPreviewURL(defaultAvatar string) string {
 	url := avatarURL("", defaultAvatar)
-	if normalizeDefaultAvatar(defaultAvatar) == "cravatar" {
+	if util.NormalizeDefaultAvatar(defaultAvatar) == "cravatar" {
 		return url + "&f=y"
 	}
 	return url
@@ -303,13 +304,4 @@ func gravatarFallback(email string) string {
 func avatarHash(email string) string {
 	sum := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 	return hex.EncodeToString(sum[:])
-}
-
-func normalizeDefaultAvatar(v string) string {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "mp", "blank", "cravatar", "identicon", "wavatar", "monsterid", "retro", "robohash":
-		return strings.ToLower(strings.TrimSpace(v))
-	default:
-		return "mp"
-	}
 }

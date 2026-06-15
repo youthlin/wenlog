@@ -19,6 +19,7 @@ import (
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/util"
 )
 
 func TestAllowDebugSQL(t *testing.T) {
@@ -78,10 +79,10 @@ func TestReleaseDirFromFS(t *testing.T) {
 			t.Fatalf("released file %q mismatch: got %q want %q", path, got, file.Data)
 		}
 	}
-	if !pathExists(targetDir) {
+	if !util.PathExists(targetDir) {
 		t.Fatal("target dir should exist after release")
 	}
-	if pathExists(filepath.Join(targetDir, "missing.txt")) {
+	if util.PathExists(filepath.Join(targetDir, "missing.txt")) {
 		t.Fatal("missing file should not exist")
 	}
 	if _, err := fs.Stat(os.DirFS(targetDir), "nested/deeper/theme.json"); err != nil {

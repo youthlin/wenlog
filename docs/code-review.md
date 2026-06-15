@@ -29,10 +29,10 @@
 |---|------|------|------|
 | 10 | ✅ 已修复 | **Open Redirect** | `admin.go` 多处 | 添加 `safeRedirect` 函数校验 Referer 域名，非本站域名回退到 `/admin/comments`。 |
 | 11 | ✅ 已知设计 | **SMTP/Metrics 密码明文存储** | `consts/const.go:31,38` | 自托管单用户博客，basic auth 和 SMTP 密码可随时更改撤销，风险可控。 |
-| 12 | ⬜ 待修复 | **密码变更无通知邮件** | `auth.go:119-164`, `admin.go:1360-1393` |
+| 12 | ✅ 已修复 | **密码变更无通知邮件** | `auth.go:119-164`, `admin.go:1360-1393` | 添加 `sendPasswordChangeNotification` 异步发送通知邮件。 |
 | 13 | ✅ 已修复 | **评论 URL 未校验协议** | `comment.go:47,73` — 可提交 `javascript:` URL |
-| 14 | ⬜ 待修复 | **用户枚举时序侧信道** | `auth.go:42-49`, `admin.go:273-278` — 登录/忘记密码可通过响应时间判断用户是否存在 |
-| 15 | ⬜ 待修复 | **用户名无格式校验** | `admin.go:303-392, 3025-3070` — 可包含特殊字符、空格等 |
+| 14 | ✅ 已修复 | **用户枚举时序侧信道** | `auth.go:42-49`, `admin.go:273-278` — 登录/忘记密码可通过响应时间判断用户是否存在 | 登录始终执行 bcrypt 比较，忘记密码添加固定延迟。 |
+| 15 | ✅ 已修复 | **用户名无格式校验** | `admin.go:303-392, 3025-3070` — 可包含特殊字符、空格等 | 添加 `validateUsernameT` 校验用户名格式。 |
 
 ---
 
@@ -86,16 +86,16 @@
 |---|------|------|------|
 | 29 | ✅ 已修复 | `settingsData` 定义但从未调用 | `admin.go:849` |
 | 30 | ✅ 已修复 | `.widget-user-greeting` CSS 规则未在任何模板中使用 | `style.css:312` |
-| 31 | ⬜ 待修复 | `.avatar-picture` CSS 规则未在模板中使用 | `style.css:179` |
+| 31 | ✅ 已修复 | `.avatar-picture` CSS 规则未在模板中使用 | `style.css:179` | 已移除。 |
 
 ### 代码重复
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
 | 32 | ⬜ 待修复 | `renderMarkdown` 和 `renderMarkdownForBootstrap` 完全重复 | `admin.go:3259` vs `bootstrap.go:193` |
-| 33 | ⬜ 待修复 | `firstNonEmpty` 三处重复实现 | `admin.go:1654`, `public.go:500`, `exporter.go:387` |
-| 34 | ⬜ 待修复 | `normalizeDefaultAvatar` 两处重复 | `admin.go:961` vs `render.go:308` |
-| 35 | ⬜ 待修复 | `pathExists` 两处重复 | `admin.go:1608` vs `i18n.go:74` |
+| 33 | ✅ 已修复 | `firstNonEmpty` 三处重复实现 | `admin.go:1654`, `public.go:500`, `exporter.go:387` | 统一到 `util.FirstNonEmpty`。 |
+| 34 | ✅ 已修复 | `normalizeDefaultAvatar` 两处重复 | `admin.go:961` vs `render.go:308` | 统一到 `util.NormalizeDefaultAvatar`。 |
+| 35 | ✅ 已修复 | `pathExists` 两处重复 | `admin.go:1608` vs `i18n.go:74` | 统一到 `util.PathExists`。 |
 | 36 | ⬜ 待修复 | `normalizeTermSlug` 和 `slugifyTag` 功能相似 | `admin.go:2504` vs `store/admin.go:524` |
 | 37 | ⬜ 待修复 | X-Forwarded 头解析逻辑重复 | `request.go:14-36` vs `csrf.go:118-139` |
 | 38 | ⬜ 待修复 | `currentUser`/`currentUserID` 在 Admin 和 Public 中重复 | `admin.go:1661,2479` vs `public.go:157,170` |

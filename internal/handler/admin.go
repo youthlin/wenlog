@@ -81,11 +81,11 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(h.st)
 	v, _ := h.st.GetSetting(consts.SettingsSiteName)
 	defaultAvatar, _ := h.st.GetSetting(consts.SettingsDefaultAvatar)
-	siteName := firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault)
+	siteName := util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, v)
 	data := gin.H{
 		"SiteName":             siteName,
 		"Title":                title,
-		"DefaultAvatar":        normalizeDefaultAvatarSetting(defaultAvatar),
+		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
 		"PendingCount":         h.st.PendingCommentCount(),
 		"PostPermalinkPattern": currentPostPermalink,
 		"RoleAdmin":            model.RoleAdmin,
@@ -271,7 +271,16 @@ func (h *Admin) Login(c *gin.Context) {
 	username := strings.TrimSpace(c.PostForm("username"))
 	password := c.PostForm("password")
 	u, err := h.st.GetUserByUsername(username)
-	if err != nil || bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
+	// 防时序攻击: 无论用户是否存在都执行 bcrypt 比较。
+	hash := ""
+	if err == nil && u != nil {
+		hash = u.PasswordHash
+	}
+	// 使用固定 hash 作为 fallback,确保用户不存在时也消耗相近时间。
+	if hash == "" {
+		hash = "$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	}
+	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil || err != nil {
 		data := h.base(c, tr.T("登录"))
 		data["Error"] = tr.T("用户名或密码错误。")
 		c.HTML(http.StatusUnauthorized, "admin_login.gohtml", data)
@@ -316,6 +325,11 @@ func (h *Admin) Register(c *gin.Context) {
 
 	if username == "" || email == "" {
 		data["Error"] = tr.T("用户名和邮箱不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
+	if err := validateUsernameT(tr.T, username); err != nil {
+		data["Error"] = err.Error()
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
 	}
@@ -773,7 +787,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 		Pages:     includePages,
 		Comments:  includeComments,
 		Settings:  includeSettings,
-		SiteTitle: firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault),
+		SiteTitle: util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, v),
 		SiteURL:   requestBaseURL(c),
 	})
 	if err != nil {
@@ -894,15 +908,15 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsSiteURL,
 		consts.SettingsMetricsAuthPassword,
 	)
-	data["SiteNameValue"] = firstNonEmptyAdmin(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault)
+	data["SiteNameValue"] = util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, settings[consts.SettingsSiteName])
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
-	data["PostPermalinkValue"] = firstNonEmptyAdmin(settings[consts.SettingsPostPermalink], consts.SettingsPostPermalinkDefault)
-	data["CategoryPrefixValue"] = firstNonEmptyAdmin(settings[consts.SettingsCategoryPrefix], consts.SettingsCategoryPrefixDefault)
-	data["TagPrefixValue"] = firstNonEmptyAdmin(settings[consts.SettingsTagPrefix], consts.SettingsTagPrefixDefault)
+	data["PostPermalinkValue"] = util.FirstNonEmptyOr(consts.SettingsPostPermalinkDefault, settings[consts.SettingsPostPermalink])
+	data["CategoryPrefixValue"] = util.FirstNonEmptyOr(consts.SettingsCategoryPrefixDefault, settings[consts.SettingsCategoryPrefix])
+	data["TagPrefixValue"] = util.FirstNonEmptyOr(consts.SettingsTagPrefixDefault, settings[consts.SettingsTagPrefix])
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
 	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
-	data["DefaultAvatarValue"] = normalizeDefaultAvatarSetting(settings[consts.SettingsDefaultAvatar])
+	data["DefaultAvatarValue"] = util.NormalizeDefaultAvatar(settings[consts.SettingsDefaultAvatar])
 	data["RegistrationOpenValue"] = settings[consts.SettingsRegistrationOpen] == "true"
 	data["SMTPHostValue"] = settings[consts.SettingsSMTPHost]
 	data["SMTPPortValue"] = settings[consts.SettingsSMTPPort]
@@ -972,15 +986,6 @@ func (h *Admin) ensureMetricsAuthPassword(current string) string {
 	return password
 }
 
-func normalizeDefaultAvatarSetting(v string) string {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "mp", "blank", "cravatar", "identicon", "wavatar", "monsterid", "retro", "robohash":
-		return strings.ToLower(strings.TrimSpace(v))
-	default:
-		return consts.SettingsDefaultAvatarDefault
-	}
-}
-
 func (h *Admin) settingsDataForTab(c *gin.Context, tab string) gin.H {
 	return h.settingsDataForSection(c, tab)
 }
@@ -1015,7 +1020,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	}
 	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
 	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
-	defaultAvatar := normalizeDefaultAvatarSetting(c.PostForm("default_avatar"))
+	defaultAvatar := util.NormalizeDefaultAvatar(c.PostForm("default_avatar"))
 
 	catNorm, tagNorm, ok := h.validateSiteSettingsPermalink(c, tr, postPermalink, categoryPrefix, tagPrefix)
 	if !ok {
@@ -1399,8 +1404,25 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	// 发送密码变更通知邮件。
+	h.sendPasswordChangeNotification(c, u)
 	middleware.ClearSession(c)
 	c.Redirect(http.StatusSeeOther, "/admin/login")
+}
+
+func (h *Admin) sendPasswordChangeNotification(c *gin.Context, u *model.User) {
+	tr := i18n.Get(c)
+	smtpCfg := smtpConfigFromStore(h.st)
+	if !smtpCfg.Configured() || u.Email == "" {
+		return
+	}
+	subject := tr.T("[%s] 密码已变更", siteNameFromStore(h.st))
+	body := tr.T("您好 %s，\n\n你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
+	go func() {
+		if err := smtpCfg.Send(u.Email, subject, body); err != nil && h.log != nil {
+			h.log.Error("send password change notification", "error", err, "to", u.Email, "user_id", u.ID)
+		}
+	}()
 }
 
 // profileData 构建个人资料页数据。
@@ -1449,7 +1471,7 @@ func (h *Admin) ReleaseTemplates(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if pathExists("web/templates") {
+	if util.PathExists("web/templates") {
 		if err := h.renderer.UseFS(os.DirFS("web/templates"), true); err != nil {
 			data := h.settingsDataForTab(c, "resources")
 			data["Error"] = tr.T("切换到本地模板失败: %s", err.Error())
@@ -1508,7 +1530,7 @@ func (h *Admin) ReleaseAssets(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if pathExists("web/assets") {
+	if util.PathExists("web/assets") {
 		h.assets.SetHot(true)
 		c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "assets-released"))
 		return
@@ -1552,7 +1574,7 @@ func (h *Admin) ReleaseI18n(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if !pathExists("web/i18n") {
+	if !util.PathExists("web/i18n") {
 		langFS, err := fs.Sub(web.I18n, "i18n")
 		if err != nil {
 			data := h.settingsDataForTab(c, "resources")
@@ -1616,11 +1638,6 @@ func releaseDirFromFS(src fs.FS, targetDir string) error {
 	})
 }
 
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
 // DebugPage 是只读 SQL 调试页,以 JSON 展示结果集。
 func (h *Admin) DebugPage(c *gin.Context) {
 	tr := i18n.Get(c)
@@ -1664,13 +1681,6 @@ func allowDebugSQL(sqlText string) bool {
 	}
 	return strings.HasPrefix(upper, "SELECT") ||
 		strings.HasPrefix(upper, "EXPLAIN")
-}
-
-func firstNonEmptyAdmin(v, fallback string) string {
-	if strings.TrimSpace(v) != "" {
-		return v
-	}
-	return fallback
 }
 
 func (h *Admin) currentUser(c *gin.Context) *model.User {
@@ -3059,6 +3069,12 @@ func (h *Admin) CreateUser(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
 		return
 	}
+	if err := validateUsernameT(tr.T, username); err != nil {
+		data := h.base(c, tr.T("新增用户"))
+		data["Error"] = err.Error()
+		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+		return
+	}
 	if len(password) < 8 {
 		data := h.base(c, tr.T("新增用户"))
 		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
@@ -3126,6 +3142,14 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("用户名和邮箱不能为空。")
+		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+		return
+	}
+	if err := validateUsernameT(tr.T, username); err != nil {
+		u, _ := h.st.GetUserByID(uint(id))
+		data := h.base(c, tr.T("编辑用户"))
+		data["EditUser"] = u
+		data["Error"] = err.Error()
 		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
 		return
 	}
@@ -3224,6 +3248,19 @@ var pageSlugReserved = map[string]bool{
 }
 
 var pageSlugAllowedRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+var usernameAllowedRe = regexp.MustCompile(`^[a-zA-Z0-9_-]{2,32}$`)
+
+func validateUsernameT(tr func(string, ...any) string, username string) error {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return errors.New(tr(gettext.Mark.T("用户名不能为空")))
+	}
+	if !usernameAllowedRe.MatchString(username) {
+		return errors.New(tr(gettext.Mark.T("用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符")))
+	}
+	return nil
+}
 
 func validatePageSlug(slug string) error {
 	return validatePageSlugT(func(msgID string, args ...any) string { return fmt.Sprintf(msgID, args...) }, slug)

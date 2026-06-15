@@ -13,6 +13,7 @@ import (
 	gettext "github.com/youthlin/t"
 	"golang.org/x/text/language"
 
+	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/web"
 )
 
@@ -30,7 +31,7 @@ var hotConfigured atomic.Bool
 // 当前仓库源码中的默认文案是中文,因此把源代码语言设为 zh_CN,英文通过 po 文件提供。
 func Init() error {
 	if !hotConfigured.Load() {
-		hot.Store(pathExists("web/i18n"))
+		hot.Store(util.PathExists("web/i18n"))
 		hotConfigured.Store(true)
 	}
 	return loadTranslations()
@@ -69,11 +70,6 @@ func loadTranslations() error {
 // Reload 重新加载翻译资源: 本地目录存在时优先使用本地目录,否则回退到 embed。
 func Reload() error {
 	return loadTranslations()
-}
-
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
 }
 
 // Middleware 为当前请求决定语言,优先级: query lang > cookie > Accept-Language。

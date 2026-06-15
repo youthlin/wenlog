@@ -14,6 +14,7 @@ import (
 
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/util"
 )
 
 const exportTimeLayout = "2006-01-02 15:04:05"
@@ -278,7 +279,7 @@ func buildExportRSS(ctx *exportContext, opts ExportOptions) exportRSS {
 			ID:          int(p.AuthorID),
 			Login:       p.Author.Username,
 			Email:       p.Author.Email,
-			DisplayName: firstNonEmpty(p.Author.DisplayName, p.Author.Username),
+			DisplayName: util.FirstNonEmpty(p.Author.DisplayName, p.Author.Username),
 		})
 	}
 	for _, p := range ctx.posts {
@@ -295,7 +296,7 @@ func buildExportRSS(ctx *exportContext, opts ExportOptions) exportRSS {
 			Status:        exportPostStatus(p.Status),
 			PostType:      p.PostType,
 			MenuOrder:     p.MenuOrder,
-			CommentStatus: firstNonEmpty(p.CommentStatus, "open"),
+			CommentStatus: util.FirstNonEmpty(p.CommentStatus, "open"),
 			Metas:         []exportXMLMeta{{Key: "views", Value: strconv.FormatInt(p.Views, 10)}},
 		}
 		for _, c := range p.Categories {
@@ -382,15 +383,6 @@ func formatWPTime(t time.Time) string {
 		return ""
 	}
 	return t.Format(exportTimeLayout)
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if strings.TrimSpace(v) != "" {
-			return v
-		}
-	}
-	return ""
 }
 
 func ExportFilename() string {

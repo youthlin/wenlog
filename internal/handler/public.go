@@ -20,6 +20,7 @@ import (
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/util"
 )
 
 // Public 是前台处理器。
@@ -108,7 +109,7 @@ func (h *Public) loadSettings() publicSettings {
 		consts.SettingsRegistrationOpen,
 	)
 	return publicSettings{
-		SiteName:         firstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
+		SiteName:         util.FirstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription:  settings[consts.SettingsSiteDesc],
 		PostPermalink:    postPermalink,
 		CategoryPrefix:   permalink.CurrentCategoryPrefix(),
@@ -116,7 +117,7 @@ func (h *Public) loadSettings() publicSettings {
 		PageSize:         positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
 		FeedSize:         positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
 		SayingPostID:     uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
-		DefaultAvatar:    normalizeDefaultAvatarSetting(settings[consts.SettingsDefaultAvatar]),
+		DefaultAvatar:    util.NormalizeDefaultAvatar(settings[consts.SettingsDefaultAvatar]),
 		RegistrationOpen: settings[consts.SettingsRegistrationOpen] == "true",
 	}
 }
@@ -496,15 +497,6 @@ func pager(res *store.ListPostsResult, baseURL string) gin.H {
 }
 
 func currentYear() int { return time.Now().Year() }
-
-func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if strings.TrimSpace(v) != "" {
-			return v
-		}
-	}
-	return ""
-}
 
 func singleSegmentSlug(path string) (string, bool) {
 	path = strings.Trim(path, "/")
