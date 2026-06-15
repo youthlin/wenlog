@@ -367,12 +367,12 @@ func (h *Admin) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := randomHexToken(32)
+	token, err := randomHexToken(consts.TokenLengthVerification)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.SavePendingRegistration(username, email, token, time.Now().Add(24*time.Hour)); err != nil {
+	if err := h.st.SavePendingRegistration(username, email, token, time.Now().Add(consts.VerificationTokenTTL)); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -463,7 +463,7 @@ func (h *Admin) RegisterVerify(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
 	}
-	if len(password) < 8 {
+	if len(password) < consts.PasswordMinLen {
 		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
@@ -976,7 +976,7 @@ func (h *Admin) ensureMetricsAuthPassword(current string) string {
 	if password != "" {
 		return password
 	}
-	password = util.GenerateRandomString(24, util.WithAlphaNumer())
+	password = util.GenerateRandomString(consts.TokenLengthMetrics, util.WithAlphaNumer())
 	if h != nil && h.st != nil {
 		_ = h.st.SetSetting(consts.SettingsMetricsAuthPassword, password)
 	}
@@ -1111,7 +1111,7 @@ func (h *Admin) SaveSMTPSettings(c *gin.Context) {
 func (h *Admin) SaveMetricsAuthSettings(c *gin.Context) {
 	tr := i18n.Get(c)
 	password := strings.TrimSpace(c.PostForm("metrics_auth_password"))
-	if len(password) < 12 {
+	if len(password) < consts.MetricsPasswordMinLen {
 		data := h.settingsDataForTab(c, "developer")
 		data["Error"] = tr.T("Metrics Basic Auth 密码至少需要 12 个字符。")
 		data["MetricsAuthPasswordValue"] = password
@@ -1299,12 +1299,12 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
-	token, err := randomHexToken(32)
+	token, err := randomHexToken(consts.TokenLengthVerification)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.SavePendingEmailChange(u.ID, email, token, time.Now().Add(24*time.Hour)); err != nil {
+	if err := h.st.SavePendingEmailChange(u.ID, email, token, time.Now().Add(consts.VerificationTokenTTL)); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1386,7 +1386,7 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
-	if len(password) < 8 {
+	if len(password) < consts.PasswordMinLen {
 		data := h.profileData(c, u)
 		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
@@ -1697,7 +1697,7 @@ func (h *Admin) UploadFile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": tr.T("未选择文件")})
 		return
 	}
-	if fh.Size > 10<<20 {
+	if fh.Size > consts.MaxUploadSize {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": tr.T("文件不能超过 10MB")})
 		return
 	}
@@ -1724,7 +1724,7 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	now := time.Now()
 	ext := safeImageExt(fh.Filename, mimeType)
 	relDir := filepath.Join("wp-content", "uploads", now.Format("2006"), now.Format("01"))
-	fileName := util.GenerateRandomString(24, util.WithAlphaNumer()) + ext
+	fileName := util.GenerateRandomString(consts.TokenLengthUpload, util.WithAlphaNumer()) + ext
 	absDir := filepath.Join(h.cfg.PublicDir, relDir)
 	if err = os.MkdirAll(absDir, 0o755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("创建上传目录失败")})

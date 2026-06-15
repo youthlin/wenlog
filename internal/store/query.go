@@ -10,6 +10,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"gorm.io/gorm"
 
+	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 )
@@ -624,7 +625,7 @@ func (s *Store) buildCommentWidgetItems(comments []model.Comment, pageSize int) 
 			Post:       *p,
 			CommentURL: base + "?cpage=" + strconv.Itoa(cpage) + "#comment-" + strconv.Itoa(int(c.ID)),
 			AuthorURL:  strings.TrimSpace(c.URL),
-			Snippet:    commentSnippet(c.Content, 36),
+			Snippet:    commentSnippet(c.Content, consts.CommentSnippetMaxRune),
 		})
 	}
 	return items

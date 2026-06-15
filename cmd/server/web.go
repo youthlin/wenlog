@@ -17,6 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/youthlin/blog/internal/config"
+	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
@@ -65,7 +66,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	sessionStore.Options(sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
-		MaxAge:   7 * 86400,
+		MaxAge:   consts.SessionMaxAge,
 		SameSite: http.SameSiteLaxMode,
 	})
 	r.Use(

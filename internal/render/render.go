@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ import (
 	mhtml "github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/util"
@@ -285,7 +287,7 @@ func gravatar(email string) string {
 }
 
 func avatarURL(email, defaultAvatar string) string {
-	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=48&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
+	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(consts.AvatarSizeSmall) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
 }
 
 func avatarPreviewURL(defaultAvatar string) string {
@@ -297,7 +299,7 @@ func avatarPreviewURL(defaultAvatar string) string {
 }
 
 func gravatarPrimary(email string) string {
-	return "https://gravatar.com/avatar/" + avatarHash(email) + "?s=48"
+	return "https://gravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(consts.AvatarSizeSmall)
 }
 
 func gravatarFallback(email string) string {

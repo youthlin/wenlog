@@ -1,5 +1,7 @@
 package consts
 
+import "time"
+
 const (
 	// 站点标题
 	SettingsSiteName        = "site_name"
@@ -39,4 +41,41 @@ const (
 	SettingsSMTPFrom     = "smtp_from"
 	// 站点 URL(用于生成重置密码链接)
 	SettingsSiteURL = "site_url"
+)
+
+// 安全相关常量。
+const (
+	TokenLengthVerification = 32 // 邮箱验证/密码重置 token 长度(字节)
+	TokenLengthUpload       = 24 // 上传文件名随机串长度
+	TokenLengthMetrics      = 24 // Metrics 密码随机串长度
+	PasswordMinLen          = 8  // 密码最小长度
+	MetricsPasswordMinLen   = 12 // Metrics Basic Auth 密码最小长度
+	TimingAttackDelay       = 50  // 防时序攻击延迟(毫秒)
+)
+
+// 超时相关常量。
+const (
+	VerificationTokenTTL = 24 * time.Hour // 邮箱验证/密码重置 token 有效期
+	ResetTokenTTL        = 1 * time.Hour  // 密码重置 token 有效期
+)
+
+// 上传相关常量。
+const (
+	MaxUploadSize = 10 << 20 // 上传文件最大 10MB
+)
+
+// 展示相关常量。
+const (
+	AvatarSizeSmall       = 48 // 头像尺寸(像素)
+	CommentSnippetMaxRune = 36 // 评论摘要最大字符数
+)
+
+// 会话相关常量。
+const (
+	SessionMaxAge = 7 * 86400 // 会话有效期(秒), 7 天
+)
+
+// 默认分类 slug。
+const (
+	DefaultCategorySlug = "uncategorized"
 )

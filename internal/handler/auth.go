@@ -44,7 +44,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	u, err := h.st.GetUserByEmail(emailAddr)
 	if err != nil {
 		// 防时序攻击: 用户不存在时也模拟相近的延迟。
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(consts.TimingAttackDelay * time.Millisecond)
 		// 不暴露用户是否存在,统一提示已发送
 		data := h.base(c, tr.T("忘记密码"), "", s)
 		data["Success"] = tr.T("如果该邮箱已注册，重置密码链接已发送。")
@@ -59,7 +59,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 		return
 	}
 	token := hex.EncodeToString(tokenBytes)
-	expiry := time.Now().Add(1 * time.Hour)
+	expiry := time.Now().Add(consts.ResetTokenTTL)
 
 	if err := h.st.SetResetToken(u.ID, token, expiry); err != nil {
 		h.serverError(c, err)
@@ -137,7 +137,7 @@ func (h *Public) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if len(password) < 8 {
+	if len(password) < consts.PasswordMinLen {
 		data := h.base(c, tr.T("重置密码"), "", s)
 		data["ResetToken"] = token
 		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
