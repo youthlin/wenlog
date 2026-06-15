@@ -129,10 +129,10 @@ func sameOriginRequest(r *http.Request) bool {
 	if err != nil || u.Host == "" {
 		return false
 	}
-	return strings.EqualFold(requestScheme(r), u.Scheme) && strings.EqualFold(requestHost(r), u.Host)
+	return strings.EqualFold(RequestScheme(r), u.Scheme) && strings.EqualFold(RequestHost(r), u.Host)
 }
 
-func requestScheme(r *http.Request) string {
+func RequestScheme(r *http.Request) string {
 	if v := strings.TrimSpace(r.Header.Get("X-Forwarded-Proto")); v != "" {
 		if i := strings.IndexByte(v, ','); i >= 0 {
 			v = v[:i]
@@ -145,7 +145,7 @@ func requestScheme(r *http.Request) string {
 	return "http"
 }
 
-func requestHost(r *http.Request) string {
+func RequestHost(r *http.Request) string {
 	if v := strings.TrimSpace(r.Header.Get("X-Forwarded-Host")); v != "" {
 		if i := strings.IndexByte(v, ','); i >= 0 {
 			v = v[:i]

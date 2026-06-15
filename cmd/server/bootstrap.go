@@ -7,9 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gomarkdown/markdown"
-	mhtml "github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 
@@ -141,7 +138,7 @@ func ensureInitialContent(st *store.Store) error {
 		ID:            postID,
 		Title:         t.T(bootstrapWelcomePostTitle),
 		ContentMD:     welcomeMD,
-		Content:       renderMarkdownForBootstrap(welcomeMD),
+		Content:       render.RenderMarkdown(welcomeMD),
 		AuthorID:      author.ID,
 		Status:        model.StatusPublished,
 		PostType:      model.PostTypePost,
@@ -177,7 +174,7 @@ func ensureInitialContent(st *store.Store) error {
 		Title:         t.T(bootstrapAboutPageTitle),
 		Slug:          "about",
 		ContentMD:     aboutMD,
-		Content:       renderMarkdownForBootstrap(aboutMD),
+		Content:       render.RenderMarkdown(aboutMD),
 		AuthorID:      author.ID,
 		Status:        model.StatusPublished,
 		PostType:      model.PostTypePage,
@@ -188,12 +185,4 @@ func ensureInitialContent(st *store.Store) error {
 		ModifiedAt:    now,
 	}
 	return st.SavePost(about)
-}
-
-func renderMarkdownForBootstrap(md string) string {
-	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
-	doc := p.Parse([]byte(md))
-	rendererMD := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
-	out := string(markdown.Render(doc, rendererMD))
-	return render.HighlightCodeBlocks(render.SanitizeHTML(out))
 }

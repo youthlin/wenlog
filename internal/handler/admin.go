@@ -27,9 +27,6 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/gomarkdown/markdown"
-	mhtml "github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 
@@ -2418,7 +2415,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 
 	// 正文:Markdown 原文 + 渲染后的 HTML 一并保存。
 	p.ContentMD = f.ContentMD
-	p.Content = renderMarkdown(f.ContentMD)
+	p.Content = renderx.RenderMarkdown(f.ContentMD)
 	p.ContentFormat = model.FormatMarkdown
 
 	// 仅文章关联分类/标签;页面不需要。
@@ -2608,7 +2605,7 @@ func (h *Admin) termsFormError(c *gin.Context, section, msg string, cat model.Ca
 func (h *Admin) Preview(c *gin.Context) {
 	md := c.PostForm("content_md")
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.String(http.StatusOK, renderMarkdown(md))
+	c.String(http.StatusOK, renderx.RenderMarkdown(md))
 }
 
 // DeletePost 删除文章/页面。
@@ -3319,13 +3316,4 @@ func selectedCats(ids []uint) map[uint]bool {
 		out[id] = true
 	}
 	return out
-}
-
-// renderMarkdown 把 Markdown 渲染为 HTML,消毒后复用前台统一的代码块高亮逻辑。
-func renderMarkdown(md string) string {
-	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
-	doc := p.Parse([]byte(md))
-	renderer := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
-	out := string(markdown.Render(doc, renderer))
-	return renderx.HighlightCodeBlocks(renderx.SanitizeHTML(out))
 }

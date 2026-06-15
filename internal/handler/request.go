@@ -7,28 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/youthlin/blog/internal/consts"
+	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/store"
 )
 
 func requestBaseURL(c *gin.Context) string {
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	}
-	if v := strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")); v != "" {
-		if i := strings.IndexByte(v, ','); i >= 0 {
-			v = v[:i]
-		}
-		scheme = strings.TrimSpace(v)
-	}
-	host := strings.TrimSpace(c.Request.Host)
-	if v := strings.TrimSpace(c.GetHeader("X-Forwarded-Host")); v != "" {
-		if i := strings.IndexByte(v, ','); i >= 0 {
-			v = v[:i]
-		}
-		host = strings.TrimSpace(v)
-	}
+	scheme := middleware.RequestScheme(c.Request)
+	host := middleware.RequestHost(c.Request)
 	if host == "" {
 		return ""
 	}

@@ -20,6 +20,9 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/cockroachdb/errors"
 	ginrender "github.com/gin-gonic/gin/render"
+	"github.com/gomarkdown/markdown"
+	mhtml "github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
@@ -304,4 +307,13 @@ func gravatarFallback(email string) string {
 func avatarHash(email string) string {
 	sum := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 	return hex.EncodeToString(sum[:])
+}
+
+// RenderMarkdown 把 Markdown 渲染为 HTML,消毒后复用统一的代码块高亮逻辑。
+func RenderMarkdown(md string) string {
+	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
+	doc := p.Parse([]byte(md))
+	renderer := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
+	out := string(markdown.Render(doc, renderer))
+	return HighlightCodeBlocks(SanitizeHTML(out))
 }
