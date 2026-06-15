@@ -70,7 +70,9 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	smtpCfg := h.loadSMTPConfig()
 	siteURL, ok := h.loadConfiguredSiteURL()
 	if !ok {
-		_ = h.st.ClearResetToken(u.ID)
+		if err := h.st.ClearResetToken(u.ID); err != nil && h.log != nil {
+			h.log.Error("clear reset token", "error", err, "user_id", u.ID)
+		}
 		data := h.base(c, tr.T("忘记密码"), "", s)
 		data["Error"] = tr.T("站点 URL 未配置，无法发送安全重置链接，请联系管理员。")
 		c.HTML(http.StatusInternalServerError, "auth_forgot_password.gohtml", data)
@@ -83,7 +85,9 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	if err := smtpCfg.Send(emailAddr, subject, body); err != nil {
 		h.log.Error("send reset email", "error", err, "to", emailAddr)
 		// 邮件发送失败,清除令牌
-		_ = h.st.ClearResetToken(u.ID)
+		if err2 := h.st.ClearResetToken(u.ID); err2 != nil && h.log != nil {
+			h.log.Error("clear reset token", "error", err2, "user_id", u.ID)
+		}
 		data := h.base(c, tr.T("忘记密码"), "", s)
 		data["Error"] = tr.T("邮件发送失败，请稍后重试或联系管理员。")
 		c.HTML(http.StatusInternalServerError, "auth_forgot_password.gohtml", data)
@@ -168,7 +172,9 @@ func (h *Public) ResetPassword(c *gin.Context) {
 		return
 	}
 	// 清除令牌
-	_ = h.st.ClearResetToken(u.ID)
+	if err := h.st.ClearResetToken(u.ID); err != nil && h.log != nil {
+		h.log.Error("clear reset token", "error", err, "user_id", u.ID)
+	}
 
 	// 发送密码变更通知邮件。
 	h.sendPasswordChangeNotification(u)

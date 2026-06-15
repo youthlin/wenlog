@@ -66,5 +66,7 @@ func (h *Public) Feed(c *gin.Context) {
 	c.String(http.StatusOK, xml.Header)
 	enc := xml.NewEncoder(c.Writer)
 	enc.Indent("", "  ")
-	_ = enc.Encode(doc)
+	if err := enc.Encode(doc); err != nil {
+		h.log.Error("feed xml encode", "error", err)
+	}
 }

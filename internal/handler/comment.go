@@ -137,7 +137,13 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	// 4. 限频:同 IP 60 秒内最多 3 条。
 	ip := c.ClientIP()
 	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
-	if cnt, _ := h.st.RecentCommentCountByIP(ip, since); cnt >= rateMaxInWindow {
+	cnt, err := h.st.RecentCommentCountByIP(ip, since)
+	if err != nil {
+		h.log.Error("rate limit check failed", "error", err, "ip", ip)
+		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), req.PostID)
+		return
+	}
+	if cnt >= rateMaxInWindow {
 		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), req.PostID)
 		return
 	}

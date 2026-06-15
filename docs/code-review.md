@@ -98,7 +98,7 @@
 | 35 | ✅ 已修复 | `pathExists` 两处重复 | `admin.go:1608` vs `i18n.go:74` | 统一到 `util.PathExists`。 |
 | 36 | ⬜ 待修复 | `normalizeTermSlug` 和 `slugifyTag` 功能相似 | `admin.go:2504` vs `store/admin.go:524` |
 | 37 | ✅ 已修复 | X-Forwarded 头解析逻辑重复 | `request.go:14-36` vs `csrf.go:118-139` | 导出 `middleware.RequestScheme`/`RequestHost` 统一使用。 |
-| 38 | ⬜ 待修复 | `currentUser`/`currentUserID` 在 Admin 和 Public 中重复 | `admin.go:1661,2479` vs `public.go:157,170` |
+| 38 | ✅ 已修复 | `currentUser`/`currentUserID` 在 Admin 和 Public 中重复 | `admin.go:1661,2479` vs `public.go:157,170` | 提取为包级 `currentUserID`/`currentUserByStore` 共享函数。 |
 
 ### 错误处理缺失
 
@@ -107,9 +107,9 @@
 | 39 | ⬜ 待修复 | `strconv.ParseUint` 错误被忽略（12 处） | `admin.go` 多处 — ID 解析失败时 id=0，可能导致意外操作 |
 | 40 | ⬜ 待修复 | `GetSetting`/`GetSettings` 错误被忽略 | `admin.go:82-83,485,863,1131`, `public.go:101`, `auth.go:172,206` |
 | 41 | ⬜ 待修复 | `IncrementViews` 错误被忽略 | `public.go:264,316` |
-| 42 | ⬜ 待修复 | `ClearResetToken` 错误被忽略 | `auth.go:69,82,159` — 失败则 token 可被重用 |
-| 43 | ⬜ 待修复 | `RecentCommentCountByIP` 错误被忽略 | `comment.go:126` — 失败则频率限制被绕过 |
-| 44 | ⬜ 待修复 | Feed XML 编码错误被忽略 | `feed.go:69` — 客户端收到截断的 200 响应 |
+| 42 | ✅ 已修复 | `ClearResetToken` 错误被忽略 | `auth.go:69,82,159` — 失败则 token 可被重用 | 添加错误日志记录。 |
+| 43 | ✅ 已修复 | `RecentCommentCountByIP` 错误被忽略 | `comment.go:126` — 失败则频率限制被绕过 | 错误时拒绝评论并记录日志。 |
+| 44 | ✅ 已修复 | Feed XML 编码错误被忽略 | `feed.go:69` — 客户端收到截断的 200 响应 | 添加错误日志记录。 |
 
 ### 魔法数字
 
