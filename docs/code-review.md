@@ -175,3 +175,114 @@
 2. **第二优先级（i18n + 无障碍）**: #16, #17-20, #21, #22, #51, #52
 3. **第三优先级（代码质量）**: #24-28, #29-31, #32-38, #39-44, #45
 4. **第四优先级（体验优化）**: #49-50, #53-64
+
+---
+
+## 修复方案总结
+
+> 完成日期: 2026-06-15 | 分支: feat/markdown-editor-ux | 共 15 次提交
+
+### 架构决策
+
+在修复过程中，针对以下问题做出了明确的架构决策：
+
+| 决策 | 问题 | 结论 |
+|------|------|------|
+| 限频存储方案 | #2 #3 #7 | 基于内存实现，预留 `RateLimiter` 接口供后续迁移 Redis |
+| CSRF 严格模式 | #8 | 无 Origin/Referer 头时拒绝请求 |
+| 安全重定向 | #10 | 仅允许跳转本站域名，通过 `safeRedirect` 校验 |
+| 密码明文存储 | #11 | 接受明文存储（basic auth / SMTP 密码可随时撤销，风险可控） |
+| 邮件 i18n | #16 | 签名传入 `tr *gettext.Translations` 参数 |
+| 函数拆分 | #24-28 | 立即执行，长函数拆分为 2-4 个职责单一的子函数 |
+| 工具包 | #32-38 | 重复代码统一到 `internal/util/` 包 |
+| 无障碍视觉 | #51 | 保持现有视觉，使用 `sr-only` 隐藏标签 |
+| 浏览器兼容 | #57 #58 | 仅兼容现代浏览器，不添加 `color-mix()` / `:has()` fallback |
+
+### 安全修复 (15 项)
+
+| 类别 | 修复项 | 方案 |
+|------|--------|------|
+| CSRF | #1 评论 CSRF、#8 严格模式 | 评论路由添加 CSRF 中间件；无 Origin/Referer 时拒绝 |
+| 限频 | #2 登录、#3 忘记密码、#7 注册 | 新增 `middleware/rate_limiter.go`，基于内存 + `RateLimiter` 接口 |
+| 注入 | #4 Debug SQL 多语句 | 检查分号，拒绝多语句 |
+| Session | #5 Cookie Secure | 修复竞态条件，根据请求 scheme 动态设置 |
+| 密码 | #6 强度要求 | 新增 `PasswordMinLen=8`、`MetricsPasswordMinLen=12` 常量 |
+| XSS | #9 Markdown HTML | 使用 `bluemonday.UGCPolicy()` 消毒 |
+| 重定向 | #10 Open Redirect | 新增 `safeRedirect`，校验 Referer 域名 |
+| 通知 | #12 密码变更通知 | 新增 `sendPasswordChangeNotification` 异步邮件 |
+| URL | #13 评论 URL 协议 | 校验仅允许 `http`/`https` |
+| 时序 | #14 用户枚举 | 登录始终 bcrypt 比较，忘记密码添加 `TimingAttackDelay=50ms` |
+| 用户名 | #15 格式校验 | 新增 `validateUsernameT`，限制字母数字下划线连字符 |
+
+### i18n 修复 (8 项)
+
+| 类别 | 修复项 | 方案 |
+|------|--------|------|
+| 邮件 | #16 硬编码中文 | `commentReplyMail` 接受 `*gettext.Translations` |
+| 模板 | #17-20 语言名称 | 4 处 `"中文"` 改为 `.t.T("中文")` |
+| 翻译 | #21 空翻译 | 补充 12 条 en_US 翻译 |
+| 翻译 | #22 fuzzy 翻译 | 修正 10 条错误翻译（如 "Views"→"Overview"） |
+| 翻译 | #23 单复数 | 修正 `%d pending` 的 `msgstr[0]`/`msgstr[1]` |
+
+### 代码质量修复 (22 项)
+
+| 类别 | 修复项 | 方案 |
+|------|--------|------|
+| 长函数 | #24-28 (5 个) | 每个拆分为 2-4 个子函数 |
+| 死代码 | #29-31 (3 个) | 删除未使用的函数和 CSS 规则 |
+| 重复代码 | #32-38 (7 个) | 统一到 `internal/util/` 或导出共享函数 |
+| 错误处理 | #39-44 (6 个) | 添加错误日志或返回错误 |
+| 魔法数字 | #45 | 新增 `TokenLength*`、`PasswordMinLen`、`MaxUploadSize`、`SessionMaxAge` 等常量 |
+
+### CSS / 无障碍修复 (16 项)
+
+| 类别 | 修复项 | 方案 |
+|------|--------|------|
+| 响应式 | #49 中间断点 | 添加 1080px 断点，缩小间距和侧边栏 |
+| 响应式 | #50 登录框宽度 | 使用 `min(320px, calc(100vw - 24px))` |
+| 无障碍 | #51 表单标签 | 添加 `sr-only` label 和 `aria-label` |
+| 无障碍 | #52 focus-visible | 添加全局 `:focus-visible` 样式 |
+| 无障碍 | #53 对比度 | 浅色主题 muted 文字加深 |
+| 无障碍 | #54 Badge 对比度 | 红色加深满足 AA |
+| 无障碍 | #55 Skip Nav | 添加 skip-to-content 链接 |
+| 无障碍 | #56 键盘导航 | 自定义 select 添加方向键 + `aria-activedescendant` |
+| CSS | #59 appearance | 已有标准属性 |
+| CSS | #60 双分号 | 修复 typo |
+| CSS | #61 print 样式 | 添加 `@media print` |
+| CSS | #62 触摸目标 | `.btn`/`.btn-secondary` 添加 `min-height: 44px` |
+| CSS | #63 硬编码颜色 | 提取为 `--danger`/`--success`/`--warning`/`--surface-shadow` 等变量 |
+
+### 文档修复 (1 项)
+
+| 修复项 | 方案 |
+|--------|------|
+| #46 文件清单不一致 | 更新 `docs/roles-and-permissions.md` 反映实际文件结构 |
+
+### 最终统计
+
+| 状态 | 数量 |
+|------|------|
+| ✅ 已修复 | 56 |
+| ✅ 已知设计 | 8 (#11 #47 #48 #57 #58 #64) |
+| ⬜ 待修复 | 0 |
+| **合计** | **64** |
+
+### 涉及文件
+
+```
+cmd/server/routes.go, web.go
+internal/config/config.go
+internal/consts/const.go
+internal/email/mail.go
+internal/handler/admin.go, auth.go, comment.go, feed.go, public.go
+internal/middleware/csrf.go, rate_limiter.go, request.go, session.go
+internal/model/user.go
+internal/render/markdown.go, render.go
+internal/store/admin.go
+internal/util/first.go, path.go, strings.go
+web/assets/admin.css, style.css, theme.js
+web/i18n/en_US.po, zh_CN.po
+web/templates/admin_base.gohtml, admin_login.gohtml, admin_register.gohtml,
+  auth_forgot_password.gohtml, base.gohtml, post.gohtml
+docs/code-review.md, roles-and-permissions.md
+```
