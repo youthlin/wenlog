@@ -104,9 +104,9 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 39 | ⬜ 待修复 | `strconv.ParseUint` 错误被忽略（12 处） | `admin.go` 多处 — ID 解析失败时 id=0，可能导致意外操作 |
-| 40 | ⬜ 待修复 | `GetSetting`/`GetSettings` 错误被忽略 | `admin.go:82-83,485,863,1131`, `public.go:101`, `auth.go:172,206` |
-| 41 | ⬜ 待修复 | `IncrementViews` 错误被忽略 | `public.go:264,316` |
+| 39 | ✅ 已修复 | `strconv.ParseUint` 错误被忽略（12 处） | `admin.go` 多处 — ID 解析失败时 id=0，可能导致意外操作 | 新增 `parseUintParam` 辅助函数，解析失败返回 404。 |
+| 40 | ✅ 已修复 | `GetSetting`/`GetSettings` 错误被忽略 | `admin.go:82-83,485,863,1131`, `public.go:101`, `auth.go:172,206` | 添加错误日志记录。 |
+| 41 | ✅ 已修复 | `IncrementViews` 错误被忽略 | `public.go:264,316` | 添加错误日志记录。 |
 | 42 | ✅ 已修复 | `ClearResetToken` 错误被忽略 | `auth.go:69,82,159` — 失败则 token 可被重用 | 添加错误日志记录。 |
 | 43 | ✅ 已修复 | `RecentCommentCountByIP` 错误被忽略 | `comment.go:126` — 失败则频率限制被绕过 | 错误时拒绝评论并记录日志。 |
 | 44 | ✅ 已修复 | Feed XML 编码错误被忽略 | `feed.go:69` — 客户端收到截断的 200 响应 | 添加错误日志记录。 |
@@ -115,7 +115,7 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 45 | ⬜ 待修复 | 大量硬编码数字应提取为常量 | token 长度 (`32`, `24`, `12`)、超时时间 (`24*time.Hour`, `1*time.Hour`)、上传大小 (`10<<20`)、session 有效期 (`7*86400`)、头像尺寸 (`48`)、评论摘要长度 (`36`)、`"uncategorized"` slug 等 |
+| 45 | ✅ 已修复 | 大量硬编码数字应提取为常量 | token 长度 (`32`, `24`, `12`)、超时时间 (`24*time.Hour`, `1*time.Hour`)、上传大小 (`10<<20`)、session 有效期 (`7*86400`)、头像尺寸 (`48`)、评论摘要长度 (`36`)、`"uncategorized"` slug 等 | 新增 `AvatarSizeSmall`, `CommentSnippetMaxRune`, `SessionMaxAge`, `DefaultCategorySlug` 等常量。 |
 
 ---
 
