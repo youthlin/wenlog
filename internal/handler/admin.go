@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-contrib/sessions"
@@ -2556,17 +2555,7 @@ func parseTags(s string) []string {
 }
 
 func normalizeTermSlug(s string) string {
-	s = strings.ToLower(strings.TrimSpace(s))
-	var b strings.Builder
-	for _, r := range s {
-		switch {
-		case unicode.IsSpace(r):
-			b.WriteByte('-')
-		case r == '-' || r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r):
-			b.WriteRune(r)
-		}
-	}
-	return strings.Trim(b.String(), "-")
+	return util.Slugify(s)
 }
 
 func defaultCategorySelection(categories []model.Category) map[uint]bool {

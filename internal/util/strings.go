@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/youthlin/blog/internal/consts"
 )
@@ -39,4 +40,23 @@ func NormalizeDefaultAvatar(v string) string {
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// Slugify 将字符串转为 URL 友好的 slug:小写、空白转连字符、保留字母数字与 -_。
+func Slugify(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case unicode.IsSpace(r):
+			b.WriteByte('-')
+		case r == '-' || r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r):
+			b.WriteRune(r)
+		}
+	}
+	slug := strings.Trim(b.String(), "-")
+	if slug == "" {
+		slug = s
+	}
+	return slug
 }

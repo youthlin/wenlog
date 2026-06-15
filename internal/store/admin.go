@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/blog/internal/util"
 )
 
 // ErrLastAdmin 表示操作会导致系统没有任何管理员。
@@ -522,21 +523,7 @@ func (s *Store) SavePostWithTerms(p *model.Post, catIDs []uint, tagNames []strin
 
 // slugifyTag 由标签名生成 slug:小写、空白转连字符、保留中文与字母数字。
 func slugifyTag(name string) string {
-	name = strings.ToLower(strings.TrimSpace(name))
-	var b strings.Builder
-	for _, r := range name {
-		switch {
-		case r == ' ' || r == '\t':
-			b.WriteByte('-')
-		case r == '-' || r == '_' || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r > 127:
-			b.WriteRune(r)
-		}
-	}
-	slug := strings.Trim(b.String(), "-")
-	if slug == "" {
-		slug = name
-	}
-	return slug
+	return util.Slugify(name)
 }
 
 // DeletePost 删除文章/页面及其关联。
