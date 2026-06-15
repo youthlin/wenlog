@@ -98,7 +98,7 @@ func (h *Public) mailEnabled() bool {
 
 func (h *Public) loadSettings() publicSettings {
 	postPermalink := syncPostPermalink(h.st)
-	settings, _ := h.st.GetSettings(
+	settings, err := h.st.GetSettings(
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
 		consts.SettingsPageSize,
@@ -107,6 +107,9 @@ func (h *Public) loadSettings() publicSettings {
 		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
 	)
+	if err != nil && h.log != nil {
+		h.log.Error("load public settings", "error", err)
+	}
 	return publicSettings{
 		SiteName:         util.FirstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription:  settings[consts.SettingsSiteDesc],
@@ -243,7 +246,9 @@ func (h *Public) Page(c *gin.Context) {
 		return
 	}
 	if p.Status == model.StatusPublished {
-		_ = h.st.IncrementViews(p.ID)
+		if err := h.st.IncrementViews(p.ID); err != nil && h.log != nil {
+			h.log.Error("increment page views", "error", err, "post_id", p.ID)
+		}
 		p.Views++
 	}
 
@@ -295,7 +300,9 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		return true
 	}
 	if p.Status == model.StatusPublished {
-		_ = h.st.IncrementViews(p.ID)
+		if err := h.st.IncrementViews(p.ID); err != nil && h.log != nil {
+			h.log.Error("increment post views", "error", err, "post_id", p.ID)
+		}
 		p.Views++
 	}
 	commentPage := atoiDefault(c.Query("cpage"), 1)

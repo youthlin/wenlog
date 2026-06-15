@@ -85,8 +85,14 @@ const (
 
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(h.st)
-	v, _ := h.st.GetSetting(consts.SettingsSiteName)
-	defaultAvatar, _ := h.st.GetSetting(consts.SettingsDefaultAvatar)
+	v, err := h.st.GetSetting(consts.SettingsSiteName)
+	if err != nil && h.log != nil {
+		h.log.Error("get site name setting", "error", err)
+	}
+	defaultAvatar, err := h.st.GetSetting(consts.SettingsDefaultAvatar)
+	if err != nil && h.log != nil {
+		h.log.Error("get default avatar setting", "error", err)
+	}
 	siteName := util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, v)
 	data := gin.H{
 		"SiteName":             siteName,
@@ -507,7 +513,10 @@ func randomHexToken(n int) (string, error) {
 
 // isRegistrationOpen 返回当前是否开放注册。
 func (h *Admin) isRegistrationOpen() bool {
-	settings, _ := h.st.GetSettings(consts.SettingsRegistrationOpen)
+	settings, err := h.st.GetSettings(consts.SettingsRegistrationOpen)
+	if err != nil && h.log != nil {
+		h.log.Error("get registration open setting", "error", err)
+	}
 	return settings[consts.SettingsRegistrationOpen] == "true"
 }
 
@@ -787,7 +796,10 @@ func (h *Admin) ExportXML(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
-	v, _ := h.st.GetSetting(consts.SettingsSiteName)
+	v, err := h.st.GetSetting(consts.SettingsSiteName)
+	if err != nil && h.log != nil {
+		h.log.Error("get site name for export", "error", err)
+	}
 	xmlData, _, err := wpimport.ExportXML(h.st.DB(), wpimport.ExportOptions{
 		Posts:     includePosts,
 		Pages:     includePages,
@@ -894,7 +906,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	data := h.base(c, title)
 	data["CurrentSettingsSection"] = currentSection
-	settings, _ := h.st.GetSettings(
+	settings, err := h.st.GetSettings(
 		consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
 		consts.SettingsPostPermalink,
@@ -914,6 +926,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsSiteURL,
 		consts.SettingsMetricsAuthPassword,
 	)
+	if err != nil && h.log != nil {
+		h.log.Error("get settings for settings page", "error", err)
+	}
 	data["SiteNameValue"] = util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, settings[consts.SettingsSiteName])
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
 	data["PostPermalinkValue"] = util.FirstNonEmptyOr(consts.SettingsPostPermalinkDefault, settings[consts.SettingsPostPermalink])
@@ -1140,7 +1155,10 @@ func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 	smtpUser := strings.TrimSpace(c.PostForm("smtp_user"))
 	smtpPassword := c.PostForm("smtp_password")
 	if strings.TrimSpace(smtpPassword) == "" {
-		settings, _ := h.st.GetSettings(consts.SettingsSMTPPassword)
+		settings, err := h.st.GetSettings(consts.SettingsSMTPPassword)
+		if err != nil && h.log != nil {
+			h.log.Error("get smtp password setting", "error", err)
+		}
 		smtpPassword = settings[consts.SettingsSMTPPassword]
 	}
 	smtpFrom := strings.TrimSpace(c.PostForm("smtp_from"))
