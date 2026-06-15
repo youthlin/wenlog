@@ -99,11 +99,12 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 
 	// 前台
 	pub := handler.NewPublic(st, cfg, log)
-	registerPublicRoutes(r, pub)
+	rateLimiter := middleware.NewMemoryRateLimiter()
+	registerPublicRoutes(r, pub, rateLimiter)
 
 	// 后台
 	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS)
-	registerAdminRoutes(r, adm, st)
+	registerAdminRoutes(r, adm, st, rateLimiter)
 	return r
 }
 

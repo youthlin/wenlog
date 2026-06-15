@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	gettext "github.com/youthlin/t"
 
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
@@ -181,10 +181,11 @@ func (h *Public) SubmitComment(c *gin.Context) {
 }
 
 func (h *Public) notifyCommentReply(c *gin.Context, reply *model.Comment) {
-	notifyApprovedCommentReply(h.st, h.log, h.loadSMTPConfig(), siteURLFromRequest(h.st, c), siteNameFromStore(h.st), reply)
+	tr := i18n.Get(c)
+	notifyApprovedCommentReply(h.st, h.log, h.loadSMTPConfig(), siteURLFromRequest(h.st, c), siteNameFromStore(h.st), reply, tr)
 }
 
-func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, reply *model.Comment) {
+func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, reply *model.Comment, tr *gettext.Translations) {
 	if st == nil || reply == nil || reply.Status != model.CommentApproved || reply.ReplyToID == 0 || !smtpCfg.Configured() {
 		return
 	}
@@ -206,7 +207,7 @@ func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email
 		return
 	}
 	commentURL := strings.TrimRight(siteURL, "/") + commentAnchorURL(post, reply.ID)
-	subject, body := commentReplyMail(siteName, post.Title, target.Author, reply.Author, reply.Content, commentURL)
+	subject, body := commentReplyMail(tr, siteName, post.Title, target.Author, reply.Author, reply.Content, commentURL)
 	go func() {
 		if err := smtpCfg.Send(target.Email, subject, body); err != nil && log != nil {
 			log.Error("send comment reply email", "error", err, "to", target.Email, "comment_id", reply.ID)
@@ -233,9 +234,9 @@ func commentAnchorURL(p *model.Post, commentID uint) string {
 	return permalink.Post(p) + "#comment-" + strconv.FormatUint(uint64(commentID), 10)
 }
 
-func commentReplyMail(siteName, postTitle, targetAuthor, replyAuthor, replyContent, commentURL string) (string, string) {
-	subject := fmt.Sprintf("[%s] 你的评论有新回复", siteName)
-	body := fmt.Sprintf("您好 %s，\n\n%s 回复了你在《%s》下的评论：\n\n%s\n\n查看回复：\n%s\n\n如果你不想再收到通知，可联系站点管理员关闭该评论的回复通知。\n",
+func commentReplyMail(tr *gettext.Translations, siteName, postTitle, targetAuthor, replyAuthor, replyContent, commentURL string) (string, string) {
+	subject := tr.T("[%s] 你的评论有新回复", siteName)
+	body := tr.T("您好 %s，\n\n%s 回复了你在《%s》下的评论：\n\n%s\n\n查看回复：\n%s\n\n如果你不想再收到通知，可联系站点管理员关闭该评论的回复通知。\n",
 		targetAuthor, replyAuthor, postTitle, replyContent, commentURL)
 	return subject, body
 }

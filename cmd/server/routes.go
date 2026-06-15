@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/youthlin/blog/internal/handler"
@@ -13,7 +15,7 @@ import (
 //
 // 路由难点:文章永久链接 /{year}{id}.html 与页面 /{slug} 都在根路径下,
 // 用单一通配路由分发,在 handler 内按格式区分。
-func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
+func registerPublicRoutes(r *gin.Engine, pub *handler.Public, limiter middleware.RateLimiter) {
 	// 首页 + /?p=ID 旧链接重定向。
 	r.GET("/", func(c *gin.Context) {
 		if c.Query("p") != "" {
@@ -30,9 +32,15 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)
 
-	// 前台认证路由(无需登录)。
+	// 前台认证路由(无需登录),带频率限制。
+	forgotLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
+		Window:  15 * time.Minute,
+		Max:     5,
+		KeyFunc: middleware.DefaultRateLimitKey,
+	})
+	r.POST("/forgot-password", forgotLimiter, pub.ForgotPassword)
+
 	r.GET("/forgot-password", pub.ForgotPasswordForm)
-	r.POST("/forgot-password", pub.ForgotPassword)
 	r.GET("/reset-password", pub.ResetPasswordForm)
 	r.POST("/reset-password", pub.ResetPassword)
 
@@ -41,11 +49,23 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 }
 
 // registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。
-func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store) {
+func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store, limiter middleware.RateLimiter) {
+	// 登录/注册接口带频率限制,防止暴力破解。
+	loginLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
+		Window:  15 * time.Minute,
+		Max:     5,
+		KeyFunc: middleware.DefaultRateLimitKey,
+	})
+	registerLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
+		Window:  1 * time.Hour,
+		Max:     3,
+		KeyFunc: middleware.DefaultRateLimitKey,
+	})
+
 	r.GET("/admin/login", adm.LoginForm)
-	r.POST("/admin/login", adm.Login)
+	r.POST("/admin/login", loginLimiter, adm.Login)
 	r.GET("/admin/register", adm.RegisterForm)
-	r.POST("/admin/register", adm.Register)
+	r.POST("/admin/register", registerLimiter, adm.Register)
 	r.GET("/admin/register/verify", adm.RegisterVerifyForm)
 	r.POST("/admin/register/verify", adm.RegisterVerify)
 

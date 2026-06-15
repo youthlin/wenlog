@@ -813,6 +813,19 @@ func (h *Admin) ProfilePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_profile.gohtml", data)
 }
 
+// safeRedirect 校验 Referer 是否为本域名,是则重定向到 Referer,否则回退到 fallback。
+func safeRedirect(c *gin.Context, fallback string) {
+	ref := strings.TrimSpace(c.GetHeader("Referer"))
+	if ref != "" {
+		u, err := url.Parse(ref)
+		if err == nil && u.Host != "" && strings.EqualFold(u.Host, c.Request.Host) {
+			c.Redirect(http.StatusSeeOther, ref)
+			return
+		}
+	}
+	c.Redirect(http.StatusSeeOther, fallback)
+}
+
 func profileRedirectURL(message string) string {
 	if strings.TrimSpace(message) == "" {
 		return "/admin/profile"
@@ -1003,12 +1016,56 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
 	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
 	defaultAvatar := normalizeDefaultAvatarSetting(c.PostForm("default_avatar"))
+
+	catNorm, tagNorm, ok := h.validateSiteSettingsPermalink(c, tr, postPermalink, categoryPrefix, tagPrefix)
+	if !ok {
+		return
+	}
+
+	settings := map[string]string{
+		"site_name":                        name,
+		"site_description":                 desc,
+		consts.SettingsPostPermalink:       permalink.NormalizePostPattern(postPermalink),
+		consts.SettingsCategoryPrefix:      catNorm,
+		consts.SettingsTagPrefix:           tagNorm,
+		"page_size":                        strconv.Itoa(pageSize),
+		"feed_size":                        strconv.Itoa(feedSize),
+		consts.SettingsSayingPageID:        strconv.Itoa(sayingPageID),
+		consts.SettingsDefaultAvatar:       defaultAvatar,
+	}
+	if err := h.setSettings(settings); err != nil {
+		h.serverError(c, err)
+		return
+	}
+
+	registrationOpen := c.PostForm("registration_open") == "on"
+	if registrationOpen && !smtpConfigFromStore(h.st).Configured() {
+		_ = h.st.SetSetting(consts.SettingsRegistrationOpen, "false")
+		c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "registration-open-requires-smtp"))
+		return
+	}
+	_ = h.st.SetSetting(consts.SettingsRegistrationOpen, strconv.FormatBool(registrationOpen))
+	syncPostPermalink(h.st)
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", ""))
+}
+
+// setSettings 批量保存设置,遇到第一个错误即返回。
+func (h *Admin) setSettings(kv map[string]string) error {
+	for k, v := range kv {
+		if err := h.st.SetSetting(k, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h *Admin) validateSiteSettingsPermalink(c *gin.Context, tr *gettext.Translations, postPermalink, categoryPrefix, tagPrefix string) (catNorm, tagNorm string, ok bool) {
 	if err := permalink.ValidatePostPattern(postPermalink); err != nil {
 		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("固定链接结构不合法: %s", err.Error())
 		data["PostPermalinkValue"] = permalink.NormalizePostPattern(postPermalink)
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
+		return "", "", false
 	}
 	if err := permalink.ValidateTaxonomyPrefix(categoryPrefix); err != nil {
 		data := h.settingsDataForTab(c, "general")
@@ -1016,7 +1073,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		data["CategoryPrefixValue"] = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
 		data["TagPrefixValue"] = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
+		return "", "", false
 	}
 	if err := permalink.ValidateTaxonomyPrefix(tagPrefix); err != nil {
 		data := h.settingsDataForTab(c, "general")
@@ -1024,76 +1081,19 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		data["CategoryPrefixValue"] = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
 		data["TagPrefixValue"] = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
+		return "", "", false
 	}
-	catNorm := permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
-	tagNorm := permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
+	catNorm = permalink.NormalizeTaxonomyPrefix(categoryPrefix, consts.SettingsCategoryPrefixDefault)
+	tagNorm = permalink.NormalizeTaxonomyPrefix(tagPrefix, consts.SettingsTagPrefixDefault)
 	if catNorm == tagNorm {
 		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("分类目录前缀和标签前缀不能相同。")
 		data["CategoryPrefixValue"] = catNorm
 		data["TagPrefixValue"] = tagNorm
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
+		return "", "", false
 	}
-	if err := h.st.SetSetting("site_name", name); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting("site_description", desc); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting(consts.SettingsPostPermalink, permalink.NormalizePostPattern(postPermalink)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting(consts.SettingsCategoryPrefix, catNorm); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting(consts.SettingsTagPrefix, tagNorm); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting("page_size", strconv.Itoa(pageSize)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting("feed_size", strconv.Itoa(feedSize)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting(consts.SettingsSayingPageID, strconv.Itoa(sayingPageID)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting(consts.SettingsDefaultAvatar, defaultAvatar); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	registrationOpen := c.PostForm("registration_open") == "on"
-	if registrationOpen && !smtpConfigFromStore(h.st).Configured() {
-		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
-			h.serverError(c, err)
-			return
-		}
-		c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "registration-open-requires-smtp"))
-		return
-	}
-	if registrationOpen {
-		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "true"); err != nil {
-			h.serverError(c, err)
-			return
-		}
-	} else {
-		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
-			h.serverError(c, err)
-			return
-		}
-	}
-	syncPostPermalink(h.st)
-	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", ""))
+	return catNorm, tagNorm, true
 }
 
 // SaveSMTPSettings 只保存 SMTP 邮件设置,避免触发站点设置必填项校验。
@@ -1142,10 +1142,8 @@ func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 		consts.SettingsSMTPFrom:     smtpFrom,
 		consts.SettingsSiteURL:      siteURL,
 	}
-	for key, value := range settings {
-		if err := h.st.SetSetting(key, value); err != nil {
-			return err
-		}
+	if err := h.setSettings(settings); err != nil {
+		return err
 	}
 	if !smtpConfigFromSettings(settings).Configured() {
 		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
@@ -1237,20 +1235,12 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		username = u.Username
 	}
 	if username == "" || displayName == "" || email == "" {
-		data := h.profileData(c, u)
-		if canEditOwnUsername(u) {
-			data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
-		} else {
-			data["Error"] = tr.T("显示名和邮件不能为空。")
-		}
-		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		h.profileError(c, u, tr, username, displayName, email)
 		return
 	}
 	addr, err := mail.ParseAddress(email)
 	if err != nil {
-		data := h.profileData(c, u)
-		data["Error"] = tr.T("邮箱格式不正确。")
-		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		h.profileError(c, u, tr, username, displayName, email)
 		return
 	}
 	email = strings.TrimSpace(addr.Address)
@@ -1268,57 +1258,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		}
 	}
 	if !sameEmail(email, u.Email) {
-		smtpCfg := smtpConfigFromStore(h.st)
-		if !smtpCfg.Configured() {
-			data := h.profileData(c, u)
-			data["Error"] = tr.T("修改邮箱需要先配置 SMTP 邮件设置，以便发送验证邮件。")
-			c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
-			return
-		}
-		exists, err := h.st.UserExistsByEmail(email, u.ID)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-		if exists {
-			data := h.profileData(c, u)
-			data["Error"] = tr.T("邮箱已被注册。")
-			c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
-			return
-		}
-		token, err := randomHexToken(32)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-		if err := h.st.SavePendingEmailChange(u.ID, email, token, time.Now().Add(24*time.Hour)); err != nil {
-			h.serverError(c, err)
-			return
-		}
-		siteURL, ok := configuredSiteURL(h.st)
-		if !ok {
-			data := h.profileData(c, u)
-			data["Error"] = tr.T("站点 URL 未配置，无法发送安全验证链接，请联系管理员。")
-			c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
-			return
-		}
-		verifyURL := strings.TrimRight(siteURL, "/") + "/admin/profile/email/verify?token=" + url.QueryEscape(token)
-		subject := tr.T("[%s] 邮箱变更验证", siteNameFromStore(h.st))
-		body := tr.T("您好 %s，\n\n请点击以下链接验证并更新你的邮箱（24 小时内有效）：\n\n%s\n\n如果你没有请求修改邮箱，请忽略此邮件。\n", displayName, verifyURL)
-		if err := smtpCfg.Send(email, subject, body); err != nil {
-			if h.log != nil {
-				h.log.Error("send profile email verification", "error", err, "to", email, "user_id", u.ID)
-			}
-			data := h.profileData(c, u)
-			data["Error"] = tr.T("邮箱验证邮件发送失败，请稍后重试或联系管理员。")
-			c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
-			return
-		}
-		if err := h.st.UpdateUserProfile(u.ID, username, displayName, u.Email); err != nil {
-			h.serverError(c, err)
-			return
-		}
-		c.Redirect(http.StatusSeeOther, profileRedirectURL("email-verification-sent"))
+		h.handleEmailChange(c, tr, u, username, displayName, email)
 		return
 	}
 	if err := h.st.UpdateUserProfile(u.ID, username, displayName, email); err != nil {
@@ -1326,6 +1266,70 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, profileRedirectURL("profile-saved"))
+}
+
+func (h *Admin) profileError(c *gin.Context, u *model.User, tr *gettext.Translations, username, displayName, email string) {
+	data := h.profileData(c, u)
+	if canEditOwnUsername(u) {
+		data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
+	} else {
+		data["Error"] = tr.T("显示名和邮件不能为空。")
+	}
+	c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+}
+
+func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *model.User, username, displayName, email string) {
+	smtpCfg := smtpConfigFromStore(h.st)
+	if !smtpCfg.Configured() {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("修改邮箱需要先配置 SMTP 邮件设置，以便发送验证邮件。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	exists, err := h.st.UserExistsByEmail(email, u.ID)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if exists {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("邮箱已被注册。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	token, err := randomHexToken(32)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := h.st.SavePendingEmailChange(u.ID, email, token, time.Now().Add(24*time.Hour)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	siteURL, ok := configuredSiteURL(h.st)
+	if !ok {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("站点 URL 未配置，无法发送安全验证链接，请联系管理员。")
+		c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
+		return
+	}
+	verifyURL := strings.TrimRight(siteURL, "/") + "/admin/profile/email/verify?token=" + url.QueryEscape(token)
+	subject := tr.T("[%s] 邮箱变更验证", siteNameFromStore(h.st))
+	body := tr.T("您好 %s，\n\n请点击以下链接验证并更新你的邮箱（24 小时内有效）：\n\n%s\n\n如果你没有请求修改邮箱，请忽略此邮件。\n", displayName, verifyURL)
+	if err := smtpCfg.Send(email, subject, body); err != nil {
+		if h.log != nil {
+			h.log.Error("send profile email verification", "error", err, "to", email, "user_id", u.ID)
+		}
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("邮箱验证邮件发送失败，请稍后重试或联系管理员。")
+		c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
+		return
+	}
+	if err := h.st.UpdateUserProfile(u.ID, username, displayName, u.Email); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, profileRedirectURL("email-verification-sent"))
 }
 
 // VerifyProfileEmail 完成个人资料邮箱变更验证。
@@ -2044,46 +2048,51 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 	data["Keyword"] = keyword
 	data["Page"] = page
 	data["ListPageURL"] = termsListURL(currentSection, keyword, 1)
+
 	if currentSection == "tag" {
-		allTags := h.st.AllTags()
-		tags, total, err := h.st.AdminListTags(keyword, page, adminPageSize)
-		pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
-		if err != nil {
-			data["Error"] = tr.T("加载标签列表失败。")
-			data["Tags"] = []model.Tag{}
-			data["Total"] = int64(0)
-			data["Pages"] = 0
-		} else {
-			data["Tags"] = tags
-			data["Total"] = total
-			data["Pages"] = pages
-			if page > 1 {
-				data["PrevPageURL"] = termsListURL(currentSection, keyword, page-1)
-			}
-			if page < pages {
-				data["NextPageURL"] = termsListURL(currentSection, keyword, page+1)
-			}
-		}
-		data["TagForm"] = model.Tag{}
-		data["TagPostListURLs"] = tagPostListURLs(allTags)
-		data["TagPublicURLs"] = tagPublicURLs(allTags)
-		if c.Query("message") == "tag-saved" {
-			data["Notice"] = tr.T("标签已保存。")
-		}
-		if c.Query("message") == "tag-deleted" {
-			data["Notice"] = tr.T("标签已删除。")
-		}
-		if editID := atoiDefault(c.Query("edit_tag"), 0); editID > 0 {
-			for _, tag := range allTags {
-				if int(tag.ID) == editID {
-					data["TagForm"] = tag
-					data["EditingTag"] = true
-					break
-				}
-			}
-		}
-		return data
+		h.fillTagTermsData(c, data, tr, keyword, page)
+	} else {
+		h.fillCategoryTermsData(c, data, tr, keyword, page, cats)
 	}
+	return data
+}
+
+func (h *Admin) fillTagTermsData(c *gin.Context, data gin.H, tr *gettext.Translations, keyword string, page int) {
+	allTags := h.st.AllTags()
+	tags, total, err := h.st.AdminListTags(keyword, page, adminPageSize)
+	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
+	if err != nil {
+		data["Error"] = tr.T("加载标签列表失败。")
+		data["Tags"] = []model.Tag{}
+		data["Total"] = int64(0)
+		data["Pages"] = 0
+	} else {
+		data["Tags"] = tags
+		data["Total"] = total
+		data["Pages"] = pages
+		fillPagination(data, keyword, page, pages)
+	}
+	data["TagForm"] = model.Tag{}
+	data["TagPostListURLs"] = tagPostListURLs(allTags)
+	data["TagPublicURLs"] = tagPublicURLs(allTags)
+	if c.Query("message") == "tag-saved" {
+		data["Notice"] = tr.T("标签已保存。")
+	}
+	if c.Query("message") == "tag-deleted" {
+		data["Notice"] = tr.T("标签已删除。")
+	}
+	if editID := atoiDefault(c.Query("edit_tag"), 0); editID > 0 {
+		for _, tag := range allTags {
+			if int(tag.ID) == editID {
+				data["TagForm"] = tag
+				data["EditingTag"] = true
+				break
+			}
+		}
+	}
+}
+
+func (h *Admin) fillCategoryTermsData(c *gin.Context, data gin.H, tr *gettext.Translations, keyword string, page int, cats []model.Category) {
 	categories, total, err := h.st.AdminListCategories(keyword, page, adminPageSize)
 	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
 	if err != nil {
@@ -2095,12 +2104,7 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 		data["Categories"] = categories
 		data["Total"] = total
 		data["Pages"] = pages
-		if page > 1 {
-			data["PrevPageURL"] = termsListURL(currentSection, keyword, page-1)
-		}
-		if page < pages {
-			data["NextPageURL"] = termsListURL(currentSection, keyword, page+1)
-		}
+		fillPagination(data, keyword, page, pages)
 	}
 	if c.Query("message") == "category-saved" {
 		data["Notice"] = tr.T("分类已保存。")
@@ -2120,7 +2124,15 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 			}
 		}
 	}
-	return data
+}
+
+func fillPagination(data gin.H, keyword string, page, pages int) {
+	if page > 1 {
+		data["PrevPageURL"] = termsListURL(data["CurrentTermsSection"].(string), keyword, page-1)
+	}
+	if page < pages {
+		data["NextPageURL"] = termsListURL(data["CurrentTermsSection"].(string), keyword, page+1)
+	}
 }
 
 func categoryPostListURLs(categories []model.Category) map[uint]string {
@@ -2359,104 +2371,31 @@ func (h *Admin) SavePost(c *gin.Context) {
 	}
 	allCategories := h.st.AllCategories()
 	if f.PostType == model.PostTypePost && !hasSelectedCategory(f.CategoryIDs, allCategories) {
-		data := h.base(c, tr.T("内容管理"))
-		data["Error"] = tr.T("请至少选择一个分类目录。")
-		data["PostType"] = f.PostType
-		data["AllCategories"] = allCategories
-		data["SelectedCats"] = selectedCats(f.CategoryIDs)
-		data["TagsCSV"] = f.Tags
-		data["Post"] = &model.Post{ID: f.ID, Title: strings.TrimSpace(f.Title), Slug: strings.TrimSpace(f.Slug), ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-		data["IsEdit"] = f.ID > 0
-		c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+		h.postEditError(c, tr.T("请至少选择一个分类目录。"), f, allCategories, selectedCats(f.CategoryIDs))
 		return
 	}
 
 	now := time.Now()
-	var p *model.Post
-	if f.ID > 0 {
-		existing, err := h.st.AdminGetPost(f.ID)
-		if err != nil {
+	p, err := h.resolvePostForSave(c, f, now)
+	if err != nil {
+		if err == errPostNotFound {
 			h.notFound(c)
-			return
-		}
-		if !h.canManagePost(c, existing) {
+		} else if err == errPostForbidden {
 			c.String(http.StatusForbidden, "Forbidden")
-			return
-		}
-		p = existing
-	} else {
-		id, err := h.st.NextPostID()
-		if err != nil {
+		} else {
 			h.serverError(c, err)
-			return
 		}
-		p = &model.Post{ID: id, PublishedAt: now, AuthorID: h.currentUserID(c)}
+		return
 	}
 
 	p.Title = strings.TrimSpace(f.Title)
 	p.Slug = strings.TrimSpace(f.Slug)
 	if f.PostType == model.PostTypePage {
-		if err := validatePageSlugT(tr.T, p.Slug); err != nil {
-			data := h.base(c, tr.T("内容管理"))
-			data["Error"] = err.Error()
-			data["PostType"] = f.PostType
-			data["AllCategories"] = allCategories
-			data["SelectedCats"] = map[uint]bool{}
-			data["TagsCSV"] = f.Tags
-			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-			data["IsEdit"] = f.ID > 0
-			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
-			return
-		}
-		exists, err := h.st.PageSlugExists(p.Slug, p.ID)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-		if exists {
-			data := h.base(c, tr.T("内容管理"))
-			data["Error"] = tr.T("页面链接 /%s 已存在，请换一个 slug。", p.Slug)
-			data["PostType"] = f.PostType
-			data["AllCategories"] = allCategories
-			data["SelectedCats"] = map[uint]bool{}
-			data["TagsCSV"] = f.Tags
-			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-			data["IsEdit"] = f.ID > 0
-			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+		if err := h.validateAndCheckPageSlug(c, tr, f, p, allCategories); err != nil {
 			return
 		}
 	} else {
-		p.Slug = normalizeTermSlug(p.Slug)
-		if p.Slug == "" {
-			p.Slug = normalizeTermSlug(p.Title)
-		}
-		if err := validatePostSlugT(tr.T, p.Slug); err != nil {
-			data := h.base(c, tr.T("内容管理"))
-			data["Error"] = err.Error()
-			data["PostType"] = f.PostType
-			data["AllCategories"] = allCategories
-			data["SelectedCats"] = selectedCats(f.CategoryIDs)
-			data["TagsCSV"] = f.Tags
-			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-			data["IsEdit"] = f.ID > 0
-			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
-			return
-		}
-		exists, err := h.st.PostSlugExists(p.Slug, p.ID)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-		if exists {
-			data := h.base(c, tr.T("内容管理"))
-			data["Error"] = tr.T("文章 slug %q 已存在，请换一个。", p.Slug)
-			data["PostType"] = f.PostType
-			data["AllCategories"] = allCategories
-			data["SelectedCats"] = selectedCats(f.CategoryIDs)
-			data["TagsCSV"] = f.Tags
-			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-			data["IsEdit"] = f.ID > 0
-			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+		if err := h.validateAndCheckPostSlug(c, tr, f, p, allCategories); err != nil {
 			return
 		}
 	}
@@ -2484,6 +2423,78 @@ func (h *Admin) SavePost(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/admin/posts?type="+p.PostType)
+}
+
+var errPostNotFound = errors.New("post not found")
+var errPostForbidden = errors.New("post forbidden")
+
+func (h *Admin) resolvePostForSave(c *gin.Context, f postForm, now time.Time) (*model.Post, error) {
+	if f.ID > 0 {
+		existing, err := h.st.AdminGetPost(f.ID)
+		if err != nil {
+			return nil, errPostNotFound
+		}
+		if !h.canManagePost(c, existing) {
+			return nil, errPostForbidden
+		}
+		return existing, nil
+	}
+	id, err := h.st.NextPostID()
+	if err != nil {
+		return nil, err
+	}
+	return &model.Post{ID: id, PublishedAt: now, AuthorID: h.currentUserID(c)}, nil
+}
+
+func (h *Admin) postEditError(c *gin.Context, errMsg string, f postForm, allCategories []model.Category, selectedCats map[uint]bool) {
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("内容管理"))
+	data["Error"] = errMsg
+	data["PostType"] = f.PostType
+	data["AllCategories"] = allCategories
+	data["SelectedCats"] = selectedCats
+	data["TagsCSV"] = f.Tags
+	data["Post"] = &model.Post{ID: f.ID, Title: strings.TrimSpace(f.Title), Slug: strings.TrimSpace(f.Slug), ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
+	data["IsEdit"] = f.ID > 0
+	c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
+}
+
+func (h *Admin) validateAndCheckPageSlug(c *gin.Context, tr *gettext.Translations, f postForm, p *model.Post, allCategories []model.Category) error {
+	if err := validatePageSlugT(tr.T, p.Slug); err != nil {
+		h.postEditError(c, err.Error(), f, allCategories, map[uint]bool{})
+		return err
+	}
+	exists, err := h.st.PageSlugExists(p.Slug, p.ID)
+	if err != nil {
+		h.serverError(c, err)
+		return err
+	}
+	if exists {
+		h.postEditError(c, tr.T("页面链接 /%s 已存在，请换一个 slug。", p.Slug), f, allCategories, map[uint]bool{})
+		return errors.New("page slug exists")
+	}
+	return nil
+}
+
+func (h *Admin) validateAndCheckPostSlug(c *gin.Context, tr *gettext.Translations, f postForm, p *model.Post, allCategories []model.Category) error {
+	p.Slug = normalizeTermSlug(p.Slug)
+	if p.Slug == "" {
+		p.Slug = normalizeTermSlug(p.Title)
+	}
+	if err := validatePostSlugT(tr.T, p.Slug); err != nil {
+		h.postEditError(c, err.Error(), f, allCategories, selectedCats(f.CategoryIDs))
+		return err
+	}
+	exists, err := h.st.PostSlugExists(p.Slug, p.ID)
+	if err != nil {
+		h.serverError(c, err)
+		return err
+	}
+	if exists {
+		h.postEditError(c, tr.T("文章 slug %q 已存在，请换一个。", p.Slug), f, allCategories, selectedCats(f.CategoryIDs))
+		return errors.New("post slug exists")
+	}
+	return nil
 }
 
 // currentUserID 从 session 读取当前管理员 ID。
@@ -2717,7 +2728,7 @@ func (h *Admin) EditComment(c *gin.Context) {
 	if _, ok := c.GetPostForm("content"); ok {
 		content := strings.TrimSpace(c.PostForm("content"))
 		if content == "" {
-			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			safeRedirect(c, "/admin/comments")
 			return
 		}
 		fields["content"] = content
@@ -2725,7 +2736,7 @@ func (h *Admin) EditComment(c *gin.Context) {
 	if _, ok := c.GetPostForm("author"); ok {
 		author := strings.TrimSpace(c.PostForm("author"))
 		if author == "" {
-			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			safeRedirect(c, "/admin/comments")
 			return
 		}
 		fields["author"] = author
@@ -2733,11 +2744,11 @@ func (h *Admin) EditComment(c *gin.Context) {
 	if _, ok := c.GetPostForm("email"); ok {
 		email := strings.TrimSpace(c.PostForm("email"))
 		if email == "" {
-			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			safeRedirect(c, "/admin/comments")
 			return
 		}
 		if _, err := mail.ParseAddress(email); err != nil {
-			c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+			safeRedirect(c, "/admin/comments")
 			return
 		}
 		fields["email"] = email
@@ -2749,21 +2760,21 @@ func (h *Admin) EditComment(c *gin.Context) {
 		}
 		if urlValue != "" {
 			if _, err := url.ParseRequestURI(urlValue); err != nil {
-				c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+				safeRedirect(c, "/admin/comments")
 				return
 			}
 		}
 		fields["url"] = urlValue
 	}
 	if len(fields) == 0 {
-		c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+		safeRedirect(c, "/admin/comments")
 		return
 	}
 	if err := h.st.UpdateCommentFields(uint(id), fields); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+	safeRedirect(c, "/admin/comments")
 }
 
 // BatchComments 批量操作评论(approve/pending/spam/delete)。
@@ -2801,7 +2812,7 @@ func (h *Admin) BatchComments(c *gin.Context) {
 	case "delete":
 		err = h.st.BatchDeleteComments(ids)
 	default:
-		c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+		safeRedirect(c, "/admin/comments")
 		return
 	}
 	if err != nil {
@@ -2811,7 +2822,7 @@ func (h *Admin) BatchComments(c *gin.Context) {
 	if action == "approve" {
 		h.notifyApprovedCommentReplies(c, notifyCandidates)
 	}
-	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+	safeRedirect(c, "/admin/comments")
 }
 
 // ModerateComment 审核评论(approve/spam/delete)。
@@ -2849,7 +2860,7 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 	if action == "approve" && notifyCandidate != nil {
 		h.notifyApprovedCommentReplies(c, []model.Comment{*notifyCandidate})
 	}
-	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+	safeRedirect(c, "/admin/comments")
 }
 
 func (h *Admin) notifyApprovedCommentReplies(c *gin.Context, comments []model.Comment) {
@@ -2862,9 +2873,10 @@ func (h *Admin) notifyApprovedCommentReplies(c *gin.Context, comments []model.Co
 	}
 	siteURL := siteURLFromRequest(h.st, c)
 	siteName := siteNameFromStore(h.st)
+	tr := i18n.Get(c)
 	for i := range comments {
 		comments[i].Status = model.CommentApproved
-		notifyApprovedCommentReply(h.st, h.log, smtpCfg, siteURL, siteName, &comments[i])
+		notifyApprovedCommentReply(h.st, h.log, smtpCfg, siteURL, siteName, &comments[i], tr)
 	}
 }
 

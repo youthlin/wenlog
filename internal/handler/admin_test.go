@@ -15,6 +15,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	gettext "github.com/youthlin/t"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
@@ -227,7 +228,7 @@ func TestCommentReplyMailHelpers(t *testing.T) {
 	if pageURL != "/guestbook#comment-11" {
 		t.Fatalf("page comment anchor=%q", pageURL)
 	}
-	subject, body := commentReplyMail("站点", "文章", "Alice", "Bob", "回复内容", "https://example.com/post#comment-1")
+	subject, body := commentReplyMail(gettext.NewTranslations(), "站点", "文章", "Alice", "Bob", "回复内容", "https://example.com/post#comment-1")
 	if !strings.Contains(subject, "站点") || !strings.Contains(body, "Alice") || !strings.Contains(body, "Bob") || !strings.Contains(body, "https://example.com/post#comment-1") {
 		t.Fatalf("commentReplyMail subject=%q body=%q", subject, body)
 	}

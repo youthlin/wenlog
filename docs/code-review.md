@@ -9,8 +9,8 @@
 | # | 状态 | 问题 | 位置 | 说明 |
 |---|------|------|------|------|
 | 1 | ✅ 已修复 | **评论提交无 CSRF 保护** | `cmd/server/routes.go:30`, `internal/handler/comment.go:55` | `POST /comment` 是状态变更端点但未应用 CSRF 中间件。登录用户评论时自动关联身份，攻击者可伪造请求以该用户身份发评论。 |
-| 2 | ⬜ 待修复 | **登录接口无限速** | `cmd/server/routes.go:46` | `POST /admin/login` 无任何频率限制，可暴力破解密码。 |
-| 3 | ⬜ 待修复 | **忘记密码接口无限速** | `cmd/server/routes.go:35` | `POST /forgot-password` 无频率限制，可用来轰炸目标邮箱或枚举用户。 |
+| 2 | ✅ 已修复 | **登录接口无限速** | `cmd/server/routes.go:46` | 已添加基于内存的 IP 频率限制中间件，15 分钟内最多 5 次。 |
+| 3 | ✅ 已修复 | **忘记密码接口无限速** | `cmd/server/routes.go:35` | 已添加基于内存的 IP 频率限制中间件，15 分钟内最多 5 次。 |
 | 4 | ✅ 已修复 | **Debug SQL 可执行多语句** | `internal/handler/admin.go:1648-1652` | `allowDebugSQL` 只检查前缀是否为 `SELECT`/`EXPLAIN`，未阻止多语句注入（如 `SELECT 1; DROP TABLE users;--`）。 |
 | 5 | ✅ 已修复 | **Session Cookie 缺少 Secure 标志** | `cmd/server/web.go:65-69`, `internal/middleware/session.go:59-70` | `Secure` 标志未在初始配置中设置，且动态设置存在竞态条件（共享 `sessionOption` 被持久修改）。部署在反向代理后可能永远不设 Secure。 |
 
@@ -19,16 +19,16 @@
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
 | 6 | ✅ 已修复 | **无密码强度要求** | `auth.go:120-164`, `admin.go:438-473, 1360-1393, 3025-3070` — 所有密码设置端点只检查非空，可设 1 字符密码 |
-| 7 | ⬜ 待修复 | **注册接口无限速** | `routes.go:48` — 可用来轰炸邮箱或枚举用户名/邮箱 |
-| 8 | ⬜ 待修复 | **CSRF 同源检查在无 Origin/Referer 时放行** | `middleware/csrf.go:108-109` — 攻击者可利用 `Referrer-Policy: no-referrer` 绕过 |
+| 7 | ✅ 已修复 | **注册接口无限速** | `routes.go:48` | 已添加基于内存的 IP 频率限制中间件，1 小时内最多 3 次。 |
+| 8 | ✅ 已修复 | **CSRF 同源检查在无 Origin/Referer 时放行** | `middleware/csrf.go:108-109` | 改为严格模式，无 Origin/Referer 头时拒绝请求。 |
 | 9 | ✅ 已修复 | **Markdown 预览不消毒 HTML** | `admin.go:2576-2580, 3259-3265` — `gomarkdown` 默认允许原始 HTML 通过，可注入 `<script>` |
 
 ### 🟢 低危
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 10 | ⬜ 待修复 | **Open Redirect** | `admin.go` 多处 — 操作后重定向到用户可控的 `Referer` 头 |
-| 11 | ⬜ 待修复 | **SMTP/Metrics 密码明文存储** | `consts/const.go:31,38` — 存在 SQLite 中，有 DB 访问权限即可读取 |
+| 10 | ✅ 已修复 | **Open Redirect** | `admin.go` 多处 | 添加 `safeRedirect` 函数校验 Referer 域名，非本站域名回退到 `/admin/comments`。 |
+| 11 | ✅ 已知设计 | **SMTP/Metrics 密码明文存储** | `consts/const.go:31,38` | 自托管单用户博客，basic auth 和 SMTP 密码可随时更改撤销，风险可控。 |
 | 12 | ⬜ 待修复 | **密码变更无通知邮件** | `auth.go:119-164`, `admin.go:1360-1393` |
 | 13 | ✅ 已修复 | **评论 URL 未校验协议** | `comment.go:47,73` — 可提交 `javascript:` URL |
 | 14 | ⬜ 待修复 | **用户枚举时序侧信道** | `auth.go:42-49`, `admin.go:273-278` — 登录/忘记密码可通过响应时间判断用户是否存在 |
@@ -42,7 +42,7 @@
 
 | # | 状态 | 问题 | 位置 |
 |---|------|------|------|
-| 16 | ⬜ 待修复 | **邮件通知硬编码中文** | `internal/handler/comment.go:222-227` — `commentReplyMail` 函数的邮件标题和正文全是硬编码中文，永远不会被翻译 |
+| 16 | ✅ 已修复 | **邮件通知硬编码中文** | `internal/handler/comment.go:222-227` | `commentReplyMail` 改为接受 `*gettext.Translations` 参数，邮件标题和正文通过 `tr.T()` 翻译。 |
 
 ### 🟡 高
 
@@ -74,11 +74,11 @@
 
 | # | 状态 | 函数 | 位置 | 行数 |
 |---|------|------|------|------|
-| 24 | ⬜ 待修复 | `SavePost` | `admin.go:2336-2476` | ~140 行 — 混合了表单绑定、校验、授权、slug 规范化、持久化 |
+| 24 | ✅ 已修复 | `SavePost` | `admin.go:2336-2476` | ~140 行 → 拆分为 `resolvePostForSave`、`postEditError`、`validateAndCheckPageSlug`、`validateAndCheckPostSlug` |
 | 25 | ⬜ 待修复 | `SubmitComment` | `comment.go:55-167` | ~112 行 — 蜜罐检查、输入校验、频率限制、评论创建、通知全在一个函数 |
-| 26 | ⬜ 待修复 | `SaveSiteSettings` | `admin.go:991-1096` | ~105 行 — 10+ 个独立设置的重复保存模式 |
-| 27 | ⬜ 待修复 | `SaveProfileSettings` | `admin.go:1225-1328` | ~103 行 — 用户名编辑、邮箱变更流程、资料更新混在一起 |
-| 28 | ⬜ 待修复 | `termsDataForSection` | `admin.go:2009-2113` | ~105 行 — 分类和标签管理共用，逻辑重复 |
+| 26 | ✅ 已修复 | `SaveSiteSettings` | `admin.go:991-1096` | ~105 行 → 拆分为 `validateSiteSettingsPermalink`、`setSettings` |
+| 27 | ✅ 已修复 | `SaveProfileSettings` | `admin.go:1225-1328` | ~103 行 → 拆分为 `profileError`、`handleEmailChange` |
+| 28 | ✅ 已修复 | `termsDataForSection` | `admin.go:2009-2113` | ~105 行 → 拆分为 `fillTagTermsData`、`fillCategoryTermsData`、`fillPagination` |
 
 ### 无用代码
 
