@@ -89,6 +89,7 @@
     <input type="hidden" name="post_id" value="{{.Post.ID}}">
     <input type="hidden" name="parent_id" value="0">
     <input type="hidden" name="reply_to_id" value="0">
+    {{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}
     {{if not .CurrentUser}}
       <p><input type="text" name="author" value="{{.RememberedCommenter.Author}}" placeholder="{{.t.T "昵称 *"}}" autocomplete="name" required></p>
       <p><input type="email" name="email" value="{{.RememberedCommenter.Email}}" placeholder="{{.t.T "邮箱 *(不公开)"}}" autocomplete="email" required></p>

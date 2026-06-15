@@ -61,11 +61,13 @@ func (s *DynamicCookieStore) currentStore(r *http.Request) (*gsessions.CookieSto
 	if err != nil {
 		return nil, err
 	}
+	// 每次请求复制一份 options,避免并发修改共享的 sessionOption。
+	opts := s.sessionOption
 	if requestScheme(r) == "https" {
-		s.sessionOption.Secure = true
+		opts.Secure = true
 	}
 	cs := gsessions.NewCookieStore([]byte(value))
-	cs.Options = s.sessionOption.ToGorillaOptions()
+	cs.Options = opts.ToGorillaOptions()
 	return cs, nil
 }
 

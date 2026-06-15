@@ -129,6 +129,14 @@ func (h *Public) ResetPassword(c *gin.Context) {
 		return
 	}
 
+	if len(password) < 8 {
+		data := h.base(c, tr.T("重置密码"), "", s)
+		data["ResetToken"] = token
+		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
+		c.HTML(http.StatusBadRequest, "auth_reset_password.gohtml", data)
+		return
+	}
+
 	if password != confirmPassword {
 		data := h.base(c, tr.T("重置密码"), "", s)
 		data["ResetToken"] = token

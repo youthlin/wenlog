@@ -452,6 +452,11 @@ func (h *Admin) RegisterVerify(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
 	}
+	if len(password) < 8 {
+		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
+		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
+		return
+	}
 	if password != confirmPassword {
 		data["Error"] = tr.T("两次输入的密码不一致。")
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
@@ -844,10 +849,6 @@ func settingsRedirectURL(section, message string) string {
 		return base + "?" + encoded
 	}
 	return base
-}
-
-func (h *Admin) settingsData(c *gin.Context) gin.H {
-	return h.settingsDataForSection(c, settingsSection(c))
 }
 
 func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
@@ -1379,6 +1380,12 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
+	if len(password) < 8 {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		h.serverError(c, err)
@@ -1647,6 +1654,10 @@ func (h *Admin) DebugPage(c *gin.Context) {
 
 func allowDebugSQL(sqlText string) bool {
 	upper := strings.ToUpper(strings.TrimSpace(sqlText))
+	// 拒绝包含分号的多语句,防止 SELECT 1; DROP TABLE users;-- 这类注入。
+	if strings.Contains(upper, ";") {
+		return false
+	}
 	return strings.HasPrefix(upper, "SELECT") ||
 		strings.HasPrefix(upper, "EXPLAIN")
 }
@@ -3036,6 +3047,12 @@ func (h *Admin) CreateUser(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
 		return
 	}
+	if len(password) < 8 {
+		data := h.base(c, tr.T("新增用户"))
+		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
+		c.HTML(http.StatusBadRequest, "admin_user_form.gohtml", data)
+		return
+	}
 	switch role {
 	case model.RoleAdmin, model.RoleAuthor, model.RoleSubscriber:
 	default:
@@ -3255,11 +3272,11 @@ func selectedCats(ids []uint) map[uint]bool {
 	return out
 }
 
-// renderMarkdown 把 Markdown 渲染为 HTML,并复用前台统一的代码块高亮逻辑。
+// renderMarkdown 把 Markdown 渲染为 HTML,消毒后复用前台统一的代码块高亮逻辑。
 func renderMarkdown(md string) string {
 	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
 	doc := p.Parse([]byte(md))
 	renderer := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
 	out := string(markdown.Render(doc, renderer))
-	return renderx.HighlightCodeBlocks(out)
+	return renderx.HighlightCodeBlocks(renderx.SanitizeHTML(out))
 }

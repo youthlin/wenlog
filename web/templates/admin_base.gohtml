@@ -21,6 +21,7 @@
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body class="admin">
+<a class="skip-link" href="#main-content">{{.t.T "跳到主要内容"}}</a>
 <header class="site-header admin-header">
   <div class="container header-inner admin-bar">
     <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
@@ -95,8 +96,8 @@
           <label class="lang-select-wrap">
             <span class="sidebar-utility-label">{{.t.T "语言"}}</span>
             <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-              <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
-              <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+              <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.t.T "中文"}}</option>
+              <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.t.T "English"}}</option>
             </select>
           </label>
           <label class="theme-select-wrap">
@@ -119,7 +120,7 @@
       </div>
     </div>
   </aside>
-  <main class="admin-main">
+  <main class="admin-main" id="main-content">
 {{end}}
 
 {{define "admin_footer"}}

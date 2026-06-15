@@ -91,6 +91,23 @@ func CSRFMiddleware() gin.HandlerFunc {
 	}
 }
 
+// VerifyCSRFToken 校验当前请求的 CSRF token 是否有效,返回 true 表示通过。
+// 用于未经过 CSRFMiddleware 但需要 CSRF 保护的端点(如前台评论)。
+func VerifyCSRFToken(c *gin.Context) bool {
+	token, err := EnsureCSRFToken(c)
+	if err != nil {
+		return false
+	}
+	if !sameOriginRequest(c.Request) {
+		return false
+	}
+	submitted := strings.TrimSpace(c.GetHeader(csrfHeaderKey))
+	if submitted == "" {
+		submitted = strings.TrimSpace(c.PostForm(csrfFormKey))
+	}
+	return submitted != "" && subtle.ConstantTimeCompare([]byte(submitted), []byte(token)) == 1
+}
+
 func isSafeMethod(method string) bool {
 	switch method {
 	case http.MethodGet, http.MethodHead, http.MethodOptions:

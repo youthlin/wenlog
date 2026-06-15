@@ -329,7 +329,7 @@ body.admin { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft Ya
 }
 body.admin.nav-open { overflow: hidden; }
 
-.badge { background: #e74c3c; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 12px; }
+.badge { background: #c0392b; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 12px; }
 
 .admin-main { min-width: 0; padding-bottom: 40px; }
 
@@ -1119,7 +1119,7 @@ a { color: var(--accent); }
 .cat-check input { width: auto; margin: 0 4px 0 0; }
 
 .login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.login-box { background: var(--card); padding: 32px; border-radius: 14px; width: 320px; box-shadow: 0 18px 42px rgba(15, 23, 42, .12); }
+.login-box { background: var(--card); padding: 32px; border-radius: 14px; width: min(320px, calc(100vw - 24px)); box-shadow: 0 18px 42px rgba(15, 23, 42, .12); }
 .login-tools { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .login-box .theme-select-wrap, .login-box .lang-select-wrap { position: relative; display: inline-flex; }
 .login-box .theme-select, .login-box .lang-select { width: auto; min-width: 112px; padding: 6px 30px 6px 10px; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 5px; appearance: none; -webkit-appearance: none; }
@@ -1388,5 +1388,4 @@ a { color: var(--accent); }
   .batch-bar .check-all { width: 100%; }
   .table-scroll { margin-bottom: 8px; }
   .edit-form { padding: 14px; }
-  .login-box { width: calc(100vw - 24px); padding: 20px; }
 }

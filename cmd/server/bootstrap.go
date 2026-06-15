@@ -195,5 +195,5 @@ func renderMarkdownForBootstrap(md string) string {
 	doc := p.Parse([]byte(md))
 	rendererMD := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
 	out := string(markdown.Render(doc, rendererMD))
-	return render.HighlightCodeBlocks(out)
+	return render.HighlightCodeBlocks(render.SanitizeHTML(out))
 }

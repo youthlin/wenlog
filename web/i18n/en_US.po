@@ -51,7 +51,7 @@ msgstr "Collapse menu"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:27
 msgid "%s・后台"
-msgstr ""
+msgstr "%s Admin"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:33
@@ -60,12 +60,11 @@ msgstr "View site"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:42
 msgid "后台导航"
-msgstr ""
+msgstr "Admin navigation"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:45
-#, fuzzy
 msgid "概览"
-msgstr "Views"
+msgstr "Overview"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:47
 msgid "欢迎"
@@ -135,7 +134,7 @@ msgstr "Media"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:83
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:25
 msgid "界面设置"
-msgstr ""
+msgstr "Interface settings"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:85
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:86
@@ -148,7 +147,7 @@ msgstr "Language"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:92
 msgid "颜色"
-msgstr ""
+msgstr "Color"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:93
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:21
@@ -302,8 +301,8 @@ msgstr[1] "%d drafts"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:28
 msgid "%d 条待审"
 msgid_plural "%d 条待审"
-msgstr[0] "%d pending"
-msgstr[1] "%d pending"
+msgstr[0] "%d pending comment"
+msgstr[1] "%d pending comments"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:52
 msgid "审核评论"
@@ -502,7 +501,7 @@ msgstr "Search"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:28
 msgid "查询"
-msgstr ""
+msgstr "Query"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:37
 msgid "发布时间"
@@ -791,21 +790,21 @@ msgstr ""
 #: internal/handler/admin.go:500
 #, c-format
 msgid "固定链接结构不合法: %s"
-msgstr ""
+msgstr "Invalid permalink structure: %s"
 
 #: internal/handler/admin.go:507
 #, c-format
 msgid "分类目录前缀不合法: %s"
-msgstr ""
+msgstr "Invalid category prefix: %s"
 
 #: internal/handler/admin.go:515
 #, c-format
 msgid "标签前缀不合法: %s"
-msgstr ""
+msgstr "Invalid tag prefix: %s"
 
 #: internal/handler/admin.go:525
 msgid "分类目录前缀和标签前缀不能相同。"
-msgstr ""
+msgstr "Category prefix and tag prefix cannot be the same."
 
 #: internal/handler/admin.go:573
 msgid "Session Secret 不能为空。"
@@ -974,33 +973,29 @@ msgid "页面管理"
 msgstr "Pages"
 
 #: internal/handler/admin.go:1110
-#, fuzzy, c-format
 msgid "文章管理 · 分类：%s"
-msgstr "Posts"
+msgstr "Posts - Category: %s"
 
 #: internal/handler/admin.go:1118
-#, fuzzy, c-format
 msgid "文章管理 · 标签：%s"
-msgstr "Posts"
+msgstr "Posts - Tag: %s"
 
 #: internal/handler/admin.go:1125
 #, c-format
 msgid "%s · 搜索：%s"
-msgstr ""
+msgstr "%s - Search: %s"
 
 #: internal/handler/admin.go:1250
 msgid "分类管理"
-msgstr ""
+msgstr "Category management"
 
 #: internal/handler/admin.go:1252
-#, fuzzy
 msgid "标签管理"
-msgstr "Categories / Tags"
+msgstr "Tag management"
 
 #: internal/handler/admin.go:1273
-#, fuzzy
 msgid "加载标签列表失败。"
-msgstr "Tag list"
+msgstr "Failed to load tag list."
 
 #: internal/handler/admin.go:1292
 msgid "标签已保存。"
@@ -1011,9 +1006,8 @@ msgid "标签已删除。"
 msgstr "Tag deleted."
 
 #: internal/handler/admin.go:1311
-#, fuzzy
 msgid "加载分类列表失败。"
-msgstr "Category list"
+msgstr "Failed to load category list."
 
 #: internal/handler/admin.go:1327
 msgid "分类已保存。"
@@ -1059,9 +1053,8 @@ msgid "页面链接 /%s 已存在，请换一个 slug。"
 msgstr "Page path /%s already exists. Please choose another slug."
 
 #: internal/handler/admin.go:1626
-#, fuzzy
 msgid "文章 slug %q 已存在，请换一个。"
-msgstr "Tag slug %q already exists."
+msgstr "Post slug %q already exists. Please choose another."
 
 #: internal/handler/admin.go:1755
 msgid "评论管理"
@@ -1107,22 +1100,19 @@ msgstr "Page slug %q is a reserved route. Please choose another one."
 
 #: internal/handler/admin.go:1964
 msgid "当前固定链接结构使用了 %postname%，文章 slug 不能为空"
-msgstr ""
+msgstr "The current permalink structure uses %postname%, so the post slug cannot be empty."
 
 #: internal/handler/admin.go:1967
-#, fuzzy
 msgid "文章 slug 不能包含 /、空白、? 或 #"
-msgstr "Page slug cannot contain whitespace, ? or #."
+msgstr "Post slug cannot contain /, whitespace, ? or #."
 
 #: internal/handler/admin.go:1970
-#, fuzzy
 msgid "文章 slug 非法"
-msgstr "Invalid page slug."
+msgstr "Invalid post slug."
 
 #: internal/handler/admin.go:1973
-#, fuzzy
 msgid "文章 slug %q 为保留路由，请换一个"
-msgstr "Page slug %q is a reserved route. Please choose another one."
+msgstr "Post slug %q is a reserved route. Please choose another one."
 
 #: internal/handler/comment.go:45
 msgid "提交内容格式有误。"

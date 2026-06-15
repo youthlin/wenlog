@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -73,6 +74,11 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	req.URL = strings.TrimSpace(req.URL)
 	loggedInUser := h.commentUser(c)
 	if loggedInUser != nil {
+		// 登录用户评论需校验 CSRF token,防止跨站伪造。
+		if !middleware.VerifyCSRFToken(c) {
+			h.commentResp(c, false, tr.T("提交失败。"), req.PostID)
+			return
+		}
 		req.Author = strings.TrimSpace(loggedInUser.DisplayName)
 		if req.Author == "" {
 			req.Author = strings.TrimSpace(loggedInUser.Username)
@@ -95,6 +101,14 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	if req.Email != "" {
 		if _, err := mail.ParseAddress(req.Email); err != nil {
 			h.commentResp(c, false, tr.T("邮箱格式不正确。"), req.PostID)
+			return
+		}
+	}
+	// 校验评论者 URL 协议,只允许 http/https。
+	if req.URL != "" {
+		u, err := url.Parse(req.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+			h.commentResp(c, false, tr.T("网站地址格式不正确。"), req.PostID)
 			return
 		}
 	}
