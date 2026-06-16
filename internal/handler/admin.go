@@ -225,6 +225,10 @@ func normalizeTermSlug(s string) string {
 	return util.Slugify(s)
 }
 
+func normalizeTaxonomySlug(s string) string {
+	return util.URLSlugify(s)
+}
+
 func (h *Admin) notFound(c *gin.Context) {
 	tr := i18n.Get(c)
 	c.HTML(http.StatusNotFound, "admin_error.gohtml", i18n.Inject(c, gin.H{

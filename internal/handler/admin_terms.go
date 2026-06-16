@@ -254,9 +254,9 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		h.termsFormError(c, "category", tr.T("分类名称不能为空。"), model.Category{ID: f.ID, Name: f.Name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
-	slug := normalizeTermSlug(f.Slug)
+	slug := normalizeTaxonomySlug(f.Slug)
 	if slug == "" {
-		slug = normalizeTermSlug(name)
+		slug = normalizeTaxonomySlug(name)
 	}
 	if slug == "" {
 		h.termsFormError(c, "category", tr.T("分类 slug 不能为空。"), model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
@@ -327,9 +327,9 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		h.termsFormError(c, "tag", tr.T("标签名称不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: f.Name, Slug: f.Slug}, false, true)
 		return
 	}
-	slug := normalizeTermSlug(f.Slug)
+	slug := normalizeTaxonomySlug(f.Slug)
 	if slug == "" {
-		slug = normalizeTermSlug(name)
+		slug = normalizeTaxonomySlug(name)
 	}
 	if slug == "" {
 		h.termsFormError(c, "tag", tr.T("标签 slug 不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)

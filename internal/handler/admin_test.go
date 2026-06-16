@@ -105,6 +105,21 @@ func TestNormalizeTermSlug(t *testing.T) {
 	}
 }
 
+func TestNormalizeTaxonomySlug(t *testing.T) {
+	tests := map[string]string{
+		" Go 教程 ":              "go-%e6%95%99%e7%a8%8b",
+		"Hello, World!":        "hello-world",
+		"中文 标签":                "%e4%b8%ad%e6%96%87-%e6%a0%87%e7%ad%be",
+		"《细说\"Hello, World\"》": "%e7%bb%86%e8%af%b4hello-world",
+		"%e4%b8%ad%e6%96%87":   "%e4%b8%ad%e6%96%87",
+	}
+	for in, want := range tests {
+		if got := normalizeTaxonomySlug(in); got != want {
+			t.Fatalf("normalizeTaxonomySlug(%q)=%q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestDefaultCategorySelectionPrefersUncategorized(t *testing.T) {
 	cats := []model.Category{
 		{ID: 2, Name: "Go", Slug: "go"},

@@ -127,7 +127,7 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 // DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。
 func (h *Public) DynamicOrLegacy(c *gin.Context) {
 	syncPostPermalink(c, h.st)
-	path := c.Request.URL.Path
+	path := c.Request.URL.EscapedPath()
 	if slug, ok := singleSegmentSlug(path); ok {
 		if h.pageExists(c, slug) {
 			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
@@ -203,12 +203,13 @@ func (h *Public) Search(c *gin.Context) {
 // Post 文章详情（按当前固定链接规则解析）。
 func (h *Public) Post(c *gin.Context) {
 	syncPostPermalink(c, h.st)
-	match, ok := permalink.ParsePostPath(c.Request.URL.Path)
+	path := c.Request.URL.EscapedPath()
+	match, ok := permalink.ParsePostPath(path)
 	if !ok {
 		h.notFound(c)
 		return
 	}
-	if !h.renderResolvedPost(c, c.Request.URL.Path, match) {
+	if !h.renderResolvedPost(c, path, match) {
 		h.notFound(c)
 	}
 }
@@ -372,10 +373,11 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 
 // Category 分类列表页。
 func (h *Public) Category(c *gin.Context) {
-	slug := c.Param("slug")
-	if slug == "" {
-		slug = c.Query("slug")
+	displaySlug := c.Param("slug")
+	if displaySlug == "" {
+		displaySlug = c.Query("slug")
 	}
+	slug := encodeTaxonomySlug(displaySlug)
 	page := atoiDefault(c.Query("page"), 1)
 	s := h.loadSettings(c)
 	tr := i18n.Get(c)
@@ -384,8 +386,8 @@ func (h *Public) Category(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("分类:%s", slug), "", s)
-	data["Heading"] = tr.T("分类:%s", slug)
+	data := h.base(c, tr.T("分类:%s", displaySlug), "", s)
+	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
 	c.HTML(http.StatusOK, "list.gohtml", data)
@@ -393,10 +395,11 @@ func (h *Public) Category(c *gin.Context) {
 
 // Tag 标签列表页。
 func (h *Public) Tag(c *gin.Context) {
-	slug := c.Param("slug")
-	if slug == "" {
-		slug = c.Query("slug")
+	displaySlug := c.Param("slug")
+	if displaySlug == "" {
+		displaySlug = c.Query("slug")
 	}
+	slug := encodeTaxonomySlug(displaySlug)
 	page := atoiDefault(c.Query("page"), 1)
 	s := h.loadSettings(c)
 	tr := i18n.Get(c)
@@ -405,8 +408,8 @@ func (h *Public) Tag(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("标签:%s", slug), "", s)
-	data["Heading"] = tr.T("标签:%s", slug)
+	data := h.base(c, tr.T("标签:%s", displaySlug), "", s)
+	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
 	c.HTML(http.StatusOK, "list.gohtml", data)
@@ -490,4 +493,8 @@ func singleSegmentSlug(path string) (string, bool) {
 		return "", false
 	}
 	return path, true
+}
+
+func encodeTaxonomySlug(slug string) string {
+	return util.URLSlugify(slug)
 }

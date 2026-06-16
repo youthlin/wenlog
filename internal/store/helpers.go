@@ -18,6 +18,7 @@ var ErrLastAdmin = errors.New("at least one admin user is required")
 var ErrPendingRegistrationNotFound = errors.New("pending registration not found")
 var ErrPendingEmailChangeNotFound = errors.New("pending email change not found")
 var ErrCannotDeleteUncategorized = errors.New("cannot delete uncategorized category")
+
 func termQueryLike(keyword string) string {
 	return "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
 }
@@ -30,7 +31,7 @@ func adminPostOrder(postType string) func(*gorm.DB) *gorm.DB {
 	}
 }
 func slugifyTag(name string) string {
-	return util.Slugify(name)
+	return util.URLSlugify(name)
 }
 func ensureUncategorizedCategory(tx *gorm.DB) (*model.Category, error) {
 	var cat model.Category

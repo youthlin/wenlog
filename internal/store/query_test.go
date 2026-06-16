@@ -54,6 +54,31 @@ func TestListPostsAndPagination(t *testing.T) {
 	}
 }
 
+func TestListPostsMatchesURLEncodedCategorySlug(t *testing.T) {
+	st := newTestStore(t)
+	db := st.DB()
+	now := time.Now()
+	cat := model.Category{ID: 1, Name: "作品", Slug: "%e4%bd%9c%e5%93%81"}
+	post := model.Post{ID: 1391, Title: "吉大校园网客户端 Java 版", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now}
+	if err := db.Create(&cat).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&post).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&post).Association("Categories").Replace([]model.Category{cat}); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := st.ListPosts(context.Background(), 1, 10, "%e4%bd%9c%e5%93%81", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Total != 1 || len(res.Posts) != 1 || res.Posts[0].ID != post.ID {
+		t.Fatalf("ListPosts by encoded category total=%d posts=%+v, want post %d", res.Total, res.Posts, post.ID)
+	}
+}
+
 func TestApprovedCommentsOnly(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()
@@ -253,7 +278,7 @@ func TestSayingComments(t *testing.T) {
 func TestSlugifyTag(t *testing.T) {
 	cases := map[string]string{
 		"Hello World": "hello-world",
-		"Go语言":        "go语言",
+		"Go语言":        "go%e8%af%ad%e8%a8%80",
 		"  C++  ":     "c",
 	}
 	for in, want := range cases {

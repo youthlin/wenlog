@@ -1,6 +1,7 @@
 package util
 
 import (
+	"net/url"
 	"os"
 	"strings"
 	"unicode"
@@ -59,4 +60,12 @@ func Slugify(s string) string {
 		slug = s
 	}
 	return slug
+}
+
+// URLSlugify 将字符串 slugify 后再做 URL 路径编码；英文保持原样，中文等非 ASCII 字符转为 %xx。
+func URLSlugify(s string) string {
+	if decoded, err := url.PathUnescape(strings.TrimSpace(s)); err == nil {
+		s = decoded
+	}
+	return strings.ToLower(url.PathEscape(Slugify(s)))
 }
