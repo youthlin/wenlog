@@ -1,3 +1,6 @@
+/* ============================================================
+   1. CSS 变量与主题
+   ============================================================ */
 :root {
   --danger: #e74c3c;
   --danger-bg: rgba(231,76,60,.08);
@@ -156,12 +159,21 @@
   --header-chip-hover-border: #d4c0f4;
   --header-shadow: 0 10px 28px rgba(70,48,105,.10);
 }
+/* ============================================================
+   2. 全局重置与工具类
+   ============================================================ */
 * { box-sizing: border-box; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .skip-link { position: absolute; top: -100px; left: 8px; background: var(--accent); color: #fff; padding: 8px 16px; z-index: 100; border-radius: 0 0 4px 4px; font-size: 14px; text-decoration: none; }
 .skip-link:focus { top: 0; }
 body.admin { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--fg); background: var(--bg); font-size: 14px; }
+h1 { font-size: 22px; }
+a { color: var(--accent); }
+.badge { background: var(--badge-bg); color: var(--badge-fg); border-radius: 10px; padding: 1px 7px; font-size: 12px; }
 
+/* ============================================================
+   3. 后台头部 (Admin Header) —— 粘性顶栏
+   ============================================================ */
 .admin-header { background: var(--header-bg); color: var(--header-fg); border-bottom: 1px solid var(--header-chip-border); box-shadow: var(--header-shadow); backdrop-filter: saturate(140%) blur(10px); position: sticky; top: 0; z-index: 40; }
 .admin-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; max-width: 1280px; margin: 0 auto; padding: 12px 20px; min-height: 64px; }
 .admin-header .site-title { color: var(--header-fg); font-size: 20px; font-weight: 700; white-space: nowrap; text-decoration: none; }
@@ -217,6 +229,10 @@ body.admin { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft Ya
 .admin-sidebar .theme-select, .admin-sidebar .lang-select { margin: 0; appearance: none; -webkit-appearance: none; padding-right: 32px; font: inherit; }
 .admin-header .theme-select-wrap::after, .admin-header .lang-select-wrap::after,
 .admin-sidebar .theme-select-wrap::after, .admin-sidebar .lang-select-wrap::after { content: "▾"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--header-muted); pointer-events: none; font-size: 12px; }
+
+/* ============================================================
+   4. 后台外壳 (Admin Shell) —— 侧栏 + 主内容区双栏布局
+   ============================================================ */
 .admin-shell {
   width: 100%;
   max-width: 1280px;
@@ -227,6 +243,10 @@ body.admin { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft Ya
   gap: 24px;
   align-items: start;
 }
+
+/* ============================================================
+   5. 后台侧栏 (Admin Sidebar)
+   ============================================================ */
 .admin-sidebar {
   position: sticky;
   top: 65px;
@@ -351,8 +371,9 @@ body.admin { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft Ya
 }
 body.admin.nav-open { overflow: hidden; }
 
-.badge { background: var(--badge-bg); color: var(--badge-fg); border-radius: 10px; padding: 1px 7px; font-size: 12px; }
-
+/* ============================================================
+   6. 后台主内容区 (Admin Main)
+   ============================================================ */
 .admin-main { min-width: 0; padding-bottom: 40px; }
 
 .admin-shell .page-head,
@@ -382,9 +403,15 @@ body.admin.nav-open { overflow: hidden; }
   background: var(--header-chip-hover-bg);
   border-color: var(--header-chip-hover-border);
 }
-h1 { font-size: 22px; }
-a { color: var(--accent); }
+/* ============================================================
+   7. 通用组件
+   ============================================================ */
 
+/* 7.1 按钮 */
+.btn { background: var(--accent); color: #fff; padding: 7px 16px; border-radius: 5px; border: 0; text-decoration: none; cursor: pointer; font-size: 14px; display: inline-block; line-height: 1.4; }
+.btn-secondary { background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 5px; cursor: pointer; line-height: 1.4; }
+
+/* 7.2 页面标题栏 */
 .page-head { display: flex; align-items: center; justify-content: space-between; }
 .posts-toolbar { margin: 16px 0; }
 .posts-filter-form {
@@ -484,9 +511,12 @@ a { color: var(--accent); }
   color: var(--muted);
   font-size: 13px;
 }
-.btn { background: var(--accent); color: #fff; padding: 7px 16px; border-radius: 5px; border: 0; text-decoration: none; cursor: pointer; font-size: 14px; display: inline-block; min-height: 44px; line-height: 1.4; }
-.btn-secondary { background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 5px; cursor: pointer; min-height: 44px; line-height: 1.4; }
+
+/* 7.11 表单提示 */
 .form-hint { margin: -6px 0 10px; color: var(--muted); font-size: 13px; }
+/* ============================================================
+   12. 个人资料页 (Profile)
+   ============================================================ */
 .profile-avatar-panel,
 .dashboard-welcome-card {
   display: flex;
@@ -509,6 +539,7 @@ a { color: var(--accent); }
 .dashboard-user-name:hover { color: var(--accent); }
 .dashboard-user-main p { margin: 6px 0 0; color: var(--muted); }
 
+/* 7.8 表格通用 */
 .data-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 6px; overflow: hidden; }
 .table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-scroll-compact { max-width: 100%; }
@@ -537,11 +568,15 @@ a { color: var(--accent); }
 .link-danger { color: var(--danger) !important; }
 .total { color: var(--muted); }
 
+/* ============================================================
+   14. 评论管理页 (Comments Table)
+   ============================================================ */
 .comments-table { border-collapse: separate; border-spacing: 0; }
 .comments-table tbody tr:last-child td { border-bottom: 0; }
 .comments-row td { padding-top: 16px; padding-bottom: 16px; }
 .comment-check-cell { width: 42px; text-align: center; }
 .comment-check-cell input { margin-top: 4px; }
+/* 7.10 头像 */
 .avatar-picture { display: inline-flex; line-height: 0; }
 .avatar { border-radius: 50%; display: block; }
 .comment-author-panel,
@@ -569,6 +604,9 @@ a { color: var(--accent); }
 .comment-actions-cell .inline button:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
 .comment-actions-cell .inline button.link-danger:hover { background: var(--danger-mix-hover-bg); }
 
+/* ============================================================
+   15. 用户管理页 (Users Table)
+   ============================================================ */
 .users-table tbody tr:last-child td { border-bottom: 0; }
 .user-name-cell { min-width: 220px; }
 .user-email-cell { min-width: 240px; word-break: break-all; }
@@ -583,6 +621,14 @@ a { color: var(--accent); }
 .user-action-link + .inline { margin-left: 6px; }
 .user-actions-cell .inline + .inline { margin-left: 6px; }
 
+/* ============================================================
+   13. 文章列表页 (Posts Table)
+   ============================================================ */
+
+/* 13.1 筛选工具栏 */
+/* (posts-toolbar / posts-filter-form 见上方 7.2 节) */
+
+/* 13.2 文章表格 */
 .posts-table tbody tr:last-child td { border-bottom: 0; }
 .post-id-cell,
 .post-menu-order-cell,
@@ -741,21 +787,26 @@ a { color: var(--accent); }
   }
 }
 
+/* 7.7 批量操作栏 */
 .batch-bar { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .batch-bar button { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--fg); cursor: pointer; padding: 4px 10px; }
 .batch-bar .check-all { display: inline-flex; align-items: center; gap: 8px; color: var(--fg); padding: 4px 6px 4px 0; }
 .batch-bar .check-all input { margin: 0; }
 
+/* 7.4 分页 */
 .pagination { display: flex; align-items: center; gap: 16px; margin-top: 20px; }
 .page-info { color: var(--muted); }
 
+/* 7.6 卡片网格 */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; margin-top: 20px; }
 .card { background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card)); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-decoration: none; color: var(--fg); box-shadow: var(--surface-shadow); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .card:hover { transform: translateY(-2px); box-shadow: var(--surface-shadow-hover); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
 .card h3 { margin: 0 0 6px; }
 .card p { margin: 0; color: var(--muted); }
 
-/* --- 概览工作台 --- */
+/* ============================================================
+   9. 概览工作台 (Dashboard)
+   ============================================================ */
 .dashboard-stats {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -906,6 +957,9 @@ a { color: var(--accent); }
   .md-editor textarea,
   .md-editor .md-preview { min-height: 420px; }
 }
+/* ============================================================
+   16. 分类/标签管理页 (Terms Table)
+   ============================================================ */
 .terms-main { margin-top: 20px; }
 .terms-main .settings-card:hover,
 .terms-section .settings-card:hover {
@@ -942,10 +996,14 @@ a { color: var(--accent); }
   outline: none;
 }
 
+/* 7.5 筛选标签页 */
 .filter-tabs { margin: 16px 0; }
 .filter-tabs a { margin-right: 14px; text-decoration: none; color: var(--muted); padding-bottom: 4px; }
 .filter-tabs a.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
+/* ============================================================
+   10. 文章/页面编辑表单 (Edit Form)
+   ============================================================ */
 .edit-form { background: var(--card); padding: 20px; border-radius: 12px; max-width: 800px; box-shadow: var(--form-shadow); }
 .edit-form label { display: block; margin-bottom: 14px; font-weight: 600; }
 .edit-form input, .edit-form textarea, .edit-form select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; font-family: inherit; font-size: 14px; font-weight: normal; margin-top: 4px; background: var(--bg); color: var(--fg); }
@@ -996,6 +1054,11 @@ a { color: var(--accent); }
 .avatar-choice span { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .avatar-choice small { color: var(--muted); font-weight: normal; line-height: 1.45; }
 
+/* ============================================================
+   11. Markdown 编辑器
+   ============================================================ */
+
+/* 11.1 工具栏 */
 .markdown-toolbar,
 .md-view-tabs,
 .draft-restore { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
@@ -1008,6 +1071,7 @@ a { color: var(--accent); }
 .md-view-tabs .btn-secondary.active { color: color-mix(in srgb, var(--accent) 86%, var(--fg)); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .draft-restore { padding: 10px 12px; border: 1px solid rgba(255,193,7,.3); border-radius: 8px; background: rgba(255,193,7,.12); color: var(--fg); }
 .draft-restore span { color: var(--warning); }
+/* 11.2 编辑区 / 预览区 */
 .md-editor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: stretch; }
 .md-editor.is-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .md-editor textarea { min-height: 520px; resize: vertical; }
@@ -1017,6 +1081,7 @@ a { color: var(--accent); }
 .md-editor.is-preview textarea { display: none; }
 .md-preview img { max-width: 100%; }
 .editor-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+/* 11.3 上传选择器 */
 .upload-btn { display: inline-block; }
 .upload-picker { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .upload-picker-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -1024,6 +1089,9 @@ a { color: var(--accent); }
 .upload-pick-item { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: 8px; text-align: left; color: var(--fg); }
 .upload-pick-item img { width: 100%; height: 88px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 6px; }
 .upload-pick-item span { display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ============================================================
+   17. 附件管理页 (Uploads Table)
+   ============================================================ */
 .uploads-table .upload-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
 .terms-table tbody tr:last-child td,
 .uploads-table tbody tr:last-child td { border-bottom: 0; }
@@ -1140,13 +1208,16 @@ a { color: var(--accent); }
 .cat-check { display: inline-block; font-weight: normal; margin: 0 14px 6px 0; }
 .cat-check input { width: auto; margin: 0 4px 0 0; }
 
+/* ============================================================
+   8. 登录页 (Login)
+   ============================================================ */
 .login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .login-box { background: var(--card); padding: 32px; border-radius: 14px; width: min(320px, calc(100vw - 24px)); box-shadow: var(--surface-shadow-lg); }
 .login-tools { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .login-box .theme-select-wrap, .login-box .lang-select-wrap { position: relative; display: inline-flex; }
 .login-box .theme-select, .login-box .lang-select { width: auto; min-width: 112px; padding: 6px 30px 6px 10px; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 5px; appearance: none; -webkit-appearance: none; }
 .login-box .theme-select-wrap::after, .login-box .lang-select-wrap::after { content: "▾"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 12px; }
-.login-box h1 { font-size: 20px; text-align: center; margin-top: 0; }
+.login-box h1 { font-size: 20px; text-align: center; }
 .login-box input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); }
 .login-box button { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; cursor: pointer; }
 .login-box .err { color: var(--danger); text-align: center; }
@@ -1154,18 +1225,28 @@ a { color: var(--accent); }
 .login-box .auth-tip { color: var(--muted); text-align: center; line-height: 1.6; }
 .login-box input[readonly] { color: var(--muted); }
 .login-box button:disabled { opacity: .55; cursor: not-allowed; }
+/* 7.3 提示横幅 */
 .err-banner { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: 6px; padding: 10px 12px; }
 .notice-banner { color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 6px; padding: 10px 12px; }
 .warn-banner { color: var(--warning); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 6px; padding: 10px 12px; }
+/* ============================================================
+   18. 设置页 (Settings)
+   ============================================================ */
 .settings-main { width: min(100%, 960px); }
 .settings-stack { display: grid; gap: 18px; }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
 .settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+/* ============================================================
+   19. 导入/导出页 (Import/Export)
+   ============================================================ */
 .import-result { margin-top: 16px; }
 .import-stats-wrap { overflow: visible; }
 .import-stats-table { table-layout: fixed; }
 .import-stats-table th { width: 45%; }
 .import-stats-table td { text-align: right; font-variant-numeric: tabular-nums; }
+/* ============================================================
+   20. Debug 页
+   ============================================================ */
 .debug-result { margin-top: 20px; }
 .debug-json { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; overflow: auto; max-height: 60vh; }
 
@@ -1224,7 +1305,6 @@ a { color: var(--accent); }
     z-index: 35;
     transform: translateX(-110%);
     transition: transform .22s ease;
-    padding: 0 8px 12px 0;
   }
   .admin-sidebar.is-open { transform: translateX(0); }
   .admin-sidebar-inner {
@@ -1399,7 +1479,7 @@ a { color: var(--accent); }
 @media (max-width: 640px) {
   .admin-bar { gap: 12px; padding-left: 12px; padding-right: 12px; }
   .admin-shell { padding-left: 12px; padding-right: 12px; }
-  .admin-sidebar { width: min(312px, calc(100vw - 12px)); padding: 6px 6px 10px; }
+  .admin-sidebar { width: min(250px, calc(100vw - 12px)); }
   .admin-sidebar-inner { padding: 12px 12px 14px; }
   .admin-sidebar-utility { padding: 8px; }
   .nav-group { padding: 9px; border-radius: 14px; }
