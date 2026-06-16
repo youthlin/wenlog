@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"strconv"
 	"strings"
 
@@ -31,18 +32,18 @@ func positiveIntSetting(raw string, def int) int {
 	return n
 }
 
-func syncPostPermalink(st *store.Store) string {
+func syncPostPermalink(ctx context.Context, st *store.Store) string {
 	pattern := consts.SettingsPostPermalinkDefault
 	categoryPrefix := consts.SettingsCategoryPrefixDefault
 	tagPrefix := consts.SettingsTagPrefixDefault
 	if st != nil {
-		if v, err := st.GetSetting(consts.SettingsPostPermalink); err == nil && strings.TrimSpace(v) != "" {
+		if v, err := st.GetSetting(ctx, consts.SettingsPostPermalink); err == nil && strings.TrimSpace(v) != "" {
 			pattern = v
 		}
-		if v, err := st.GetSetting(consts.SettingsCategoryPrefix); err == nil && strings.TrimSpace(v) != "" {
+		if v, err := st.GetSetting(ctx, consts.SettingsCategoryPrefix); err == nil && strings.TrimSpace(v) != "" {
 			categoryPrefix = v
 		}
-		if v, err := st.GetSetting(consts.SettingsTagPrefix); err == nil && strings.TrimSpace(v) != "" {
+		if v, err := st.GetSetting(ctx, consts.SettingsTagPrefix); err == nil && strings.TrimSpace(v) != "" {
 			tagPrefix = v
 		}
 	}
@@ -63,12 +64,12 @@ func currentUserID(c *gin.Context) uint {
 }
 
 // currentUserByStore 返回当前登录用户(未登录为 nil)。
-func currentUserByStore(st *store.Store, c *gin.Context) *model.User {
+func currentUserByStore(ctx context.Context, st *store.Store, c *gin.Context) *model.User {
 	uid := currentUserID(c)
 	if uid == 0 {
 		return nil
 	}
-	u, err := st.GetUserByID(uid)
+	u, err := st.GetUserByID(ctx, uid)
 	if err != nil {
 		return nil
 	}

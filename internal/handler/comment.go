@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
+	"context"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
@@ -71,7 +72,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		return
 	}
 
-	parentID, replyToID, err := h.st.ResolveCommentReply(req.PostID, req.ReplyToID, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
+	parentID, replyToID, err := h.st.ResolveCommentReply(c, req.PostID, req.ReplyToID, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
 	if err != nil {
 		h.commentResp(c, false, tr.T("目标评论不存在。"), req.PostID)
 		return
@@ -100,7 +101,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		uid := loggedInUser.ID
 		cm.UserID = &uid
 	}
-	if err := h.st.CreateComment(cm); err != nil {
+	if err := h.st.CreateComment(c, cm); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -116,7 +117,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	if cm.Status == model.CommentApproved {
 		h.notifyCommentReply(c, cm)
 	}
-	commentPage := h.st.VisibleCommentPageForViewerID(cm.ID, commentPageSize, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
+	commentPage := h.st.VisibleCommentPageForViewerID(c, cm.ID, commentPageSize, currentCommentUserID(loggedInUser), pendingCommentIDs(c))
 	h.commentResp(c, true, msg, req.PostID, gin.H{"comment_page": commentPage})
 }
 
@@ -175,9 +176,9 @@ func (h *Public) validateCommentInput(c *gin.Context, tr *gettext.Translations, 
 
 // validateCommentTarget 校验目标文章/页面存在、已发布、评论开放。
 func (h *Public) validateCommentTarget(c *gin.Context, tr *gettext.Translations, postID uint) (*model.Post, bool) {
-	target, err := h.st.GetPostByID(postID)
+	target, err := h.st.GetPostByID(c, postID)
 	if err != nil {
-		meta, err2 := h.st.PostMeta(postID)
+		meta, err2 := h.st.PostMeta(c, postID)
 		if err2 != nil || meta.Status != model.StatusPublished {
 			h.commentResp(c, false, tr.T("目标文章不存在。"), postID)
 			return nil, false
@@ -195,7 +196,7 @@ func (h *Public) validateCommentTarget(c *gin.Context, tr *gettext.Translations,
 func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations, postID uint) bool {
 	ip := c.ClientIP()
 	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
-	cnt, err := h.st.RecentCommentCountByIP(ip, since)
+	cnt, err := h.st.RecentCommentCountByIP(c, ip, since)
 	if err != nil {
 		h.log.Error("rate limit check failed", "error", err, "ip", ip)
 		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
@@ -210,14 +211,14 @@ func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations,
 
 func (h *Public) notifyCommentReply(c *gin.Context, reply *model.Comment) {
 	tr := i18n.Get(c)
-	notifyApprovedCommentReply(h.st, h.log, h.loadSMTPConfig(), siteURLFromRequest(h.st, c), siteNameFromStore(h.st), reply, tr)
+	notifyApprovedCommentReply(c, h.st, h.log, h.loadSMTPConfig(), siteURLFromRequest(h.st, c), siteNameFromStore(c, h.st), reply, tr)
 }
 
-func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, reply *model.Comment, tr *gettext.Translations) {
+func notifyApprovedCommentReply(ctx context.Context, st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, reply *model.Comment, tr *gettext.Translations) {
 	if st == nil || reply == nil || reply.Status != model.CommentApproved || reply.ReplyToID == 0 || !smtpCfg.Configured() {
 		return
 	}
-	target, err := st.GetCommentByID(reply.ReplyToID)
+	target, err := st.GetCommentByID(ctx, reply.ReplyToID)
 	if err != nil || target == nil || !target.NotifyOnReply || target.Email == "" {
 		return
 	}
@@ -230,7 +231,7 @@ func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email
 	if _, err := mail.ParseAddress(target.Email); err != nil {
 		return
 	}
-	post, err := st.PostMeta(reply.PostID)
+	post, err := st.PostMeta(ctx, reply.PostID)
 	if err != nil {
 		return
 	}
@@ -243,8 +244,8 @@ func notifyApprovedCommentReply(st *store.Store, log *slog.Logger, smtpCfg email
 	}()
 }
 
-func siteNameFromStore(st *store.Store) string {
-	settings, _ := st.GetSettings(consts.SettingsSiteName)
+func siteNameFromStore(ctx context.Context, st *store.Store) string {
+	settings, _ := st.GetSettings(ctx, consts.SettingsSiteName)
 	if name := strings.TrimSpace(settings[consts.SettingsSiteName]); name != "" {
 		return name
 	}
@@ -363,7 +364,7 @@ func (h *Public) commentResp(c *gin.Context, ok bool, msg string, postID uint, e
 		return
 	}
 	// 非 Ajax:重定向回文章页。
-	if p, err := h.st.PostMeta(postID); err == nil {
+	if p, err := h.st.PostMeta(c, postID); err == nil {
 		c.Redirect(http.StatusSeeOther, postRedirectURL(p))
 		return
 	}
@@ -385,7 +386,7 @@ func (h *Public) commentUser(c *gin.Context) *model.User {
 	if !ok || uid == 0 {
 		return nil
 	}
-	u, err := h.st.GetUserByID(uid)
+	u, err := h.st.GetUserByID(c, uid)
 	if err != nil {
 		return nil
 	}

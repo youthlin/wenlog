@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -34,7 +35,7 @@ func NewDynamicCookieStore(st *store.Store) (*DynamicCookieStore, error) {
 
 func (s *DynamicCookieStore) currentSecret() (string, error) {
 	// 先查db设置
-	value, err := s.st.GetSetting(consts.SettingsSessionSecret)
+	value, err := s.st.GetSetting(context.Background(), consts.SettingsSessionSecret)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +47,7 @@ func (s *DynamicCookieStore) currentSecret() (string, error) {
 
 	// db里没有 生成一个并保存
 	value = util.GenerateRandomString(32)
-	if err = s.st.SetSetting(consts.SettingsSessionSecret, value); err == nil {
+	if err = s.st.SetSetting(context.Background(), consts.SettingsSessionSecret, value); err == nil {
 		s.fallbackSecret = value
 		return value, nil
 	}

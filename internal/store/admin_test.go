@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -18,24 +19,24 @@ func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {
 	if err := db.Create(&model.User{ID: 2, Username: "taken", DisplayName: "占用", Email: "taken@example.com"}).Error; err != nil {
 		t.Fatalf("seed user2: %v", err)
 	}
-	exists, err := st.UserExistsByUsername("taken", 1)
+	exists, err := st.UserExistsByUsername(context.Background(), "taken", 1)
 	if err != nil {
 		t.Fatalf("check username: %v", err)
 	}
 	if !exists {
 		t.Fatal("expected username taken to exist for another user")
 	}
-	exists, err = st.UserExistsByUsername("taken", 2)
+	exists, err = st.UserExistsByUsername(context.Background(), "taken", 2)
 	if err != nil {
 		t.Fatalf("check own username: %v", err)
 	}
 	if exists {
 		t.Fatal("expected own username not to be treated as duplicate")
 	}
-	if err := st.UpdateUserProfile(1, "newname", "新显示名", "new@example.com"); err != nil {
+	if err := st.UpdateUserProfile(context.Background(), 1, "newname", "新显示名", "new@example.com"); err != nil {
 		t.Fatalf("update profile: %v", err)
 	}
-	u, err := st.GetUserByID(1)
+	u, err := st.GetUserByID(context.Background(), 1)
 	if err != nil {
 		t.Fatalf("load updated user: %v", err)
 	}
@@ -51,10 +52,10 @@ func TestLastAdminCannotBeDemotedOrDeleted(t *testing.T) {
 		t.Fatalf("seed admin: %v", err)
 	}
 
-	if err := st.UpdateUserRole(1, model.RoleAuthor); !errors.Is(err, ErrLastAdmin) {
+	if err := st.UpdateUserRole(context.Background(), 1, model.RoleAuthor); !errors.Is(err, ErrLastAdmin) {
 		t.Fatalf("UpdateUserRole error = %v, want ErrLastAdmin", err)
 	}
-	u, err := st.GetUserByID(1)
+	u, err := st.GetUserByID(context.Background(), 1)
 	if err != nil {
 		t.Fatalf("load admin: %v", err)
 	}
@@ -62,7 +63,7 @@ func TestLastAdminCannotBeDemotedOrDeleted(t *testing.T) {
 		t.Fatalf("role = %q, want admin", u.Role)
 	}
 
-	if err := st.DeleteUser(1); !errors.Is(err, ErrLastAdmin) {
+	if err := st.DeleteUser(context.Background(), 1); !errors.Is(err, ErrLastAdmin) {
 		t.Fatalf("DeleteUser error = %v, want ErrLastAdmin", err)
 	}
 	var count int64
@@ -87,10 +88,10 @@ func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
 		}
 	}
 
-	if err := st.UpdateUserRole(1, model.RoleAuthor); err != nil {
+	if err := st.UpdateUserRole(context.Background(), 1, model.RoleAuthor); err != nil {
 		t.Fatalf("UpdateUserRole with another admin: %v", err)
 	}
-	u, err := st.GetUserByID(1)
+	u, err := st.GetUserByID(context.Background(), 1)
 	if err != nil {
 		t.Fatalf("load demoted user: %v", err)
 	}
@@ -98,10 +99,10 @@ func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
 		t.Fatalf("role = %q, want author", u.Role)
 	}
 
-	if err := st.DeleteUser(2); err != nil {
+	if err := st.DeleteUser(context.Background(), 2); err != nil {
 		t.Fatalf("DeleteUser with another admin: %v", err)
 	}
-	if _, err := st.GetUserByID(2); err == nil {
+	if _, err := st.GetUserByID(context.Background(), 2); err == nil {
 		t.Fatal("expected deleted admin2 to be missing")
 	}
 }
@@ -109,10 +110,10 @@ func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
 func TestPendingRegistrationCreatesUserAfterVerification(t *testing.T) {
 	st := newTestStore(t)
 	expiry := time.Now().Add(time.Hour)
-	if err := st.SavePendingRegistration("newuser", "new@example.com", "token-1", expiry); err != nil {
+	if err := st.SavePendingRegistration(context.Background(), "newuser", "new@example.com", "token-1", expiry); err != nil {
 		t.Fatalf("save pending registration: %v", err)
 	}
-	pending, err := st.GetPendingRegistrationByToken("token-1")
+	pending, err := st.GetPendingRegistrationByToken(context.Background(), "token-1")
 	if err != nil {
 		t.Fatalf("get pending registration: %v", err)
 	}
@@ -120,30 +121,30 @@ func TestPendingRegistrationCreatesUserAfterVerification(t *testing.T) {
 		t.Fatalf("pending registration = %+v", pending)
 	}
 
-	u, err := st.CompletePendingRegistration("token-1", "hashed-password")
+	u, err := st.CompletePendingRegistration(context.Background(), "token-1", "hashed-password")
 	if err != nil {
 		t.Fatalf("complete pending registration: %v", err)
 	}
 	if u.Username != "newuser" || u.Email != "new@example.com" || u.Role != model.RoleSubscriber || u.PasswordHash != "hashed-password" {
 		t.Fatalf("created user = %+v", u)
 	}
-	if _, err := st.GetPendingRegistrationByToken("token-1"); !errors.Is(err, ErrPendingRegistrationNotFound) {
+	if _, err := st.GetPendingRegistrationByToken(context.Background(), "token-1"); !errors.Is(err, ErrPendingRegistrationNotFound) {
 		t.Fatalf("pending registration after complete error = %v, want ErrPendingRegistrationNotFound", err)
 	}
 }
 
 func TestPendingRegistrationReplacesDuplicateRequest(t *testing.T) {
 	st := newTestStore(t)
-	if err := st.SavePendingRegistration("newuser", "new@example.com", "old-token", time.Now().Add(time.Hour)); err != nil {
+	if err := st.SavePendingRegistration(context.Background(), "newuser", "new@example.com", "old-token", time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("save old pending registration: %v", err)
 	}
-	if err := st.SavePendingRegistration("newuser", "new@example.com", "new-token", time.Now().Add(time.Hour)); err != nil {
+	if err := st.SavePendingRegistration(context.Background(), "newuser", "new@example.com", "new-token", time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("save new pending registration: %v", err)
 	}
-	if _, err := st.GetPendingRegistrationByToken("old-token"); !errors.Is(err, ErrPendingRegistrationNotFound) {
+	if _, err := st.GetPendingRegistrationByToken(context.Background(), "old-token"); !errors.Is(err, ErrPendingRegistrationNotFound) {
 		t.Fatalf("old token error = %v, want ErrPendingRegistrationNotFound", err)
 	}
-	if _, err := st.GetPendingRegistrationByToken("new-token"); err != nil {
+	if _, err := st.GetPendingRegistrationByToken(context.Background(), "new-token"); err != nil {
 		t.Fatalf("new token should exist: %v", err)
 	}
 }
@@ -154,30 +155,30 @@ func TestPendingEmailChangeUpdatesUserAfterVerification(t *testing.T) {
 	if err := db.Create(&model.User{ID: 1, Username: "user", DisplayName: "用户", Email: "old@example.com"}).Error; err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
-	if err := st.SavePendingEmailChange(1, "new@example.com", "email-token", time.Now().Add(time.Hour)); err != nil {
+	if err := st.SavePendingEmailChange(context.Background(), 1, "new@example.com", "email-token", time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("save pending email change: %v", err)
 	}
-	u, err := st.CompletePendingEmailChange(1, "email-token")
+	u, err := st.CompletePendingEmailChange(context.Background(), 1, "email-token")
 	if err != nil {
 		t.Fatalf("complete pending email change: %v", err)
 	}
 	if u.Email != "new@example.com" {
 		t.Fatalf("email = %q, want new@example.com", u.Email)
 	}
-	if _, err := st.CompletePendingEmailChange(1, "email-token"); !errors.Is(err, ErrPendingEmailChangeNotFound) {
+	if _, err := st.CompletePendingEmailChange(context.Background(), 1, "email-token"); !errors.Is(err, ErrPendingEmailChangeNotFound) {
 		t.Fatalf("repeat complete error = %v, want ErrPendingEmailChangeNotFound", err)
 	}
 }
 
 func TestPendingEmailChangeReplacesDuplicateRequest(t *testing.T) {
 	st := newTestStore(t)
-	if err := st.SavePendingEmailChange(1, "new@example.com", "old-email-token", time.Now().Add(time.Hour)); err != nil {
+	if err := st.SavePendingEmailChange(context.Background(), 1, "new@example.com", "old-email-token", time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("save old pending email change: %v", err)
 	}
-	if err := st.SavePendingEmailChange(1, "new@example.com", "new-email-token", time.Now().Add(time.Hour)); err != nil {
+	if err := st.SavePendingEmailChange(context.Background(), 1, "new@example.com", "new-email-token", time.Now().Add(time.Hour)); err != nil {
 		t.Fatalf("save new pending email change: %v", err)
 	}
-	if _, err := st.CompletePendingEmailChange(1, "old-email-token"); !errors.Is(err, ErrPendingEmailChangeNotFound) {
+	if _, err := st.CompletePendingEmailChange(context.Background(), 1, "old-email-token"); !errors.Is(err, ErrPendingEmailChangeNotFound) {
 		t.Fatalf("old token error = %v, want ErrPendingEmailChangeNotFound", err)
 	}
 }
@@ -198,7 +199,7 @@ func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
 		}
 	}
 
-	pages, total, err := st.AdminListPosts(model.PostTypePage, 1, 10, 0, 0, "")
+	pages, total, err := st.AdminListPosts(context.Background(), model.PostTypePage, 1, 10, 0, 0, "")
 	if err != nil {
 		t.Fatalf("AdminListPosts pages: %v", err)
 	}
@@ -233,10 +234,10 @@ func TestDeleteCategoryMovesPostsToParent(t *testing.T) {
 		t.Fatalf("seed post category: %v", err)
 	}
 
-	if err := st.DeleteCategory(child.ID); err != nil {
+	if err := st.DeleteCategory(context.Background(), child.ID); err != nil {
 		t.Fatalf("DeleteCategory: %v", err)
 	}
-	loaded, err := st.AdminGetPost(post.ID)
+	loaded, err := st.AdminGetPost(context.Background(), post.ID)
 	if err != nil {
 		t.Fatalf("load post: %v", err)
 	}
@@ -263,10 +264,10 @@ func TestDeleteCategoryMovesPostsToUncategorizedWithoutParent(t *testing.T) {
 		t.Fatalf("seed post category: %v", err)
 	}
 
-	if err := st.DeleteCategory(cat.ID); err != nil {
+	if err := st.DeleteCategory(context.Background(), cat.ID); err != nil {
 		t.Fatalf("DeleteCategory: %v", err)
 	}
-	loaded, err := st.AdminGetPost(post.ID)
+	loaded, err := st.AdminGetPost(context.Background(), post.ID)
 	if err != nil {
 		t.Fatalf("load post: %v", err)
 	}
@@ -282,7 +283,7 @@ func TestDeleteCategoryRejectsUncategorized(t *testing.T) {
 	if err := db.Create(&uncategorized).Error; err != nil {
 		t.Fatalf("seed uncategorized: %v", err)
 	}
-	if err := st.DeleteCategory(uncategorized.ID); !errors.Is(err, ErrCannotDeleteUncategorized) {
+	if err := st.DeleteCategory(context.Background(), uncategorized.ID); !errors.Is(err, ErrCannotDeleteUncategorized) {
 		t.Fatalf("DeleteCategory error = %v, want ErrCannotDeleteUncategorized", err)
 	}
 }
@@ -293,14 +294,14 @@ func TestPageSlugExists(t *testing.T) {
 	if err := db.Create(&model.Post{ID: 1, PostType: model.PostTypePage, Slug: "about", Status: model.StatusPublished}).Error; err != nil {
 		t.Fatalf("seed page: %v", err)
 	}
-	exists, err := st.PageSlugExists("about", 0)
+	exists, err := st.PageSlugExists(context.Background(), "about", 0)
 	if err != nil {
 		t.Fatalf("PageSlugExists: %v", err)
 	}
 	if !exists {
 		t.Fatal("expected about slug to exist")
 	}
-	exists, err = st.PageSlugExists("about", 1)
+	exists, err = st.PageSlugExists(context.Background(), "about", 1)
 	if err != nil {
 		t.Fatalf("PageSlugExists self: %v", err)
 	}
@@ -322,7 +323,7 @@ func TestDeleteCommentSoftDeletesChildren(t *testing.T) {
 			t.Fatalf("seed comment %d: %v", c.ID, err)
 		}
 	}
-	if err := st.DeleteComment(1); err != nil {
+	if err := st.DeleteComment(context.Background(), 1); err != nil {
 		t.Fatalf("DeleteComment: %v", err)
 	}
 	var got []model.Comment

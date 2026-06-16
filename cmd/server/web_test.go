@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"os"
@@ -26,17 +27,18 @@ func newTestStore(t *testing.T) *store.Store {
 
 func TestEnsureInitialAdmin(t *testing.T) {
 	st := newTestStore(t)
+	ctx := context.Background()
 	if err := ensureInitialAdmin(st); err != nil {
 		t.Fatalf("ensure initial admin: %v", err)
 	}
-	n, err := st.CountUsers()
+	n, err := st.CountUsers(ctx)
 	if err != nil {
 		t.Fatalf("count users: %v", err)
 	}
 	if n != 1 {
 		t.Fatalf("user count = %d, want 1", n)
 	}
-	u, err := st.GetUserByUsername("admin")
+	u, err := st.GetUserByUsername(ctx, "admin")
 	if err != nil {
 		t.Fatalf("get admin: %v", err)
 	}
@@ -49,7 +51,7 @@ func TestEnsureInitialAdmin(t *testing.T) {
 	if err := ensureInitialAdmin(st); err != nil {
 		t.Fatalf("ensure initial admin second run: %v", err)
 	}
-	n, err = st.CountUsers()
+	n, err = st.CountUsers(ctx)
 	if err != nil {
 		t.Fatalf("count users second run: %v", err)
 	}
@@ -126,7 +128,7 @@ func TestEnsureInitialContent(t *testing.T) {
 	if len(categories) != 1 || categories[0].Name != "Uncategorized" || categories[0].Slug != "uncategorized" {
 		t.Fatalf("categories = %+v", categories)
 	}
-	post, err := st.GetPostByID(posts[0].ID)
+	post, err := st.GetPostByID(context.Background(), posts[0].ID)
 	if err != nil {
 		t.Fatalf("get welcome post: %v", err)
 	}

@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -83,7 +84,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 		t.Fatalf("unexpected stats: %+v", stats)
 	}
 
-	p, err := st.AdminGetPost(123)
+	p, err := st.AdminGetPost(context.Background(), 123)
 	if err != nil {
 		t.Fatalf("load imported post: %v", err)
 	}
@@ -114,7 +115,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 		t.Fatalf("tags = %+v, want slug backend", p.Tags)
 	}
 
-	comments, err := st.ApprovedComments(123)
+	comments, err := st.ApprovedComments(context.Background(), 123)
 	if err != nil {
 		t.Fatalf("load comments: %v", err)
 	}
@@ -128,7 +129,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 	if !comments[0].CreatedAt.Equal(wantCommentCreatedAt) {
 		t.Fatalf("comment created_at = %s, want %s", comments[0].CreatedAt, wantCommentCreatedAt)
 	}
-	setting, err := st.GetSetting("site_name")
+	setting, err := st.GetSetting(context.Background(), "site_name")
 	if err != nil {
 		t.Fatalf("get setting: %v", err)
 	}
@@ -175,7 +176,7 @@ func TestImportReaderUsesGMTDatesWhenLocalDatesAreMissing(t *testing.T) {
 	if _, err := ImportReader(db, strings.NewReader(xml), Options{TargetUserID: 7, IncludeDrafts: true}); err != nil {
 		t.Fatalf("import xml: %v", err)
 	}
-	p, err := st.AdminGetPost(321)
+	p, err := st.AdminGetPost(context.Background(), 321)
 	if err != nil {
 		t.Fatalf("load imported post: %v", err)
 	}
@@ -187,7 +188,7 @@ func TestImportReaderUsesGMTDatesWhenLocalDatesAreMissing(t *testing.T) {
 	if !p.ModifiedAt.Equal(wantModifiedAt) {
 		t.Fatalf("modified_at = %s, want %s", p.ModifiedAt, wantModifiedAt)
 	}
-	comments, err := st.ApprovedComments(321)
+	comments, err := st.ApprovedComments(context.Background(), 321)
 	if err != nil {
 		t.Fatalf("load comments: %v", err)
 	}
@@ -256,7 +257,7 @@ func TestExportXMLRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected import stats: %+v", importStats)
 	}
 
-	importedPost, err := dst.AdminGetPost(1001)
+	importedPost, err := dst.AdminGetPost(context.Background(), 1001)
 	if err != nil {
 		t.Fatalf("load imported post: %v", err)
 	}
@@ -269,14 +270,14 @@ func TestExportXMLRoundTrip(t *testing.T) {
 	if len(importedPost.Tags) != 1 || importedPost.Tags[0].Slug != "backend" {
 		t.Fatalf("tags = %+v, want backend", importedPost.Tags)
 	}
-	comments, err := dst.ApprovedComments(1001)
+	comments, err := dst.ApprovedComments(context.Background(), 1001)
 	if err != nil {
 		t.Fatalf("load imported comments: %v", err)
 	}
 	if len(comments) != 1 || comments[0].Content != "评论内容" {
 		t.Fatalf("comments = %+v, want one imported comment", comments)
 	}
-	setting, err := dst.GetSetting("site_name")
+	setting, err := dst.GetSetting(context.Background(), "site_name")
 	if err != nil {
 		t.Fatalf("get imported setting: %v", err)
 	}
@@ -353,14 +354,14 @@ func TestExportXMLRoundTripMapsMultipleAuthorsAndCommentUsers(t *testing.T) {
 	if importStats.Posts != 1 || importStats.Pages != 1 || importStats.Comments != 2 {
 		t.Fatalf("unexpected import stats: %+v", importStats)
 	}
-	importedWriterPost, err := dst.AdminGetPost(2001)
+	importedWriterPost, err := dst.AdminGetPost(context.Background(), 2001)
 	if err != nil {
 		t.Fatalf("load writer post: %v", err)
 	}
 	if importedWriterPost.AuthorID != 77 {
 		t.Fatalf("writer post author_id = %d, want 77", importedWriterPost.AuthorID)
 	}
-	importedEditorPage, err := dst.AdminGetPost(2002)
+	importedEditorPage, err := dst.AdminGetPost(context.Background(), 2002)
 	if err != nil {
 		t.Fatalf("load editor page: %v", err)
 	}

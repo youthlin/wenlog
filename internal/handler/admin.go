@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -73,6 +74,7 @@ func parseUintParam(s string) (uint, error) {
 	}
 	return uint(id), nil
 }
+
 const defaultFeedSize = 20
 
 const (
@@ -83,12 +85,12 @@ const (
 )
 
 func (h *Admin) base(c *gin.Context, title string) gin.H {
-	currentPostPermalink := syncPostPermalink(h.st)
-	v, err := h.st.GetSetting(consts.SettingsSiteName)
+	currentPostPermalink := syncPostPermalink(c, h.st)
+	v, err := h.st.GetSetting(c, consts.SettingsSiteName)
 	if err != nil && h.log != nil {
 		h.log.Error("get site name setting", "error", err)
 	}
-	defaultAvatar, err := h.st.GetSetting(consts.SettingsDefaultAvatar)
+	defaultAvatar, err := h.st.GetSetting(c, consts.SettingsDefaultAvatar)
 	if err != nil && h.log != nil {
 		h.log.Error("get default avatar setting", "error", err)
 	}
@@ -97,7 +99,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"SiteName":             siteName,
 		"Title":                title,
 		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
-		"PendingCount":         h.st.PendingCommentCount(),
+		"PendingCount":         h.st.PendingCommentCount(c),
 		"PostPermalinkPattern": currentPostPermalink,
 		"RoleAdmin":            model.RoleAdmin,
 		"RoleAuthor":           model.RoleAuthor,
@@ -152,11 +154,11 @@ func (h *Admin) canManageComment(c *gin.Context, commentID uint) bool {
 	if h.currentUserRole(c) != model.RoleAuthor {
 		return false
 	}
-	comment, err := h.st.GetCommentByID(commentID)
+	comment, err := h.st.GetCommentByID(c, commentID)
 	if err != nil {
 		return false
 	}
-	post, err := h.st.PostMeta(comment.PostID)
+	post, err := h.st.PostMeta(c, comment.PostID)
 	if err != nil {
 		return false
 	}
@@ -231,22 +233,6 @@ func adminPostNavKey(postType string) string {
 	return "posts"
 }
 
-func settingsSection(c *gin.Context) string {
-	if c == nil {
-		return "general"
-	}
-	path := c.FullPath()
-	if path == "" && c.Request != nil && c.Request.URL != nil {
-		path = c.Request.URL.Path
-	}
-	switch path {
-	case "/admin/settings/developer", "/admin/settings/metrics", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload":
-		return "developer"
-	default:
-		return "general"
-	}
-}
-
 func settingsPageURL(section string) string {
 	switch normalizeSettingsSection(section) {
 	case "developer":
@@ -272,7 +258,7 @@ func (h *Admin) LoginForm(c *gin.Context) {
 	if c.Query("message") == "session-secret-updated" {
 		data["Notice"] = tr.T("Session Secret 已更新，所有登录用户都需要重新登录。")
 	}
-	data["RegistrationOpen"] = h.isRegistrationOpen()
+	data["RegistrationOpen"] = h.isRegistrationOpen(c)
 	c.HTML(http.StatusOK, "admin_login.gohtml", data)
 }
 
@@ -281,10 +267,10 @@ func (h *Admin) Login(c *gin.Context) {
 	tr := i18n.Get(c)
 	username := strings.TrimSpace(c.PostForm("username"))
 	password := c.PostForm("password")
-	u, err := h.st.GetUserByUsername(username)
-	// 防时序攻击: 无论用户是否存在都执行 bcrypt 比较。
+	u, err := h.st.GetUserByUsername(c, username)
 	hash := ""
 	if err == nil && u != nil {
+		// 防时序攻击: 无论用户是否存在都执行 bcrypt 比较。
 		hash = u.PasswordHash
 	}
 	// 使用固定 hash 作为 fallback,确保用户不存在时也消耗相近时间。
@@ -310,19 +296,19 @@ func (h *Admin) Logout(c *gin.Context) {
 // RegisterForm 后台注册页(对齐 /admin/login 样式)。
 func (h *Admin) RegisterForm(c *gin.Context) {
 	tr := i18n.Get(c)
-	if !h.isRegistrationOpen() {
+	if !h.isRegistrationOpen(c) {
 		c.Redirect(http.StatusSeeOther, "/admin/login")
 		return
 	}
 	data := h.base(c, tr.T("注册"))
-	data["SMTPConfigured"] = smtpConfigFromStore(h.st).Configured()
+	data["SMTPConfigured"] = smtpConfigFromStore(c, h.st).Configured()
 	c.HTML(http.StatusOK, "admin_register.gohtml", data)
 }
 
 // Register 处理注册申请,先发送邮箱验证链接,验证通过后再创建账号。
 func (h *Admin) Register(c *gin.Context) {
 	tr := i18n.Get(c)
-	if !h.isRegistrationOpen() {
+	if !h.isRegistrationOpen(c) {
 		c.Redirect(http.StatusSeeOther, "/admin/login")
 		return
 	}
@@ -332,7 +318,7 @@ func (h *Admin) Register(c *gin.Context) {
 	data := h.base(c, tr.T("注册"))
 	data["RegisterUsername"] = username
 	data["RegisterEmail"] = email
-	data["SMTPConfigured"] = smtpConfigFromStore(h.st).Configured()
+	data["SMTPConfigured"] = smtpConfigFromStore(c, h.st).Configured()
 
 	if username == "" || email == "" {
 		data["Error"] = tr.T("用户名和邮箱不能为空。")
@@ -353,14 +339,14 @@ func (h *Admin) Register(c *gin.Context) {
 	email = strings.TrimSpace(addr.Address)
 	data["RegisterEmail"] = email
 
-	smtpCfg := smtpConfigFromStore(h.st)
+	smtpCfg := smtpConfigFromStore(c, h.st)
 	if !smtpCfg.Configured() {
 		data["Error"] = tr.T("站点尚未配置 SMTP，暂时无法发送验证邮件。")
 		c.HTML(http.StatusServiceUnavailable, "admin_register.gohtml", data)
 		return
 	}
 
-	exists, err := h.st.UserExistsByUsername(username, 0)
+	exists, err := h.st.UserExistsByUsername(c, username, 0)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -370,7 +356,7 @@ func (h *Admin) Register(c *gin.Context) {
 		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
 		return
 	}
-	exists, err = h.st.UserExistsByEmail(email, 0)
+	exists, err = h.st.UserExistsByEmail(c, email, 0)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -386,12 +372,12 @@ func (h *Admin) Register(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.SavePendingRegistration(username, email, token, time.Now().Add(consts.VerificationTokenTTL)); err != nil {
+	if err := h.st.SavePendingRegistration(c, username, email, token, time.Now().Add(consts.VerificationTokenTTL)); err != nil {
 		h.serverError(c, err)
 		return
 	}
 
-	siteURL, ok := configuredSiteURL(h.st)
+	siteURL, ok := configuredSiteURL(c, h.st)
 	if !ok {
 		data["Error"] = tr.T("站点 URL 未配置，无法发送安全验证链接，请联系管理员。")
 		c.HTML(http.StatusInternalServerError, "admin_register.gohtml", data)
@@ -419,7 +405,7 @@ func (h *Admin) Register(c *gin.Context) {
 // RegisterVerifyForm 展示邮箱验证后的密码设置页。
 func (h *Admin) RegisterVerifyForm(c *gin.Context) {
 	tr := i18n.Get(c)
-	if !h.isRegistrationOpen() {
+	if !h.isRegistrationOpen(c) {
 		c.Redirect(http.StatusSeeOther, "/admin/login")
 		return
 	}
@@ -432,13 +418,13 @@ func (h *Admin) RegisterVerifyForm(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
 	}
-	pending, err := h.st.GetPendingRegistrationByToken(token)
+	pending, err := h.st.GetPendingRegistrationByToken(c, token)
 	if err != nil {
 		data["Error"] = tr.T("注册链接无效或已过期，请重新注册。")
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
 		return
 	}
-	if exists, err := h.st.UserExistsByUsername(pending.Username, 0); err != nil {
+	if exists, err := h.st.UserExistsByUsername(c, pending.Username, 0); err != nil {
 		h.serverError(c, err)
 		return
 	} else if exists {
@@ -446,7 +432,7 @@ func (h *Admin) RegisterVerifyForm(c *gin.Context) {
 		c.HTML(http.StatusConflict, "admin_register.gohtml", data)
 		return
 	}
-	if exists, err := h.st.UserExistsByEmail(pending.Email, 0); err != nil {
+	if exists, err := h.st.UserExistsByEmail(c, pending.Email, 0); err != nil {
 		h.serverError(c, err)
 		return
 	} else if exists {
@@ -462,7 +448,7 @@ func (h *Admin) RegisterVerifyForm(c *gin.Context) {
 // RegisterVerify 完成邮箱验证并创建账号。
 func (h *Admin) RegisterVerify(c *gin.Context) {
 	tr := i18n.Get(c)
-	if !h.isRegistrationOpen() {
+	if !h.isRegistrationOpen(c) {
 		c.Redirect(http.StatusSeeOther, "/admin/login")
 		return
 	}
@@ -492,7 +478,7 @@ func (h *Admin) RegisterVerify(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	u, err := h.st.CompletePendingRegistration(token, string(hash))
+	u, err := h.st.CompletePendingRegistration(c, token, string(hash))
 	if err != nil {
 		data["Error"] = tr.T("注册链接无效或已过期，请重新注册。")
 		c.HTML(http.StatusBadRequest, "admin_register.gohtml", data)
@@ -511,8 +497,8 @@ func randomHexToken(n int) (string, error) {
 }
 
 // isRegistrationOpen 返回当前是否开放注册。
-func (h *Admin) isRegistrationOpen() bool {
-	settings, err := h.st.GetSettings(consts.SettingsRegistrationOpen)
+func (h *Admin) isRegistrationOpen(ctx context.Context) bool {
+	settings, err := h.st.GetSettings(ctx, consts.SettingsRegistrationOpen)
 	if err != nil && h.log != nil {
 		h.log.Error("get registration open setting", "error", err)
 	}
@@ -530,24 +516,28 @@ func (h *Admin) Dashboard(c *gin.Context) {
 	data := h.base(c, tr.T("欢迎"))
 	switch u.Role {
 	case model.RoleAdmin:
-		data["Stats"] = h.st.DashboardStats()
+		data["Stats"] = h.st.DashboardStats(c)
 	case model.RoleAuthor:
-		data["AuthorStats"] = h.st.AuthorDashboardStats(u.ID)
+		data["AuthorStats"] = h.st.AuthorDashboardStats(c, u.ID)
 	default:
-		data["ReaderStats"] = h.st.ReaderDashboardStats(u.ID)
+		data["ReaderStats"] = h.st.ReaderDashboardStats(c.Request.Context(
+
+		// 最近文章
+		), u.ID)
 	}
 
-	// 最近文章
-	data["RecentPosts"] = h.st.RecentPosts(5)
-	// 最近评论
-	comments := h.st.RecentComments(5)
+	data["RecentPosts"] = h.st.RecentPosts(c.Request.
+		// 最近评论
+		Context(), 5)
+
+	comments := h.st.RecentComments(c, 5)
 	data["RecentComments"] = comments
 	if len(comments) > 0 {
 		postIDs := make([]uint, 0, len(comments))
 		for _, c := range comments {
 			postIDs = append(postIDs, c.PostID)
 		}
-		postsByID, err := h.st.AdminPostsByIDs(postIDs)
+		postsByID, err := h.st.AdminPostsByIDs(c, postIDs)
 		if err == nil {
 			titles := make(map[uint]string, len(postsByID))
 			urls := make(map[uint]string, len(postsByID))
@@ -602,7 +592,7 @@ func (h *Admin) ImportXML(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
-	_, err := h.st.GetUserByID(form.UserID)
+	_, err := h.st.GetUserByID(c, form.UserID)
 	if err != nil {
 		data["Error"] = tr.T("所选用户不存在。")
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
@@ -795,7 +785,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
-	v, err := h.st.GetSetting(consts.SettingsSiteName)
+	v, err := h.st.GetSetting(c, consts.SettingsSiteName)
 	if err != nil && h.log != nil {
 		h.log.Error("get site name for export", "error", err)
 	}
@@ -905,8 +895,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	data := h.base(c, title)
 	data["CurrentSettingsSection"] = currentSection
-	settings, err := h.st.GetSettings(
-		consts.SettingsSiteName,
+	settings, err := h.st.GetSettings(c, consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
 		consts.SettingsPostPermalink,
 		consts.SettingsCategoryPrefix,
@@ -945,7 +934,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["SMTPFromValue"] = settings[consts.SettingsSMTPFrom]
 	data["SiteURLValue"] = settings[consts.SettingsSiteURL]
 	data["MetricsAuthUsernameValue"] = "metrics"
-	data["MetricsAuthPasswordValue"] = h.ensureMetricsAuthPassword(settings[consts.SettingsMetricsAuthPassword])
+	data["MetricsAuthPasswordValue"] = h.ensureMetricsAuthPassword(c, settings[consts.SettingsMetricsAuthPassword])
 	data["SMTPConfigured"] = smtpConfigFromSettings(settings).Configured()
 	if strings.TrimSpace(settings[consts.SettingsSessionSecret]) != "" {
 		data["SessionSecretConfigured"] = true
@@ -994,14 +983,14 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	return data
 }
 
-func (h *Admin) ensureMetricsAuthPassword(current string) string {
+func (h *Admin) ensureMetricsAuthPassword(ctx context.Context, current string) string {
 	password := strings.TrimSpace(current)
 	if password != "" {
 		return password
 	}
 	password = util.GenerateRandomString(consts.TokenLengthMetrics, util.WithAlphaNumer())
 	if h != nil && h.st != nil {
-		_ = h.st.SetSetting(consts.SettingsMetricsAuthPassword, password)
+		_ = h.st.SetSetting(ctx, consts.SettingsMetricsAuthPassword, password)
 	}
 	return password
 }
@@ -1017,7 +1006,7 @@ func (h *Admin) importPageData(c *gin.Context, title string) (gin.H, bool) {
 	data["ExportPages"] = true
 	data["ExportComments"] = true
 	data["ExportSettings"] = true
-	users, err := h.st.ListUsers()
+	users, err := h.st.ListUsers(c)
 	if err != nil {
 		h.serverError(c, err)
 		return nil, false
@@ -1048,36 +1037,36 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	}
 
 	settings := map[string]string{
-		"site_name":                        name,
-		"site_description":                 desc,
-		consts.SettingsPostPermalink:       permalink.NormalizePostPattern(postPermalink),
-		consts.SettingsCategoryPrefix:      catNorm,
-		consts.SettingsTagPrefix:           tagNorm,
-		"page_size":                        strconv.Itoa(pageSize),
-		"feed_size":                        strconv.Itoa(feedSize),
-		consts.SettingsSayingPageID:        strconv.Itoa(sayingPageID),
-		consts.SettingsDefaultAvatar:       defaultAvatar,
+		consts.SettingsSiteName:       name,
+		consts.SettingsSiteDesc:       desc,
+		consts.SettingsPostPermalink:  permalink.NormalizePostPattern(postPermalink),
+		consts.SettingsCategoryPrefix: catNorm,
+		consts.SettingsTagPrefix:      tagNorm,
+		consts.SettingsPageSize:       strconv.Itoa(pageSize),
+		consts.SettingsFeedSize:       strconv.Itoa(feedSize),
+		consts.SettingsSayingPageID:   strconv.Itoa(sayingPageID),
+		consts.SettingsDefaultAvatar:  defaultAvatar,
 	}
-	if err := h.setSettings(settings); err != nil {
+	if err := h.setSettings(c, settings); err != nil {
 		h.serverError(c, err)
 		return
 	}
 
 	registrationOpen := c.PostForm("registration_open") == "on"
-	if registrationOpen && !smtpConfigFromStore(h.st).Configured() {
-		_ = h.st.SetSetting(consts.SettingsRegistrationOpen, "false")
+	if registrationOpen && !smtpConfigFromStore(c, h.st).Configured() {
+		_ = h.st.SetSetting(c, consts.SettingsRegistrationOpen, "false")
 		c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "registration-open-requires-smtp"))
 		return
 	}
-	_ = h.st.SetSetting(consts.SettingsRegistrationOpen, strconv.FormatBool(registrationOpen))
-	syncPostPermalink(h.st)
+	_ = h.st.SetSetting(c, consts.SettingsRegistrationOpen, strconv.FormatBool(registrationOpen))
+	syncPostPermalink(c, h.st)
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", ""))
 }
 
 // setSettings 批量保存设置,遇到第一个错误即返回。
-func (h *Admin) setSettings(kv map[string]string) error {
+func (h *Admin) setSettings(ctx context.Context, kv map[string]string) error {
 	for k, v := range kv {
-		if err := h.st.SetSetting(k, v); err != nil {
+		if err := h.st.SetSetting(ctx, k, v); err != nil {
 			return err
 		}
 	}
@@ -1141,7 +1130,7 @@ func (h *Admin) SaveMetricsAuthSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsMetricsAuthPassword, password); err != nil {
+	if err := h.st.SetSetting(c, consts.SettingsMetricsAuthPassword, password); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1154,7 +1143,7 @@ func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 	smtpUser := strings.TrimSpace(c.PostForm("smtp_user"))
 	smtpPassword := c.PostForm("smtp_password")
 	if strings.TrimSpace(smtpPassword) == "" {
-		settings, err := h.st.GetSettings(consts.SettingsSMTPPassword)
+		settings, err := h.st.GetSettings(c, consts.SettingsSMTPPassword)
 		if err != nil && h.log != nil {
 			h.log.Error("get smtp password setting", "error", err)
 		}
@@ -1170,11 +1159,11 @@ func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 		consts.SettingsSMTPFrom:     smtpFrom,
 		consts.SettingsSiteURL:      siteURL,
 	}
-	if err := h.setSettings(settings); err != nil {
+	if err := h.setSettings(c, settings); err != nil {
 		return err
 	}
 	if !smtpConfigFromSettings(settings).Configured() {
-		if err := h.st.SetSetting(consts.SettingsRegistrationOpen, "false"); err != nil {
+		if err := h.st.SetSetting(c, consts.SettingsRegistrationOpen, "false"); err != nil {
 			return err
 		}
 	}
@@ -1207,7 +1196,7 @@ func (h *Admin) TestSMTPSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	smtpCfg := smtpConfigFromStore(h.st)
+	smtpCfg := smtpConfigFromStore(c, h.st)
 	if !smtpCfg.Configured() {
 		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("SMTP 未配置完整，请填写服务器、端口和发件人地址。")
@@ -1215,7 +1204,7 @@ func (h *Admin) TestSMTPSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	siteName := siteNameFromStore(h.st)
+	siteName := siteNameFromStore(c, h.st)
 	subject := tr.T("[%s] SMTP 测试邮件", siteName)
 	body := tr.T("这是一封来自 %s 的 SMTP 测试邮件。\n\n如果你收到这封邮件，说明 SMTP 配置已生效。\n", siteName)
 	if err := smtpCfg.Send(to, subject, body); err != nil {
@@ -1238,7 +1227,7 @@ func (h *Admin) SaveSessionSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	if err := h.st.SetSetting(consts.SettingsSessionSecret, secret); err != nil {
+	if err := h.st.SetSetting(c, consts.SettingsSessionSecret, secret); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1273,7 +1262,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	}
 	email = strings.TrimSpace(addr.Address)
 	if canEditOwnUsername(u) {
-		exists, err := h.st.UserExistsByUsername(username, u.ID)
+		exists, err := h.st.UserExistsByUsername(c, username, u.ID)
 		if err != nil {
 			h.serverError(c, err)
 			return
@@ -1289,7 +1278,7 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		h.handleEmailChange(c, tr, u, username, displayName, email)
 		return
 	}
-	if err := h.st.UpdateUserProfile(u.ID, username, displayName, email); err != nil {
+	if err := h.st.UpdateUserProfile(c, u.ID, username, displayName, email); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1307,14 +1296,14 @@ func (h *Admin) profileError(c *gin.Context, u *model.User, tr *gettext.Translat
 }
 
 func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *model.User, username, displayName, email string) {
-	smtpCfg := smtpConfigFromStore(h.st)
+	smtpCfg := smtpConfigFromStore(c, h.st)
 	if !smtpCfg.Configured() {
 		data := h.profileData(c, u)
 		data["Error"] = tr.T("修改邮箱需要先配置 SMTP 邮件设置，以便发送验证邮件。")
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
-	exists, err := h.st.UserExistsByEmail(email, u.ID)
+	exists, err := h.st.UserExistsByEmail(c, email, u.ID)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -1330,11 +1319,11 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.SavePendingEmailChange(u.ID, email, token, time.Now().Add(consts.VerificationTokenTTL)); err != nil {
+	if err := h.st.SavePendingEmailChange(c, u.ID, email, token, time.Now().Add(consts.VerificationTokenTTL)); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	siteURL, ok := configuredSiteURL(h.st)
+	siteURL, ok := configuredSiteURL(c, h.st)
 	if !ok {
 		data := h.profileData(c, u)
 		data["Error"] = tr.T("站点 URL 未配置，无法发送安全验证链接，请联系管理员。")
@@ -1342,7 +1331,7 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 		return
 	}
 	verifyURL := strings.TrimRight(siteURL, "/") + "/admin/profile/email/verify?token=" + url.QueryEscape(token)
-	subject := tr.T("[%s] 邮箱变更验证", siteNameFromStore(h.st))
+	subject := tr.T("[%s] 邮箱变更验证", siteNameFromStore(c, h.st))
 	body := tr.T("您好 %s，\n\n请点击以下链接验证并更新你的邮箱（24 小时内有效）：\n\n%s\n\n如果你没有请求修改邮箱，请忽略此邮件。\n", displayName, verifyURL)
 	if err := smtpCfg.Send(email, subject, body); err != nil {
 		if h.log != nil {
@@ -1353,7 +1342,7 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 		c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
 		return
 	}
-	if err := h.st.UpdateUserProfile(u.ID, username, displayName, u.Email); err != nil {
+	if err := h.st.UpdateUserProfile(c, u.ID, username, displayName, u.Email); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1375,7 +1364,7 @@ func (h *Admin) VerifyProfileEmail(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 		return
 	}
-	updated, err := h.st.CompletePendingEmailChange(u.ID, token)
+	updated, err := h.st.CompletePendingEmailChange(c, u.ID, token)
 	if err != nil {
 		data := h.profileData(c, u)
 		data["Error"] = tr.T("邮箱验证链接无效或已过期，请重新提交邮箱变更。")
@@ -1423,7 +1412,7 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.UpdateUserPassword(u.ID, string(hash)); err != nil {
+	if err := h.st.UpdateUserPassword(c, u.ID, string(hash)); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1435,11 +1424,11 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 
 func (h *Admin) sendPasswordChangeNotification(c *gin.Context, u *model.User) {
 	tr := i18n.Get(c)
-	smtpCfg := smtpConfigFromStore(h.st)
+	smtpCfg := smtpConfigFromStore(c, h.st)
 	if !smtpCfg.Configured() || u.Email == "" {
 		return
 	}
-	subject := tr.T("[%s] 密码已变更", siteNameFromStore(h.st))
+	subject := tr.T("[%s] 密码已变更", siteNameFromStore(c, h.st))
 	body := tr.T("您好 %s，\n\n你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
 	go func() {
 		if err := smtpCfg.Send(u.Email, subject, body); err != nil && h.log != nil {
@@ -1679,7 +1668,7 @@ func (h *Admin) DebugPage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, jsonData)
 		return
 	}
-	rows, err := h.st.DebugQuery(sqlText)
+	rows, err := h.st.DebugQuery(c, sqlText)
 	if err != nil {
 		h.log.ErrorContext(c, "SQL执行失败",
 			slog.String("sql", sqlText),
@@ -1707,10 +1696,9 @@ func allowDebugSQL(sqlText string) bool {
 }
 
 func (h *Admin) currentUser(c *gin.Context) *model.User {
-	return currentUserByStore(h.st, c)
+	return currentUserByStore(c, h.st, c)
 }
 
-// UploadFile 上传图片并返回可直接插入 Markdown 的地址。
 func (h *Admin) UploadFile(c *gin.Context) {
 	tr := i18n.Get(c)
 	u := h.currentUser(c)
@@ -1773,7 +1761,7 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	width, height := imageSize(absPath)
 	urlPath := "/" + filepath.ToSlash(filepath.Join(relDir, fileName))
 	record := &model.Upload{Path: urlPath, OrigName: fh.Filename, MimeType: mimeType, Size: fh.Size, Width: width, Height: height, UploaderID: u.ID, CreatedAt: now}
-	if err := h.st.SaveUpload(record); err != nil {
+	if err := h.st.SaveUpload(c, record); err != nil {
 		_ = os.Remove(absPath)
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("保存上传记录失败")})
 		return
@@ -1789,7 +1777,7 @@ func (h *Admin) UploadsPage(c *gin.Context) {
 	if h.currentUserRole(c) == model.RoleAuthor {
 		uploaderID = currentUserID(c)
 	}
-	uploads, total, err := h.st.ListUploadsForUser(page, adminPageSize, uploaderID)
+	uploads, total, err := h.st.ListUploadsForUser(c, page, adminPageSize, uploaderID)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -1809,7 +1797,7 @@ func (h *Admin) UploadsJSON(c *gin.Context) {
 	if h.currentUserRole(c) == model.RoleAuthor {
 		uploaderID = currentUserID(c)
 	}
-	uploads, _, err := h.st.ListUploadsForUser(page, adminPageSize, uploaderID)
+	uploads, _, err := h.st.ListUploadsForUser(c, page, adminPageSize, uploaderID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": err.Error()})
 		return
@@ -1824,7 +1812,7 @@ func (h *Admin) DeleteUpload(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	u, err := h.st.GetUpload(id)
+	u, err := h.st.GetUpload(c, id)
 	if err != nil {
 		h.notFound(c)
 		return
@@ -1835,7 +1823,7 @@ func (h *Admin) DeleteUpload(c *gin.Context) {
 	}
 	absPath := filepath.Join(h.cfg.PublicDir, strings.TrimPrefix(filepath.FromSlash(u.Path), string(filepath.Separator)))
 	_ = os.Remove(absPath)
-	if err := h.st.DeleteUpload(id); err != nil {
+	if err := h.st.DeleteUpload(c, id); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -1912,7 +1900,7 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	}
 	if pt == model.PostTypePost {
 		if categoryID > 0 {
-			for _, cat := range h.st.AllCategories() {
+			for _, cat := range h.st.AllCategories(c) {
 				if cat.ID == categoryID {
 					title = tr.T("文章管理 · 分类：%s", cat.Name)
 					break
@@ -1920,7 +1908,7 @@ func (h *Admin) ListPosts(c *gin.Context) {
 			}
 		}
 		if tagID > 0 {
-			for _, tag := range h.st.AllTags() {
+			for _, tag := range h.st.AllTags(c) {
 				if tag.ID == tagID {
 					title = tr.T("文章管理 · 标签：%s", tag.Name)
 					break
@@ -1936,7 +1924,7 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	if h.currentUserRole(c) == model.RoleAuthor {
 		authorID = currentUserID(c)
 	}
-	posts, total, err := h.st.AdminListPostsForAuthor(pt, page, adminPageSize, categoryID, tagID, keyword, authorID)
+	posts, total, err := h.st.AdminListPostsForAuthor(c, pt, page, adminPageSize, categoryID, tagID, keyword, authorID)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -1950,8 +1938,8 @@ func (h *Admin) ListPosts(c *gin.Context) {
 	data["CategoryFilterID"] = categoryID
 	data["TagFilterID"] = tagID
 	data["Keyword"] = keyword
-	data["AllCategories"] = h.st.AllCategories()
-	data["AllTags"] = h.st.AllTags()
+	data["AllCategories"] = h.st.AllCategories(c)
+	data["AllTags"] = h.st.AllTags(c)
 	data["ClearPostFilterURL"] = adminPostsListURL(pt, 1, 0, 0, "")
 	data["Page"] = page
 	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
@@ -2063,7 +2051,7 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 		title = tr.T("标签管理")
 	}
 	data := h.base(c, title)
-	cats := h.st.AllCategories()
+	cats := h.st.AllCategories(c)
 	data["CurrentTermsSection"] = currentSection
 	data["CurrentTermsPageURL"] = termsPageURL(currentSection)
 	data["CategoriesPageURL"] = termsPageURL("category")
@@ -2087,8 +2075,8 @@ func (h *Admin) termsDataForSection(c *gin.Context, section string) gin.H {
 }
 
 func (h *Admin) fillTagTermsData(c *gin.Context, data gin.H, tr *gettext.Translations, keyword string, page int) {
-	allTags := h.st.AllTags()
-	tags, total, err := h.st.AdminListTags(keyword, page, adminPageSize)
+	allTags := h.st.AllTags(c)
+	tags, total, err := h.st.AdminListTags(c, keyword, page, adminPageSize)
 	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
 	if err != nil {
 		data["Error"] = tr.T("加载标签列表失败。")
@@ -2122,7 +2110,7 @@ func (h *Admin) fillTagTermsData(c *gin.Context, data gin.H, tr *gettext.Transla
 }
 
 func (h *Admin) fillCategoryTermsData(c *gin.Context, data gin.H, tr *gettext.Translations, keyword string, page int, cats []model.Category) {
-	categories, total, err := h.st.AdminListCategories(keyword, page, adminPageSize)
+	categories, total, err := h.st.AdminListCategories(c, keyword, page, adminPageSize)
 	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
 	if err != nil {
 		data["Error"] = tr.T("加载分类列表失败。")
@@ -2229,7 +2217,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 		h.termsFormError(c, "category", tr.T("分类 slug 不能为空。"), model.Category{ID: f.ID, Name: name, Slug: f.Slug, Description: f.Description, ParentID: f.ParentID}, model.Tag{}, true, false)
 		return
 	}
-	exists, err := h.st.CategorySlugExists(slug, f.ID)
+	exists, err := h.st.CategorySlugExists(c, slug, f.ID)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -2242,7 +2230,7 @@ func (h *Admin) SaveCategory(c *gin.Context) {
 	if f.ID > 0 && f.ParentID == f.ID {
 		cat.ParentID = 0
 	}
-	if err := h.st.SaveCategory(cat); err != nil {
+	if err := h.st.SaveCategory(c, cat); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2260,7 +2248,7 @@ func (h *Admin) DeleteCategory(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	if err := h.st.DeleteCategory(id); err != nil {
+	if err := h.st.DeleteCategory(c, id); err != nil {
 		if errors.Is(err, store.ErrCannotDeleteUncategorized) {
 			c.Redirect(http.StatusSeeOther, termsRedirectURL("category", "category-delete-blocked"))
 			return
@@ -2302,7 +2290,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		h.termsFormError(c, "tag", tr.T("标签 slug 不能为空。"), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: f.Slug}, false, true)
 		return
 	}
-	exists, err := h.st.TagSlugExists(slug, f.ID)
+	exists, err := h.st.TagSlugExists(c, slug, f.ID)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -2311,7 +2299,7 @@ func (h *Admin) SaveTag(c *gin.Context) {
 		h.termsFormError(c, "tag", tr.T("标签 slug %q 已存在。", slug), model.Category{}, model.Tag{ID: f.ID, Name: name, Slug: slug}, false, true)
 		return
 	}
-	if err := h.st.SaveTag(&model.Tag{ID: f.ID, Name: name, Slug: slug}); err != nil {
+	if err := h.st.SaveTag(c, &model.Tag{ID: f.ID, Name: name, Slug: slug}); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2329,7 +2317,7 @@ func (h *Admin) DeleteTag(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	if err := h.st.DeleteTag(id); err != nil {
+	if err := h.st.DeleteTag(c, id); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2342,7 +2330,7 @@ func (h *Admin) EditPostForm(c *gin.Context) {
 	pt := c.DefaultQuery("type", model.PostTypePost)
 	data := h.base(c, tr.T("内容管理"))
 	data["PostType"] = pt
-	allCategories := h.st.AllCategories()
+	allCategories := h.st.AllCategories(c)
 	data["AllCategories"] = allCategories
 	data["SelectedCats"] = map[uint]bool{}
 	data["TagsCSV"] = ""
@@ -2352,7 +2340,7 @@ func (h *Admin) EditPostForm(c *gin.Context) {
 			h.notFound(c)
 			return
 		}
-		p, err := h.st.AdminGetPost(id)
+		p, err := h.st.AdminGetPost(c, id)
 		if err != nil {
 			h.notFound(c)
 			return
@@ -2410,7 +2398,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 	if f.Status != model.StatusDraft {
 		f.Status = model.StatusPublished
 	}
-	allCategories := h.st.AllCategories()
+	allCategories := h.st.AllCategories(c)
 	if f.PostType == model.PostTypePost && !hasSelectedCategory(f.CategoryIDs, allCategories) {
 		h.postEditError(c, tr.T("请至少选择一个分类目录。"), f, allCategories, selectedCats(f.CategoryIDs))
 		return
@@ -2455,11 +2443,11 @@ func (h *Admin) SavePost(c *gin.Context) {
 	// 仅文章关联分类/标签;页面不需要。
 	if f.PostType == model.PostTypePost {
 		tagNames := parseTags(f.Tags)
-		if err := h.st.SavePostWithTerms(p, f.CategoryIDs, tagNames); err != nil {
+		if err := h.st.SavePostWithTerms(c, p, f.CategoryIDs, tagNames); err != nil {
 			h.serverError(c, err)
 			return
 		}
-	} else if err := h.st.SavePost(p); err != nil {
+	} else if err := h.st.SavePost(c, p); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2471,7 +2459,7 @@ var errPostForbidden = errors.New("post forbidden")
 
 func (h *Admin) resolvePostForSave(c *gin.Context, f postForm, now time.Time) (*model.Post, error) {
 	if f.ID > 0 {
-		existing, err := h.st.AdminGetPost(f.ID)
+		existing, err := h.st.AdminGetPost(c, f.ID)
 		if err != nil {
 			return nil, errPostNotFound
 		}
@@ -2480,7 +2468,7 @@ func (h *Admin) resolvePostForSave(c *gin.Context, f postForm, now time.Time) (*
 		}
 		return existing, nil
 	}
-	id, err := h.st.NextPostID()
+	id, err := h.st.NextPostID(c)
 	if err != nil {
 		return nil, err
 	}
@@ -2505,7 +2493,7 @@ func (h *Admin) validateAndCheckPageSlug(c *gin.Context, tr *gettext.Translation
 		h.postEditError(c, err.Error(), f, allCategories, map[uint]bool{})
 		return err
 	}
-	exists, err := h.st.PageSlugExists(p.Slug, p.ID)
+	exists, err := h.st.PageSlugExists(c, p.Slug, p.ID)
 	if err != nil {
 		h.serverError(c, err)
 		return err
@@ -2526,7 +2514,7 @@ func (h *Admin) validateAndCheckPostSlug(c *gin.Context, tr *gettext.Translation
 		h.postEditError(c, err.Error(), f, allCategories, selectedCats(f.CategoryIDs))
 		return err
 	}
-	exists, err := h.st.PostSlugExists(p.Slug, p.ID)
+	exists, err := h.st.PostSlugExists(c, p.Slug, p.ID)
 	if err != nil {
 		h.serverError(c, err)
 		return err
@@ -2629,7 +2617,7 @@ func (h *Admin) DeletePost(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	p, err := h.st.AdminGetPost(id)
+	p, err := h.st.AdminGetPost(c, id)
 	if err != nil {
 		h.notFound(c)
 		return
@@ -2638,7 +2626,7 @@ func (h *Admin) DeletePost(c *gin.Context) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
-	if err := h.st.DeletePost(id); err != nil {
+	if err := h.st.DeletePost(c, id); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2670,13 +2658,13 @@ func (h *Admin) ListComments(c *gin.Context) {
 			h.notFound(c)
 			return
 		}
-		comments, total, err = h.st.ListCommentsByUser(u.ID, page, adminPageSize)
+		comments, total, err = h.st.ListCommentsByUser(c, u.ID, page, adminPageSize)
 	} else {
 		var authorID uint
 		if h.currentUserRole(c) == model.RoleAuthor {
 			authorID = currentUserID(c)
 		}
-		comments, total, err = h.st.AdminListCommentsForAuthor(status, postID, page, adminPageSize, authorID)
+		comments, total, err = h.st.AdminListCommentsForAuthor(c, status, postID, page, adminPageSize, authorID)
 	}
 	if err != nil {
 		h.serverError(c, err)
@@ -2690,7 +2678,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 	for _, comment := range comments {
 		postIDs = append(postIDs, comment.PostID)
 	}
-	postsByID, err := h.st.AdminPostsByIDs(postIDs)
+	postsByID, err := h.st.AdminPostsByIDs(c, postIDs)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -2713,7 +2701,7 @@ func (h *Admin) ListComments(c *gin.Context) {
 			data["FilterPostTitle"] = post.Title
 		}
 	}
-	data["Counts"] = h.st.AdminCommentCounts()
+	data["Counts"] = h.st.AdminCommentCounts(c)
 	data["Page"] = page
 	pages := int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
 	data["Pages"] = pages
@@ -2799,7 +2787,7 @@ func (h *Admin) EditComment(c *gin.Context) {
 		safeRedirect(c, "/admin/comments")
 		return
 	}
-	if err := h.st.UpdateCommentFields(id, fields); err != nil {
+	if err := h.st.UpdateCommentFields(c, id, fields); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2818,7 +2806,7 @@ func (h *Admin) BatchComments(c *gin.Context) {
 	}
 	var notifyCandidates []model.Comment
 	if action == "approve" {
-		comments, _ := h.st.CommentsByIDs(h.filterManageableCommentIDs(c, ids))
+		comments, _ := h.st.CommentsByIDs(c, h.filterManageableCommentIDs(c, ids))
 		for _, comment := range comments {
 			if comment.Status != model.CommentApproved {
 				notifyCandidates = append(notifyCandidates, comment)
@@ -2833,13 +2821,13 @@ func (h *Admin) BatchComments(c *gin.Context) {
 	var err error
 	switch action {
 	case "approve":
-		err = h.st.BatchSetCommentStatus(ids, model.CommentApproved)
+		err = h.st.BatchSetCommentStatus(c, ids, model.CommentApproved)
 	case "pending":
-		err = h.st.BatchSetCommentStatus(ids, model.CommentPending)
+		err = h.st.BatchSetCommentStatus(c, ids, model.CommentPending)
 	case "spam":
-		err = h.st.BatchSetCommentStatus(ids, model.CommentSpam)
+		err = h.st.BatchSetCommentStatus(c, ids, model.CommentSpam)
 	case "delete":
-		err = h.st.BatchDeleteComments(ids)
+		err = h.st.BatchDeleteComments(c, ids)
 	default:
 		safeRedirect(c, "/admin/comments")
 		return
@@ -2868,20 +2856,20 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 	action := c.Param("action")
 	var notifyCandidate *model.Comment
 	if action == "approve" {
-		if comment, e := h.st.GetCommentByID(id); e == nil && comment.Status != model.CommentApproved {
+		if comment, e := h.st.GetCommentByID(c, id); e == nil && comment.Status != model.CommentApproved {
 			notifyCandidate = comment
 		}
 	}
 	var err error
 	switch action {
 	case "approve":
-		err = h.st.SetCommentStatus(id, model.CommentApproved)
+		err = h.st.SetCommentStatus(c, id, model.CommentApproved)
 	case "pending":
-		err = h.st.SetCommentStatus(id, model.CommentPending)
+		err = h.st.SetCommentStatus(c, id, model.CommentPending)
 	case "spam":
-		err = h.st.SetCommentStatus(id, model.CommentSpam)
+		err = h.st.SetCommentStatus(c, id, model.CommentSpam)
 	case "delete":
-		err = h.st.DeleteComment(id)
+		err = h.st.DeleteComment(c, id)
 	default:
 		h.notFound(c)
 		return
@@ -2900,16 +2888,16 @@ func (h *Admin) notifyApprovedCommentReplies(c *gin.Context, comments []model.Co
 	if len(comments) == 0 {
 		return
 	}
-	smtpCfg := smtpConfigFromStore(h.st)
+	smtpCfg := smtpConfigFromStore(c, h.st)
 	if !smtpCfg.Configured() {
 		return
 	}
 	siteURL := siteURLFromRequest(h.st, c)
-	siteName := siteNameFromStore(h.st)
+	siteName := siteNameFromStore(c, h.st)
 	tr := i18n.Get(c)
 	for i := range comments {
 		comments[i].Status = model.CommentApproved
-		notifyApprovedCommentReply(h.st, h.log, smtpCfg, siteURL, siteName, &comments[i], tr)
+		notifyApprovedCommentReply(c, h.st, h.log, smtpCfg, siteURL, siteName, &comments[i], tr)
 	}
 }
 
@@ -2925,7 +2913,7 @@ func (h *Admin) DeleteMyComment(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	if err := h.st.DeleteCommentByUser(commentID, u.ID); err != nil {
+	if err := h.st.DeleteCommentByUser(c, commentID, u.ID); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -2954,7 +2942,7 @@ func (h *Admin) ExportData(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	data, err := h.st.ExportUserData(u.ID)
+	data, err := h.st.ExportUserData(c, u.ID)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -2992,7 +2980,7 @@ func (h *Admin) DeleteAccount(c *gin.Context) {
 		h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("请输入 DELETE 确认删除。"))
 		return
 	}
-	if err := h.st.DeleteUser(u.ID); err != nil {
+	if err := h.st.DeleteUser(c, u.ID); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
 			h.renderDeleteAccountError(c, u, http.StatusBadRequest, tr.T("不能删除唯一的管理员账号。请先创建或指定另一个管理员。"))
 			return
@@ -3016,7 +3004,7 @@ func (h *Admin) renderDeleteAccountError(c *gin.Context, u *model.User, status i
 func (h *Admin) ListUsers(c *gin.Context) {
 	tr := i18n.Get(c)
 	page := atoiDefault(c.Query("page"), 1)
-	users, total, err := h.st.AdminListUsers(page, adminPageSize)
+	users, total, err := h.st.AdminListUsers(c, page, adminPageSize)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -3048,7 +3036,7 @@ func (h *Admin) UpdateUserRole(c *gin.Context) {
 		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能降低自己的管理员权限。请让其他管理员操作。"))
 		return
 	}
-	if err := h.st.UpdateUserRole(id, role); err != nil {
+	if err := h.st.UpdateUserRole(c, id, role); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
 			h.renderUsersError(c, http.StatusBadRequest, tr.T("不能将唯一的管理员改为其他角色。请先创建或指定另一个管理员。"))
 			return
@@ -3071,7 +3059,7 @@ func (h *Admin) DeleteUser(c *gin.Context) {
 		h.renderUsersError(c, http.StatusBadRequest, tr.T("不能在用户管理中删除自己；如需删除自己的账号，请到个人删除账号页面。"))
 		return
 	}
-	if err := h.st.DeleteUser(id); err != nil {
+	if err := h.st.DeleteUser(c, id); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
 			h.renderUsersError(c, http.StatusBadRequest, tr.T("不能删除唯一的管理员账号。请先创建或指定另一个管理员。"))
 			return
@@ -3122,7 +3110,7 @@ func (h *Admin) CreateUser(c *gin.Context) {
 		role = model.RoleSubscriber
 	}
 
-	exists, err := h.st.UserExistsByUsername(username, 0)
+	exists, err := h.st.UserExistsByUsername(c, username, 0)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -3142,7 +3130,7 @@ func (h *Admin) CreateUser(c *gin.Context) {
 	if displayName == "" {
 		displayName = username
 	}
-	if err := h.st.CreateUser(username, displayName, email, string(hash), role); err != nil {
+	if err := h.st.CreateUser(c, username, displayName, email, string(hash), role); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -3157,7 +3145,7 @@ func (h *Admin) EditUserForm(c *gin.Context) {
 		h.notFound(c)
 		return
 	}
-	u, err := h.st.GetUserByID(id)
+	u, err := h.st.GetUserByID(c, id)
 	if err != nil {
 		h.notFound(c)
 		return
@@ -3181,7 +3169,7 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	role := c.PostForm("role")
 
 	if username == "" || email == "" {
-		u, _ := h.st.GetUserByID(id)
+		u, _ := h.st.GetUserByID(c, id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("用户名和邮箱不能为空。")
@@ -3189,7 +3177,7 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		return
 	}
 	if err := validateUsernameT(tr.T, username); err != nil {
-		u, _ := h.st.GetUserByID(id)
+		u, _ := h.st.GetUserByID(c, id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = err.Error()
@@ -3202,7 +3190,7 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		role = model.RoleSubscriber
 	}
 	if id == currentUserID(c) && role != model.RoleAdmin {
-		u, _ := h.st.GetUserByID(id)
+		u, _ := h.st.GetUserByID(c, id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("不能降低自己的管理员权限。请让其他管理员操作。")
@@ -3210,13 +3198,13 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	exists, err := h.st.UserExistsByUsername(username, id)
+	exists, err := h.st.UserExistsByUsername(c, username, id)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
 	if exists {
-		u, _ := h.st.GetUserByID(id)
+		u, _ := h.st.GetUserByID(c, id)
 		data := h.base(c, tr.T("编辑用户"))
 		data["EditUser"] = u
 		data["Error"] = tr.T("用户名已被占用。")
@@ -3227,13 +3215,13 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	if displayName == "" {
 		displayName = username
 	}
-	if err := h.st.UpdateUserProfile(id, username, displayName, email); err != nil {
+	if err := h.st.UpdateUserProfile(c, id, username, displayName, email); err != nil {
 		h.serverError(c, err)
 		return
 	}
-	if err := h.st.UpdateUserRole(id, role); err != nil {
+	if err := h.st.UpdateUserRole(c, id, role); err != nil {
 		if errors.Is(err, store.ErrLastAdmin) {
-			u, _ := h.st.GetUserByID(id)
+			u, _ := h.st.GetUserByID(c, id)
 			data := h.base(c, tr.T("编辑用户"))
 			data["EditUser"] = u
 			data["Error"] = tr.T("不能将唯一的管理员改为其他角色。请先创建或指定另一个管理员。")
@@ -3249,7 +3237,7 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 func (h *Admin) renderUsersError(c *gin.Context, status int, msg string) {
 	tr := i18n.Get(c)
 	page := atoiDefault(c.Query("page"), 1)
-	users, total, err := h.st.AdminListUsers(page, adminPageSize)
+	users, total, err := h.st.AdminListUsers(c, page, adminPageSize)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -3310,7 +3298,7 @@ func validatePageSlug(slug string) error {
 }
 
 func validatePageSlugT(tr func(string, ...any) string, slug string) error {
-	syncPostPermalink(nil)
+	syncPostPermalink(context.Background(), nil)
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
 		return errors.New(tr(gettext.Mark.T("页面 slug 不能为空")))

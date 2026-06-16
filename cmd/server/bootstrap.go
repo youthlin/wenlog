@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -24,7 +25,6 @@ var (
 	bootstrapAboutMarkdown    = gettext.Mark.T("你好，欢迎来到这里。\n\n我是这个博客的作者，喜欢记录技术、写作、日常想法，也会把一些正在尝试和思考的东西慢慢整理出来。这里不会只放“结论”，也会保留过程、踩坑和一些还没完全想清楚的问题。\n\n如果你恰好读到某篇文章，希望它能给你一点启发；如果你也在做相似的事情，欢迎交流。")
 	bootstrapMsgRandomPasswd  = gettext.Mark.T("已生成随机密码: %s\n")
 	bootstrapErrPasswdHash    = gettext.Mark.T("密码处理失败, err=%v\n")
-	bootstrapErrSetPasswd     = gettext.Mark.T("设置密码失败, err=%v\n")
 	bootstrapMsgResetPasswd   = gettext.Mark.T("已为用户 %s 重置密码\n")
 	bootstrapMsgInitialAdmin  = gettext.Mark.T("已自动创建管理员, 用户名: admin 密码: %s\n")
 	bootstrapErrNoAuthor      = gettext.Mark.T("初始化内容失败: 未找到可用作者")
@@ -38,6 +38,7 @@ var resetPassword = flag.String("reset-password", "",
 // setPasswd 如果有 -reset-password 参数 执行密码重置 并退出。
 func setPasswd(st *store.Store) bool {
 	t := gettext.Global()
+	ctx := context.Background()
 	spec := *resetPassword
 	if spec == "" { // 没有传该参数
 		return false
@@ -53,10 +54,10 @@ func setPasswd(st *store.Store) bool {
 		fmt.Fprintf(os.Stderr, t.T(bootstrapErrPasswdHash), err)
 		os.Exit(1)
 	}
-	err = st.SetUserPassword(username, string(hash))
+	err = st.SetUserPassword(ctx, username, string(hash))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, t.T(bootstrapErrUserNotFound), username)
-		admins, listErr := st.ListUsersByRole(model.RoleAdmin)
+		admins, listErr := st.ListUsersByRole(ctx, model.RoleAdmin)
 		if listErr == nil && len(admins) > 0 {
 			fmt.Fprint(os.Stderr, t.T(bootstrapMsgAdminList))
 			for _, a := range admins {
@@ -72,13 +73,14 @@ func setPasswd(st *store.Store) bool {
 // ensureInitialAdmin 启动时如果没有用户, 自动创建 admin 用户。
 func ensureInitialAdmin(st *store.Store) error {
 	t := gettext.Global()
-	n, err := st.CountUsers()
+	ctx := context.Background()
+	n, err := st.CountUsers(ctx)
 	if err != nil {
 		return err
 	}
 	if n > 0 {
 		// 确保现有 admin 用户拥有 admin 角色(兼容旧数据迁移)
-		if err := st.EnsureAdminRole("admin"); err != nil {
+		if err := st.EnsureAdminRole(ctx, "admin"); err != nil {
 			return err
 		}
 		return nil
@@ -88,11 +90,11 @@ func ensureInitialAdmin(st *store.Store) error {
 	if err != nil {
 		return err
 	}
-	if err := st.UpsertUserPassword("admin", "admin", string(hash)); err != nil {
+	if err := st.UpsertUserPassword(ctx, "admin", "admin", string(hash)); err != nil {
 		return err
 	}
 	// 新创建的 admin 用户需要显式设为 admin 角色
-	if err := st.EnsureAdminRole("admin"); err != nil {
+	if err := st.EnsureAdminRole(ctx, "admin"); err != nil {
 		return err
 	}
 	fmt.Printf(t.T(bootstrapMsgInitialAdmin), password)
@@ -103,16 +105,17 @@ func ensureInitialAdmin(st *store.Store) error {
 // i18n.Init 在 main 中先执行, 这里读取当前全局语言, 让首批内容尽量跟随服务器默认语言。
 func ensureInitialContent(st *store.Store) error {
 	t := gettext.Global()
-	total, err := st.CountPosts()
+	ctx := context.Background()
+	total, err := st.CountPosts(ctx)
 	if err != nil {
 		return err
 	}
 	if total > 0 {
 		return nil
 	}
-	author, err := st.GetUserByUsername("admin")
+	author, err := st.GetUserByUsername(ctx, "admin")
 	if err != nil {
-		users, listErr := st.ListUsers()
+		users, listErr := st.ListUsers(ctx)
 		if listErr != nil {
 			return listErr
 		}
@@ -125,11 +128,11 @@ func ensureInitialContent(st *store.Store) error {
 		Name: t.T("未分类"),
 		Slug: "uncategorized",
 	}
-	if err = st.SaveCategory(uncategorized); err != nil {
+	if err = st.SaveCategory(ctx, uncategorized); err != nil {
 		return err
 	}
 	now := time.Now()
-	postID, err := st.NextPostID()
+	postID, err := st.NextPostID(ctx)
 	if err != nil {
 		return err
 	}
@@ -147,7 +150,7 @@ func ensureInitialContent(st *store.Store) error {
 		PublishedAt:   now,
 		ModifiedAt:    now,
 	}
-	if err = st.SavePostWithTerms(welcome, []uint{uncategorized.ID}, nil); err != nil {
+	if err = st.SavePostWithTerms(ctx, welcome, []uint{uncategorized.ID}, nil); err != nil {
 		return err
 	}
 	comment := &model.Comment{
@@ -161,10 +164,10 @@ func ensureInitialContent(st *store.Store) error {
 		CreatedAt: now.Add(time.Minute),
 		ParentID:  0,
 	}
-	if err = st.CreateComment(comment); err != nil {
+	if err = st.CreateComment(ctx, comment); err != nil {
 		return err
 	}
-	aboutID, err := st.NextPostID()
+	aboutID, err := st.NextPostID(ctx)
 	if err != nil {
 		return err
 	}
@@ -184,5 +187,5 @@ func ensureInitialContent(st *store.Store) error {
 		PublishedAt:   now,
 		ModifiedAt:    now,
 	}
-	return st.SavePost(about)
+	return st.SavePost(ctx, about)
 }

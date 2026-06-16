@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"context"
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/i18n"
@@ -51,7 +52,7 @@ func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger) *Public {
 
 // base 返回模板通用数据(站点名、菜单、当前年份、侧栏小组件、当前登录用户)。
 func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.H {
-	menu, _ := h.st.MenuPages()
+	menu, _ := h.st.MenuPages(c)
 	if strings.TrimSpace(desc) == "" {
 		desc = s.SiteDescription
 	}
@@ -75,17 +76,17 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"CSRFToken":          csrfToken,
 		"RegistrationOpen":   s.RegistrationOpen,
 		"MailEnabled":        h.mailEnabled(),
-		"RecentComments":     h.st.RecentComments(8),
-		"RecentCommentItems": h.st.RecentCommentItems(8, commentPageSize),
-		"RecentPosts":        h.st.RecentPosts(8),
-		"SayingComments":     h.st.SayingComments(s.SayingPostID, 5),
-		"SayingCommentItems": h.st.SayingCommentItems(s.SayingPostID, 5, commentPageSize),
-		"ArchiveMonths":      h.st.ArchiveMonths(),
-		"Categories":         h.st.AllCategories(),
-		"Tags":               h.st.AllTags(),
+		"RecentComments":     h.st.RecentComments(c, 8),
+		"RecentCommentItems": h.st.RecentCommentItems(c, 8, commentPageSize),
+		"RecentPosts":        h.st.RecentPosts(c, 8),
+		"SayingComments":     h.st.SayingComments(c, s.SayingPostID, 5),
+		"SayingCommentItems": h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize),
+		"ArchiveMonths":      h.st.ArchiveMonths(c),
+		"Categories":         h.st.AllCategories(c),
+		"Tags":               h.st.AllTags(c),
 	}
 	if s.SayingPostID > 0 {
-		if p, err := h.st.PostMeta(s.SayingPostID); err == nil && p.Status == model.StatusPublished {
+		if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
 			data["SayingPost"] = p
 		}
 	}
@@ -96,10 +97,9 @@ func (h *Public) mailEnabled() bool {
 	return h.loadSMTPConfig().Configured()
 }
 
-func (h *Public) loadSettings() publicSettings {
-	postPermalink := syncPostPermalink(h.st)
-	settings, err := h.st.GetSettings(
-		consts.SettingsSiteName,
+func (h *Public) loadSettings(ctx context.Context) publicSettings {
+	postPermalink := syncPostPermalink(ctx, h.st)
+	settings, err := h.st.GetSettings(ctx, consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
@@ -126,10 +126,10 @@ func (h *Public) loadSettings() publicSettings {
 
 // DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。
 func (h *Public) DynamicOrLegacy(c *gin.Context) {
-	syncPostPermalink(h.st)
+	syncPostPermalink(c, h.st)
 	path := c.Request.URL.Path
 	if slug, ok := singleSegmentSlug(path); ok {
-		if h.pageExists(slug) {
+		if h.pageExists(c, slug) {
 			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
 			h.Page(c)
 			return
@@ -158,15 +158,13 @@ func (h *Public) DynamicOrLegacy(c *gin.Context) {
 
 // currentUser 返回当前登录用户(未登录为 nil)。
 func (h *Public) currentUser(c *gin.Context) *model.User {
-	return currentUserByStore(h.st, c)
+	return currentUserByStore(c, h.st, c)
 }
 
-// currentUserID 返回当前登录用户 ID(未登录为 0)。
-// Index 首页文章列表。
 func (h *Public) Index(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
-	s := h.loadSettings()
-	res, err := h.st.ListPosts(page, s.PageSize, "", "")
+	s := h.loadSettings(c)
+	res, err := h.st.ListPosts(c, page, s.PageSize, "", "")
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -181,13 +179,13 @@ func (h *Public) Index(c *gin.Context) {
 func (h *Public) Search(c *gin.Context) {
 	kw := strings.TrimSpace(c.Query("q"))
 	page := atoiDefault(c.Query("page"), 1)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	var res *store.ListPostsResult
 	var err error
 	if kw == "" {
 		res = &store.ListPostsResult{Page: 1}
 	} else {
-		res, err = h.st.SearchPosts(kw, page, s.PageSize)
+		res, err = h.st.SearchPosts(c, kw, page, s.PageSize)
 		if err != nil {
 			h.serverError(c, err)
 			return
@@ -204,7 +202,7 @@ func (h *Public) Search(c *gin.Context) {
 
 // Post 文章详情（按当前固定链接规则解析）。
 func (h *Public) Post(c *gin.Context) {
-	syncPostPermalink(h.st)
+	syncPostPermalink(c, h.st)
 	match, ok := permalink.ParsePostPath(c.Request.URL.Path)
 	if !ok {
 		h.notFound(c)
@@ -221,7 +219,7 @@ func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 	if uid == 0 {
 		return nil
 	}
-	p, err := h.st.GetPostAnyStatus(id)
+	p, err := h.st.GetPostAnyStatus(c, id)
 	if err != nil || p.Status != model.StatusDraft || p.AuthorID != uid {
 		return nil
 	}
@@ -230,7 +228,7 @@ func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 
 // Page 处理 /{slug} 页面以及若干特殊页面(归档)。
 func (h *Public) Page(c *gin.Context) {
-	_ = h.loadSettings()
+	_ = h.loadSettings(c)
 	slug := strings.Trim(c.Param("slug"), "/")
 	if slug == "" {
 		h.notFound(c)
@@ -240,25 +238,25 @@ func (h *Public) Page(c *gin.Context) {
 		h.renderArchive(c, h.specialPage(c, "archive", "归档"))
 		return
 	}
-	p, err := h.st.GetPageBySlug(slug)
+	p, err := h.st.GetPageBySlug(c, slug)
 	if err != nil {
 		h.notFound(c)
 		return
 	}
 	if p.Status == model.StatusPublished {
-		if err := h.st.IncrementViews(p.ID); err != nil && h.log != nil {
+		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
 			h.log.Error("increment page views", "error", err, "post_id", p.ID)
 		}
 		p.Views++
 	}
 
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
+	comments, err := h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	data := h.base(c, p.Title, p.Excerpt, s)
 	data["Post"] = p
 	data["Comments"] = comments.Comments
@@ -273,19 +271,19 @@ func (h *Public) Page(c *gin.Context) {
 	c.HTML(http.StatusOK, "page.gohtml", data)
 }
 
-func (h *Public) pageExists(slug string) bool {
+func (h *Public) pageExists(ctx context.Context, slug string) bool {
 	if slug == "archive" {
 		return true
 	}
 	if h.st == nil {
 		return false
 	}
-	_, err := h.st.GetPageBySlug(slug)
+	_, err := h.st.GetPageBySlug(ctx, slug)
 	return err == nil
 }
 
 func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalink.PostPathMatch) bool {
-	p, err := h.st.ResolvePostByPath(path, match)
+	p, err := h.st.ResolvePostByPath(c, path, match)
 	if err != nil {
 		if match == nil || !match.HasPostID {
 			return false
@@ -300,18 +298,18 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		return true
 	}
 	if p.Status == model.StatusPublished {
-		if err := h.st.IncrementViews(p.ID); err != nil && h.log != nil {
+		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
 			h.log.Error("increment post views", "error", err, "post_id", p.ID)
 		}
 		p.Views++
 	}
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.VisibleCommentsPageForViewer(p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
+	comments, err := h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return true
 	}
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	data := h.base(c, p.Title, p.Excerpt, s)
 	data["Post"] = p
 	data["IsDraft"] = p.Status == model.StatusDraft
@@ -320,8 +318,8 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	data["PrevPost"] = h.st.PrevPost(p.PublishedAt)
-	data["NextPost"] = h.st.NextPost(p.PublishedAt)
+	data["PrevPost"] = h.st.PrevPost(c, p.PublishedAt)
+	data["NextPost"] = h.st.NextPost(c, p.PublishedAt)
 	if c.Query("ajax") == "comments" {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return true
@@ -332,7 +330,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 
 func (h *Public) specialPage(c *gin.Context, slug, fallbackTitle string) *model.Post {
 	if h.st != nil {
-		p, err := h.st.GetPageBySlug(slug)
+		p, err := h.st.GetPageBySlug(c, slug)
 		if err == nil {
 			return p
 		}
@@ -342,7 +340,7 @@ func (h *Public) specialPage(c *gin.Context, slug, fallbackTitle string) *model.
 }
 
 func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
-	posts, err := h.st.AllPostsForArchive()
+	posts, err := h.st.AllPostsForArchive(c)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -365,7 +363,7 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 	}
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Year > groups[j].Year })
 
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	data := h.base(c, p.Title, "", s)
 	data["Post"] = p
 	data["Groups"] = groups
@@ -379,9 +377,9 @@ func (h *Public) Category(c *gin.Context) {
 		slug = c.Query("slug")
 	}
 	page := atoiDefault(c.Query("page"), 1)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	tr := i18n.Get(c)
-	res, err := h.st.ListPosts(page, s.PageSize, slug, "")
+	res, err := h.st.ListPosts(c, page, s.PageSize, slug, "")
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -400,9 +398,9 @@ func (h *Public) Tag(c *gin.Context) {
 		slug = c.Query("slug")
 	}
 	page := atoiDefault(c.Query("page"), 1)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	tr := i18n.Get(c)
-	res, err := h.st.ListPosts(page, s.PageSize, "", slug)
+	res, err := h.st.ListPosts(c, page, s.PageSize, "", slug)
 	if err != nil {
 		h.serverError(c, err)
 		return
@@ -417,7 +415,7 @@ func (h *Public) Tag(c *gin.Context) {
 // LegacyQueryRedirect 处理 /?p={id} 旧链接 301 到永久链接。
 // 返回 true 表示已处理。
 func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
-	syncPostPermalink(h.st)
+	syncPostPermalink(c, h.st)
 	pid := c.Query("p")
 	if pid == "" {
 		return false
@@ -426,7 +424,7 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 	if err != nil {
 		return false
 	}
-	p, err := h.st.PostMeta(uint(id))
+	p, err := h.st.PostMeta(c, uint(id))
 	if err != nil {
 		return false
 	}
@@ -443,7 +441,7 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 // notFound 渲染 404。
 func (h *Public) notFound(c *gin.Context) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings())
+	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c))
 	data["Code"] = 404
 	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
 	c.HTML(http.StatusNotFound, "error.gohtml", data)
@@ -452,7 +450,7 @@ func (h *Public) notFound(c *gin.Context) {
 func (h *Public) serverError(c *gin.Context, err error) {
 	h.log.Error("handler error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("出错了"), "", h.loadSettings())
+	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c))
 	data["Code"] = 500
 	data["Message"] = tr.T("服务器内部错误,请稍后重试。")
 	c.HTML(http.StatusInternalServerError, "error.gohtml", data)

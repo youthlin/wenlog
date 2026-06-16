@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func TestListPostsAndPagination(t *testing.T) {
 	// 一篇草稿不应出现。
 	db.Create(&model.Post{ID: 99, PostType: model.PostTypePost, Status: model.StatusDraft, PublishedAt: now})
 
-	res, err := st.ListPosts(1, 10, "", "")
+	res, err := st.ListPosts(context.Background(), 1, 10, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +61,7 @@ func TestApprovedCommentsOnly(t *testing.T) {
 	db.Create(&model.Comment{ID: 1, PostID: 1, Status: model.CommentApproved, Content: "a", CreatedAt: time.Now()})
 	db.Create(&model.Comment{ID: 2, PostID: 1, Status: model.CommentPending, Content: "b", CreatedAt: time.Now()})
 
-	comments, err := st.ApprovedComments(1)
+	comments, err := st.ApprovedComments(context.Background(), 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +81,7 @@ func TestVisibleCommentsIncludesOwnPendingOnly(t *testing.T) {
 	db.Create(&model.Comment{ID: 3, PostID: 1, Status: model.CommentPending, Content: "session pending", CreatedAt: now.Add(-1 * time.Minute)})
 	db.Create(&model.Comment{ID: 4, PostID: 1, Status: model.CommentPending, Content: "other pending", CreatedAt: now})
 
-	comments, err := st.VisibleCommentsPageForViewer(1, 1, 10, uid, []uint{3})
+	comments, err := st.VisibleCommentsPageForViewer(context.Background(), 1, 1, 10, uid, []uint{3})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +110,7 @@ func TestResolveCommentReplyKeepsTwoLevelThread(t *testing.T) {
 	db.Create(&model.Comment{ID: 1, PostID: 1, ParentID: 0, Status: model.CommentApproved, Author: "parent", CreatedAt: now})
 	db.Create(&model.Comment{ID: 2, PostID: 1, ParentID: 1, ReplyToID: 1, Status: model.CommentApproved, Author: "child", CreatedAt: now.Add(time.Minute)})
 
-	parentID, replyToID, err := st.ResolveCommentReply(1, 2, 0, nil)
+	parentID, replyToID, err := st.ResolveCommentReply(context.Background(), 1, 2, 0, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,10 +118,10 @@ func TestResolveCommentReplyKeepsTwoLevelThread(t *testing.T) {
 		t.Fatalf("ResolveCommentReply parent=%d replyTo=%d, want parent=1 replyTo=2", parentID, replyToID)
 	}
 
-	if err := st.CreateComment(&model.Comment{ID: 3, PostID: 1, ParentID: parentID, ReplyToID: replyToID, Status: model.CommentApproved, Author: "reply", CreatedAt: now.Add(2 * time.Minute)}); err != nil {
+	if err := st.CreateComment(context.Background(), &model.Comment{ID: 3, PostID: 1, ParentID: parentID, ReplyToID: replyToID, Status: model.CommentApproved, Author: "reply", CreatedAt: now.Add(2 * time.Minute)}); err != nil {
 		t.Fatal(err)
 	}
-	comments, err := st.VisibleCommentsPageForViewer(1, 1, 10, 0, nil)
+	comments, err := st.VisibleCommentsPageForViewer(context.Background(), 1, 1, 10, 0, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +143,7 @@ func TestCommentsByIDs(t *testing.T) {
 	db.Create(&model.Comment{ID: 2, PostID: 1, Author: "b"})
 	db.Create(&model.Comment{ID: 3, PostID: 1, Author: "c"})
 
-	comments, err := st.CommentsByIDs([]uint{1, 3})
+	comments, err := st.CommentsByIDs(context.Background(), []uint{1, 3})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +158,7 @@ func TestCommentsByIDs(t *testing.T) {
 		t.Fatalf("CommentsByIDs returned IDs=%v", got)
 	}
 
-	comments, err = st.CommentsByIDs(nil)
+	comments, err = st.CommentsByIDs(context.Background(), nil)
 	if err != nil || len(comments) != 0 {
 		t.Fatalf("CommentsByIDs nil=(%v,%v), want empty nil error", comments, err)
 	}
@@ -167,7 +168,7 @@ func TestNextPostID(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()
 	db.Create(&model.Post{ID: 1890, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()})
-	id, err := st.NextPostID()
+	id, err := st.NextPostID(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +187,7 @@ func TestSearchPosts(t *testing.T) {
 	// 草稿命中也不应返回。
 	db.Create(&model.Post{ID: 4, Title: "Go 草稿", PostType: model.PostTypePost, Status: model.StatusDraft, PublishedAt: now})
 
-	res, err := st.SearchPosts("Go", 1, 10)
+	res, err := st.SearchPosts(context.Background(), "Go", 1, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,14 +205,14 @@ func TestPrevNextPost(t *testing.T) {
 			Status: model.StatusPublished, PublishedAt: base.Add(time.Duration(i) * time.Hour)})
 	}
 	mid := base.Add(2 * time.Hour)
-	if prev := st.PrevPost(mid); prev == nil || prev.ID != 1 {
+	if prev := st.PrevPost(context.Background(), mid); prev == nil || prev.ID != 1 {
 		t.Errorf("PrevPost = %v, want id 1", prev)
 	}
-	if next := st.NextPost(mid); next == nil || next.ID != 3 {
+	if next := st.NextPost(context.Background(), mid); next == nil || next.ID != 3 {
 		t.Errorf("NextPost = %v, want id 3", next)
 	}
 	// 边界:最新一篇无下一篇。
-	if next := st.NextPost(base.Add(3 * time.Hour)); next != nil {
+	if next := st.NextPost(context.Background(), base.Add(3*time.Hour)); next != nil {
 		t.Errorf("NextPost(newest) = %v, want nil", next)
 	}
 }
@@ -225,7 +226,7 @@ func TestApprovedCommentCounts(t *testing.T) {
 	db.Create(&model.Comment{ID: 2, PostID: 1, Status: model.CommentApproved, CreatedAt: time.Now()})
 	db.Create(&model.Comment{ID: 3, PostID: 1, Status: model.CommentPending, CreatedAt: time.Now()})
 
-	counts := st.ApprovedCommentCounts([]uint{1, 2})
+	counts := st.ApprovedCommentCounts(context.Background(), []uint{1, 2})
 	if counts[1] != 2 {
 		t.Errorf("count post1 = %d, want 2", counts[1])
 	}
@@ -243,7 +244,7 @@ func TestSayingComments(t *testing.T) {
 	db.Create(&model.Comment{ID: 2, PostID: sayingPostID, Email: "guest@x.com", Status: model.CommentApproved, Content: "访客", CreatedAt: time.Now()})
 	db.Create(&model.Comment{ID: 3, PostID: uint(consts.SettingsSayingPageIDDefault), Email: "me@example.com", Status: model.CommentApproved, Content: "旧配置", CreatedAt: time.Now()})
 
-	got := st.SayingComments(sayingPostID, 5)
+	got := st.SayingComments(context.Background(), sayingPostID, 5)
 	if len(got) != 1 || got[0].ID != 1 {
 		t.Errorf("SayingComments returned %d, want only blogger's id=1", len(got))
 	}

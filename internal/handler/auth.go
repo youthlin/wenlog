@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
+	"context"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
@@ -23,7 +24,7 @@ import (
 // ForgotPasswordForm 忘记密码页。
 func (h *Public) ForgotPasswordForm(c *gin.Context) {
 	tr := i18n.Get(c)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	data := h.base(c, tr.T("忘记密码"), "", s)
 	c.HTML(http.StatusOK, "auth_forgot_password.gohtml", data)
 }
@@ -31,7 +32,7 @@ func (h *Public) ForgotPasswordForm(c *gin.Context) {
 // ForgotPassword 处理忘记密码请求,发送重置邮件。
 func (h *Public) ForgotPassword(c *gin.Context) {
 	tr := i18n.Get(c)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	emailAddr := strings.TrimSpace(c.PostForm("email"))
 
 	if emailAddr == "" {
@@ -41,7 +42,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	u, err := h.st.GetUserByEmail(emailAddr)
+	u, err := h.st.GetUserByEmail(c, emailAddr)
 	if err != nil {
 		// 防时序攻击: 用户不存在时也模拟相近的延迟。
 		time.Sleep(consts.TimingAttackDelay * time.Millisecond)
@@ -61,7 +62,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	token := hex.EncodeToString(tokenBytes)
 	expiry := time.Now().Add(consts.ResetTokenTTL)
 
-	if err := h.st.SetResetToken(u.ID, token, expiry); err != nil {
+	if err := h.st.SetResetToken(c, u.ID, token, expiry); err != nil {
 		h.serverError(c, err)
 		return
 	}
@@ -70,7 +71,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	smtpCfg := h.loadSMTPConfig()
 	siteURL, ok := h.loadConfiguredSiteURL()
 	if !ok {
-		if err := h.st.ClearResetToken(u.ID); err != nil && h.log != nil {
+		if err := h.st.ClearResetToken(c, u.ID); err != nil && h.log != nil {
 			h.log.Error("clear reset token", "error", err, "user_id", u.ID)
 		}
 		data := h.base(c, tr.T("忘记密码"), "", s)
@@ -85,7 +86,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	if err := smtpCfg.Send(emailAddr, subject, body); err != nil {
 		h.log.Error("send reset email", "error", err, "to", emailAddr)
 		// 邮件发送失败,清除令牌
-		if err2 := h.st.ClearResetToken(u.ID); err2 != nil && h.log != nil {
+		if err2 := h.st.ClearResetToken(c, u.ID); err2 != nil && h.log != nil {
 			h.log.Error("clear reset token", "error", err2, "user_id", u.ID)
 		}
 		data := h.base(c, tr.T("忘记密码"), "", s)
@@ -102,7 +103,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 // ResetPasswordForm 重置密码页(校验 token)。
 func (h *Public) ResetPasswordForm(c *gin.Context) {
 	tr := i18n.Get(c)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	token := strings.TrimSpace(c.Query("token"))
 
 	if token == "" {
@@ -110,7 +111,7 @@ func (h *Public) ResetPasswordForm(c *gin.Context) {
 		return
 	}
 
-	u, err := h.st.GetUserByResetToken(token)
+	u, err := h.st.GetUserByResetToken(c, token)
 	if err != nil {
 		data := h.base(c, tr.T("重置密码"), "", s)
 		data["Error"] = tr.T("重置链接无效或已过期，请重新请求。")
@@ -127,7 +128,7 @@ func (h *Public) ResetPasswordForm(c *gin.Context) {
 // ResetPassword 处理重置密码提交。
 func (h *Public) ResetPassword(c *gin.Context) {
 	tr := i18n.Get(c)
-	s := h.loadSettings()
+	s := h.loadSettings(c)
 	token := strings.TrimSpace(c.PostForm("token"))
 	password := c.PostForm("password")
 	confirmPassword := c.PostForm("confirm_password")
@@ -153,7 +154,7 @@ func (h *Public) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	u, err := h.st.GetUserByResetToken(token)
+	u, err := h.st.GetUserByResetToken(c, token)
 	if err != nil {
 		data := h.base(c, tr.T("重置密码"), "", s)
 		data["Error"] = tr.T("重置链接无效或已过期，请重新请求。")
@@ -167,12 +168,12 @@ func (h *Public) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.st.UpdateUserPassword(u.ID, string(hash)); err != nil {
+	if err := h.st.UpdateUserPassword(c, u.ID, string(hash)); err != nil {
 		h.serverError(c, err)
 		return
 	}
 	// 清除令牌
-	if err := h.st.ClearResetToken(u.ID); err != nil && h.log != nil {
+	if err := h.st.ClearResetToken(c, u.ID); err != nil && h.log != nil {
 		h.log.Error("clear reset token", "error", err, "user_id", u.ID)
 	}
 
@@ -189,7 +190,7 @@ func (h *Public) sendPasswordChangeNotification(u *model.User) {
 	if !smtpCfg.Configured() || u.Email == "" {
 		return
 	}
-	subject := fmt.Sprintf("[%s] 密码已变更", siteNameFromStore(h.st))
+	subject := fmt.Sprintf("[%s] 密码已变更", siteNameFromStore(context.Background(), h.st))
 	body := fmt.Sprintf("您好 %s，\n\n你的账户密码刚刚通过重置链接被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
 	go func() {
 		if err := smtpCfg.Send(u.Email, subject, body); err != nil && h.log != nil {
@@ -200,12 +201,11 @@ func (h *Public) sendPasswordChangeNotification(u *model.User) {
 
 // loadSMTPConfig 从设置中读取 SMTP 配置。
 func (h *Public) loadSMTPConfig() email.Config {
-	return smtpConfigFromStore(h.st)
+	return smtpConfigFromStore(context.Background(), h.st)
 }
 
-func smtpConfigFromStore(st *store.Store) email.Config {
-	settings, _ := st.GetSettings(
-		consts.SettingsSMTPHost,
+func smtpConfigFromStore(ctx context.Context, st *store.Store) email.Config {
+	settings, _ := st.GetSettings(ctx, consts.SettingsSMTPHost,
 		consts.SettingsSMTPPort,
 		consts.SettingsSMTPUser,
 		consts.SettingsSMTPPassword,
@@ -234,11 +234,11 @@ func (h *Public) loadSiteURL(c *gin.Context) string {
 }
 
 func (h *Public) loadConfiguredSiteURL() (string, bool) {
-	return configuredSiteURL(h.st)
+	return configuredSiteURL(context.Background(), h.st)
 }
 
-func configuredSiteURL(st *store.Store) (string, bool) {
-	settings, _ := st.GetSettings(consts.SettingsSiteURL)
+func configuredSiteURL(ctx context.Context, st *store.Store) (string, bool) {
+	settings, _ := st.GetSettings(ctx, consts.SettingsSiteURL)
 	u := strings.TrimSpace(settings[consts.SettingsSiteURL])
 	if u == "" {
 		return "", false
@@ -251,7 +251,7 @@ func configuredSiteURL(st *store.Store) (string, bool) {
 }
 
 func siteURLFromRequest(st *store.Store, c *gin.Context) string {
-	if u, ok := configuredSiteURL(st); ok {
+	if u, ok := configuredSiteURL(c, st); ok {
 		return u
 	}
 	scheme := "http"

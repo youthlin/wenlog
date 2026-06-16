@@ -35,7 +35,7 @@ func AuthRequiredRedirect(redirectPath string, stores ...*store.Store) gin.Handl
 			return
 		}
 		if len(stores) > 0 && stores[0] != nil {
-			u, err := stores[0].GetUserByID(uid)
+			u, err := stores[0].GetUserByID(c.Request.Context(), uid)
 			if err != nil || u == nil || sessionInt64(s.Get(SessionVersionKey)) != u.SessionVersion {
 				s.Clear()
 				_ = s.Save()

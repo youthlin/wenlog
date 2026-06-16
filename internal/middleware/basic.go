@@ -3,6 +3,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/subtle"
 	"log/slog"
 	"net/http"
@@ -52,7 +53,7 @@ func Metrics() gin.HandlerFunc {
 // MetricsBasicAuth 用固定用户名 metrics 和后台设置的密码保护 /metrics。
 func MetricsBasicAuth(st *store.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		password := metricsPassword(st)
+		password := metricsPassword(c.Request.Context(), st)
 		user, pass, ok := c.Request.BasicAuth()
 		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte("metrics")) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
 			c.Header("WWW-Authenticate", `Basic realm="metrics"`)
@@ -63,17 +64,17 @@ func MetricsBasicAuth(st *store.Store) gin.HandlerFunc {
 	}
 }
 
-func metricsPassword(st *store.Store) string {
+func metricsPassword(ctx context.Context, st *store.Store) string {
 	if st == nil {
 		return util.GenerateRandomString(32)
 	}
-	password, _ := st.GetSetting(consts.SettingsMetricsAuthPassword)
+	password, _ := st.GetSetting(ctx, consts.SettingsMetricsAuthPassword)
 	password = strings.TrimSpace(password)
 	if password != "" {
 		return password
 	}
 	password = util.GenerateRandomString(24, util.WithAlphaNumer())
-	_ = st.SetSetting(consts.SettingsMetricsAuthPassword, password)
+	_ = st.SetSetting(ctx, consts.SettingsMetricsAuthPassword, password)
 	return password
 }
 

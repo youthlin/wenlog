@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -15,11 +16,11 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	gettext "github.com/youthlin/t"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/util"
+	gettext "github.com/youthlin/t"
 )
 
 func TestAllowDebugSQL(t *testing.T) {
@@ -261,7 +262,7 @@ func TestSaveSMTPSettingsDoesNotRequireSiteFields(t *testing.T) {
 	if w.Code != http.StatusSeeOther {
 		t.Fatalf("SaveSMTPSettings status=%d, want %d", w.Code, http.StatusSeeOther)
 	}
-	settings, err := st.GetSettings(consts.SettingsSMTPHost, consts.SettingsSMTPPort, consts.SettingsSMTPFrom, consts.SettingsSiteURL)
+	settings, err := st.GetSettings(context.Background(), consts.SettingsSMTPHost, consts.SettingsSMTPPort, consts.SettingsSMTPFrom, consts.SettingsSiteURL)
 	if err != nil {
 		t.Fatalf("get settings: %v", err)
 	}
