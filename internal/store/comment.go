@@ -133,22 +133,58 @@ func (s *Store) VisibleCommentsPageForViewer(ctx context.Context, postID uint, p
 		return &CommentPageResult{Page: page, Pages: pages, TotalTop: totalTop, TotalComments: totalAll}, nil
 	}
 
-	ids := make([]uint, len(tops))
+	// 递归获取当前页顶层评论的所有子孙评论，支持多层嵌套的历史数据。
+	// rootByID 记录每条评论对应的根顶层评论 ID。
+	rootByID := make(map[uint]uint, len(tops))
+	for _, top := range tops {
+		rootByID[top.ID] = top.ID
+	}
+
+	var allDescendants []model.Comment
+	frontier := make([]uint, len(tops))
+	for i, top := range tops {
+		frontier[i] = top.ID
+	}
+	for len(frontier) > 0 {
+		var nextGen []model.Comment
+		if err := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
+			Where("parent_id IN ?", frontier).
+			Order("created_at ASC").Find(&nextGen).Error; err != nil {
+			return nil, errors.Wrap(err, "list child comments")
+		}
+		frontier = frontier[:0]
+		for i := range nextGen {
+			c := &nextGen[i]
+			if _, seen := rootByID[c.ID]; seen {
+				continue
+			}
+			rootByID[c.ID] = rootByID[c.ParentID]
+			allDescendants = append(allDescendants, *c)
+			frontier = append(frontier, c.ID)
+		}
+	}
+
+	// 将深度 >1 的子孙评论的 ParentID 重写为根顶层评论 ID，实现平铺展示。
+	// 同时，如果 ReplyToID 为 0（直接回复父评论），则设为原始 ParentID，
+	// 以便 populateReplyToAuthors 能正确显示"回复 @某人"。
+	for i := range allDescendants {
+		origParent := allDescendants[i].ParentID
+		root := rootByID[origParent]
+		if root != 0 && origParent != root {
+			allDescendants[i].ParentID = root
+			if allDescendants[i].ReplyToID == 0 {
+				allDescendants[i].ReplyToID = origParent
+			}
+		}
+	}
+
+	// 按 ParentID（即根顶层评论 ID）分组。
 	index := make(map[uint][]model.Comment, len(tops))
-	for i := range tops {
-		ids[i] = tops[i].ID
-	}
-	var children []model.Comment
-	if err := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
-		Where("parent_id IN ?", ids).
-		Order("created_at ASC").Find(&children).Error; err != nil {
-		return nil, errors.Wrap(err, "list child comments")
-	}
-	for _, c := range children {
+	for _, c := range allDescendants {
 		index[c.ParentID] = append(index[c.ParentID], c)
 	}
 
-	out := make([]model.Comment, 0, len(tops)+len(children))
+	out := make([]model.Comment, 0, len(tops)+len(allDescendants))
 	for _, top := range tops {
 		out = append(out, top)
 		out = append(out, index[top.ID]...)
@@ -260,9 +296,9 @@ func (s *Store) RecentCommentItems(ctx context.Context, n, pageSize int) []Comme
 }
 func (s *Store) SayingComments(ctx context.Context, postID uint, n int) []model.Comment {
 	var cs []model.Comment
-	s.db.Where("post_id = ? AND status = ? AND email IN (?)",
+	s.db.Where("post_id = ? AND status = ? AND user_id = (?)",
 		postID, model.CommentApproved,
-		s.db.Model(&model.User{}).Select("email")).
+		s.db.Model(&model.Post{}).Select("author_id").Where("id = ?", postID)).
 		Order("created_at DESC").Limit(n).Find(&cs)
 	return cs
 }

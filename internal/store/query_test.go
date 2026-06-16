@@ -264,10 +264,12 @@ func TestSayingComments(t *testing.T) {
 	st := newTestStore(t)
 	db := st.DB()
 	sayingPostID := uint(789)
-	db.Create(&model.User{ID: 1, Username: "youthlin", Email: "me@example.com"})
-	db.Create(&model.Comment{ID: 1, PostID: sayingPostID, Email: "me@example.com", Status: model.CommentApproved, Content: "动态1", CreatedAt: time.Now()})
+	authorID := uint(1)
+	db.Create(&model.User{ID: authorID, Username: "youthlin", Email: "me@example.com"})
+	db.Create(&model.Post{ID: sayingPostID, AuthorID: authorID, PostType: model.PostTypePage, Status: model.StatusPublished})
+	db.Create(&model.Comment{ID: 1, PostID: sayingPostID, UserID: &authorID, Status: model.CommentApproved, Content: "动态1", CreatedAt: time.Now()})
 	db.Create(&model.Comment{ID: 2, PostID: sayingPostID, Email: "guest@x.com", Status: model.CommentApproved, Content: "访客", CreatedAt: time.Now()})
-	db.Create(&model.Comment{ID: 3, PostID: uint(consts.SettingsSayingPageIDDefault), Email: "me@example.com", Status: model.CommentApproved, Content: "旧配置", CreatedAt: time.Now()})
+	db.Create(&model.Comment{ID: 3, PostID: uint(consts.SettingsSayingPageIDDefault), UserID: &authorID, Status: model.CommentApproved, Content: "旧配置", CreatedAt: time.Now()})
 
 	got := st.SayingComments(context.Background(), sayingPostID, 5)
 	if len(got) != 1 || got[0].ID != 1 {
