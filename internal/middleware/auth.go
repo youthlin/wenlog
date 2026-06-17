@@ -44,6 +44,7 @@ func AuthRequiredRedirect(redirectPath string, stores ...*store.Store) gin.Handl
 				return
 			}
 			s.Set(SessionRoleKey, u.Role)
+			c.Set("currentUser", u) // 缓存用户对象，避免 handler 层重复查库
 		}
 		c.Next()
 	}

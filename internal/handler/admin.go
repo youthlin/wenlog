@@ -57,20 +57,22 @@ func parseUintParam(s string) (uint, error) {
 
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(c, h.st)
-	v, err := h.st.GetSetting(c, consts.SettingsSiteName)
+	// 批量查询设置，避免多次 GetSetting
+	settings, err := h.st.GetSettings(c, consts.SettingsSiteName, consts.SettingsDefaultAvatar, consts.SettingsShowSQLDetails)
 	if err != nil && h.log != nil {
-		h.log.Error("get site name setting", "error", err)
+		h.log.Error("get settings", "error", err)
 	}
-	defaultAvatar, err := h.st.GetSetting(c, consts.SettingsDefaultAvatar)
-	if err != nil && h.log != nil {
-		h.log.Error("get default avatar setting", "error", err)
-	}
+	v := settings[consts.SettingsSiteName]
+	defaultAvatar := settings[consts.SettingsDefaultAvatar]
+	pendingCount := h.st.PendingCommentCount(c)
+	// 缓存 pending 数到 context，避免 DashboardStats 中 AdminCommentCounts 重复查询
+	c.Request = c.Request.WithContext(store.CtxWithPendingCommentCount(c.Request.Context(), pendingCount))
 	siteName := util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, v)
 	data := gin.H{
 		"SiteName":             siteName,
 		"Title":                title,
 		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
-		"PendingCount":         h.st.PendingCommentCount(c),
+		"PendingCount":         pendingCount,
 		"PostPermalinkPattern": currentPostPermalink,
 		"RoleAdmin":            model.RoleAdmin,
 		"RoleAuthor":           model.RoleAuthor,
@@ -90,7 +92,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		}
 		// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
 		if currentUser != nil && currentUser.Role == model.RoleAdmin {
-			if showSQL, _ := h.st.GetSetting(c, consts.SettingsShowSQLDetails); showSQL == "true" {
+			if settings[consts.SettingsShowSQLDetails] == "true" {
 				data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
 			}
 		}

@@ -38,9 +38,16 @@ func (s *Store) ReaderDashboardStats(ctx context.Context, userID uint) ReaderSta
 		Distinct("comments.post_id").Count(&rs.CommentedPageCount)
 	return rs
 }
+type ctxKeyPendingCommentCount struct{}
+
 func (s *Store) AdminCommentCounts(ctx context.Context) CommentCounts {
 	var cc CommentCounts
-	s.db(ctx).Model(&model.Comment{}).Where("status = ?", model.CommentPending).Count(&cc.Pending)
+	// 如果 ctx 中已有缓存的 pending 数，直接复用
+	if cached, ok := ctx.Value(ctxKeyPendingCommentCount{}).(int64); ok {
+		cc.Pending = cached
+	} else {
+		s.db(ctx).Model(&model.Comment{}).Where("status = ?", model.CommentPending).Count(&cc.Pending)
+	}
 	s.db(ctx).Model(&model.Comment{}).Where("status = ?", model.CommentApproved).Count(&cc.Approved)
 	s.db(ctx).Model(&model.Comment{}).Where("status = ?", model.CommentSpam).Count(&cc.Spam)
 	return cc
@@ -49,4 +56,9 @@ func (s *Store) PendingCommentCount(ctx context.Context) int64 {
 	var n int64
 	s.db(ctx).Model(&model.Comment{}).Where("status = ?", model.CommentPending).Count(&n)
 	return n
+}
+
+// CtxWithPendingCommentCount 将 pending 评论数缓存到 context，供后续 AdminCommentCounts 复用。
+func CtxWithPendingCommentCount(ctx context.Context, n int64) context.Context {
+	return context.WithValue(ctx, ctxKeyPendingCommentCount{}, n)
 }

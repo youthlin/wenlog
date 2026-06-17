@@ -70,8 +70,15 @@ func currentUserID(c *gin.Context) uint {
 	return 0
 }
 
-// currentUserByStore 返回当前登录用户(未登录为 nil)。
+const ctxKeyCurrentUser = "currentUser"
+
+// currentUserByStore 返回当前登录用户(未登录为 nil)。同一请求内缓存结果，避免重复查库。
 func currentUserByStore(ctx context.Context, st *store.Store, c *gin.Context) *model.User {
+	if cached, ok := c.Get(ctxKeyCurrentUser); ok {
+		if u, ok := cached.(*model.User); ok {
+			return u
+		}
+	}
 	uid := currentUserID(c)
 	if uid == 0 {
 		return nil
@@ -80,5 +87,6 @@ func currentUserByStore(ctx context.Context, st *store.Store, c *gin.Context) *m
 	if err != nil {
 		return nil
 	}
+	c.Set(ctxKeyCurrentUser, u)
 	return u
 }
