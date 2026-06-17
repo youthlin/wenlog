@@ -68,6 +68,16 @@
     <p>&copy; {{.CurrentYear}} {{.SiteName}} · Powered by Go</p>
   </div>
 </footer>
+{{if .SQLDetails}}
+{{if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.t.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{end}}
+{{end}}
 <script src="/assets/theme.js"></script>
 <script src="/assets/scroll.js"></script>
 </body>

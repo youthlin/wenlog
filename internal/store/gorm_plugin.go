@@ -205,7 +205,6 @@ func (g *GormSQLTracer) afterDefault(db *gorm.DB) {
 	// 记录 SQL 执行日志
 	if g.Log != nil {
 		attrs := []slog.Attr{
-			slog.String("trace_id", CtxGetTraceID(ctx)),
 			slog.String("sql_type", sqlType),
 			slog.Int64("rows", rowsAffected),
 			slog.Duration("cost", cost),
@@ -224,15 +223,14 @@ func (g *GormSQLTracer) afterDefault(db *gorm.DB) {
 			errStr = err.Error()
 		}
 		d.Append(&SQLDetail{
-			Cmd:     sqlType,
-			Rows:    rowsAffected,
-			SQL:     explainedSQL,
-			Cost:    cost,
-			Used:    cost.String(),
-			Start:   start.Format("2006-01-02 15:04:05.000"),
-			End:     end.Format("2006-01-02 15:04:05.000"),
-			Err:     errStr,
-			TraceID: CtxGetTraceID(ctx),
+			Cmd:   sqlType,
+			Rows:  rowsAffected,
+			SQL:   explainedSQL,
+			Cost:  cost,
+			Used:  cost.String(),
+			Start: start.Format("2006-01-02 15:04:05.000"),
+			End:   end.Format("2006-01-02 15:04:05.000"),
+			Err:   errStr,
 		})
 	}
 }
@@ -249,9 +247,6 @@ func getFirstWord(sql string) string {
 
 type sqlDetailsKey struct{}
 
-// GinKeySQLDetails 是 gin.Context.Set/Get 使用的键，供中间件和 handler 共享 SQLDetails。
-const GinKeySQLDetails = "_sql_details"
-
 // CtxWithSQLDetails 在 ctx 中注入 SQL 详情收集器。如果 details 非 nil 则复用，否则新建。
 func CtxWithSQLDetails(ctx context.Context, details *SQLDetails) context.Context {
 	if details == nil {
@@ -261,15 +256,8 @@ func CtxWithSQLDetails(ctx context.Context, details *SQLDetails) context.Context
 }
 
 // CtxGetSQLDetails 从 ctx 中取出记录 SQL 详情的 SQLDetails 结构。
-// 优先用私有 struct key 查找；若 ctx 是 *gin.Context 且 struct key 未命中，
-// 则尝试用字符串 key（GinKeySQLDetails）从 gin.Keys 中获取。
 func CtxGetSQLDetails(ctx context.Context) *SQLDetails {
 	if d := ctx.Value(sqlDetailsKey{}); d != nil {
-		return d.(*SQLDetails)
-	}
-	// 兼容 *gin.Context：中间件通过 c.Set(GinKeySQLDetails, details) 存入，
-	// gin.Context.Value(stringKey) 会直接命中 c.Keys。
-	if d := ctx.Value(GinKeySQLDetails); d != nil {
 		return d.(*SQLDetails)
 	}
 	return nil
@@ -278,6 +266,7 @@ func CtxGetSQLDetails(ctx context.Context) *SQLDetails {
 // SQLDetails 记录一次请求中所有 SQL 执行的详情。
 type SQLDetails struct {
 	mu      sync.Mutex
+	TraceID string
 	Details []*SQLDetail
 }
 
@@ -305,15 +294,14 @@ func (d *SQLDetails) List() []*SQLDetail {
 
 // SQLDetail 单条 SQL 执行详情。
 type SQLDetail struct {
-	Cmd     string        // SQL 类型: SELECT, INSERT, UPDATE 等
-	Rows    int64         // 影响行数
-	SQL     string        // 完整的 SQL 语句(占位符已替换为实际值)
-	Cost    time.Duration // 耗时
-	Used    string        // 耗时字符串
-	Start   string        // 开始时间
-	End     string        // 结束时间
-	Err     string        // 错误信息(空表示无错误)
-	TraceID string        // 请求追踪 ID
+	Cmd   string        // SQL 类型: SELECT, INSERT, UPDATE 等
+	Rows  int64         // 影响行数
+	SQL   string        // 完整的 SQL 语句(占位符已替换为实际值)
+	Cost  time.Duration // 耗时
+	Used  string        // 耗时字符串
+	Start string        // 开始时间
+	End   string        // 结束时间
+	Err   string        // 错误信息(空表示无错误)
 }
 
 // FormatSQLDetails 将 SQLDetails 格式化为人类可读的字符串，方便调试输出。
@@ -325,18 +313,18 @@ func FormatSQLDetails(d *SQLDetails) string {
 	if len(list) == 0 {
 		return ""
 	}
+	var cost time.Duration
+	for _, detail := range list {
+		cost += detail.Cost
+	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "共 %d 条 SQL:\n", len(list))
+	fmt.Fprintf(&b, "共[%d]条 SQL, 总计耗时[%s]:\n", len(list), cost)
 	for i, detail := range list {
-		fmt.Fprintf(&b, "  [%d] %s | rows=%d | cost=%s", i+1, detail.Cmd, detail.Rows, detail.Used)
-		if detail.TraceID != "" {
-			fmt.Fprintf(&b, " | trace=%s", detail.TraceID)
-		}
+		fmt.Fprintf(&b, "  [%02d] rows=%d | cost=%s", i+1, detail.Rows, detail.Used)
 		if detail.Err != "" {
 			fmt.Fprintf(&b, " | err=%s", detail.Err)
 		}
-		b.WriteString("\n")
-		fmt.Fprintf(&b, "      %s\n", detail.SQL)
+		fmt.Fprintf(&b, "\n  %s\n", detail.SQL)
 	}
 	return b.String()
 }
@@ -355,7 +343,7 @@ func (l *LazySQLDetails) String() string {
 	return FormatSQLDetails(CtxGetSQLDetails(l.Ctx))
 }
 
-// Count 返回已收集的 SQL 条数。
+// Count 返回已收集的 SQL 条数。 模板中会使用 {{.SQLDetails.Count}}
 func (l *LazySQLDetails) Count() int {
 	if l == nil || l.Ctx == nil {
 		return 0
@@ -382,26 +370,6 @@ func CtxGetSQLHint(ctx context.Context) string {
 		return ""
 	}
 	if v := ctx.Value(sqlHintKey{}); v != nil {
-		return v.(string)
-	}
-	return ""
-}
-
-// ---------- context 中存取 trace ID ----------
-
-type traceIDKey struct{}
-
-// CtxWithTraceID 在 ctx 中注入 trace ID。
-func CtxWithTraceID(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, traceIDKey{}, id)
-}
-
-// CtxGetTraceID 从 ctx 中取出 trace ID。
-func CtxGetTraceID(ctx context.Context) string {
-	if ctx == nil {
-		return ""
-	}
-	if v := ctx.Value(traceIDKey{}); v != nil {
 		return v.(string)
 	}
 	return ""

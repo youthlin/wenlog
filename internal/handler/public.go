@@ -43,6 +43,7 @@ type publicSettings struct {
 	SayingPostID     uint
 	DefaultAvatar    string
 	RegistrationOpen bool
+	ShowSQLDetails   bool
 }
 
 // NewPublic 构造前台处理器。
@@ -91,6 +92,10 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 			data["SayingPost"] = p
 		}
 	}
+	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
+	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
+		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
+	}
 	return i18n.Inject(c, data)
 }
 
@@ -107,6 +112,7 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 		consts.SettingsSayingPageID,
 		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
+		consts.SettingsShowSQLDetails,
 	)
 	if err != nil && h.log != nil {
 		h.log.Error("load public settings", "error", err)
@@ -122,6 +128,7 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 		SayingPostID:     uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
 		DefaultAvatar:    util.NormalizeDefaultAvatar(settings[consts.SettingsDefaultAvatar]),
 		RegistrationOpen: settings[consts.SettingsRegistrationOpen] == "true",
+		ShowSQLDetails:   settings[consts.SettingsShowSQLDetails] == "true",
 	}
 }
 

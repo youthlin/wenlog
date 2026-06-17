@@ -12,12 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/youthlin/blog/internal/config"
-	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
@@ -59,24 +57,13 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	r.ContextWithFallback = true
 
 	// 中间件
-	sessionStore, err := middleware.NewDynamicCookieStore(st)
-	if err != nil {
-		log.Error("init session store", slog.Any("error", err))
-		os.Exit(1)
-	}
-	sessionStore.Options(sessions.Options{
-		Path:     "/",
-		HttpOnly: true,
-		MaxAge:   consts.SessionMaxAge,
-		SameSite: http.SameSiteLaxMode,
-	})
 	r.Use(
 		middleware.Recover(log),
 		middleware.TraceID(),
 		middleware.Logger(log),
 		middleware.Metrics(),
 		middleware.SQLTracer(log),
-		sessions.Sessions("blog_session", sessionStore),
+		middleware.Session(log, st)(),
 		i18n.Middleware(),
 	)
 

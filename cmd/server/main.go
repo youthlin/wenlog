@@ -8,6 +8,7 @@ import (
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/store"
 )
 
@@ -70,5 +71,6 @@ func newLogger(jsonOut bool) *slog.Logger {
 	} else {
 		h = slog.NewTextHandler(os.Stdout, opts)
 	}
+	h = middleware.NewCtxLoggerHandler(h)
 	return slog.New(h)
 }

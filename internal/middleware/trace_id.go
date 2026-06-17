@@ -5,11 +5,8 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"log/slog"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/youthlin/blog/internal/store"
 )
 
 type traceIDKey struct{}
@@ -18,10 +15,11 @@ type traceIDKey struct{}
 // 设置 X-Trace-Id 响应头，并注入到日志属性中。
 func TraceID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		traceID := generateTraceID()
-		ctx := context.WithValue(c.Request.Context(), traceIDKey{}, traceID)
-		ctx = store.CtxWithTraceID(ctx, traceID)
-		c.Request = c.Request.WithContext(ctx)
+		var traceID = generateTraceID()
+		ResetGinCtx(c, func(ctx context.Context) context.Context {
+			ctx = context.WithValue(ctx, traceIDKey{}, traceID)
+			return ctx
+		})
 		c.Set("TraceID", traceID)
 		c.Header("X-Trace-Id", traceID)
 		c.Next()
@@ -34,11 +32,6 @@ func GetTraceID(ctx context.Context) string {
 		return v.(string)
 	}
 	return ""
-}
-
-// TraceIDAttr 返回 slog.Attr("trace_id", id)，方便日志输出。
-func TraceIDAttr(ctx context.Context) slog.Attr {
-	return slog.String("trace_id", GetTraceID(ctx))
 }
 
 func generateTraceID() string {
