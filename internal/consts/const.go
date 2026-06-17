@@ -41,6 +41,8 @@ const (
 	SettingsSMTPFrom     = "smtp_from"
 	// 站点 URL(用于生成重置密码链接)
 	SettingsSiteURL = "site_url"
+	// 是否在 HTML 响应中输出 SQL 执行详情(仅管理员登录时)
+	SettingsShowSQLDetails = "show_sql_details"
 )
 
 // 安全相关常量。

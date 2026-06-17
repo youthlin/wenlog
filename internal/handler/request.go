@@ -37,14 +37,21 @@ func syncPostPermalink(ctx context.Context, st *store.Store) string {
 	categoryPrefix := consts.SettingsCategoryPrefixDefault
 	tagPrefix := consts.SettingsTagPrefixDefault
 	if st != nil {
-		if v, err := st.GetSetting(ctx, consts.SettingsPostPermalink); err == nil && strings.TrimSpace(v) != "" {
-			pattern = v
-		}
-		if v, err := st.GetSetting(ctx, consts.SettingsCategoryPrefix); err == nil && strings.TrimSpace(v) != "" {
-			categoryPrefix = v
-		}
-		if v, err := st.GetSetting(ctx, consts.SettingsTagPrefix); err == nil && strings.TrimSpace(v) != "" {
-			tagPrefix = v
+		settings, err := st.GetSettings(ctx,
+			consts.SettingsPostPermalink,
+			consts.SettingsCategoryPrefix,
+			consts.SettingsTagPrefix,
+		)
+		if err == nil {
+			if v := settings[consts.SettingsPostPermalink]; strings.TrimSpace(v) != "" {
+				pattern = v
+			}
+			if v := settings[consts.SettingsCategoryPrefix]; strings.TrimSpace(v) != "" {
+				categoryPrefix = v
+			}
+			if v := settings[consts.SettingsTagPrefix]; strings.TrimSpace(v) != "" {
+				tagPrefix = v
+			}
 		}
 	}
 	permalink.SetPostPattern(pattern)

@@ -120,6 +120,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["TemplateHotReload"] = h.renderer != nil && h.renderer.Hot()
 	data["AssetHotReload"] = h.assets != nil && h.assets.Hot()
 	data["I18nHotReload"] = i18n.Hot()
+	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
 	if c != nil && c.Query("message") == "templates-reloaded" {
@@ -151,6 +152,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "metrics-saved" {
 		data["Notice"] = tr.T("Metrics Basic Auth 密码已保存。")
+	}
+	if c != nil && c.Query("message") == "sql-details-saved" {
+		data["Notice"] = tr.T("SQL 调试设置已保存。")
 	}
 	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
 		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
@@ -297,6 +301,16 @@ func (h *Admin) SaveMetricsAuthSettings(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "metrics-saved"))
+}
+
+// SaveSQLDetailsSettings 保存 SQL 详情输出开关。
+func (h *Admin) SaveSQLDetailsSettings(c *gin.Context) {
+	showSQL := c.PostForm("show_sql_details") == "on"
+	if err := h.st.SetSetting(c, consts.SettingsShowSQLDetails, strconv.FormatBool(showSQL)); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "sql-details-saved"))
 }
 
 func (h *Admin) saveSMTPSettings(c *gin.Context) error {

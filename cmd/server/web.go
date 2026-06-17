@@ -56,6 +56,7 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	r.ContextWithFallback = true
 
 	// 中间件
 	sessionStore, err := middleware.NewDynamicCookieStore(st)
@@ -71,8 +72,10 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	})
 	r.Use(
 		middleware.Recover(log),
+		middleware.TraceID(),
 		middleware.Logger(log),
 		middleware.Metrics(),
+		middleware.SQLTracer(log),
 		sessions.Sessions("blog_session", sessionStore),
 		i18n.Middleware(),
 	)

@@ -84,6 +84,7 @@ func Logger(log *slog.Logger) gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 		log.Info("http request done",
+			slog.String("trace_id", GetTraceID(c.Request.Context())),
 			slog.String("method", c.Request.Method),
 			slog.String("path", c.Request.URL.Path),
 			slog.Int("status", c.Writer.Status()),
@@ -99,6 +100,7 @@ func Recover(log *slog.Logger) gin.HandlerFunc {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("panic recovered",
+					slog.String("trace_id", GetTraceID(c.Request.Context())),
 					slog.Any("error", r),
 					slog.String("path", c.Request.URL.Path),
 					slog.String("stack", string(debug.Stack())),

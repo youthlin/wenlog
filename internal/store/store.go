@@ -2,6 +2,7 @@
 package store
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -15,7 +16,7 @@ import (
 
 // Store 封装 gorm DB。
 type Store struct {
-	db *gorm.DB
+	gormDB *gorm.DB
 }
 
 // Open 打开 SQLite 数据库并执行自动迁移。
@@ -31,7 +32,11 @@ func Open(dbPath string) (*Store, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "open sqlite")
 	}
-	s := &Store{db: db}
+	// 注册 SQL 追踪插件，记录每次 SQL 执行的详情（可通过 ctx 注入 SQLDetails 收集）。
+	if err := db.Use(&GormSQLTracer{}); err != nil {
+		return nil, errors.Wrap(err, "register sql tracer")
+	}
+	s := &Store{gormDB: db}
 	if err := s.migrate(); err != nil {
 		return nil, err
 	}
@@ -39,10 +44,15 @@ func Open(dbPath string) (*Store, error) {
 }
 
 // DB 返回底层 gorm 句柄(供后台导入等场景直接使用)。
-func (s *Store) DB() *gorm.DB { return s.db }
+func (s *Store) DB() *gorm.DB { return s.gormDB }
+
+// db 返回带 context 的 gorm 句柄，确保 SQL 追踪插件能拿到 ctx。
+func (s *Store) db(ctx context.Context) *gorm.DB {
+	return s.gormDB.WithContext(ctx)
+}
 
 func (s *Store) migrate() error {
-	err := s.db.AutoMigrate(
+	err := s.gormDB.AutoMigrate(
 		&model.User{},
 		&model.PendingRegistration{},
 		&model.PendingEmailChange{},
@@ -57,8 +67,8 @@ func (s *Store) migrate() error {
 		return errors.Wrap(err, "auto migrate")
 	}
 	// old_slugs 已废弃,迁移时清理历史表。
-	if s.db.Migrator().HasTable("old_slugs") {
-		if err := s.db.Migrator().DropTable("old_slugs"); err != nil {
+	if s.gormDB.Migrator().HasTable("old_slugs") {
+		if err := s.gormDB.Migrator().DropTable("old_slugs"); err != nil {
 			return errors.Wrap(err, "drop old_slugs")
 		}
 	}

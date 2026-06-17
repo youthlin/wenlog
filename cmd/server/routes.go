@@ -119,6 +119,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store, lim
 	adminGroup.POST("/settings/smtp/test", adm.TestSMTPSettings)
 	adminGroup.POST("/settings/session", adm.SaveSessionSettings)
 	adminGroup.POST("/settings/metrics", adm.SaveMetricsAuthSettings)
+	adminGroup.POST("/settings/sql-details", adm.SaveSQLDetailsSettings)
 	adminGroup.POST("/settings/assets/release", adm.ReleaseAssets)
 	adminGroup.POST("/settings/assets/embed", adm.UseEmbeddedAssets)
 	adminGroup.POST("/settings/i18n/release", adm.ReleaseI18n)

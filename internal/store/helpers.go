@@ -57,7 +57,7 @@ func (s *Store) softDeleteComments(ctx context.Context, ids []uint) error {
 		return nil
 	}
 	return errors.Wrap(
-		s.db.Model(&model.Comment{}).
+		s.db(ctx).Model(&model.Comment{}).
 			Where("id IN ?", allIDs).
 			Update("status", model.CommentDeleted).Error,
 		"soft delete comments",
@@ -82,7 +82,7 @@ func (s *Store) commentTreeIDs(ctx context.Context, ids []uint) ([]uint, error) 
 			break
 		}
 		var children []uint
-		if err := s.db.Model(&model.Comment{}).
+		if err := s.db(ctx).Model(&model.Comment{}).
 			Where("parent_id IN ? OR reply_to_id IN ?", frontier, frontier).
 			Pluck("id", &children).
 			Error; err != nil {
@@ -218,10 +218,24 @@ func commentVisibleToViewer(c model.Comment, currentUserID uint, pendingCommentI
 	return false
 }
 func (s *Store) buildCommentWidgetItems(ctx context.Context, comments []model.Comment, pageSize int) []CommentWidgetItem {
-	items := make([]CommentWidgetItem, 0, len(comments))
+	if len(comments) == 0 {
+		return nil
+	}
+	// 批量查询所有关联文章，避免 N+1
+	postIDs := make([]uint, 0, len(comments))
 	for _, c := range comments {
-		p, err := s.PostMeta(ctx, c.PostID)
-		if err != nil || p.Status != model.StatusPublished {
+		postIDs = append(postIDs, c.PostID)
+	}
+	postMap, err := s.PostMetas(ctx, postIDs)
+	if err != nil {
+		return nil
+	}
+
+	items := make([]CommentWidgetItem, 0, len(comments))
+	for i := range comments {
+		c := &comments[i]
+		p, ok := postMap[c.PostID]
+		if !ok || p.Status != model.StatusPublished {
 			continue
 		}
 		base := "/"
@@ -230,9 +244,9 @@ func (s *Store) buildCommentWidgetItems(ctx context.Context, comments []model.Co
 		} else {
 			base = permalink.Post(p)
 		}
-		cpage := s.CommentPageForID(ctx, c.ID, pageSize)
+		cpage := s.CommentPageForComment(ctx, c, pageSize)
 		items = append(items, CommentWidgetItem{
-			Comment:    c,
+			Comment:    *c,
 			Post:       *p,
 			CommentURL: base + "?cpage=" + strconv.Itoa(cpage) + "#comment-" + strconv.Itoa(int(c.ID)),
 			AuthorURL:  strings.TrimSpace(c.URL),

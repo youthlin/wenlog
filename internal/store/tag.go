@@ -11,7 +11,7 @@ import (
 
 func (s *Store) TagSlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
 	var n int64
-	q := s.db.Model(&model.Tag{}).Where("slug = ?", slug)
+	q := s.db(ctx).Model(&model.Tag{}).Where("slug = ?", slug)
 	if excludeID > 0 {
 		q = q.Where("id <> ?", excludeID)
 	}
@@ -19,10 +19,10 @@ func (s *Store) TagSlugExists(ctx context.Context, slug string, excludeID uint) 
 	return n > 0, errors.Wrap(err, "count tag slug")
 }
 func (s *Store) SaveTag(ctx context.Context, tag *model.Tag) error {
-	return errors.Wrap(s.db.Save(tag).Error, "save tag")
+	return errors.Wrap(s.db(ctx).Save(tag).Error, "save tag")
 }
 func (s *Store) DeleteTag(ctx context.Context, id uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec("DELETE FROM post_tags WHERE tag_id = ?", id).Error; err != nil {
 			return errors.Wrap(err, "delete tag relations")
 		}
@@ -33,7 +33,7 @@ func (s *Store) DeleteTag(ctx context.Context, id uint) error {
 	})
 }
 func (s *Store) AdminListTags(ctx context.Context, keyword string, page, pageSize int) ([]model.Tag, int64, error) {
-	q := s.db.Model(&model.Tag{})
+	q := s.db(ctx).Model(&model.Tag{})
 	applyKeyword := func(db *gorm.DB) *gorm.DB {
 		if kw := strings.TrimSpace(keyword); kw != "" {
 			like := termQueryLike(kw)
@@ -47,7 +47,7 @@ func (s *Store) AdminListTags(ctx context.Context, keyword string, page, pageSiz
 		return nil, 0, errors.Wrap(err, "count tags")
 	}
 	var tags []model.Tag
-	listQ := applyKeyword(s.db.Model(&model.Tag{}))
+	listQ := applyKeyword(s.db(ctx).Model(&model.Tag{}))
 	err := listQ.Select("tags.*, COUNT(DISTINCT posts.id) AS post_count").
 		Joins("LEFT JOIN post_tags pt_count ON pt_count.tag_id = tags.id").
 		Joins("LEFT JOIN posts ON posts.id = pt_count.post_id AND posts.post_type = ?", model.PostTypePost).
@@ -57,6 +57,6 @@ func (s *Store) AdminListTags(ctx context.Context, keyword string, page, pageSiz
 }
 func (s *Store) AllTags(ctx context.Context) []model.Tag {
 	var ts []model.Tag
-	s.db.Order("name ASC").Find(&ts)
+	s.db(ctx).Order("name ASC").Find(&ts)
 	return ts
 }

@@ -1491,3 +1491,38 @@ body.admin.nav-open { overflow: hidden; }
   .table-scroll { margin-bottom: 8px; }
   .edit-form { padding: 14px; }
 }
+
+/* SQL 执行详情 footer */
+.sql-details-footer {
+  margin: 0;
+  padding: 0;
+  border-top: 2px solid var(--border);
+  background: var(--bg-secondary);
+}
+.sql-details-footer details {
+  padding: 12px 20px;
+}
+.sql-details-footer summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  user-select: none;
+}
+.sql-details-footer summary:hover {
+  color: var(--text);
+}
+.sql-details-content {
+  margin: 8px 0 0;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-secondary);
+  max-height: 400px;
+  overflow-y: auto;
+}

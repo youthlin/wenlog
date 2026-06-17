@@ -8,13 +8,13 @@ import (
 )
 
 func (s *Store) SaveUpload(ctx context.Context, u *model.Upload) error {
-	return errors.Wrap(s.db.Create(u).Error, "save upload")
+	return errors.Wrap(s.db(ctx).Create(u).Error, "save upload")
 }
 func (s *Store) ListUploads(ctx context.Context, page, pageSize int) ([]model.Upload, int64, error) {
 	return s.ListUploadsForUser(ctx, page, pageSize, 0)
 }
 func (s *Store) ListUploadsForUser(ctx context.Context, page, pageSize int, uploaderID uint) ([]model.Upload, int64, error) {
-	q := s.db.Model(&model.Upload{})
+	q := s.db(ctx).Model(&model.Upload{})
 	if uploaderID > 0 {
 		q = q.Where("uploader_id = ?", uploaderID)
 	}
@@ -29,11 +29,11 @@ func (s *Store) ListUploadsForUser(ctx context.Context, page, pageSize int, uplo
 }
 func (s *Store) GetUpload(ctx context.Context, id uint) (*model.Upload, error) {
 	var u model.Upload
-	if err := s.db.First(&u, id).Error; err != nil {
+	if err := s.db(ctx).First(&u, id).Error; err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 func (s *Store) DeleteUpload(ctx context.Context, id uint) error {
-	return errors.Wrap(s.db.Delete(&model.Upload{}, id).Error, "delete upload")
+	return errors.Wrap(s.db(ctx).Delete(&model.Upload{}, id).Error, "delete upload")
 }

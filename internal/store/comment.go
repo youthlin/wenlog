@@ -11,7 +11,7 @@ func (s *Store) AdminListComments(ctx context.Context, status string, postID uin
 	return s.AdminListCommentsForAuthor(ctx, status, postID, page, pageSize, 0)
 }
 func (s *Store) AdminListCommentsForAuthor(ctx context.Context, status string, postID uint, page, pageSize int, authorID uint) ([]model.Comment, int64, error) {
-	q := s.db.Model(&model.Comment{})
+	q := s.db(ctx).Model(&model.Comment{})
 	if authorID > 0 {
 		q = q.Joins("JOIN posts ON posts.id = comments.post_id").Where("posts.author_id = ?", authorID)
 	}
@@ -32,7 +32,7 @@ func (s *Store) AdminListCommentsForAuthor(ctx context.Context, status string, p
 }
 func (s *Store) SetCommentStatus(ctx context.Context, id uint, status string) error {
 	return errors.Wrap(
-		s.db.Model(&model.Comment{}).Where("id = ?", id).Update("status", status).Error,
+		s.db(ctx).Model(&model.Comment{}).Where("id = ?", id).Update("status", status).Error,
 		"set comment status")
 }
 func (s *Store) DeleteComment(ctx context.Context, id uint) error {
@@ -43,7 +43,7 @@ func (s *Store) UpdateCommentFields(ctx context.Context, id uint, fields map[str
 		return nil
 	}
 	return errors.Wrap(
-		s.db.Model(&model.Comment{}).Where("id = ?", id).Updates(fields).Error,
+		s.db(ctx).Model(&model.Comment{}).Where("id = ?", id).Updates(fields).Error,
 		"update comment fields")
 }
 func (s *Store) BatchSetCommentStatus(ctx context.Context, ids []uint, status string) error {
@@ -51,7 +51,7 @@ func (s *Store) BatchSetCommentStatus(ctx context.Context, ids []uint, status st
 		return nil
 	}
 	return errors.Wrap(
-		s.db.Model(&model.Comment{}).Where("id IN ?", ids).Update("status", status).Error,
+		s.db(ctx).Model(&model.Comment{}).Where("id IN ?", ids).Update("status", status).Error,
 		"batch set comment status")
 }
 func (s *Store) BatchDeleteComments(ctx context.Context, ids []uint) error {
@@ -61,7 +61,7 @@ func (s *Store) BatchDeleteComments(ctx context.Context, ids []uint) error {
 	return s.softDeleteComments(ctx, ids)
 }
 func (s *Store) ListCommentsByUser(ctx context.Context, userID uint, page, pageSize int) ([]model.Comment, int64, error) {
-	q := s.db.Model(&model.Comment{}).Where("user_id = ?", userID)
+	q := s.db(ctx).Model(&model.Comment{}).Where("user_id = ?", userID)
 	var total int64
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, errors.Wrap(err, "count user comments")
@@ -71,7 +71,7 @@ func (s *Store) ListCommentsByUser(ctx context.Context, userID uint, page, pageS
 	return comments, total, errors.Wrap(err, "list user comments")
 }
 func (s *Store) DeleteCommentByUser(ctx context.Context, commentID, userID uint) error {
-	result := s.db.Model(&model.Comment{}).
+	result := s.db(ctx).Model(&model.Comment{}).
 		Where("id = ? AND user_id = ?", commentID, userID).
 		Update("status", model.CommentDeleted)
 	if result.RowsAffected == 0 {
@@ -81,7 +81,7 @@ func (s *Store) DeleteCommentByUser(ctx context.Context, commentID, userID uint)
 }
 func (s *Store) ApprovedComments(ctx context.Context, postID uint) ([]model.Comment, error) {
 	var comments []model.Comment
-	err := s.db.Where("post_id = ? AND status = ?", postID, model.CommentApproved).
+	err := s.db(ctx).Where("post_id = ? AND status = ?", postID, model.CommentApproved).
 		Order("created_at ASC").Find(&comments).Error
 	if err != nil {
 		return nil, errors.Wrap(err, "approved comments")
@@ -103,12 +103,12 @@ func (s *Store) VisibleCommentsPageForViewer(ctx context.Context, postID uint, p
 	}
 
 	var totalAll int64
-	if err := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
+	if err := visibleCommentsQuery(s.db(ctx).Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
 		Count(&totalAll).Error; err != nil {
 		return nil, errors.Wrap(err, "count visible comments")
 	}
 
-	qTop := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
+	qTop := visibleCommentsQuery(s.db(ctx).Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
 		Where("parent_id = 0")
 	var totalTop int64
 	if err := qTop.Count(&totalTop).Error; err != nil {
@@ -147,7 +147,7 @@ func (s *Store) VisibleCommentsPageForViewer(ctx context.Context, postID uint, p
 	}
 	for len(frontier) > 0 {
 		var nextGen []model.Comment
-		if err := visibleCommentsQuery(s.db.Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
+		if err := visibleCommentsQuery(s.db(ctx).Model(&model.Comment{}), postID, currentUserID, pendingCommentIDs).
 			Where("parent_id IN ?", frontier).
 			Order("created_at ASC").Find(&nextGen).Error; err != nil {
 			return nil, errors.Wrap(err, "list child comments")
@@ -189,12 +189,44 @@ func (s *Store) VisibleCommentsPageForViewer(ctx context.Context, postID uint, p
 		out = append(out, top)
 		out = append(out, index[top.ID]...)
 	}
-	populateReplyToAuthors(s.db, out)
-	populateCommenterRoles(s.db, out, postID)
+	populateReplyToAuthors(s.gormDB, out)
+	populateCommenterRoles(s.gormDB, out, postID)
 	return &CommentPageResult{Comments: out, TotalComments: totalAll, TotalTop: totalTop, Page: page, Pages: pages}, nil
 }
 func (s *Store) CommentPageForID(ctx context.Context, commentID uint, pageSize int) int {
 	return s.VisibleCommentPageForViewerID(ctx, commentID, pageSize, 0, nil)
+}
+
+// CommentPageForComment 与 CommentPageForID 相同，但直接使用已加载的评论对象，避免重复查询。
+func (s *Store) CommentPageForComment(ctx context.Context, c *model.Comment, pageSize int) int {
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	if c.Status != model.CommentApproved {
+		return 1
+	}
+	rootID := c.ID
+	rootCreatedAt := c.CreatedAt
+	if c.ParentID != 0 {
+		var parent model.Comment
+		if err := s.db(ctx).Select("id", "created_at", "status", "user_id").
+			First(&parent, c.ParentID).
+			Error; err != nil {
+			return 1
+		}
+		if parent.Status != model.CommentApproved {
+			return 1
+		}
+		rootID = parent.ID
+		rootCreatedAt = parent.CreatedAt
+	}
+	var newer int64
+	_ = s.db(ctx).Model(&model.Comment{}).
+		Where("post_id = ? AND status = ?", c.PostID, model.CommentApproved).
+		Where("parent_id = 0").
+		Where("created_at > ? OR (created_at = ? AND id > ?)", rootCreatedAt, rootCreatedAt, rootID).
+		Count(&newer).Error
+	return int(newer)/pageSize + 1
 }
 func (s *Store) VisibleCommentPageForID(ctx context.Context, commentID uint, pageSize int, currentUserID uint) int {
 	return s.VisibleCommentPageForViewerID(ctx, commentID, pageSize, currentUserID, nil)
@@ -204,7 +236,7 @@ func (s *Store) VisibleCommentPageForViewerID(ctx context.Context, commentID uin
 		pageSize = 20
 	}
 	var c model.Comment
-	if err := s.db.Select("id", "post_id", "parent_id", "created_at", "status", "user_id").
+	if err := s.db(ctx).Select("id", "post_id", "parent_id", "created_at", "status", "user_id").
 		First(&c, commentID).
 		Error; err != nil {
 		return 1
@@ -216,7 +248,7 @@ func (s *Store) VisibleCommentPageForViewerID(ctx context.Context, commentID uin
 	rootCreatedAt := c.CreatedAt
 	if c.ParentID != 0 {
 		var parent model.Comment
-		if err := s.db.Select("id", "created_at", "status", "user_id").
+		if err := s.db(ctx).Select("id", "created_at", "status", "user_id").
 			First(&parent, c.ParentID).
 			Error; err != nil {
 			return 1
@@ -228,7 +260,7 @@ func (s *Store) VisibleCommentPageForViewerID(ctx context.Context, commentID uin
 		rootCreatedAt = parent.CreatedAt
 	}
 	var newer int64
-	_ = visibleCommentsQuery(s.db.Model(&model.Comment{}), c.PostID, currentUserID, pendingCommentIDs).
+	_ = visibleCommentsQuery(s.db(ctx).Model(&model.Comment{}), c.PostID, currentUserID, pendingCommentIDs).
 		Where("parent_id = 0").
 		Where("created_at > ? OR (created_at = ? AND id > ?)", rootCreatedAt, rootCreatedAt, rootID).
 		Count(&newer).Error
@@ -239,7 +271,7 @@ func (s *Store) ResolveCommentReply(ctx context.Context, postID uint, replyToID 
 		return 0, 0, nil
 	}
 	var target model.Comment
-	if err := s.db.Select("id", "post_id", "parent_id", "status", "user_id").First(&target, replyToID).Error; err != nil {
+	if err := s.db(ctx).Select("id", "post_id", "parent_id", "status", "user_id").First(&target, replyToID).Error; err != nil {
 		return 0, 0, errors.Wrap(err, "get reply target")
 	}
 	if target.PostID != postID || (target.Status != model.CommentApproved && !commentVisibleToViewer(target, currentUserID, pendingCommentIDs)) {
@@ -249,7 +281,7 @@ func (s *Store) ResolveCommentReply(ctx context.Context, postID uint, replyToID 
 		return target.ID, target.ID, nil
 	}
 	var parent model.Comment
-	if err := s.db.Select("id", "post_id", "status", "user_id").First(&parent, target.ParentID).Error; err != nil {
+	if err := s.db(ctx).Select("id", "post_id", "status", "user_id").First(&parent, target.ParentID).Error; err != nil {
 		return 0, 0, errors.Wrap(err, "get reply parent")
 	}
 	if parent.PostID != postID || (parent.Status != model.CommentApproved && !commentVisibleToViewer(parent, currentUserID, pendingCommentIDs)) {
@@ -258,11 +290,11 @@ func (s *Store) ResolveCommentReply(ctx context.Context, postID uint, replyToID 
 	return parent.ID, target.ID, nil
 }
 func (s *Store) CreateComment(ctx context.Context, c *model.Comment) error {
-	return errors.Wrap(s.db.Create(c).Error, "create comment")
+	return errors.Wrap(s.db(ctx).Create(c).Error, "create comment")
 }
 func (s *Store) GetCommentByID(ctx context.Context, id uint) (*model.Comment, error) {
 	var c model.Comment
-	if err := s.db.First(&c, id).Error; err != nil {
+	if err := s.db(ctx).First(&c, id).Error; err != nil {
 		return nil, errors.Wrap(err, "get comment by id")
 	}
 	return &c, nil
@@ -272,21 +304,21 @@ func (s *Store) CommentsByIDs(ctx context.Context, ids []uint) ([]model.Comment,
 		return nil, nil
 	}
 	var comments []model.Comment
-	if err := s.db.Where("id IN ?", ids).Find(&comments).Error; err != nil {
+	if err := s.db(ctx).Where("id IN ?", ids).Find(&comments).Error; err != nil {
 		return nil, errors.Wrap(err, "comments by ids")
 	}
 	return comments, nil
 }
 func (s *Store) RecentCommentCountByIP(ctx context.Context, ip string, sinceUnix int64) (int64, error) {
 	var n int64
-	err := s.db.Model(&model.Comment{}).
+	err := s.db(ctx).Model(&model.Comment{}).
 		Where("ip = ? AND created_at > datetime(?, 'unixepoch')", ip, sinceUnix).
 		Count(&n).Error
 	return n, errors.Wrap(err, "recent comment count")
 }
 func (s *Store) RecentComments(ctx context.Context, n int) []model.Comment {
 	var cs []model.Comment
-	s.db.Where("status = ?", model.CommentApproved).
+	s.db(ctx).Where("status = ?", model.CommentApproved).
 		Order("created_at DESC").Limit(n).Find(&cs)
 	return cs
 }
@@ -296,9 +328,9 @@ func (s *Store) RecentCommentItems(ctx context.Context, n, pageSize int) []Comme
 }
 func (s *Store) SayingComments(ctx context.Context, postID uint, n int) []model.Comment {
 	var cs []model.Comment
-	s.db.Where("post_id = ? AND status = ? AND user_id = (?)",
+	s.db(ctx).Where("post_id = ? AND status = ? AND user_id = (?)",
 		postID, model.CommentApproved,
-		s.db.Model(&model.Post{}).Select("author_id").Where("id = ?", postID)).
+		s.db(ctx).Model(&model.Post{}).Select("author_id").Where("id = ?", postID)).
 		Order("created_at DESC").Limit(n).Find(&cs)
 	return cs
 }

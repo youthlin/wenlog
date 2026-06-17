@@ -11,7 +11,7 @@ import (
 
 func (s *Store) CategorySlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
 	var n int64
-	q := s.db.Model(&model.Category{}).Where("slug = ?", slug)
+	q := s.db(ctx).Model(&model.Category{}).Where("slug = ?", slug)
 	if excludeID > 0 {
 		q = q.Where("id <> ?", excludeID)
 	}
@@ -19,10 +19,10 @@ func (s *Store) CategorySlugExists(ctx context.Context, slug string, excludeID u
 	return n > 0, errors.Wrap(err, "count category slug")
 }
 func (s *Store) SaveCategory(ctx context.Context, cat *model.Category) error {
-	return errors.Wrap(s.db.Save(cat).Error, "save category")
+	return errors.Wrap(s.db(ctx).Save(cat).Error, "save category")
 }
 func (s *Store) DeleteCategory(ctx context.Context, id uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
 		var cat model.Category
 		if err := tx.First(&cat, id).Error; err != nil {
 			return errors.Wrap(err, "load category")
@@ -75,7 +75,7 @@ func (s *Store) DeleteCategory(ctx context.Context, id uint) error {
 	})
 }
 func (s *Store) AdminListCategories(ctx context.Context, keyword string, page, pageSize int) ([]model.Category, int64, error) {
-	q := s.db.Model(&model.Category{})
+	q := s.db(ctx).Model(&model.Category{})
 	applyKeyword := func(db *gorm.DB) *gorm.DB {
 		if kw := strings.TrimSpace(keyword); kw != "" {
 			like := termQueryLike(kw)
@@ -89,7 +89,7 @@ func (s *Store) AdminListCategories(ctx context.Context, keyword string, page, p
 		return nil, 0, errors.Wrap(err, "count categories")
 	}
 	var categories []model.Category
-	listQ := applyKeyword(s.db.Model(&model.Category{}))
+	listQ := applyKeyword(s.db(ctx).Model(&model.Category{}))
 	err := listQ.Select("categories.*, COUNT(DISTINCT posts.id) AS post_count").
 		Joins("LEFT JOIN post_categories pc_count ON pc_count.category_id = categories.id").
 		Joins("LEFT JOIN posts ON posts.id = pc_count.post_id AND posts.post_type = ?", model.PostTypePost).
@@ -99,6 +99,6 @@ func (s *Store) AdminListCategories(ctx context.Context, keyword string, page, p
 }
 func (s *Store) AllCategories(ctx context.Context) []model.Category {
 	var cs []model.Category
-	s.db.Order("name ASC").Find(&cs)
+	s.db(ctx).Order("name ASC").Find(&cs)
 	return cs
 }

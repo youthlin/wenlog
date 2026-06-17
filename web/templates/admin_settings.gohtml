@@ -85,6 +85,19 @@
         <p><button type="submit" class="btn">{{.t.T "保存 Metrics 密码"}}</button></p>
       </form>
     </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "SQL 调试"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/sql-details">
+        {{template "csrf_field" .}}
+        <div class="inline-setting-row">
+          <span class="inline-setting-title">{{.t.T "在 HTML 响应中输出 SQL 执行详情（仅管理员登录时）"}}</span>
+          <label class="checkbox-label inline-checkbox"><input type="checkbox" name="show_sql_details" {{if .ShowSQLDetails}}checked{{end}}> {{.t.T "开启"}}</label>
+        </div>
+        <p class="tip">{{.t.T "开启后，管理员登录后台时，每页底部会显示本次请求执行的所有 SQL 语句及耗时。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存 SQL 调试设置"}}</button></p>
+      </form>
+    </section>
   </div>
 </div>
 {{else}}

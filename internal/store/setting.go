@@ -10,7 +10,7 @@ import (
 
 func (s *Store) GetSetting(ctx context.Context, key string) (string, error) {
 	var st model.Setting
-	err := s.db.First(&st, "key = ?", key).Error
+	err := s.db(ctx).First(&st, "key = ?", key).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", nil
 	}
@@ -25,7 +25,7 @@ func (s *Store) GetSettings(ctx context.Context, keys ...string) (map[string]str
 		return out, nil
 	}
 	var items []model.Setting
-	if err := s.db.Where("key IN ?", keys).Find(&items).Error; err != nil {
+	if err := s.db(ctx).Where("key IN ?", keys).Find(&items).Error; err != nil {
 		return nil, errors.Wrap(err, "list settings")
 	}
 	for _, key := range keys {
@@ -38,10 +38,10 @@ func (s *Store) GetSettings(ctx context.Context, keys ...string) (map[string]str
 }
 func (s *Store) SetSetting(ctx context.Context, key, value string) error {
 	st := &model.Setting{Key: key, Value: value}
-	return errors.Wrap(s.db.Save(st).Error, "save setting")
+	return errors.Wrap(s.db(ctx).Save(st).Error, "save setting")
 }
 func (s *Store) DebugQuery(ctx context.Context, sql string) ([]map[string]any, error) {
-	rows, err := s.db.Raw(sql).Rows()
+	rows, err := s.db(ctx).Raw(sql).Rows()
 	if err != nil {
 		return nil, errors.Wrap(err, "debug query")
 	}

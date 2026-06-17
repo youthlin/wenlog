@@ -88,6 +88,12 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		if role, ok := s.Get(middleware.SessionRoleKey).(string); ok {
 			data["CurrentUserRole"] = role
 		}
+		// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
+		if currentUser != nil && currentUser.Role == model.RoleAdmin {
+			if showSQL, _ := h.st.GetSetting(c, consts.SettingsShowSQLDetails); showSQL == "true" {
+				data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
+			}
+		}
 	}
 	return i18n.Inject(c, data)
 }
