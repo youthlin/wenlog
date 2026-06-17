@@ -96,9 +96,18 @@ func injectSQLHint(db *gorm.DB) {
 		return
 	}
 	oldSQL := db.Statement.SQL.String()
-	db.Statement.SQL.Reset()
-	db.Statement.SQL.WriteString("/*" + hint + "*/ ")
-	db.Statement.SQL.WriteString(oldSQL)
+	// 将 hint 注释放在第一个 SQL 关键字之后，避免破坏 getFirstWord 的解析
+	firstWordEnd := strings.IndexByte(oldSQL, ' ')
+	if firstWordEnd > 0 {
+		db.Statement.SQL.Reset()
+		db.Statement.SQL.WriteString(oldSQL[:firstWordEnd])
+		db.Statement.SQL.WriteString(" /*" + hint + "*/")
+		db.Statement.SQL.WriteString(oldSQL[firstWordEnd:])
+	} else {
+		db.Statement.SQL.Reset()
+		db.Statement.SQL.WriteString("/*" + hint + "*/ ")
+		db.Statement.SQL.WriteString(oldSQL)
+	}
 }
 
 // callerHint 从调用栈中提取第一个有意义的调用者函数名作为 hint。
@@ -317,18 +326,17 @@ func FormatSQLDetails(d *SQLDetails) string {
 		return ""
 	}
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("共 %d 条 SQL:\n", len(list)))
+	fmt.Fprintf(&b, "共 %d 条 SQL:\n", len(list))
 	for i, detail := range list {
-		b.WriteString(fmt.Sprintf("  [%d] %s | rows=%d | cost=%s",
-			i+1, detail.Cmd, detail.Rows, detail.Used))
+		fmt.Fprintf(&b, "  [%d] %s | rows=%d | cost=%s", i+1, detail.Cmd, detail.Rows, detail.Used)
 		if detail.TraceID != "" {
-			b.WriteString(fmt.Sprintf(" | trace=%s", detail.TraceID))
+			fmt.Fprintf(&b, " | trace=%s", detail.TraceID)
 		}
 		if detail.Err != "" {
-			b.WriteString(fmt.Sprintf(" | err=%s", detail.Err))
+			fmt.Fprintf(&b, " | err=%s", detail.Err)
 		}
 		b.WriteString("\n")
-		b.WriteString(fmt.Sprintf("      %s\n", detail.SQL))
+		fmt.Fprintf(&b, "      %s\n", detail.SQL)
 	}
 	return b.String()
 }
