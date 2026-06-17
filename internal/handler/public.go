@@ -76,17 +76,18 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		"CSRFToken":          csrfToken,
 		"RegistrationOpen":   s.RegistrationOpen,
 		"MailEnabled":        h.mailEnabled(),
-		"RecentComments":     h.st.RecentComments(c, 8),
 		"RecentCommentItems": h.st.RecentCommentItems(c, 8, commentPageSize),
 		"RecentPosts":        h.st.RecentPosts(c, 8),
-		"SayingComments":     h.st.SayingComments(c, s.SayingPostID, 5),
 		"SayingCommentItems": h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize),
 		"ArchiveMonths":      h.st.ArchiveMonths(c),
 		"Categories":         h.st.AllCategories(c),
 		"Tags":               h.st.AllTags(c),
 	}
 	if s.SayingPostID > 0 {
-		if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
+		// 优先从 SayingCommentItems 中提取 saying post，避免重复查库
+		if items, ok := data["SayingCommentItems"].([]store.CommentWidgetItem); ok && len(items) > 0 {
+			data["SayingPost"] = &items[0].Post
+		} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
 			data["SayingPost"] = p
 		}
 	}

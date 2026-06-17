@@ -232,6 +232,12 @@ func (s *Store) buildCommentWidgetItems(ctx context.Context, comments []model.Co
 	}
 
 	items := make([]CommentWidgetItem, 0, len(comments))
+	// 批量计算所有评论的页码，避免 N+1 查询
+	commentPtrs := make([]*model.Comment, len(comments))
+	for i := range comments {
+		commentPtrs[i] = &comments[i]
+	}
+	pages := s.CommentPagesForComments(ctx, commentPtrs, pageSize)
 	for i := range comments {
 		c := &comments[i]
 		p, ok := postMap[c.PostID]
@@ -244,7 +250,10 @@ func (s *Store) buildCommentWidgetItems(ctx context.Context, comments []model.Co
 		} else {
 			base = permalink.Post(p)
 		}
-		cpage := s.CommentPageForComment(ctx, c, pageSize)
+		cpage := pages[c.ID]
+		if cpage < 1 {
+			cpage = 1
+		}
 		items = append(items, CommentWidgetItem{
 			Comment:    *c,
 			Post:       *p,

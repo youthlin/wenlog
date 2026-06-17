@@ -3,6 +3,8 @@ package store
 
 import (
 	"context"
+	"time"
+
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/model"
 )
@@ -227,6 +229,94 @@ func (s *Store) CommentPageForComment(ctx context.Context, c *model.Comment, pag
 		Where("created_at > ? OR (created_at = ? AND id > ?)", rootCreatedAt, rootCreatedAt, rootID).
 		Count(&newer).Error
 	return int(newer)/pageSize + 1
+}
+
+// commentPageResult 用于批量计算评论页码的中间结果。
+type commentPageResult struct {
+	ID        uint
+	CreatedAt time.Time
+}
+
+// CommentPagesForComments 批量计算多条评论的页码，避免 N+1 查询。
+func (s *Store) CommentPagesForComments(ctx context.Context, comments []*model.Comment, pageSize int) map[uint]int {
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	result := make(map[uint]int, len(comments))
+	if len(comments) == 0 {
+		return result
+	}
+
+	// 1. 收集需要查父评论的回复
+	parentIDs := make([]uint, 0)
+	parentMap := make(map[uint]*model.Comment) // childID -> parent
+	for _, c := range comments {
+		if c.Status != model.CommentApproved {
+			result[c.ID] = 1
+			continue
+		}
+		if c.ParentID != 0 {
+			parentIDs = append(parentIDs, c.ParentID)
+		}
+	}
+	if len(parentIDs) > 0 {
+		var parents []model.Comment
+		if err := s.db(ctx).Select("id", "created_at", "status").
+			Where("id IN ?", parentIDs).Find(&parents).Error; err == nil {
+			for i := range parents {
+				for _, c := range comments {
+					if c.ParentID == parents[i].ID {
+						parentMap[c.ID] = &parents[i]
+					}
+				}
+			}
+		}
+	}
+
+	// 2. 按 post 分组，批量查每个 post 的顶层评论列表
+	postRoots := make(map[uint][]commentPageResult)
+	postIDs := make(map[uint]bool)
+	for _, c := range comments {
+		if _, done := result[c.ID]; done {
+			continue
+		}
+		postIDs[c.PostID] = true
+	}
+	for pid := range postIDs {
+		var roots []commentPageResult
+		s.db(ctx).Model(&model.Comment{}).
+			Select("id", "created_at").
+			Where("post_id = ? AND status = ? AND parent_id = 0", pid, model.CommentApproved).
+			Order("created_at ASC, id ASC").Find(&roots)
+		postRoots[pid] = roots
+	}
+
+	// 3. 计算每条评论的页码
+	for _, c := range comments {
+		if _, done := result[c.ID]; done {
+			continue
+		}
+		rootID := c.ID
+		rootCreatedAt := c.CreatedAt
+		if c.ParentID != 0 {
+			if parent, ok := parentMap[c.ID]; ok && parent.Status == model.CommentApproved {
+				rootID = parent.ID
+				rootCreatedAt = parent.CreatedAt
+			} else {
+				result[c.ID] = 1
+				continue
+			}
+		}
+		roots := postRoots[c.PostID]
+		newer := 0
+		for _, r := range roots {
+			if r.CreatedAt.After(rootCreatedAt) || (r.CreatedAt.Equal(rootCreatedAt) && r.ID > rootID) {
+				newer++
+			}
+		}
+		result[c.ID] = newer/pageSize + 1
+	}
+	return result
 }
 func (s *Store) VisibleCommentPageForID(ctx context.Context, commentID uint, pageSize int, currentUserID uint) int {
 	return s.VisibleCommentPageForViewerID(ctx, commentID, pageSize, currentUserID, nil)
