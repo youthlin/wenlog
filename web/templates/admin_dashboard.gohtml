@@ -25,7 +25,7 @@
     <span class="stat-value">{{.Stats.PostsPublished}}</span>
     <span class="stat-label">{{.t.T "已发布文章"}}</span>
     {{- if gt .Stats.PostsDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .Stats.PostsDraft .Stats.PostsDraft}}</span>
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .Stats.PostsDraft .Stats.PostsDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/posts?type=page">
@@ -33,7 +33,7 @@
     <span class="stat-value">{{.Stats.PagesPublished}}</span>
     <span class="stat-label">{{.t.T "已发布页面"}}</span>
     {{- if gt .Stats.PagesDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .Stats.PagesDraft .Stats.PagesDraft}}</span>
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .Stats.PagesDraft .Stats.PagesDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/comments">
@@ -41,7 +41,7 @@
     <span class="stat-value">{{.Stats.Comments.Approved}}</span>
     <span class="stat-label">{{.t.T "已批准评论"}}</span>
     {{- if gt .Stats.Comments.Pending 0}}
-    <span class="stat-sub stat-warn">{{.t.N64 "%d 条待审" "%d 条待审" .Stats.Comments.Pending .Stats.Comments.Pending}}</span>
+    <span class="stat-sub stat-warn">{{.t.N1_64 "%d 条待审" .Stats.Comments.Pending .Stats.Comments.Pending}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/categories">
@@ -78,7 +78,7 @@
     <span class="stat-value">{{.AuthorStats.PostsPublished}}</span>
     <span class="stat-label">{{.t.T "我的已发布文章"}}</span>
     {{- if gt .AuthorStats.PostsDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .AuthorStats.PostsDraft .AuthorStats.PostsDraft}}</span>
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .AuthorStats.PostsDraft .AuthorStats.PostsDraft}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/posts?type=page">
@@ -86,7 +86,7 @@
     <span class="stat-value">{{.AuthorStats.PagesPublished}}</span>
     <span class="stat-label">{{.t.T "我的已发布页面"}}</span>
     {{- if gt .AuthorStats.PagesDraft 0}}
-    <span class="stat-sub">{{.t.N64 "%d 篇草稿" "%d 篇草稿" .AuthorStats.PagesDraft .AuthorStats.PagesDraft}}</span>
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .AuthorStats.PagesDraft .AuthorStats.PagesDraft}}</span>
     {{- end}}
   </a>
 </div>
@@ -104,7 +104,7 @@
     <span class="stat-value">{{.ReaderStats.CommentCount}}</span>
     <span class="stat-label">{{.t.T "我的评论"}}</span>
     {{- if gt .ReaderStats.PendingCommentCount 0}}
-    <span class="stat-sub stat-warn">{{.t.N64 "%d 条待审" "%d 条待审" .ReaderStats.PendingCommentCount .ReaderStats.PendingCommentCount}}</span>
+    <span class="stat-sub stat-warn">{{.t.N1_64 "%d 条待审" .ReaderStats.PendingCommentCount .ReaderStats.PendingCommentCount}}</span>
     {{- end}}
   </a>
   <a class="stat-card" href="/admin/posts?type=post">

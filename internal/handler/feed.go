@@ -34,6 +34,7 @@ type rssItem struct {
 
 // Feed 输出 RSS,保留 WordPress 的 /feed 链接。
 func (h *Public) Feed(c *gin.Context) {
+	syncPostPermalink(c, h.st)
 	s := h.loadSettings(c)
 	res, err := h.st.ListPosts(c, 1, s.FeedSize, "", "")
 	if err != nil {

@@ -320,11 +320,11 @@ func FormatSQLDetails(d *SQLDetails) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "共[%d]条 SQL, 总计耗时[%s]:\n", len(list), cost)
 	for i, detail := range list {
-		fmt.Fprintf(&b, "  [%02d] rows=%d | cost=%s", i+1, detail.Rows, detail.Used)
+		fmt.Fprintf(&b, "[%02d] rows=%d | cost=%s", i+1, detail.Rows, detail.Used)
 		if detail.Err != "" {
 			fmt.Fprintf(&b, " | err=%s", detail.Err)
 		}
-		fmt.Fprintf(&b, "\n  %s\n", detail.SQL)
+		fmt.Fprintf(&b, "\n%s\n", detail.SQL)
 	}
 	return b.String()
 }

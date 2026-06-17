@@ -123,7 +123,7 @@
   </section>
 </div>
 {{end}}
-<p class="total">{{if eq .CurrentTermsSection "tag"}}{{.t.N64 "共 %d 个标签" "共 %d 个标签" .Total .Total}}{{else}}{{.t.N64 "共 %d 个分类" "共 %d 个分类" .Total .Total}}{{end}}</p>
+<p class="total">{{if eq .CurrentTermsSection "tag"}}{{.t.N1_64 "共 %d 个标签" .Total .Total}}{{else}}{{.t.N1_64 "共 %d 个分类" .Total .Total}}{{end}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
   {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}

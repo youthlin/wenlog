@@ -104,7 +104,6 @@ func (h *Public) mailEnabled() bool {
 }
 
 func (h *Public) loadSettings(ctx context.Context) publicSettings {
-	postPermalink := syncPostPermalink(ctx, h.st)
 	settings, err := h.st.GetSettings(ctx, consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
 		consts.SettingsPageSize,
@@ -120,7 +119,7 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 	return publicSettings{
 		SiteName:         util.FirstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription:  settings[consts.SettingsSiteDesc],
-		PostPermalink:    postPermalink,
+		PostPermalink:    permalink.CurrentPostPattern(),
 		CategoryPrefix:   permalink.CurrentCategoryPrefix(),
 		TagPrefix:        permalink.CurrentTagPrefix(),
 		PageSize:         positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
@@ -171,6 +170,7 @@ func (h *Public) currentUser(c *gin.Context) *model.User {
 
 func (h *Public) Index(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
+	syncPostPermalink(c, h.st)
 	s := h.loadSettings(c)
 	res, err := h.st.ListPosts(c, page, s.PageSize, "", "")
 	if err != nil {
@@ -187,6 +187,7 @@ func (h *Public) Index(c *gin.Context) {
 func (h *Public) Search(c *gin.Context) {
 	kw := strings.TrimSpace(c.Query("q"))
 	page := atoiDefault(c.Query("page"), 1)
+	syncPostPermalink(c, h.st)
 	s := h.loadSettings(c)
 	var res *store.ListPostsResult
 	var err error
@@ -498,6 +499,10 @@ func currentYear() int { return time.Now().Year() }
 func singleSegmentSlug(path string) (string, bool) {
 	path = strings.Trim(path, "/")
 	if path == "" || strings.ContainsRune(path, '/') {
+		return "", false
+	}
+	// 排除文章永久链接格式（如 /20241.html），避免无用的 page 查询
+	if strings.HasSuffix(path, ".html") {
 		return "", false
 	}
 	return path, true

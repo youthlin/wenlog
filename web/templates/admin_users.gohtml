@@ -2,7 +2,7 @@
 {{template "admin_header" .}}
 <h1>{{.t.T "用户管理"}}</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-<p class="total">{{.t.N64 "共 %d 位用户" "共 %d 位用户" .Total .Total}} · <a href="/admin/user/new" class="btn">{{.t.T "新增用户"}}</a></p>
+<p class="total">{{.t.N1_64 "共 %d 位用户" .Total .Total}} · <a href="/admin/user/new" class="btn">{{.t.T "新增用户"}}</a></p>
 <div class="table-scroll">
   <table class="data-table users-table">
     <thead><tr><th>{{.t.T "用户名"}}</th><th>{{.t.T "显示名"}}</th><th>{{.t.T "邮箱"}}</th><th>{{.t.T "角色"}}</th><th>{{.t.T "注册时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>

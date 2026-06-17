@@ -124,7 +124,7 @@
     </tbody>
   </table>
 </div>
-<p class="total">{{if eq .PostType "page"}}{{.t.N64 "共 %d 个页面" "共 %d 个页面" .Total .Total}}{{else}}{{.t.N64 "共 %d 篇文章" "共 %d 篇文章" .Total .Total}}{{end}}</p>
+<p class="total">{{if eq .PostType "page"}}{{.t.N1_64 "共 %d 个页面" .Total .Total}}{{else}}{{.t.N1_64 "共 %d 篇文章" .Total .Total}}{{end}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
   {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}

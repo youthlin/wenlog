@@ -109,7 +109,7 @@
   </table>
 </div>
 
-<p class="total">{{.t.N64 "共 %d 条评论" "共 %d 条评论" .Total .Total}}</p>
+<p class="total">{{.t.N1_64 "共 %d 条评论" .Total .Total}}</p>
 {{if gt .Pages 1}}
 <nav class="pagination">
   {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}

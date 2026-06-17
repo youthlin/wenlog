@@ -117,10 +117,14 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 	data["t"] = translator
 	data["T"] = translator.T
 	data["N"] = translator.N
+	data["N1"] = translator.N1
 	data["N64"] = translator.N64
+	data["N1_64"] = translator.N1_64
 	data["X"] = translator.X
 	data["XN"] = translator.XN
+	data["XN1"] = translator.XN1
 	data["XN64"] = translator.XN64
+	data["XN1_64"] = translator.XN1_64
 	data["usedLocale"] = used
 	data["htmlLang"] = htmlLang(used)
 	data["langURL"] = switchURLs
