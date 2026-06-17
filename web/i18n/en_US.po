@@ -405,7 +405,6 @@ msgid "暂无评论"
 msgstr "No comments"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:112
-#, fuzzy
 msgid "共 %d 条评论"
 msgid_plural "共 %d 条评论"
 msgstr[0] "%d comment"
@@ -477,9 +476,8 @@ msgstr[1] ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:65
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:95
-#, fuzzy
 msgid "写文章"
-msgstr "Posts"
+msgstr "Write post"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:66
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:96
@@ -601,7 +599,6 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:33
-#, fuzzy
 msgid ""
 "注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
 "保存。"
@@ -614,9 +611,8 @@ msgid "XML 文件"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:40
-#, fuzzy
 msgid "默认归属用户"
-msgstr "Please choose an import owner."
+msgstr "Default owner"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:42
 msgid "请选择用户"
@@ -680,7 +676,6 @@ msgstr ""
 "The exported XML can be re-imported on this page for migration or backup."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:88
-#, fuzzy
 msgid ""
 "说明：若只勾选「评论」而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示"
 "错误。"
@@ -726,10 +721,9 @@ msgid "← 返回到"
 msgstr "← Back to"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
-#, fuzzy
 msgctxt "admin.post_type.singular"
 msgid "文章"
-msgstr "Posts"
+msgstr "Post"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
 msgid "新建%s"
@@ -740,10 +734,9 @@ msgid "编辑%s"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
-#, fuzzy
 msgctxt "admin.post_type.singular"
 msgid "页面"
-msgstr "Pages"
+msgstr "Page"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:9
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:36
@@ -955,14 +948,12 @@ msgid "暂无内容"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:127
-#, fuzzy
 msgid "共 %d 个页面"
 msgid_plural "共 %d 个页面"
 msgstr[0] "%d file"
 msgstr[1] "%d files"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:127
-#, fuzzy
 msgid "共 %d 篇文章"
 msgid_plural "共 %d 篇文章"
 msgstr[0] "%d file"
@@ -980,14 +971,12 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:18
-#, fuzzy
 msgid "显示名"
-msgstr "No display name set"
+msgstr "Display name"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:28
-#, fuzzy
 msgid "邮件"
-msgstr "Media"
+msgstr "Email"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:29
 msgid "修改邮箱后需要先通过新邮箱中的验证链接确认，确认前仍保留当前邮箱。"
@@ -1002,15 +991,13 @@ msgid "密码设置"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:38
-#, fuzzy
 msgid "原密码"
-msgstr "Password"
+msgstr "Current password"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:39
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:14
-#, fuzzy
 msgid "新密码"
-msgstr "Password"
+msgstr "New password"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:40
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:15
@@ -1064,12 +1051,10 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:23
-#, fuzzy
 msgid "重新解析模板"
-msgstr "Failed to reload templates: %s"
+msgstr "Reload templates"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:27
-#, fuzzy
 msgid ""
 "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘"
 "上。"
@@ -1089,9 +1074,8 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:34
-#, fuzzy
 msgid "释放出模板文件夹"
-msgstr "Failed to extract templates: %s"
+msgstr "Extract template folder"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:40
 msgid "资源文件设置"
@@ -1112,7 +1096,6 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:46
-#, fuzzy
 msgid ""
 "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"
 msgstr ""
@@ -1131,9 +1114,8 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:53
-#, fuzzy
 msgid "释放资源文件夹"
-msgstr "Failed to extract assets: %s"
+msgstr "Extract assets folder"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:59
 msgid "翻译资源设置"
@@ -1152,7 +1134,6 @@ msgid "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻�
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:65
-#, fuzzy
 msgid ""
 "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"
 msgstr ""
@@ -1160,9 +1141,8 @@ msgstr ""
 "remains on disk."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:66
-#, fuzzy
 msgid "使用内嵌翻译资源"
-msgstr "Failed to read embedded translations: %s"
+msgstr "Use embedded translations"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:71
 msgid ""
@@ -1172,9 +1152,8 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:72
-#, fuzzy
 msgid "释放翻译资源目录"
-msgstr "Failed to extract translations: %s"
+msgstr "Extract translations folder"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:78
 msgid "Metrics 访问设置"
@@ -1220,9 +1199,8 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:98
-#, fuzzy
 msgid "保存 SQL 调试设置"
-msgstr "SMTP settings saved."
+msgstr "SQL debug settings saved."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:107
 msgid "站点设置"
@@ -1237,9 +1215,8 @@ msgid "站点描述"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:112
-#, fuzzy
 msgid "文章固定链接结构"
-msgstr "Invalid permalink structure: %s"
+msgstr "Post permalink structure"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:113
 msgid ""
@@ -1249,14 +1226,12 @@ msgid ""
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:115
-#, fuzzy
 msgid "分类目录前缀"
-msgstr "Invalid category prefix: %s"
+msgstr "Category prefix"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:116
-#, fuzzy
 msgid "标签前缀"
-msgstr "Invalid tag prefix: %s"
+msgstr "Tag prefix"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:118
 msgid ""
@@ -1326,9 +1301,8 @@ msgid "小怪物"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:160
-#, fuzzy
 msgid "复古"
-msgstr "Size"
+msgstr "Retro"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:168
 msgid "当评论者或用户没有自定义 Cravatar 头像时，使用这里选择的默认头像样式。"
@@ -1395,9 +1369,8 @@ msgid "用于生成重置密码等邮件中的链接。留空则自动从请求�
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:194
-#, fuzzy
 msgid "测试收件人"
-msgstr "Test recipient cannot be empty."
+msgstr "Test recipient"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:195
 msgid "测试前会先保存上方 SMTP 设置。"
@@ -1408,9 +1381,8 @@ msgid "保存 SMTP 设置"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:196
-#, fuzzy
 msgid "发送测试邮件"
-msgstr "[%s] SMTP test email"
+msgstr "Send test email"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:201
 msgid "会话设置"
@@ -1425,12 +1397,10 @@ msgid "请输入新的 Session Secret"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:205
-#, fuzzy
 msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
 msgstr "Session secret updated. All logged-in users must sign in again."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:205
-#, fuzzy
 msgid ""
 "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
 "登录。"
@@ -1471,9 +1441,8 @@ msgid "创建标签"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:34
-#, fuzzy
 msgid "标签列表"
-msgstr "Failed to load tag list."
+msgstr "Tag list"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:49
 msgid "确认删除该标签吗？"
@@ -1494,9 +1463,8 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:72
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:94
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:104
-#, fuzzy
 msgid "父分类"
-msgstr "Uncategorized"
+msgstr "Parent category"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:74
 msgid "无"
@@ -1515,9 +1483,8 @@ msgid "创建分类"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:91
-#, fuzzy
 msgid "分类列表"
-msgstr "Failed to load category list."
+msgstr "Category list"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:108
 msgid ""
@@ -1533,14 +1500,12 @@ msgid "暂无分类"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:126
-#, fuzzy
 msgid "共 %d 个分类"
 msgid_plural "共 %d 个分类"
 msgstr[0] "%d file"
 msgstr[1] "%d files"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:126
-#, fuzzy
 msgid "共 %d 个标签"
 msgid_plural "共 %d 个标签"
 msgstr[0] "%d file"
@@ -1659,9 +1624,8 @@ msgid "前往登录"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:10
-#, fuzzy
 msgid "正在为 %s 重置密码"
-msgstr "Password reset for user %s\n"
+msgstr "Password reset for user %s"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:4
 msgid "提交失败,请稍后重试。"
@@ -1747,7 +1711,6 @@ msgstr[1] "%d views"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:13
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:105
-#, fuzzy
 msgid "评论已关闭"
 msgstr "Comments are closed for this post."
 
@@ -1805,9 +1768,8 @@ msgid "以 <strong>%s</strong> 的身份发表评论，"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:82
-#, fuzzy
 msgid "登出"
-msgstr "Log in"
+msgstr "Log out"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:94
 msgid "昵称"
@@ -1826,9 +1788,8 @@ msgid "网站"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:96
-#, fuzzy
 msgid "网站(可选)"
-msgstr "Excerpt (optional)"
+msgstr "Website (optional)"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:99
 msgid "评论内容"
@@ -1937,9 +1898,8 @@ msgid "初始化内容失败: 未找到可用作者"
 msgstr "Failed to initialize content: no available author found"
 
 #: cmd/server/bootstrap.go:31
-#, fuzzy, c-format
 msgid "用户不存在: %s\n"
-msgstr "The selected user does not exist."
+msgstr "The selected user does not exist.\n"
 
 #: cmd/server/bootstrap.go:32
 msgid "当前管理员列表:\n"
@@ -1958,14 +1918,12 @@ msgid "服务器错误"
 msgstr "Server error"
 
 #: internal/handler/admin.go:262
-#, fuzzy
 msgid "用户名不能为空"
-msgstr "Category name cannot be empty."
+msgstr "Username cannot be empty."
 
 #: internal/handler/admin.go:265
-#, fuzzy
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
-msgstr ""
+msgstr "Username must be 2-32 characters, using only letters, digits, underscores, and hyphens."
 "Page slug may only contain letters, numbers, dots, underscores, and hyphens, "
 "and must start with a letter or number."
 
@@ -1986,7 +1944,6 @@ msgid "注册"
 msgstr ""
 
 #: internal/handler/admin_auth.go:91 internal/handler/admin_user.go:188
-#, fuzzy
 msgid "用户名和邮箱不能为空。"
 msgstr "Email is required."
 
@@ -2046,7 +2003,6 @@ msgid "注册链接无效或已过期，请重新注册。"
 msgstr ""
 
 #: internal/handler/admin_auth.go:198
-#, fuzzy
 msgid "用户名已被占用，请重新注册。"
 msgstr "Username is already taken."
 
@@ -2098,9 +2054,8 @@ msgid "表单参数有误。"
 msgstr "Invalid form parameters."
 
 #: internal/handler/admin_import.go:66
-#, fuzzy
 msgid "请选择默认归属用户。"
-msgstr "Please choose an import owner."
+msgstr "Please select a default owner."
 
 #: internal/handler/admin_import.go:72
 msgid "所选用户不存在。"
@@ -2123,14 +2078,12 @@ msgid "打开上传文件失败。"
 msgstr "Failed to open the uploaded file."
 
 #: internal/handler/admin_import.go:103
-#, fuzzy
 msgid "读取上传文件失败。"
-msgstr "Failed to read uploaded file"
+msgstr "Failed to read uploaded file."
 
 #: internal/handler/admin_import.go:111
-#, fuzzy, c-format
 msgid "解析 XML 失败: %s"
-msgstr "Failed to reload templates: %s"
+msgstr "Failed to parse XML: %s"
 
 #: internal/handler/admin_import.go:118
 msgid "保存会话失败。"
@@ -2192,9 +2145,8 @@ msgid "内容管理"
 msgstr "Content"
 
 #: internal/handler/admin_post.go:192
-#, fuzzy
 msgid "请至少选择一个分类目录。"
-msgstr "Select at least one content type to export."
+msgstr "Select at least one category."
 
 #: internal/handler/admin_post.go:291
 #, c-format
@@ -2258,9 +2210,8 @@ msgid "个人资料"
 msgstr ""
 
 #: internal/handler/admin_profile.go:54
-#, fuzzy
 msgid "个人资料已保存。"
-msgstr "Tag saved."
+msgstr "Profile saved."
 
 #: internal/handler/admin_profile.go:56
 msgid "个人资料已保存；邮箱变更验证邮件已发送，请检查新邮箱并完成验证。"
@@ -2279,7 +2230,6 @@ msgid "用户名、显示名和邮件不能为空。"
 msgstr "Username, display name, and email are required."
 
 #: internal/handler/admin_profile.go:117
-#, fuzzy
 msgid "显示名和邮件不能为空。"
 msgstr "Username, display name, and email are required."
 
@@ -2416,9 +2366,8 @@ msgid "Metrics Basic Auth 密码已保存。"
 msgstr ""
 
 #: internal/handler/admin_settings.go:157
-#, fuzzy
 msgid "SQL 调试设置已保存。"
-msgstr "SMTP settings saved."
+msgstr "SQL debug settings saved."
 
 #: internal/handler/admin_settings.go:160
 msgid "开放注册需要先配置 SMTP 邮件设置。"
@@ -2698,7 +2647,6 @@ msgid "新增用户"
 msgstr ""
 
 #: internal/handler/admin_user.go:104
-#, fuzzy
 msgid "用户名、密码和邮箱不能为空。"
 msgstr "Username, display name, and email are required."
 
@@ -2766,9 +2714,8 @@ msgid "提交内容格式有误。"
 msgstr "Invalid submission format."
 
 #: internal/handler/comment.go:77
-#, fuzzy
 msgid "目标评论不存在。"
-msgstr "Target post does not exist."
+msgstr "Target comment does not exist."
 
 #: internal/handler/comment.go:108
 msgid "评论已提交,等待审核后显示。"
@@ -2795,9 +2742,8 @@ msgid "邮箱不能为空。"
 msgstr "Email is required."
 
 #: internal/handler/comment.go:170
-#, fuzzy
 msgid "网站地址格式不正确。"
-msgstr "Invalid email address."
+msgstr "Invalid website URL."
 
 #: internal/handler/comment.go:183
 msgid "目标文章不存在。"
