@@ -91,15 +91,15 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 
 	// 前台
-	// 确保默认主题在磁盘上存在（优先从 embed 释放）
-	ensureDefaultThemeOnDisk()
+	// 确保内嵌主题在磁盘上存在（优先从 embed 释放）
+	ensureThemesOnDisk()
 	tm, err := theme.NewManager("themes", st)
 	if err != nil {
 		log.Error("init theme manager", slog.Any("error", err))
 		os.Exit(1)
 	}
 	// 设置默认主题 embed FS，供 ResetToDefault 时从 embed 加载
-	if defaultThemeFS, err := fs.Sub(web.DefaultTheme, "themes/default/templates"); err == nil {
+	if defaultThemeFS, err := fs.Sub(web.Themes, "themes/default/templates"); err == nil {
 		tplRenderer.SetDefaultThemeFS(defaultThemeFS)
 	}
 	// 启动时加载当前激活主题的模板
@@ -192,27 +192,40 @@ func (fsys *localFirstFileSystem) SetHot(v bool) {
 	fsys.hot.Store(v)
 }
 
-// ensureDefaultThemeOnDisk 确保默认主题在磁盘上存在。
-// 优先从 embed 释放到 themes/default/，已存在则跳过。
-func ensureDefaultThemeOnDisk() {
-	if _, err := os.Stat("themes/default/theme.yaml"); err == nil {
+// ensureThemesOnDisk 确保所有内嵌主题在磁盘上存在。
+// 优先从 embed 释放到 themes/ 目录，已存在则跳过。
+func ensureThemesOnDisk() {
+	entries, err := fs.ReadDir(web.Themes, "themes")
+	if err != nil {
+		slog.Warn("read embedded themes", "error", err)
 		return
 	}
-	_ = os.MkdirAll("themes/default", 0o755)
-	if err := fs.WalkDir(web.DefaultTheme, "themes/default", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
 		}
-		target := filepath.Join(path)
-		if d.IsDir() {
-			return os.MkdirAll(target, 0o755)
+		themeName := entry.Name()
+		themeYAML := filepath.Join("themes", themeName, "theme.yaml")
+		if _, err := os.Stat(themeYAML); err == nil {
+			continue // 已存在，跳过
 		}
-		data, err := fs.ReadFile(web.DefaultTheme, path)
-		if err != nil {
-			return err
+		_ = os.MkdirAll(filepath.Join("themes", themeName), 0o755)
+		prefix := filepath.Join("themes", themeName)
+		if err := fs.WalkDir(web.Themes, prefix, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			target := filepath.Join(path)
+			if d.IsDir() {
+				return os.MkdirAll(target, 0o755)
+			}
+			data, err := fs.ReadFile(web.Themes, path)
+			if err != nil {
+				return err
+			}
+			return os.WriteFile(target, data, 0o644)
+		}); err != nil {
+			slog.Warn("release theme from embed", "theme", themeName, "error", err)
 		}
-		return os.WriteFile(target, data, 0o644)
-	}); err != nil {
-		slog.Warn("release default theme from embed", "error", err)
 	}
 }
