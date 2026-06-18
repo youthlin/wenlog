@@ -239,7 +239,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"detailHTML":       detailHTML,
 		"hasMore":          func(content string) bool { _, m := wxr.SplitMore(content); return m },
 		"avatarURL":        avatarURL,
-		"avatarPreviewURL": avatarPreviewURL,
+		"defaultAvatarURL": defaultAvatarURL,
 		"fmtDate":          func(t time.Time) string { return t.Format("2006-01-02") },
 		"fmtDateTime":      func(t time.Time) string { return t.Format("2006-01-02 15:04") },
 		"fmtFileSize":      fmtFileSize,
@@ -373,12 +373,10 @@ func avatarURL(email, defaultAvatar string) string {
 	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(consts.AvatarSizeSmall) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
 }
 
-func avatarPreviewURL(defaultAvatar string) string {
+// defaultAvatarURL 获取强制展示指定默认头像的链接。
+func defaultAvatarURL(defaultAvatar string) string {
 	url := avatarURL("", defaultAvatar)
-	if util.NormalizeDefaultAvatar(defaultAvatar) == "cravatar" {
-		return url + "&f=y"
-	}
-	return url
+	return url + "&f=y"
 }
 
 func avatarHash(email string) string {

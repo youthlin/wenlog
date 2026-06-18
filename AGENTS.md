@@ -97,6 +97,7 @@ go run ./cmd/server restart
 
 - 会自动创建 `admin` 用户
 - 随机密码只打印一次，需从控制台保存
+- 后续管理员可以修改自己的用户名, 此时执行 -reset-password admin:xxx 会报错无此用户并列出当前用户
 
 ### 导入 / 导出 WordPress XML
 
@@ -174,6 +175,8 @@ go build -o blog ./cmd/server
 - **不要修改 `Post.ID` 与永久链接之间的关系**，否则会破坏历史链接兼容。
 - **不要在 handler 中重新实现 permalink 判断**，统一复用 `internal/permalink`。
 - **不要把模板层逻辑搬到前端 JS 里重做**；该项目以服务端渲染为主，JS 主要是增强体验。
+- **谨慎执行 `git reset --hard`**：除非已经确认当前工作区的所有改动都有可靠备份且能完整还原，否则不要使用会丢弃改动的命令。
+- **不要擅自删除 stash**：stash 应作为恢复兜底保留。需要使用 stash 内容时，优先使用 `git stash apply`，避免 `git stash pop`；更不要执行 `git stash drop`，除非用户明确要求删除对应 stash。
 
 ## 4. 测试策略与执行建议
 

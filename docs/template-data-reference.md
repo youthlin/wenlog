@@ -60,7 +60,6 @@
 | `detailHTML` | `func(*model.Post) template.HTML` | 详情页完整正文 |
 | `hasMore` | `func(string) bool` | 是否有 more 标记 |
 | `avatarURL` | `func(string, string) string` | 头像 URL（带默认头像） |
-| `avatarPreviewURL` | `func(string) string` | 头像预览 URL |
 | `fmtDate` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
 | `fmtDateTime` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
 | `fmtFileSize` | `func(int64) string` | 格式化文件大小 |

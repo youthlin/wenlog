@@ -180,42 +180,42 @@
           <legend>{{.t.T "默认头像"}}</legend>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="mp" {{if eq .DefaultAvatarValue "mp"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "mp"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "mp"}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "神秘人士"}}</strong><small>{{.t.T "通用的人物轮廓"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="blank" {{if eq .DefaultAvatarValue "blank"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "blank"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "blank"}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "空白"}}</strong><small>{{.t.T "透明图像"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="cravatar" {{if eq .DefaultAvatarValue "cravatar"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "cravatar"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "cravatar"}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "Cravatar 标志"}}</strong><small>{{.t.T "默认服务标志"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="identicon" {{if eq .DefaultAvatarValue "identicon"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "identicon"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "identicon"}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "抽象图形"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="wavatar" {{if eq .DefaultAvatarValue "wavatar"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "wavatar"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "wavatar"}}" alt="" width="48" height="48">
             <span><strong>Wavatar</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="monsterid" {{if eq .DefaultAvatarValue "monsterid"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "monsterid"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "monsterid"}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "小怪物"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="retro" {{if eq .DefaultAvatarValue "retro"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "retro"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "retro"}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "复古"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="robohash" {{if eq .DefaultAvatarValue "robohash"}}checked{{end}}>
-            <img class="avatar" src="{{avatarPreviewURL "robohash"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "robohash"}}" alt="" width="48" height="48">
             <span><strong>RoboHash</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
         </fieldset>

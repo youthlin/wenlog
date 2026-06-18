@@ -213,7 +213,7 @@ pages:
 - `safeHTML`, `escapeHTML` — HTML 安全输出
 - `postExcerptHTML`, `detailHTML` — 正文渲染（摘要/完整）
 - `hasMore` — 判断是否有 `<!--more-->`
-- `avatarURL`, `avatarPreviewURL` — 头像
+- `avatarURL` — 头像
 - `fmtDate`, `fmtDateTime`, `fmtFileSize` — 格式化
 - `year`, `add`, `sub`, `seq` — 辅助函数
 
