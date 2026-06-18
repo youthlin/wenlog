@@ -98,6 +98,60 @@
         <p><button type="submit" class="btn">{{.t.T "保存 SQL 调试设置"}}</button></p>
       </form>
     </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "主题管理"}}</h3>
+      <p class="tip">{{.t.T "上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目录。"}}</p>
+      {{if .CurrentTheme}}
+      <p class="tip">{{.t.T "当前主题"}}: <strong>{{.CurrentTheme.Name}}</strong> {{if .CurrentTheme.Version}}v{{.CurrentTheme.Version}}{{end}} — {{.CurrentTheme.Description}}</p>
+      {{end}}
+      {{if .Themes}}
+      <table class="theme-table">
+        <thead><tr><th>{{.t.T "主题名"}}</th><th>{{.t.T "版本"}}</th><th>{{.t.T "描述"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+        <tbody>
+        {{range .Themes}}
+        <tr>
+          <td>{{.Name}}{{if eq .Name $.CurrentTheme.Name}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}</td>
+          <td>v{{.Version}}</td>
+          <td>{{.Description}}</td>
+          <td class="theme-actions">
+            {{if ne .Name $.CurrentTheme.Name}}
+            <form method="post" action="/admin/theme/activate" style="display:inline">
+              {{template "csrf_field" $}}
+              <input type="hidden" name="theme_name" value="{{.Name}}">
+              <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
+            </form>
+            {{end}}
+            {{if ne .Name "default"}}
+            <form method="post" action="/admin/theme/delete" style="display:inline" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
+              {{template "csrf_field" $}}
+              <input type="hidden" name="theme_name" value="{{.Name}}">
+              <button type="submit" class="btn-danger btn-sm">{{$.t.T "删除"}}</button>
+            </form>
+            {{end}}
+          </td>
+        </tr>
+        {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="tip">{{.t.T "暂无已安装的主题。"}}</p>
+      {{end}}
+      <form class="edit-form" method="post" action="/admin/theme/upload" enctype="multipart/form-data">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "上传主题包 (.zip)"}}<input type="file" name="theme_zip" accept=".zip" required></label>
+        <p><button type="submit" class="btn">{{.t.T "上传并安装"}}</button></p>
+      </form>
+      {{if .CurrentTheme}}
+      {{if ne .CurrentTheme.Name "default"}}
+      <form class="edit-form" method="post" action="/admin/theme/reset">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "重置为默认模板（不使用任何主题模板）。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "重置为默认模板"}}</button></p>
+      </form>
+      {{end}}
+      {{end}}
+    </section>
   </div>
 </div>
 {{else}}

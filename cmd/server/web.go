@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/web"
 )
 
@@ -89,13 +91,39 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 
 	// 前台
-	pub := handler.NewPublic(st, cfg, log)
+	tm, err := theme.NewManager("themes", st)
+	if err != nil {
+		log.Error("init theme manager", slog.Any("error", err))
+		os.Exit(1)
+	}
+	// 启动时加载当前激活主题的模板
+	if current := tm.Current(context.Background()); current != nil && current.HasTemplates() {
+		if err := tplRenderer.LoadTheme(current.TemplatesDir()); err != nil {
+			log.Error("load current theme templates", slog.Any("error", err))
+		}
+	}
+	pub := handler.NewPublic(st, cfg, log, tm)
 	rateLimiter := middleware.NewMemoryRateLimiter()
 	registerPublicRoutes(r, pub, rateLimiter)
 
 	// 后台
-	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS)
+	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS, tm)
 	registerAdminRoutes(r, adm, st, rateLimiter)
+
+	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
+	r.GET("/theme-assets/*filepath", func(c *gin.Context) {
+		current := tm.Current(c)
+		if current == nil || !current.HasAssets() {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		name := strings.TrimPrefix(filepath.Clean(c.Param("filepath")), string(filepath.Separator))
+		if name == "." || strings.HasPrefix(name, "..") {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.File(filepath.Join(current.AssetsDir(), name))
+	})
 	return r
 }
 

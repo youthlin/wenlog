@@ -2,6 +2,8 @@
 package handler
 
 import (
+	"context"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -12,7 +14,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"context"
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/i18n"
@@ -20,14 +21,16 @@ import (
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
 )
 
 // Public 是前台处理器。
 type Public struct {
-	st  *store.Store
-	cfg *config.Config
-	log *slog.Logger
+	st           *store.Store
+	cfg          *config.Config
+	log          *slog.Logger
+	themeManager *theme.Manager
 }
 
 const commentPageSize = 20
@@ -47,12 +50,13 @@ type publicSettings struct {
 }
 
 // NewPublic 构造前台处理器。
-func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger) *Public {
-	return &Public{st: st, cfg: cfg, log: log}
+func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.Manager) *Public {
+	return &Public{st: st, cfg: cfg, log: log, themeManager: tm}
 }
 
 // base 返回模板通用数据(站点名、菜单、当前年份、侧栏小组件、当前登录用户)。
-func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.H {
+// pageCfg 来自 theme.yaml 的 pages.{page} 配置，为 nil 时查询所有数据（兼容无主题场景）。
+func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig) gin.H {
 	menu, _ := h.st.MenuPages(c)
 	if strings.TrimSpace(desc) == "" {
 		desc = s.SiteDescription
@@ -66,32 +70,56 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 		}
 	}
 	data := gin.H{
-		"SiteName":           s.SiteName,
-		"Title":              title,
-		"Description":        desc,
-		"Menu":               menu,
-		"CurrentYear":        currentYear(),
-		"CurrentUserID":      uid,
-		"CurrentUser":        currentUser,
-		"DefaultAvatar":      s.DefaultAvatar,
-		"CSRFToken":          csrfToken,
-		"RegistrationOpen":   s.RegistrationOpen,
-		"MailEnabled":        h.mailEnabled(),
-		"RecentCommentItems": h.st.RecentCommentItems(c, 8, commentPageSize),
-		"RecentPosts":        h.st.RecentPosts(c, 8),
-		"SayingCommentItems": h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize),
-		"ArchiveMonths":      h.st.ArchiveMonths(c),
-		"Categories":         h.st.AllCategories(c),
-		"Tags":               h.st.AllTags(c),
+		"SiteName":         s.SiteName,
+		"Title":            title,
+		"Description":      desc,
+		"Menu":             menu,
+		"CurrentYear":      currentYear(),
+		"CurrentUserID":    uid,
+		"CurrentUser":      currentUser,
+		"DefaultAvatar":    s.DefaultAvatar,
+		"CSRFToken":        csrfToken,
+		"RegistrationOpen": s.RegistrationOpen,
+		"MailEnabled":      h.mailEnabled(),
 	}
-	if s.SayingPostID > 0 {
-		// 优先从 SayingCommentItems 中提取 saying post，避免重复查库
-		if items, ok := data["SayingCommentItems"].([]store.CommentWidgetItem); ok && len(items) > 0 {
-			data["SayingPost"] = &items[0].Post
-		} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
-			data["SayingPost"] = p
+
+	// 按需查询数据（根据 theme.yaml 的 pages.{page}.data 声明）
+	needs := func(field string) bool {
+		if pageCfg == nil {
+			return true // 无主题配置时查询所有
+		}
+		return pageCfg.Needs(field)
+	}
+
+	if needs("RecentPosts") {
+		data["RecentPosts"] = h.st.RecentPosts(c, 8)
+	}
+	if needs("RecentComments") {
+		data["RecentCommentItems"] = h.st.RecentCommentItems(c, 8, commentPageSize)
+	}
+	if needs("SayingComments") {
+		data["SayingCommentItems"] = h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
+		if s.SayingPostID > 0 {
+			if items, ok := data["SayingCommentItems"].([]store.CommentWidgetItem); ok && len(items) > 0 {
+				data["SayingPost"] = &items[0].Post
+			} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
+				data["SayingPost"] = p
+			}
 		}
 	}
+	if needs("ArchiveMonths") {
+		data["ArchiveMonths"] = h.st.ArchiveMonths(c)
+	}
+	if needs("Categories") {
+		data["Categories"] = h.st.AllCategories(c)
+	}
+	if needs("Tags") {
+		data["Tags"] = h.st.AllTags(c)
+	}
+
+	// 渲染 sidebar widgets
+	data["SidebarWidgets"] = h.renderSidebarWidgets(c, s, pageCfg)
+
 	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
 	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
 		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
@@ -99,8 +127,73 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings) gin.
 	return i18n.Inject(c, data)
 }
 
+// renderSidebarWidgets 根据 pageCfg 渲染 sidebar widget HTML 片段列表。
+func (h *Public) renderSidebarWidgets(c *gin.Context, s publicSettings, pageCfg *theme.PageConfig) []template.HTML {
+	if pageCfg == nil || len(pageCfg.Sidebar) == 0 {
+		return nil
+	}
+	currentUser := h.currentUser(c)
+	settings := theme.WidgetSettings{
+		SayingPostID:     s.SayingPostID,
+		DefaultAvatar:    s.DefaultAvatar,
+		CurrentUserID:    currentUserID(c),
+		CurrentUserName:  displayUserName(currentUser),
+		RegistrationOpen: s.RegistrationOpen,
+		CSRFToken:        "",
+	}
+	if uid := currentUserID(c); uid != 0 {
+		if token, err := middleware.EnsureCSRFToken(c); err == nil {
+			settings.CSRFToken = token
+		}
+	}
+	var widgets []template.HTML
+	for _, name := range pageCfg.Sidebar {
+		w := theme.Get(name)
+		if w == nil {
+			continue
+		}
+		html, err := w.Render(c, h.st, settings)
+		if err != nil {
+			if h.log != nil {
+				h.log.Error("render widget", "name", name, "error", err)
+			}
+			continue
+		}
+		if html != "" {
+			widgets = append(widgets, html)
+		}
+	}
+	return widgets
+}
+
+func displayUserName(u *model.User) string {
+	if u == nil {
+		return ""
+	}
+	if u.DisplayName != "" {
+		return u.DisplayName
+	}
+	return u.Username
+}
+
 func (h *Public) mailEnabled() bool {
 	return h.loadSMTPConfig().Configured()
+}
+
+// pageConfig 从当前主题获取指定页面的配置，无主题时返回 nil。
+func (h *Public) pageConfig(c *gin.Context, pageName string) *theme.PageConfig {
+	if h.themeManager == nil {
+		return nil
+	}
+	t := h.themeManager.Current(c)
+	if t == nil {
+		return nil
+	}
+	cfg, ok := t.Pages[pageName]
+	if !ok {
+		return nil
+	}
+	return &cfg
 }
 
 func (h *Public) loadSettings(ctx context.Context) publicSettings {
@@ -177,7 +270,7 @@ func (h *Public) Index(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, s.SiteName, "", s)
+	data := h.base(c, s.SiteName, "", s, h.pageConfig(c, "index"))
 	data["List"] = res
 	data["Pager"] = pager(res, "/")
 	c.HTML(http.StatusOK, "index.gohtml", data)
@@ -201,7 +294,7 @@ func (h *Public) Search(c *gin.Context) {
 		}
 	}
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("搜索:%s", kw), "", s)
+	data := h.base(c, tr.T("搜索:%s", kw), "", s, h.pageConfig(c, "list"))
 	data["Heading"] = tr.T("搜索「%s」", kw)
 	data["Keyword"] = kw
 	data["List"] = res
@@ -267,7 +360,7 @@ func (h *Public) Page(c *gin.Context) {
 		return
 	}
 	s := h.loadSettings(c)
-	data := h.base(c, p.Title, p.Excerpt, s)
+	data := h.base(c, p.Title, p.Excerpt, s, h.pageConfig(c, "page"))
 	data["Post"] = p
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
@@ -320,7 +413,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		return true
 	}
 	s := h.loadSettings(c)
-	data := h.base(c, p.Title, p.Excerpt, s)
+	data := h.base(c, p.Title, p.Excerpt, s, h.pageConfig(c, "post"))
 	data["Post"] = p
 	data["IsDraft"] = p.Status == model.StatusDraft
 	data["Comments"] = comments.Comments
@@ -374,7 +467,7 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Year > groups[j].Year })
 
 	s := h.loadSettings(c)
-	data := h.base(c, p.Title, "", s)
+	data := h.base(c, p.Title, "", s, h.pageConfig(c, "archive"))
 	data["Post"] = p
 	data["Groups"] = groups
 	c.HTML(http.StatusOK, "archive.gohtml", data)
@@ -395,7 +488,7 @@ func (h *Public) Category(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("分类:%s", displaySlug), "", s)
+	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, h.pageConfig(c, "list"))
 	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
@@ -417,7 +510,7 @@ func (h *Public) Tag(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("标签:%s", displaySlug), "", s)
+	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, h.pageConfig(c, "list"))
 	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
@@ -453,7 +546,7 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 // notFound 渲染 404。
 func (h *Public) notFound(c *gin.Context) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c))
+	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), h.pageConfig(c, "error"))
 	data["Code"] = 404
 	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
 	c.HTML(http.StatusNotFound, "error.gohtml", data)
@@ -462,7 +555,7 @@ func (h *Public) notFound(c *gin.Context) {
 func (h *Public) serverError(c *gin.Context, err error) {
 	h.log.Error("handler error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c))
+	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), h.pageConfig(c, "error"))
 	data["Code"] = 500
 	data["Message"] = tr.T("服务器内部错误,请稍后重试。")
 	c.HTML(http.StatusInternalServerError, "error.gohtml", data)

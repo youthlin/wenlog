@@ -20,16 +20,21 @@ import (
 	"github.com/youthlin/blog/internal/model"
 	renderx "github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
 )
 
+// ThemeManager 是主题管理器的类型别名，方便 handler 层引用。
+type ThemeManager = theme.Manager
+
 // Admin 是后台处理器。
 type Admin struct {
-	st       *store.Store
-	cfg      *config.Config
-	log      *slog.Logger
-	renderer *renderx.Renderer
-	assets   hotSwitcher
+	st           *store.Store
+	cfg          *config.Config
+	log          *slog.Logger
+	renderer     *renderx.Renderer
+	assets       hotSwitcher
+	themeManager *ThemeManager
 }
 
 type hotSwitcher interface {
@@ -38,8 +43,8 @@ type hotSwitcher interface {
 }
 
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *renderx.Renderer, assets hotSwitcher) *Admin {
-	return &Admin{st: st, cfg: cfg, log: log, renderer: renderer, assets: assets}
+func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *renderx.Renderer, assets hotSwitcher, tm *ThemeManager) *Admin {
+	return &Admin{st: st, cfg: cfg, log: log, renderer: renderer, assets: assets, themeManager: tm}
 }
 
 const adminPageSize = 20

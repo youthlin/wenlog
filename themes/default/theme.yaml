@@ -1,0 +1,100 @@
+# 默认主题配置 — 保持与现有行为一致
+name: "default"
+version: "1.0"
+description: "默认主题，保持现有布局"
+author: "youthlin"
+
+pages:
+  index:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - saying
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  post:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - saying
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  page:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - saying
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  list:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - saying
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  archive:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - saying
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  error:
+    data: []
+    sidebar: []

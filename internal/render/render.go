@@ -34,11 +34,14 @@ import (
 
 // Renderer 持有模板配置,既支持静态模板,也支持开发期热更新。
 type Renderer struct {
-	mu      sync.RWMutex
-	tpl     *template.Template
-	fsys    fs.FS
-	pattern string
-	hot     bool
+	mu         sync.RWMutex
+	tpl        *template.Template
+	fsys       fs.FS
+	pattern    string
+	hot        bool
+	defaultFS  fs.FS
+	defaultHot bool
+	themeDir   string
 }
 
 const pattern = "*.gohtml"
@@ -50,9 +53,11 @@ func New(fsys fs.FS) (*Renderer, error) {
 		return nil, err
 	}
 	return &Renderer{
-		tpl:     tpl,
-		fsys:    fsys,
-		pattern: pattern,
+		tpl:        tpl,
+		fsys:       fsys,
+		pattern:    pattern,
+		defaultFS:  fsys,
+		defaultHot: false,
 	}, nil
 }
 
@@ -65,10 +70,12 @@ func NewHot(dir string) (*Renderer, error) {
 		return nil, err
 	}
 	return &Renderer{
-		tpl:     tpl,
-		fsys:    fsys,
-		pattern: pattern,
-		hot:     true,
+		tpl:        tpl,
+		fsys:       fsys,
+		pattern:    pattern,
+		hot:        true,
+		defaultFS:  fsys,
+		defaultHot: true,
 	}, nil
 }
 
@@ -105,6 +112,79 @@ func (r *Renderer) UseFS(fsys fs.FS, hot bool) error {
 	r.hot = hot
 	r.mu.Unlock()
 	return nil
+}
+
+// LoadTheme 加载主题模板目录。先解析主题模板，再补充默认模板中缺失的。
+// 主题模板覆盖同名的默认模板。
+func (r *Renderer) LoadTheme(themeDir string) error {
+	if r == nil {
+		return nil
+	}
+	themeFS := os.DirFS(themeDir)
+	// 先解析主题模板
+	themeTpl, err := parseTemplates(themeFS, r.pattern)
+	if err != nil {
+		return err
+	}
+	// 再补充默认模板中缺失的（主题未提供的模板回退默认）
+	if r.defaultFS != nil && hasMatchingFiles(r.defaultFS, r.pattern) {
+		defaultTpl, err := parseTemplates(r.defaultFS, r.pattern)
+		if err != nil {
+			return err
+		}
+		// 遍历默认模板，只添加主题中不存在的
+		for _, t := range defaultTpl.Templates() {
+			if themeTpl.Lookup(t.Name()) == nil {
+				if _, err := themeTpl.AddParseTree(t.Name(), t.Tree); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	r.mu.Lock()
+	r.tpl = themeTpl
+	r.fsys = themeFS
+	r.hot = false
+	r.themeDir = themeDir
+	r.mu.Unlock()
+	return nil
+}
+
+// ResetToDefault 重置为默认模板（不使用任何主题模板）。
+func (r *Renderer) ResetToDefault() error {
+	if r == nil {
+		return nil
+	}
+	if r.defaultFS == nil {
+		return nil
+	}
+	tpl, err := parseTemplates(r.defaultFS, r.pattern)
+	if err != nil {
+		return err
+	}
+	r.mu.Lock()
+	r.tpl = tpl
+	r.fsys = r.defaultFS
+	r.hot = r.defaultHot
+	r.themeDir = ""
+	r.mu.Unlock()
+	return nil
+}
+
+// ThemeDir 返回当前加载的主题模板目录，空字符串表示使用默认模板。
+func (r *Renderer) ThemeDir() string {
+	if r == nil {
+		return ""
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.themeDir
+}
+
+// hasMatchingFiles 检查 fsys 中是否存在匹配 pattern 的文件。
+func hasMatchingFiles(fsys fs.FS, pattern string) bool {
+	matches, err := fs.Glob(fsys, pattern)
+	return err == nil && len(matches) > 0
 }
 
 // ReleaseToHotDir 把当前模板写入磁盘目录,并切换到该目录的 hot 模式。

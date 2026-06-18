@@ -1,3 +1,5 @@
+{{define "sidebar"}}{{end}}
+
 {{define "header"}}<!DOCTYPE html>
 <html lang="{{.htmlLang}}" data-theme="dark"
       data-comment-success="{{.t.T "评论已提交,等待审核后显示。"}}"
@@ -11,6 +13,7 @@
 <title>{{.Title}}</title>
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
 <link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/theme-assets/style.css">
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
@@ -57,17 +60,19 @@
 
 {{define "footer"}}
 </main>
-{{template "sidebar" .}}
 </div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-widgets">
+      {{range .SidebarWidgets}}{{.}}{{end}}
+    </div>
+    <p>&copy; {{.CurrentYear}} {{.SiteName}} · Powered by Go</p>
+  </div>
+</footer>
 <div class="scroll-tools">
   <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.t.T "回顶部"}}">↑</button>
   <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.t.T "到底部"}}">↓</button>
 </div>
-<footer class="site-footer">
-  <div class="container">
-    <p>&copy; {{.CurrentYear}} {{.SiteName}} · Powered by Go</p>
-  </div>
-</footer>
 {{if .SQLDetails}}
 {{if .SQLDetails.Count}}
 <footer class="sql-details-footer">
@@ -82,22 +87,4 @@
 <script src="/assets/scroll.js"></script>
 </body>
 </html>
-{{end}}
-
-{{define "pagination"}}
-{{with .Pager}}
-{{if gt .Pages 1}}
-<nav class="pagination">
-  {{if gt .Page 1}}<a href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}">{{$.t.T "上一页"}}</a>{{end}}
-  <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}">{{$.t.T "下一页"}}</a>{{end}}
-</nav>
-{{end}}
-{{end}}
-{{end}}
-
-{{define "sidebar"}}
-<aside class="sidebar">
-  {{range .SidebarWidgets}}{{.}}{{end}}
-</aside>
 {{end}}

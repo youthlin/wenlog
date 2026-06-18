@@ -146,4 +146,10 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store, lim
 	adminGroup.POST("/user/:id/edit", adm.UpdateUser)
 	adminGroup.POST("/user/:id/role", adm.UpdateUserRole)
 	adminGroup.POST("/user/:id/delete", adm.DeleteUser)
+
+	// 主题管理
+	adminGroup.POST("/theme/upload", adm.ThemeUpload)
+	adminGroup.POST("/theme/activate", adm.ThemeActivate)
+	adminGroup.POST("/theme/delete", adm.ThemeDelete)
+	adminGroup.POST("/theme/reset", adm.ThemeReset)
 }

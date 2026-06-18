@@ -1,0 +1,96 @@
+# 单栏主题 — 无 sidebar，header / main / footer 布局
+# footer 中放置基本 widget
+name: "single"
+version: "1.0"
+description: "单栏布局，无侧栏，footer 中放置基本 widget"
+author: "youthlin"
+
+pages:
+  index:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  post:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  page:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  list:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  archive:
+    data:
+      - RecentPosts
+      - RecentComments
+      - SayingComments
+      - ArchiveMonths
+      - Categories
+      - Tags
+    sidebar:
+      - user_info
+      - search
+      - recent_posts
+      - recent_comments
+      - archive_months
+      - categories
+      - tags
+
+  error:
+    data: []
+    sidebar: []

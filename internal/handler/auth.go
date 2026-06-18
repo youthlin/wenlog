@@ -25,7 +25,7 @@ import (
 func (h *Public) ForgotPasswordForm(c *gin.Context) {
 	tr := i18n.Get(c)
 	s := h.loadSettings(c)
-	data := h.base(c, tr.T("忘记密码"), "", s)
+	data := h.base(c, tr.T("忘记密码"), "", s, nil)
 	c.HTML(http.StatusOK, "auth_forgot_password.gohtml", data)
 }
 
@@ -36,7 +36,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 	emailAddr := strings.TrimSpace(c.PostForm("email"))
 
 	if emailAddr == "" {
-		data := h.base(c, tr.T("忘记密码"), "", s)
+		data := h.base(c, tr.T("忘记密码"), "", s, nil)
 		data["Error"] = tr.T("请输入邮箱地址。")
 		c.HTML(http.StatusBadRequest, "auth_forgot_password.gohtml", data)
 		return
@@ -47,7 +47,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 		// 防时序攻击: 用户不存在时也模拟相近的延迟。
 		time.Sleep(consts.TimingAttackDelay * time.Millisecond)
 		// 不暴露用户是否存在,统一提示已发送
-		data := h.base(c, tr.T("忘记密码"), "", s)
+		data := h.base(c, tr.T("忘记密码"), "", s, nil)
 		data["Success"] = tr.T("如果该邮箱已注册，重置密码链接已发送。")
 		c.HTML(http.StatusOK, "auth_forgot_password.gohtml", data)
 		return
@@ -74,7 +74,7 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 		if err := h.st.ClearResetToken(c, u.ID); err != nil && h.log != nil {
 			h.log.Error("clear reset token", "error", err, "user_id", u.ID)
 		}
-		data := h.base(c, tr.T("忘记密码"), "", s)
+		data := h.base(c, tr.T("忘记密码"), "", s, nil)
 		data["Error"] = tr.T("站点 URL 未配置，无法发送安全重置链接，请联系管理员。")
 		c.HTML(http.StatusInternalServerError, "auth_forgot_password.gohtml", data)
 		return
@@ -89,13 +89,13 @@ func (h *Public) ForgotPassword(c *gin.Context) {
 		if err2 := h.st.ClearResetToken(c, u.ID); err2 != nil && h.log != nil {
 			h.log.Error("clear reset token", "error", err2, "user_id", u.ID)
 		}
-		data := h.base(c, tr.T("忘记密码"), "", s)
+		data := h.base(c, tr.T("忘记密码"), "", s, nil)
 		data["Error"] = tr.T("邮件发送失败，请稍后重试或联系管理员。")
 		c.HTML(http.StatusInternalServerError, "auth_forgot_password.gohtml", data)
 		return
 	}
 
-	data := h.base(c, tr.T("忘记密码"), "", s)
+	data := h.base(c, tr.T("忘记密码"), "", s, nil)
 	data["Success"] = tr.T("如果该邮箱已注册，重置密码链接已发送。")
 	c.HTML(http.StatusOK, "auth_forgot_password.gohtml", data)
 }
@@ -113,13 +113,13 @@ func (h *Public) ResetPasswordForm(c *gin.Context) {
 
 	u, err := h.st.GetUserByResetToken(c, token)
 	if err != nil {
-		data := h.base(c, tr.T("重置密码"), "", s)
+		data := h.base(c, tr.T("重置密码"), "", s, nil)
 		data["Error"] = tr.T("重置链接无效或已过期，请重新请求。")
 		c.HTML(http.StatusBadRequest, "auth_reset_password.gohtml", data)
 		return
 	}
 
-	data := h.base(c, tr.T("重置密码"), "", s)
+	data := h.base(c, tr.T("重置密码"), "", s, nil)
 	data["ResetToken"] = token
 	data["ResetUser"] = u
 	c.HTML(http.StatusOK, "auth_reset_password.gohtml", data)
@@ -139,7 +139,7 @@ func (h *Public) ResetPassword(c *gin.Context) {
 	}
 
 	if len(password) < consts.PasswordMinLen {
-		data := h.base(c, tr.T("重置密码"), "", s)
+		data := h.base(c, tr.T("重置密码"), "", s, nil)
 		data["ResetToken"] = token
 		data["Error"] = tr.T("密码长度不能少于 8 个字符。")
 		c.HTML(http.StatusBadRequest, "auth_reset_password.gohtml", data)
@@ -147,7 +147,7 @@ func (h *Public) ResetPassword(c *gin.Context) {
 	}
 
 	if password != confirmPassword {
-		data := h.base(c, tr.T("重置密码"), "", s)
+		data := h.base(c, tr.T("重置密码"), "", s, nil)
 		data["ResetToken"] = token
 		data["Error"] = tr.T("两次输入的密码不一致。")
 		c.HTML(http.StatusBadRequest, "auth_reset_password.gohtml", data)
@@ -156,7 +156,7 @@ func (h *Public) ResetPassword(c *gin.Context) {
 
 	u, err := h.st.GetUserByResetToken(c, token)
 	if err != nil {
-		data := h.base(c, tr.T("重置密码"), "", s)
+		data := h.base(c, tr.T("重置密码"), "", s, nil)
 		data["Error"] = tr.T("重置链接无效或已过期，请重新请求。")
 		c.HTML(http.StatusBadRequest, "auth_reset_password.gohtml", data)
 		return
@@ -180,7 +180,7 @@ func (h *Public) ResetPassword(c *gin.Context) {
 	// 发送密码变更通知邮件。
 	h.sendPasswordChangeNotification(u)
 
-	data := h.base(c, tr.T("重置密码"), "", s)
+	data := h.base(c, tr.T("重置密码"), "", s, nil)
 	data["Success"] = tr.T("密码已重置，请使用新密码登录。")
 	c.HTML(http.StatusOK, "auth_reset_password.gohtml", data)
 }

@@ -123,6 +123,11 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
+	// 主题管理数据
+	if h.themeManager != nil {
+		data["Themes"] = h.themeManager.List()
+		data["CurrentTheme"] = h.themeManager.Current(c)
+	}
 	if c != nil && c.Query("message") == "templates-reloaded" {
 		data["Notice"] = tr.T("模板已重新解析。")
 	}
