@@ -1,0 +1,74 @@
+{{define "admin_themes.gohtml"}}
+{{template "admin_header" .}}
+<h1>{{.t.T "外观"}}</h1>
+{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
+{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "主题管理"}}</h3>
+      <p class="tip">{{.t.T "上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目录。"}}</p>
+      {{if .CurrentTheme}}
+      <p class="tip">{{.t.T "当前主题"}}: <strong>{{.CurrentTheme.Name}}</strong> {{if .CurrentTheme.Version}}v{{.CurrentTheme.Version}}{{end}} — {{.CurrentTheme.Description}}</p>
+      {{end}}
+      {{if .Themes}}
+      <div class="table-scroll">
+        <table class="data-table themes-table">
+          <thead>
+          <tr>
+            <th>{{.t.T "主题名"}}</th>
+            <th>{{.t.T "版本"}}</th>
+            <th>{{.t.T "描述"}}</th>
+            <th>{{.t.T "操作"}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          {{range .Themes}}
+          <tr>
+            <td data-label="{{$.t.T "主题名"}}">{{.Name}}{{if eq .Name $.CurrentTheme.Name}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}</td>
+            <td data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
+            <td data-label="{{$.t.T "描述"}}">{{.Description}}</td>
+            <td class="actions" data-label="{{$.t.T "操作"}}">
+              {{if ne .Name $.CurrentTheme.Name}}
+              <form class="inline" method="post" action="/admin/theme/activate">
+                {{template "csrf_field" $}}
+                <input type="hidden" name="theme_name" value="{{.Name}}">
+                <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
+              </form>
+              {{end}}
+              {{if ne .Name "default"}}
+              <form class="inline" method="post" action="/admin/theme/delete" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
+                {{template "csrf_field" $}}
+                <input type="hidden" name="theme_name" value="{{.Name}}">
+                <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+              </form>
+              {{end}}
+            </td>
+          </tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p class="tip">{{.t.T "暂无已安装的主题。"}}</p>
+      {{end}}
+      <form class="edit-form" method="post" action="/admin/theme/upload" enctype="multipart/form-data">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "上传主题包 (.zip)"}}<input type="file" name="theme_zip" accept=".zip" required></label>
+        <p><button type="submit" class="btn">{{.t.T "上传并安装"}}</button></p>
+      </form>
+      {{if .CurrentTheme}}
+      {{if ne .CurrentTheme.Name "default"}}
+      <form class="edit-form" method="post" action="/admin/theme/reset">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "重置为默认模板（不使用任何主题模板）。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "重置为默认模板"}}</button></p>
+      </form>
+      {{end}}
+      {{end}}
+    </section>
+  </div>
+</div>
+{{template "admin_footer" .}}
+{{end}}

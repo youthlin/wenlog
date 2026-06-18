@@ -17,6 +17,21 @@ import (
 
 const maxThemeUploadSize = 5 << 20 // 5MB
 
+// ThemesPage 渲染主题管理页面。
+func (h *Admin) ThemesPage(c *gin.Context) {
+	tr := i18n.Get(c)
+	data := h.base(c, tr.T("外观"))
+	data["CurrentAdminNav"] = "themes"
+	if h.themeManager != nil {
+		data["Themes"] = h.themeManager.List()
+		data["CurrentTheme"] = h.themeManager.Current(c)
+	}
+	if msg := c.Query("message"); msg != "" {
+		data["Notice"] = msg
+	}
+	c.HTML(http.StatusOK, "admin_themes.gohtml", data)
+}
+
 // ThemeUpload 处理主题 zip 上传。
 func (h *Admin) ThemeUpload(c *gin.Context) {
 	tr := i18n.Get(c)
@@ -164,7 +179,7 @@ func (h *Admin) ThemeReset(c *gin.Context) {
 }
 
 func (h *Admin) redirectThemeSettings(c *gin.Context, msg string) {
-	u := "/admin/settings/developer?message=" + url.QueryEscape(msg)
+	u := "/admin/themes?message=" + url.QueryEscape(msg)
 	c.Redirect(http.StatusSeeOther, u)
 }
 

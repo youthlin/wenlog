@@ -205,6 +205,8 @@ func adminNavKey(c *gin.Context) string {
 		return "import"
 	case "/admin/users", "/admin/user/:id/role", "/admin/user/:id/delete":
 		return "users"
+	case "/admin/themes", "/admin/theme/upload", "/admin/theme/activate", "/admin/theme/delete", "/admin/theme/reset":
+		return "themes"
 	default:
 		return ""
 	}

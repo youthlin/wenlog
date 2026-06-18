@@ -159,7 +159,50 @@ go build -o blog ./cmd/server
 - 后台保存文章时会同时维护：
   - `ContentMD`：后台编辑原文
   - `Content`：用于前台展示的 HTML
-- 评论分页是按“顶层评论”分页，不是按全部评论平铺分页；改评论相关逻辑时先理解这一点。
+- 评论分页是按"顶层评论"分页，不是按全部评论平铺分页；改评论相关逻辑时先理解这一点。
+
+### 后台表格规范
+
+后台管理页面（文章、评论、分类、标签、附件、用户、主题等）的数据表格统一使用以下模式：
+
+**HTML 结构：**
+```gohtml
+<div class="table-scroll">
+  <table class="data-table {entity}-table">
+    <thead>
+    <tr>
+      <th>{{.t.T "列名"}}</th>
+      ...
+      <th>{{.t.T "操作"}}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Items}}
+    <tr>
+      <td data-label="{{$.t.T "列名"}}">{{.Field}}</td>
+      ...
+      <td class="actions" data-label="{{$.t.T "操作"}}">
+        <form class="inline" method="post" action="/admin/...">
+          {{template "csrf_field" $}}
+          <button type="submit" class="btn-secondary btn-sm">{{$.t.T "操作"}}</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="N">{{.t.T "暂无内容"}}</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+```
+
+**关键约定：**
+- 外层用 `<div class="table-scroll">` 包裹，提供横向滚动
+- `<table>` 使用 `class="data-table {entity}-table"`（如 `posts-table`、`comments-table`、`themes-table`）
+- 每个 `<td>` 必须带 `data-label` 属性，用于响应式布局
+- 操作列使用 `class="actions"`，内嵌 `<form class="inline">` + CSRF token
+- 空状态用 `{{else}}` 分支显示 "暂无内容"
+- 分页使用 `{{if gt .Pages 1}}` 包裹的 prev/next 链接 + `page-info`
 
 ### i18n / 翻译字符串约定
 
