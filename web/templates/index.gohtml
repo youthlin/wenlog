@@ -15,7 +15,7 @@
       {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.t.N1_64 "%d 条评论" .CommentCount .CommentCount}}</a>{{end}}
       {{if and $.CurrentUserID (eq $.CurrentUserID .AuthorID)}}<a class="edit-link" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>{{end}}
     </div>
-    <div class="post-content">{{listHTML .}}</div>
+    <div class="post-content">{{postExcerptHTML .}}</div>
     {{if hasMore .Content}}<a class="read-more" href="{{postURL .}}#more-{{.ID}}">{{$.t.T "阅读全文 →"}}</a>{{end}}
   </article>
   {{end}}

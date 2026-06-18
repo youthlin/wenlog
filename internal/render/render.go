@@ -231,19 +231,15 @@ func (r *Renderer) ReleaseToHotDir(dir string) error {
 func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 	funcs := template.FuncMap{
 		"postURL":          postURL,
-		"pageURL":          pageURL,
 		"categoryURL":      permalink.Category,
 		"tagURL":           permalink.Tag,
 		"safeHTML":         func(s string) template.HTML { return template.HTML(s) },
 		"escapeHTML":       stdhtml.EscapeString,
-		"listHTML":         listHTML,
+		"postExcerptHTML":  postExcerptHTML,
 		"detailHTML":       detailHTML,
 		"hasMore":          func(content string) bool { _, m := wxr.SplitMore(content); return m },
-		"gravatar":         gravatar,
 		"avatarURL":        avatarURL,
 		"avatarPreviewURL": avatarPreviewURL,
-		"gravatarPrimary":  gravatarPrimary,
-		"gravatarFallback": gravatarFallback,
 		"fmtDate":          func(t time.Time) string { return t.Format("2006-01-02") },
 		"fmtDateTime":      func(t time.Time) string { return t.Format("2006-01-02 15:04") },
 		"fmtFileSize":      fmtFileSize,
@@ -270,17 +266,6 @@ func postURL(p any) string {
 	}
 }
 
-func pageURL(p any) string {
-	switch v := p.(type) {
-	case *model.Post:
-		return permalink.Page(v)
-	case model.Post:
-		return permalink.Page(&v)
-	default:
-		return ""
-	}
-}
-
 // Template 返回当前缓存的底层模板。
 func (r *Renderer) Template() *template.Template {
 	r.mu.RLock()
@@ -296,8 +281,8 @@ func (r *Renderer) Instance(name string, data any) ginrender.Render {
 	return ginrender.HTML{Template: tpl, Name: name, Data: data}
 }
 
-// listHTML 返回列表页应展示的正文 HTML:有 more 标记则只取之前部分。
-func listHTML(p *model.Post) template.HTML {
+// postExcerptHTML 返回列表页应展示的文章摘要 HTML: 有 more 标记则只取之前部分。
+func postExcerptHTML(p *model.Post) template.HTML {
 	above, hasMore := wxr.SplitMore(p.Content)
 	if hasMore {
 		return template.HTML(HighlightCodeBlocks(SanitizeHTML(above)))
@@ -383,11 +368,7 @@ func fmtFileSize(size int64) string {
 	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
 }
 
-// gravatar 由邮箱生成 cravatar(国内镜像)头像 URL。
-func gravatar(email string) string {
-	return avatarURL(email, "")
-}
-
+// avatarURL 由邮箱生成 cravatar(国内镜像)头像 URL。
 func avatarURL(email, defaultAvatar string) string {
 	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(consts.AvatarSizeSmall) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
 }
@@ -398,14 +379,6 @@ func avatarPreviewURL(defaultAvatar string) string {
 		return url + "&f=y"
 	}
 	return url
-}
-
-func gravatarPrimary(email string) string {
-	return "https://gravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(consts.AvatarSizeSmall)
-}
-
-func gravatarFallback(email string) string {
-	return avatarURL(email, "")
 }
 
 func avatarHash(email string) string {

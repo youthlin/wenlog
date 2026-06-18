@@ -51,20 +51,16 @@
 
 | 函数 | 签名 | 说明 |
 |---|---|---|
-| `postURL` | `func(*model.Post) string` | 文章永久链接 |
-| `pageURL` | `func(*model.Post) string` | 页面永久链接 |
+| `postURL` | `func(*model.Post) string` | 文章或页面永久链接 |
 | `categoryURL` | `func(string) string` | 分类归档链接 |
 | `tagURL` | `func(string) string` | 标签归档链接 |
 | `safeHTML` | `func(string) template.HTML` | 输出原始 HTML |
 | `escapeHTML` | `func(string) string` | HTML 转义 |
-| `listHTML` | `func(*model.Post) template.HTML` | 列表页正文（截断 more 标记前） |
+| `postExcerptHTML` | `func(*model.Post) template.HTML` | 文章摘要 HTML（截断 more 标记前） |
 | `detailHTML` | `func(*model.Post) template.HTML` | 详情页完整正文 |
 | `hasMore` | `func(string) bool` | 是否有 more 标记 |
-| `gravatar` | `func(string) string` | 头像 URL |
 | `avatarURL` | `func(string, string) string` | 头像 URL（带默认头像） |
 | `avatarPreviewURL` | `func(string) string` | 头像预览 URL |
-| `gravatarPrimary` | `func(string) string` | Gravatar 主源 URL |
-| `gravatarFallback` | `func(string) string` | Gravatar 回退 URL |
 | `fmtDate` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
 | `fmtDateTime` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
 | `fmtFileSize` | `func(int64) string` | 格式化文件大小 |

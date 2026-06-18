@@ -12,15 +12,15 @@ import (
 	"github.com/youthlin/blog/web"
 )
 
-func TestGravatar(t *testing.T) {
+func TestAvatarURL(t *testing.T) {
 	// 已知:md5("me@example.com") = ... ;只校验前缀与不随大小写/空白变化。
-	a := gravatar("Me@Example.com")
-	b := gravatar("  me@example.com ")
+	a := avatarURL("Me@Example.com", "")
+	b := avatarURL("  me@example.com ", "")
 	if a != b {
-		t.Errorf("gravatar should normalize case/space: %q != %q", a, b)
+		t.Errorf("avatarURL should normalize case/space: %q != %q", a, b)
 	}
-	if got := gravatar("me@example.com"); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
-		t.Errorf("gravatar url too short: %q", got)
+	if got := avatarURL("me@example.com", ""); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
+		t.Errorf("avatar url too short: %q", got)
 	}
 }
 

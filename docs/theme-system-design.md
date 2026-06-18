@@ -209,11 +209,11 @@ pages:
 
 所有模板函数由 `internal/render` 注册，主题模板可直接使用：
 
-- `postURL`, `pageURL`, `categoryURL`, `tagURL` — 永久链接生成
+- `postURL`, `categoryURL`, `tagURL` — 永久链接生成（`postURL` 同时支持文章和页面）
 - `safeHTML`, `escapeHTML` — HTML 安全输出
-- `listHTML`, `detailHTML` — 正文渲染（截断/完整）
+- `postExcerptHTML`, `detailHTML` — 正文渲染（摘要/完整）
 - `hasMore` — 判断是否有 `<!--more-->`
-- `gravatar`, `avatarURL`, `avatarPreviewURL` — 头像
+- `avatarURL`, `avatarPreviewURL` — 头像
 - `fmtDate`, `fmtDateTime`, `fmtFileSize` — 格式化
 - `year`, `add`, `sub`, `seq` — 辅助函数
 
