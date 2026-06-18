@@ -1,7 +1,5 @@
-{{define "widgets"}}{{end}}
-
 {{define "header"}}<!DOCTYPE html>
-<html lang="{{.htmlLang}}"
+<html lang="{{.htmlLang}}" data-theme="dark"
       data-comment-success="{{.t.T "评论已提交,等待审核后显示。"}}"
       data-comment-fail="{{.t.T "提交失败,请稍后重试。"}}"
       data-comment-network="{{.t.T "网络错误,请稍后重试。"}}"
@@ -13,8 +11,8 @@
 <title>{{.Title}}</title>
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
 <link rel="stylesheet" href="/assets/style.css">
-<link rel="stylesheet" href="/theme-assets/style.css">
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+<script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">{{.t.T "跳到主要内容"}}</a>
@@ -25,21 +23,32 @@
       <div class="site-nav-links">
         {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
       </div>
-      <div class="site-nav-utility">
+      <div class="site-nav-utility" aria-label="{{.t.T "界面设置"}}">
         <label class="lang-select-wrap">
           <span class="sr-only">{{.t.T "语言"}}</span>
           <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
-            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.t.T "中文"}}</option>
+            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.t.T "English"}}</option>
+          </select>
+        </label>
+        <label class="theme-select-wrap">
+          <span class="sr-only">{{.t.T "切换主题"}}</span>
+          <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
+            <option value="dark">{{.t.T "暗黑"}}</option>
+            <option value="light">{{.t.T "明亮"}}</option>
+            <option value="red-plum">{{.t.T "红梅"}}</option>
+            <option value="bamboo">{{.t.T "绿竹"}}</option>
+            <option value="lotus">{{.t.T "藕粉"}}</option>
+            <option value="orange">{{.t.T "橙黄"}}</option>
+            <option value="azure">{{.t.T "蔚蓝"}}</option>
+            <option value="purple">{{.t.T "韵紫"}}</option>
           </select>
         </label>
       </div>
     </nav>
-    <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">
-      <span class="nav-toggle-bar"></span>
-      <span class="nav-toggle-bar"></span>
-      <span class="nav-toggle-bar"></span>
-    </button>
+    <div class="header-actions">
+      <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
+    </div>
   </div>
 </header>
 <div class="container layout">
@@ -48,22 +57,17 @@
 
 {{define "footer"}}
 </main>
+{{template "widgets" .}}
 </div>
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-widgets">
-      {{range .Widgets}}{{.}}{{end}}
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; {{.CurrentYear}} {{.SiteName}}</p>
-      <p class="footer-powered">Powered by Go</p>
-    </div>
-  </div>
-</footer>
 <div class="scroll-tools">
   <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.t.T "回顶部"}}">↑</button>
   <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.t.T "到底部"}}">↓</button>
 </div>
+<footer class="site-footer">
+  <div class="container">
+    <p>&copy; {{.CurrentYear}} {{.SiteName}} · Powered by Go</p>
+  </div>
+</footer>
 {{if .SQLDetails}}
 {{if .SQLDetails.Count}}
 <footer class="sql-details-footer">
@@ -74,6 +78,7 @@
 </footer>
 {{end}}
 {{end}}
+<script src="/assets/theme.js"></script>
 <script src="/assets/scroll.js"></script>
 </body>
 </html>
@@ -83,12 +88,18 @@
 {{with .Pager}}
 {{if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}" class="pagination-link">{{$.t.T "上一页"}}</a>{{end}}
+  {{if gt .Page 1}}<a href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}">{{$.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}" class="pagination-link">{{$.t.T "下一页"}}</a>{{end}}
+  {{if lt .Page .Pages}}<a href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}">{{$.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
 {{end}}
+{{end}}
+
+{{define "widgets"}}
+<aside class="widgets">
+  {{range .Widgets}}{{.}}{{end}}
+</aside>
 {{end}}
 
 {{define "widget_user_info"}}
@@ -119,6 +130,21 @@
     <input type="search" name="q" placeholder="{{.t.T "输入关键词…"}}" value="{{.Keyword}}">
     <button type="submit">{{.t.T "搜索"}}</button>
   </form>
+</section>
+{{end}}
+
+{{define "widget_saying"}}
+<section class="widget widget-saying">
+  <h3>{{.t.T "博主动态"}}</h3>
+  <div class="widget-saying-author">
+    <img class="avatar" src="{{avatarURL .AuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
+    <span>{{.AuthorName}}</span>
+  </div>
+  <ul>
+    {{range .Items}}
+    <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>
+    {{end}}
+  </ul>
 </section>
 {{end}}
 

@@ -115,8 +115,8 @@ func (r *Renderer) UseFS(fsys fs.FS, hot bool) error {
 	return nil
 }
 
-// LoadTheme 加载主题模板目录。先解析主题模板，再补充默认模板中缺失的。
-// 主题模板覆盖同名的默认模板。
+// LoadTheme 加载主题模板目录。先解析主题模板，再补充默认主题模板中缺失的，
+// 最后补充 admin/auth 模板中缺失的。主题模板覆盖同名的默认/后台模板。
 func (r *Renderer) LoadTheme(themeDir string) error {
 	if r == nil {
 		return nil
@@ -127,21 +127,10 @@ func (r *Renderer) LoadTheme(themeDir string) error {
 	if err != nil {
 		return err
 	}
-	// 再补充默认模板中缺失的（主题未提供的模板回退默认）
-	if r.defaultFS != nil && hasMatchingFiles(r.defaultFS, r.pattern) {
-		defaultTpl, err := parseTemplates(r.defaultFS, r.pattern)
-		if err != nil {
-			return err
-		}
-		// 遍历默认模板，只添加主题中不存在的
-		for _, t := range defaultTpl.Templates() {
-			if themeTpl.Lookup(t.Name()) == nil {
-				if _, err := themeTpl.AddParseTree(t.Name(), t.Tree); err != nil {
-					return err
-				}
-			}
-		}
-	}
+	// 再补充默认主题模板中缺失的（主题未提供的页面模板回退默认主题）
+	r.fallbackFromDefaultTheme(themeTpl)
+	// 最后补充 admin/auth 模板中缺失的
+	r.fallbackFromDefaultFS(themeTpl)
 	r.mu.Lock()
 	r.tpl = themeTpl
 	r.fsys = themeFS
@@ -149,6 +138,53 @@ func (r *Renderer) LoadTheme(themeDir string) error {
 	r.themeDir = themeDir
 	r.mu.Unlock()
 	return nil
+}
+
+// fallbackFromDefaultTheme 从默认主题模板补充缺失的模板。
+func (r *Renderer) fallbackFromDefaultTheme(themeTpl *template.Template) {
+	// 优先从磁盘默认主题加载
+	defaultThemeDir := filepath.Join("themes", "default", "templates")
+	if _, err := os.Stat(defaultThemeDir); err == nil {
+		defaultFS := os.DirFS(defaultThemeDir)
+		if hasMatchingFiles(defaultFS, r.pattern) {
+			defaultTpl, err := parseTemplates(defaultFS, r.pattern)
+			if err == nil {
+				for _, t := range defaultTpl.Templates() {
+					if themeTpl.Lookup(t.Name()) == nil {
+						_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
+					}
+				}
+			}
+		}
+		return
+	}
+	// 磁盘不存在时从 embed 加载
+	if r.defaultThemeFS != nil && hasMatchingFiles(r.defaultThemeFS, r.pattern) {
+		defaultTpl, err := parseTemplates(r.defaultThemeFS, r.pattern)
+		if err == nil {
+			for _, t := range defaultTpl.Templates() {
+				if themeTpl.Lookup(t.Name()) == nil {
+					_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
+				}
+			}
+		}
+	}
+}
+
+// fallbackFromDefaultFS 从 admin/auth 模板补充缺失的模板。
+func (r *Renderer) fallbackFromDefaultFS(themeTpl *template.Template) {
+	if r.defaultFS == nil || !hasMatchingFiles(r.defaultFS, r.pattern) {
+		return
+	}
+	defaultTpl, err := parseTemplates(r.defaultFS, r.pattern)
+	if err != nil {
+		return
+	}
+	for _, t := range defaultTpl.Templates() {
+		if themeTpl.Lookup(t.Name()) == nil {
+			_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
+		}
+	}
 }
 
 // ResetToDefault 重置为默认主题模板 + admin/auth 回退。

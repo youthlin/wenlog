@@ -1,7 +1,7 @@
-# 极简暗黑主题 — 单栏布局，纯暗色，无颜色切换
-name: "single"
-version: "2.0"
-description: "极简暗黑单栏主题，纯暗色外观，footer 中放置基本 widget"
+# 默认主题配置 — 保持与现有行为一致
+name: "default"
+version: "1.0"
+description: "默认主题，保持现有布局"
 author: "youthlin"
 
 pages:
@@ -16,6 +16,7 @@ pages:
     widgets:
       - user_info
       - search
+      - saying
       - recent_posts
       - recent_comments
       - archive_months
@@ -33,6 +34,7 @@ pages:
     widgets:
       - user_info
       - search
+      - saying
       - recent_posts
       - recent_comments
       - archive_months
@@ -50,6 +52,7 @@ pages:
     widgets:
       - user_info
       - search
+      - saying
       - recent_posts
       - recent_comments
       - archive_months
@@ -67,6 +70,7 @@ pages:
     widgets:
       - user_info
       - search
+      - saying
       - recent_posts
       - recent_comments
       - archive_months
@@ -84,6 +88,7 @@ pages:
     widgets:
       - user_info
       - search
+      - saying
       - recent_posts
       - recent_comments
       - archive_months
