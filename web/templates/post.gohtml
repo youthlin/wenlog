@@ -79,7 +79,7 @@
 
   {{if .CurrentUser}}
   <div class="comment-login-tip">{{if .CurrentUser.DisplayName}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.DisplayName))}}{{else}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.Username))}}{{end}}
-    <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "登出"}}</button></form>
+    <form class="inline" method="post" action="/auth/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "登出"}}</button></form>
   </div>
   {{end}}
 

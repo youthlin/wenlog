@@ -239,24 +239,12 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	h.sendPasswordChangeNotification(c, u)
-	middleware.ClearSession(c)
-	c.Redirect(http.StatusSeeOther, "/admin/login")
-}
-
-func (h *Admin) sendPasswordChangeNotification(c *gin.Context, u *model.User) {
-	tr := i18n.Get(c)
-	smtpCfg := smtpConfigFromStore(c, h.st)
-	if !smtpCfg.Configured() || u.Email == "" {
-		return
-	}
-	subject := tr.T("[%s] 密码已变更", siteNameFromStore(c, h.st))
+	siteName := siteNameFromStore(c, h.st)
+	subject := tr.T("[%s] 密码已变更", siteName)
 	body := tr.T("您好 %s，\n\n你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
-	go func() {
-		if err := smtpCfg.Send(u.Email, subject, body); err != nil && h.log != nil {
-			h.log.Error("send password change notification", "error", err, "to", u.Email, "user_id", u.ID)
-		}
-	}()
+	sendPasswordChangeNotification(h.st, h.log, u, subject, body)
+	middleware.ClearSession(c)
+	c.Redirect(http.StatusSeeOther, "/auth/login")
 }
 
 // profileData 构建个人资料页数据。
@@ -339,7 +327,7 @@ func (h *Admin) DeleteAccount(c *gin.Context) {
 		return
 	}
 	middleware.ClearSession(c)
-	c.Redirect(http.StatusSeeOther, "/admin/login")
+	c.Redirect(http.StatusSeeOther, "/login")
 }
 
 func (h *Admin) renderDeleteAccountError(c *gin.Context, u *model.User, status int, msg string) {

@@ -115,7 +115,7 @@
           </label>
         </div>
         <div class="admin-sidebar-actions">
-          <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
+          <form class="inline" method="post" action="/auth/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
         </div>
       </div>
     </div>

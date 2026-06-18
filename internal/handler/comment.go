@@ -15,7 +15,6 @@ import (
 	gettext "github.com/youthlin/t"
 
 	"context"
-	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
@@ -211,7 +210,7 @@ func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations,
 
 func (h *Public) notifyCommentReply(c *gin.Context, reply *model.Comment) {
 	tr := i18n.Get(c)
-	notifyApprovedCommentReply(c, h.st, h.log, h.loadSMTPConfig(), siteURLFromRequest(h.st, c), siteNameFromStore(c, h.st), reply, tr)
+	notifyApprovedCommentReply(c, h.st, h.log, smtpConfigFromStore(c, h.st), siteURLFromRequest(h.st, c), siteNameFromStore(c, h.st), reply, tr)
 }
 
 func notifyApprovedCommentReply(ctx context.Context, st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, reply *model.Comment, tr *gettext.Translations) {
@@ -242,14 +241,6 @@ func notifyApprovedCommentReply(ctx context.Context, st *store.Store, log *slog.
 			log.Error("send comment reply email", "error", err, "to", target.Email, "comment_id", reply.ID)
 		}
 	}()
-}
-
-func siteNameFromStore(ctx context.Context, st *store.Store) string {
-	settings, _ := st.GetSettings(ctx, consts.SettingsSiteName)
-	if name := strings.TrimSpace(settings[consts.SettingsSiteName]); name != "" {
-		return name
-	}
-	return consts.SettingsSiteNameDefault
 }
 
 func sameEmail(a, b string) bool {

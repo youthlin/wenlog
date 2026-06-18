@@ -21,7 +21,7 @@ const SessionVersionKey = "session_version"
 
 // AuthRequired 保护 /admin:未登录跳转登录页。
 func AuthRequired(st ...*store.Store) gin.HandlerFunc {
-	return AuthRequiredRedirect("/admin/login", st...)
+	return AuthRequiredRedirect("/auth/login", st...)
 }
 
 // AuthRequiredRedirect 未登录时跳转到指定路径。

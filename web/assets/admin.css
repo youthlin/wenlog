@@ -1225,6 +1225,7 @@ body.admin.nav-open { overflow: hidden; }
 .login-box .auth-tip { color: var(--muted); text-align: center; line-height: 1.6; }
 .login-box input[readonly] { color: var(--muted); }
 .login-box button:disabled { opacity: .55; cursor: not-allowed; }
+.login-box .login-links { text-align: center; color: var(--muted); font-size: 13px; }
 /* 7.3 提示横幅 */
 .err-banner { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: 6px; padding: 10px 12px; }
 .notice-banner { color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 6px; padding: 10px 12px; }

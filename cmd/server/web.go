@@ -106,9 +106,13 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	rateLimiter := middleware.NewMemoryRateLimiter()
 	registerPublicRoutes(r, pub, rateLimiter)
 
+	// 认证（独立于前台和后台）
+	auth := handler.NewAuth(st, log)
+	registerAuthRoutes(r, auth, rateLimiter)
+
 	// 后台
 	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS, tm)
-	registerAdminRoutes(r, adm, st, rateLimiter)
+	registerAdminRoutes(r, adm, auth, st, rateLimiter)
 
 	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
 	r.GET("/theme-assets/*filepath", func(c *gin.Context) {

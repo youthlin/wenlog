@@ -415,7 +415,7 @@ func (h *Admin) SaveSessionSettings(c *gin.Context) {
 	s := sessions.Default(c)
 	s.Clear()
 	_ = s.Save()
-	c.Redirect(http.StatusSeeOther, "/admin/login?message=session-secret-updated")
+	c.Redirect(http.StatusSeeOther, "/auth/login?message=session-secret-updated")
 }
 
 // ReloadTemplates 手动重新解析本地模板文件。仅热更新模式支持。

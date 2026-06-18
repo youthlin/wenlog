@@ -32,25 +32,12 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public, limiter middleware
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)
 
-	// 前台认证路由(无需登录),带频率限制。
-	forgotLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
-		Window:  15 * time.Minute,
-		Max:     5,
-		KeyFunc: middleware.DefaultRateLimitKey,
-	})
-	r.POST("/forgot-password", forgotLimiter, pub.ForgotPassword)
-
-	r.GET("/forgot-password", pub.ForgotPasswordForm)
-	r.GET("/reset-password", pub.ResetPasswordForm)
-	r.POST("/reset-password", pub.ResetPassword)
-
 	// 兜底动态路由: 页面 slug + 任意层级文章永久链接 + 旧链接兼容。
 	r.NoRoute(pub.DynamicOrLegacy)
 }
 
-// registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。
-func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store, limiter middleware.RateLimiter) {
-	// 登录/注册接口带频率限制,防止暴力破解。
+// registerAuthRoutes 注册认证路由(/auth/*),无需登录。
+func registerAuthRoutes(r *gin.Engine, auth *handler.Auth, limiter middleware.RateLimiter) {
 	loginLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
 		Window:  15 * time.Minute,
 		Max:     5,
@@ -61,19 +48,32 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, st *store.Store, lim
 		Max:     3,
 		KeyFunc: middleware.DefaultRateLimitKey,
 	})
+	forgotLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
+		Window:  15 * time.Minute,
+		Max:     5,
+		KeyFunc: middleware.DefaultRateLimitKey,
+	})
 
-	r.GET("/admin/login", adm.LoginForm)
-	r.POST("/admin/login", loginLimiter, adm.Login)
-	r.GET("/admin/register", adm.RegisterForm)
-	r.POST("/admin/register", registerLimiter, adm.Register)
-	r.GET("/admin/register/verify", adm.RegisterVerifyForm)
-	r.POST("/admin/register/verify", adm.RegisterVerify)
+	r.GET("/auth/login", auth.LoginForm)
+	r.POST("/auth/login", loginLimiter, auth.Login)
+	r.GET("/auth/register", auth.RegisterForm)
+	r.POST("/auth/register", registerLimiter, auth.Register)
+	r.GET("/auth/register/verify", auth.RegisterVerifyForm)
+	r.POST("/auth/register/verify", auth.RegisterVerify)
+	r.GET("/auth/forgot-password", auth.ForgotPasswordForm)
+	r.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
+	r.GET("/auth/reset-password", auth.ResetPasswordForm)
+	r.POST("/auth/reset-password", auth.ResetPassword)
+}
 
+// registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。
+func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, st *store.Store, limiter middleware.RateLimiter) {
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")
 	g.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
 	g.GET("/", adm.Dashboard) // 欢迎页
-	g.POST("/logout", adm.Logout)
+
+	r.POST("/auth/logout", middleware.AuthRequired(st), middleware.CSRFMiddleware(), auth.Logout)
 
 	// 个人资料(所有角色可访问)。
 	profileGroup := r.Group("/admin")

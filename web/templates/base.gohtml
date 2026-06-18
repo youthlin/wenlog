@@ -108,7 +108,7 @@
   <h3>{{.t.T "%s, 你好" .CurrentUserName}}</h3>
   <div class="widget-user-actions">
     <a href="/admin">{{.t.T "控制台"}}</a>
-    <form method="post" action="/admin/logout">
+    <form method="post" action="/auth/logout">
       {{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}
       <button type="submit">{{.t.T "退出"}}</button>
     </form>
@@ -116,8 +116,8 @@
   {{else}}
   <h3>{{.t.T "欢迎"}}</h3>
   <div class="widget-user-actions">
-    <a href="/admin/login">{{.t.T "登录"}}</a>
-    {{if .RegistrationOpen}}<a href="/admin/register">{{.t.T "注册"}}</a>{{end}}
+    <a href="/auth/login">{{.t.T "登录"}}</a>
+    {{if .RegistrationOpen}}<a href="/auth/register">{{.t.T "注册"}}</a>{{end}}
   </div>
   {{end}}
 </section>

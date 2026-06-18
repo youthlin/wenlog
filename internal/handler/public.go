@@ -235,7 +235,7 @@ func displayUserName(u *model.User) string {
 }
 
 func (h *Public) mailEnabled() bool {
-	return h.loadSMTPConfig().Configured()
+	return smtpConfigFromStore(context.Background(), h.st).Configured()
 }
 
 // pageConfig 从当前主题获取指定页面的配置，无主题时返回 nil。
