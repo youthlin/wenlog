@@ -52,7 +52,18 @@
 <footer class="site-footer">
   <div class="container">
     <div class="footer-widgets">
-      {{range .Widgets}}{{.}}{{end}}
+      <div class="footer-col footer-col-1">
+        {{index .Widgets 0}}{{/* user_info */}}
+        {{index .Widgets 1}}{{/* search */}}
+        {{index .Widgets 5}}{{/* categories */}}
+        {{index .Widgets 6}}{{/* tags */}}
+      </div>
+      <div class="footer-col footer-col-2">
+        {{index .Widgets 2}}{{/* recent_posts */}}
+      </div>
+      <div class="footer-col footer-col-3">
+        {{index .Widgets 3}}{{/* recent_comments */}}
+      </div>
     </div>
     <div class="footer-bottom">
       <p>&copy; {{.CurrentYear}} {{.SiteName}}</p>
@@ -74,6 +85,20 @@
 </footer>
 {{end}}
 {{end}}
+<script>
+(function(){
+  var toggle = document.querySelector('[data-nav-toggle]');
+  var nav = document.getElementById('site-nav-menu');
+  if (!toggle || !nav) return;
+  toggle.addEventListener('click', function(){
+    var open = nav.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open
+      ? document.documentElement.getAttribute('data-nav-close-label') || '收起菜单'
+      : document.documentElement.getAttribute('data-nav-open-label') || '打开菜单');
+  });
+})();
+</script>
 <script src="/assets/scroll.js"></script>
 </body>
 </html>

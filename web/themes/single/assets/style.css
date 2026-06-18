@@ -335,9 +335,12 @@ img { max-width: 100%; height: auto; }
 }
 .footer-widgets {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 32px;
   margin-bottom: 40px;
+}
+.footer-col {
+  min-width: 0;
 }
 .footer-bottom {
   text-align: center; padding-top: 24px;
@@ -610,6 +613,7 @@ img { max-width: 100%; height: auto; }
   .comment-children { padding-left: 16px; }
   .comment .comment-form { margin-left: 0; }
   .footer-widgets { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .footer-col-3 { grid-column: 1 / -1; }
 }
 
 @media (max-width: 640px) {
@@ -617,6 +621,7 @@ img { max-width: 100%; height: auto; }
   .post-title { font-size: 20px; }
   .post-meta { gap: 4px 10px; }
   .footer-widgets { grid-template-columns: 1fr; }
+  .footer-col-3 { grid-column: auto; }
   .scroll-tools { right: 12px; bottom: 12px; }
   .scroll-btn { width: 36px; height: 36px; }
   .error-page h1 { font-size: 48px; }
