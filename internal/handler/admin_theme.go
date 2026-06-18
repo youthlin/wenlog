@@ -160,24 +160,6 @@ func (h *Admin) ThemeDelete(c *gin.Context) {
 	h.redirectThemeSettings(c, tr.T("主题「%s」已删除", name))
 }
 
-// ThemeReset 重置为默认主题（不使用任何主题模板）。
-func (h *Admin) ThemeReset(c *gin.Context) {
-	tr := i18n.Get(c)
-	if h.themeManager != nil {
-		if err := h.themeManager.Activate(c, "default"); err != nil {
-			h.redirectThemeSettings(c, tr.T("切换默认主题失败: %s", err.Error()))
-			return
-		}
-	}
-	if h.renderer != nil {
-		if err := h.renderer.ResetToDefault(); err != nil {
-			h.redirectThemeSettings(c, tr.T("重置模板失败: %s", err.Error()))
-			return
-		}
-	}
-	h.redirectThemeSettings(c, tr.T("已重置为默认模板"))
-}
-
 func (h *Admin) redirectThemeSettings(c *gin.Context, msg string) {
 	u := "/admin/themes?message=" + url.QueryEscape(msg)
 	c.Redirect(http.StatusSeeOther, u)

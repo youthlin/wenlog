@@ -152,5 +152,4 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.POST("/theme/upload", adm.ThemeUpload)
 	adminGroup.POST("/theme/activate", adm.ThemeActivate)
 	adminGroup.POST("/theme/delete", adm.ThemeDelete)
-	adminGroup.POST("/theme/reset", adm.ThemeReset)
 }

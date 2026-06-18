@@ -58,15 +58,6 @@
         <label>{{.t.T "上传主题包 (.zip)"}}<input type="file" name="theme_zip" accept=".zip" required></label>
         <p><button type="submit" class="btn">{{.t.T "上传并安装"}}</button></p>
       </form>
-      {{if .CurrentTheme}}
-      {{if ne .CurrentTheme.Name "default"}}
-      <form class="edit-form" method="post" action="/admin/theme/reset">
-        {{template "csrf_field" .}}
-        <p class="tip">{{.t.T "重置为默认模板（不使用任何主题模板）。"}}</p>
-        <p><button type="submit" class="btn-secondary">{{.t.T "重置为默认模板"}}</button></p>
-      </form>
-      {{end}}
-      {{end}}
     </section>
   </div>
 </div>

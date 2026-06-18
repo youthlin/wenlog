@@ -1344,6 +1344,7 @@ body.admin.nav-open { overflow: hidden; }
   .table-scroll:has(.users-table) { overflow: visible; }
   .table-scroll:has(.terms-table) { overflow: visible; }
   .table-scroll:has(.uploads-table) { overflow: visible; }
+  .table-scroll:has(.themes-table) { overflow: visible; }
   .comments-table,
   .comments-table thead,
   .comments-table tbody,
@@ -1475,6 +1476,21 @@ body.admin.nav-open { overflow: hidden; }
   .uploads-table .upload-preview-cell { display: none; }
   .uploads-table .upload-file-panel { align-items: center; }
   .uploads-table .upload-thumb-inline { display: block; width: 64px; height: 64px; }
+
+  .themes-table,
+  .themes-table thead,
+  .themes-table tbody,
+  .themes-table tr,
+  .themes-table th,
+  .themes-table td { display: block; width: 100%; }
+  .themes-table { min-width: 0 !important; background: transparent; border-spacing: 0; }
+  .themes-table thead { display: none; }
+  .themes-table tbody { display: grid; gap: 14px; }
+  .themes-table tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--surface-shadow); overflow: hidden; }
+  .themes-table tbody tr td { border-bottom: 0; padding: 12px 14px; }
+  .themes-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .themes-table .actions { display: grid !important; gap: 8px; }
+  .themes-table .actions .inline + .inline { margin-top: 0; }
 }
 
 @media (max-width: 640px) {
