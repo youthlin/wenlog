@@ -479,14 +479,7 @@ func (h *Admin) UseEmbeddedTemplates(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
 		return
 	}
-	tplFS, err := fs.Sub(web.Templates, "templates")
-	if err != nil {
-		data := h.settingsDataForTab(c, "resources")
-		data["Error"] = tr.T("读取内嵌模板失败: %s", err.Error())
-		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
-		return
-	}
-	if err := h.renderer.UseFS(tplFS, false); err != nil {
+	if err := h.renderer.ResetToDefault(); err != nil {
 		data := h.settingsDataForTab(c, "resources")
 		data["Error"] = tr.T("切换回内嵌模板失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)

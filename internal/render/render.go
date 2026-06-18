@@ -34,14 +34,15 @@ import (
 
 // Renderer 持有模板配置,既支持静态模板,也支持开发期热更新。
 type Renderer struct {
-	mu         sync.RWMutex
-	tpl        *template.Template
-	fsys       fs.FS
-	pattern    string
-	hot        bool
-	defaultFS  fs.FS
-	defaultHot bool
-	themeDir   string
+	mu             sync.RWMutex
+	tpl            *template.Template
+	fsys           fs.FS
+	pattern        string
+	hot            bool
+	defaultFS      fs.FS // admin/auth 模板（embed 或 hot disk）
+	defaultHot     bool
+	defaultThemeFS fs.FS // 默认主题模板（embed），用于 ResetToDefault 时从 embed 加载
+	themeDir       string
 }
 
 const pattern = "*.gohtml"
@@ -150,11 +151,22 @@ func (r *Renderer) LoadTheme(themeDir string) error {
 	return nil
 }
 
-// ResetToDefault 重置为默认模板（不使用任何主题模板）。
+// ResetToDefault 重置为默认主题模板 + admin/auth 回退。
+// 优先从磁盘 themes/default/templates/ 加载，不存在时回退 embed。
 func (r *Renderer) ResetToDefault() error {
 	if r == nil {
 		return nil
 	}
+	// 先尝试磁盘默认主题
+	themeDir := filepath.Join("themes", "default", "templates")
+	if _, err := os.Stat(themeDir); err == nil {
+		return r.LoadTheme(themeDir)
+	}
+	// 磁盘不存在时从 embed 加载默认主题
+	if r.defaultThemeFS != nil {
+		return r.loadThemeFS(r.defaultThemeFS)
+	}
+	// 兜底：只用 admin/auth 模板
 	if r.defaultFS == nil {
 		return nil
 	}
@@ -179,6 +191,45 @@ func (r *Renderer) ThemeDir() string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.themeDir
+}
+
+// SetDefaultThemeFS 设置默认主题的 embed 文件系统，用于 ResetToDefault 时从 embed 加载。
+func (r *Renderer) SetDefaultThemeFS(fsys fs.FS) {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	r.defaultThemeFS = fsys
+	r.mu.Unlock()
+}
+
+// loadThemeFS 从 fs.FS 加载主题模板（如 embed 默认主题），再补充 admin/auth 回退。
+func (r *Renderer) loadThemeFS(themeFS fs.FS) error {
+	themeTpl, err := parseTemplates(themeFS, r.pattern)
+	if err != nil {
+		return err
+	}
+	// 补充 admin/auth 模板
+	if r.defaultFS != nil && hasMatchingFiles(r.defaultFS, r.pattern) {
+		defaultTpl, err := parseTemplates(r.defaultFS, r.pattern)
+		if err != nil {
+			return err
+		}
+		for _, t := range defaultTpl.Templates() {
+			if themeTpl.Lookup(t.Name()) == nil {
+				if _, err := themeTpl.AddParseTree(t.Name(), t.Tree); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	r.mu.Lock()
+	r.tpl = themeTpl
+	r.fsys = themeFS
+	r.hot = false
+	r.themeDir = ""
+	r.mu.Unlock()
+	return nil
 }
 
 // hasMatchingFiles 检查 fsys 中是否存在匹配 pattern 的文件。

@@ -91,15 +91,26 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	r.GET("/healthz", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 
 	// 前台
+	// 确保默认主题在磁盘上存在（优先从 embed 释放）
+	ensureDefaultThemeOnDisk()
 	tm, err := theme.NewManager("themes", st)
 	if err != nil {
 		log.Error("init theme manager", slog.Any("error", err))
 		os.Exit(1)
 	}
+	// 设置默认主题 embed FS，供 ResetToDefault 时从 embed 加载
+	if defaultThemeFS, err := fs.Sub(web.DefaultTheme, "themes/default/templates"); err == nil {
+		tplRenderer.SetDefaultThemeFS(defaultThemeFS)
+	}
 	// 启动时加载当前激活主题的模板
 	if current := tm.Current(context.Background()); current != nil && current.HasTemplates() {
 		if err := tplRenderer.LoadTheme(current.TemplatesDir()); err != nil {
 			log.Error("load current theme templates", slog.Any("error", err))
+		}
+	} else {
+		// 没有激活主题或主题无模板时，加载默认主题
+		if err := tplRenderer.ResetToDefault(); err != nil {
+			log.Error("load default theme templates", slog.Any("error", err))
 		}
 	}
 	pub := handler.NewPublic(st, cfg, log, tm, tplRenderer)
@@ -179,4 +190,29 @@ func (fsys *localFirstFileSystem) SetHot(v bool) {
 		return
 	}
 	fsys.hot.Store(v)
+}
+
+// ensureDefaultThemeOnDisk 确保默认主题在磁盘上存在。
+// 优先从 embed 释放到 themes/default/，已存在则跳过。
+func ensureDefaultThemeOnDisk() {
+	if _, err := os.Stat("themes/default/theme.yaml"); err == nil {
+		return
+	}
+	_ = os.MkdirAll("themes/default", 0o755)
+	if err := fs.WalkDir(web.DefaultTheme, "themes/default", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(path)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := fs.ReadFile(web.DefaultTheme, path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	}); err != nil {
+		slog.Warn("release default theme from embed", "error", err)
+	}
 }

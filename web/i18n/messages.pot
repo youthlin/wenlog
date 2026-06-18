@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 17:06+0800\n"
+"POT-Creation-Date: 2026-06-18 19:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,18 +50,14 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:13
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:50
 msgid "打开菜单"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:7
 msgid "收起菜单"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:18
 msgid "跳到主要内容"
 msgstr ""
 
@@ -136,7 +132,6 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:20
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:43
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:89
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:204
 msgid "标签"
 msgstr ""
 
@@ -164,40 +159,35 @@ msgid "用户"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:95
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:26
 msgid "界面设置"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:97
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:98
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:15
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:15
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:28
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:29
 msgid "语言"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:99
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:16
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:16
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:30
 msgid "中文"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:100
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:31
 msgid "English"
 msgstr ""
 
@@ -206,98 +196,86 @@ msgid "颜色"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:105
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:35
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:36
 msgid "切换主题"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:106
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:23
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:23
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:23
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:23
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:37
 msgid "暗黑"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:107
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:38
 msgid "明亮"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:108
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:25
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:25
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:25
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:25
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:39
 msgid "红梅"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:109
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:26
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:26
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:40
 msgid "绿竹"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:110
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:41
 msgid "藕粉"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:111
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:28
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:28
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:42
 msgid "橙黄"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:112
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:29
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:29
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:43
 msgid "蔚蓝"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:113
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:44
 msgid "韵紫"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:118
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:113
 msgid "退出"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:133
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:75
 msgid "SQL 执行详情 (%d 条)"
 msgstr ""
 
@@ -376,13 +354,12 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:42
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:40
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:49
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:18
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:19
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:38
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:95
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:49
 msgid "邮箱"
 msgstr ""
 
@@ -415,10 +392,6 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:50
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:114
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:33
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/page.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:10
 msgid "编辑"
 msgstr ""
 
@@ -439,8 +412,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:106
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:159
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:15
 msgid "暂无评论"
 msgstr ""
 
@@ -455,8 +426,6 @@ msgstr[1] ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:129
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:44
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:91
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:74
 msgid "上一页"
 msgstr ""
 
@@ -465,8 +434,6 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:131
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:46
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:54
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:93
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:76
 msgid "下一页"
 msgstr ""
 
@@ -557,7 +524,6 @@ msgid "最近评论"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:152
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:172
 msgid "发表在"
 msgstr ""
 
@@ -695,7 +661,6 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:42
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:78
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:194
 msgid "分类目录"
 msgstr ""
 
@@ -719,35 +684,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:98
 msgid "下载 XML"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:34
-msgid "%s · 登录"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:37
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:39
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:48
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
-msgid "用户名"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:38
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:42
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:15
-msgid "密码"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:41
-msgid "← 返回 <a href=\"/\">%s</a>"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_login.gohtml:43
-msgid "忘记密码？"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
@@ -909,12 +845,10 @@ msgid "新建"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:195
 msgid "没有匹配的分类"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:195
 msgid "输入分类名筛选…"
 msgstr ""
 
@@ -923,12 +857,10 @@ msgid "不限分类"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:20
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:205
 msgid "没有匹配的标签"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:20
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:205
 msgid "输入标签名筛选…"
 msgstr ""
 
@@ -939,8 +871,6 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:9
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:10
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:128
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:131
 msgid "搜索"
 msgstr ""
 
@@ -989,6 +919,16 @@ msgstr[1] ""
 msgid "头像由 Cravatar 提供，可前往 cravatar.com 修改。"
 msgstr ""
 
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:48
+msgid "用户名"
+msgstr ""
+
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:25
 msgid "用户名仅管理员可修改。"
 msgstr ""
@@ -1032,36 +972,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:41
 msgid "修改密码"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:38
-msgid "邮箱已验证，请为账号设置登录密码。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:43
-msgid "确认密码"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:46
-msgid "站点尚未配置 SMTP，暂时无法注册。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:47
-msgid "先填写用户名和邮箱；验证邮件发送后，再通过邮件链接设置密码并创建账号。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:50
-msgid "发送验证邮件"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:52
-msgid "已有账号？"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_register.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:41
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:48
-msgid "← 返回到"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:17
@@ -1629,6 +1539,12 @@ msgid_plural "共 %d 个文件"
 msgstr[0] ""
 msgstr[1] ""
 
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:38
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:42
+msgid "密码"
+msgstr ""
+
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:19
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:20
@@ -1637,8 +1553,6 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:46
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:58
 msgid "管理员"
 msgstr ""
 
@@ -1700,200 +1614,61 @@ msgstr ""
 msgid "返回登录"
 msgstr ""
 
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:48
+msgid "← 返回到"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:34
+msgid "%s · 登录"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:53
+msgid "← 返回 <a href=\"/\">%s</a>"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:43
+msgid "忘记密码？"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:34
+msgid "%s · 完成注册"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:34
+msgid "%s · 注册"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:38
+msgid "邮箱已验证，请为账号设置登录密码。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:43
+msgid "确认密码"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:46
+msgid "站点尚未配置 SMTP，暂时无法注册。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:47
+msgid "先填写用户名和邮箱；验证邮件发送后，再通过邮件链接设置密码并创建账号。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:50
+msgid "发送验证邮件"
+msgstr ""
+
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:38
 msgid "前往登录"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:41
 msgid "正在为 %s 重置密码"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:4
-msgid "提交失败,请稍后重试。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:5
-msgid "网络错误,请稍后重试。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:63
-msgid "回顶部"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:64
-msgid "到底部"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:108
-msgid "%s, 你好"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:110
-msgid "控制台"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:130
-msgid "输入关键词…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:138
-msgid "博主动态"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:153
-msgid "近期文章"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:162
-msgid "近期评论"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:182
-msgid "归档"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:183
-msgid "没有匹配的月份"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:183
-msgid "输入月份筛选…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:184
-msgid "选择月份…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:186
-msgid "%d 年 %d 月(%d)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:196
-msgid "选择分类…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/base.gohtml:206
-msgid "选择标签…"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/error.gohtml:6
-msgid "返回首页"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:12
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/page.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:9
-msgid "%d 次阅读"
-msgid_plural "%d 次阅读"
-msgstr[0] ""
-msgstr[1] ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:105
-msgid "评论已关闭"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:31
-msgid "%d 条评论"
-msgid_plural "%d 条评论"
-msgstr[0] ""
-msgstr[1] ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/index.gohtml:19
-msgid "阅读全文 →"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/list.gohtml:21
-msgid "没有找到匹配的文章。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:4
-msgid "草稿预览"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:46
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:58
-msgid "回复时邮件通知"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:46
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:58
-msgid "文章作者"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:46
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:58
-msgid "登录用户"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:47
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:59
-msgid "评论审核中,当前仅自己可见"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:50
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:62
-msgid "回复"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:61
-msgid "回复 @%s"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:81
-msgid "以 <strong>%s</strong> 的身份发表评论，"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:82
-msgid "登出"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:94
-msgid "昵称"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:94
-msgid "昵称 *"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:95
-msgid "邮箱 *(不公开)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:96
-msgid "网站"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:96
-msgid "网站(可选)"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:99
-msgid "评论内容"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:99
-msgid "说点什么吧…… *"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:100
-msgid "有回复时邮件通知我"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:101
-msgid "取消回复"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:101
-msgid "提交评论"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/post.gohtml:102
-msgid "评论提交后需经审核才会显示。"
 msgstr ""
 
 #: cmd/server/bootstrap.go:21
@@ -1982,103 +1757,6 @@ msgstr ""
 
 #: internal/handler/admin.go:270
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
-msgstr ""
-
-#: internal/handler/admin_auth.go:24 internal/handler/admin_auth.go:49
-msgid "登录"
-msgstr ""
-
-#: internal/handler/admin_auth.go:26
-msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:50
-msgid "用户名或密码错误。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:73 internal/handler/admin_auth.go:88
-msgid "注册"
-msgstr ""
-
-#: internal/handler/admin_auth.go:94 internal/handler/admin_user.go:188
-msgid "用户名和邮箱不能为空。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:105 internal/handler/comment.go:163
-msgid "邮箱格式不正确。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:114
-msgid "站点尚未配置 SMTP，暂时无法发送验证邮件。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:125 internal/handler/admin_profile.go:96
-#: internal/handler/admin_user.go:133 internal/handler/admin_user.go:223
-msgid "用户名已被占用。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:135 internal/handler/admin_profile.go:137
-msgid "邮箱已被注册。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:152 internal/handler/admin_profile.go:153
-msgid "站点 URL 未配置，无法发送安全验证链接，请联系管理员。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:158
-#, c-format
-msgid "[%s] 注册邮箱验证"
-msgstr ""
-
-#: internal/handler/admin_auth.go:159
-#, c-format
-msgid ""
-"您好 %s，\n"
-"\n"
-"请点击以下链接验证邮箱并设置登录密码（24 小时内有效）：\n"
-"\n"
-"%s\n"
-"\n"
-"如果您没有请求注册，请忽略此邮件。\n"
-msgstr ""
-
-#: internal/handler/admin_auth.go:164
-msgid "验证邮件发送失败，请稍后重试或联系管理员。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:171
-msgid "验证邮件已发送，请检查邮箱并在 24 小时内完成注册。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:183 internal/handler/admin_auth.go:228
-msgid "完成注册"
-msgstr ""
-
-#: internal/handler/admin_auth.go:187 internal/handler/admin_auth.go:193
-#: internal/handler/admin_auth.go:253
-msgid "注册链接无效或已过期，请重新注册。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:201
-msgid "用户名已被占用，请重新注册。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:209
-msgid "邮箱已被注册，请重新注册。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:232
-msgid "注册链接无效或密码不能为空。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:237 internal/handler/admin_profile.go:229
-#: internal/handler/admin_user.go:116 internal/handler/auth.go:144
-msgid "密码长度不能少于 8 个字符。"
-msgstr ""
-
-#: internal/handler/admin_auth.go:242 internal/handler/admin_profile.go:223
-#: internal/handler/auth.go:152
-msgid "两次输入的密码不一致。"
 msgstr ""
 
 #: internal/handler/admin_comment.go:54
@@ -2257,7 +1935,7 @@ msgstr ""
 msgid "文章 slug %q 为保留路由，请换一个"
 msgstr ""
 
-#: internal/handler/admin_profile.go:31 internal/handler/admin_profile.go:265
+#: internal/handler/admin_profile.go:31 internal/handler/admin_profile.go:253
 msgid "个人资料"
 msgstr ""
 
@@ -2277,6 +1955,11 @@ msgstr ""
 msgid "密码已修改。"
 msgstr ""
 
+#: internal/handler/admin_profile.go:96 internal/handler/admin_user.go:133
+#: internal/handler/admin_user.go:223 internal/handler/auth_handler.go:148
+msgid "用户名已被占用。"
+msgstr ""
+
 #: internal/handler/admin_profile.go:115
 msgid "用户名、显示名和邮件不能为空。"
 msgstr ""
@@ -2287,6 +1970,14 @@ msgstr ""
 
 #: internal/handler/admin_profile.go:126
 msgid "修改邮箱需要先配置 SMTP 邮件设置，以便发送验证邮件。"
+msgstr ""
+
+#: internal/handler/admin_profile.go:137 internal/handler/auth_handler.go:158
+msgid "邮箱已被注册。"
+msgstr ""
+
+#: internal/handler/admin_profile.go:153 internal/handler/auth_handler.go:175
+msgid "站点 URL 未配置，无法发送安全验证链接，请联系管理员。"
 msgstr ""
 
 #: internal/handler/admin_profile.go:158
@@ -2322,12 +2013,22 @@ msgstr ""
 msgid "原密码不正确。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:253
+#: internal/handler/admin_profile.go:223 internal/handler/auth_handler.go:265
+#: internal/handler/auth_handler.go:404
+msgid "两次输入的密码不一致。"
+msgstr ""
+
+#: internal/handler/admin_profile.go:229 internal/handler/admin_user.go:116
+#: internal/handler/auth_handler.go:260 internal/handler/auth_handler.go:396
+msgid "密码长度不能少于 8 个字符。"
+msgstr ""
+
+#: internal/handler/admin_profile.go:243 internal/handler/auth_handler.go:432
 #, c-format
 msgid "[%s] 密码已变更"
 msgstr ""
 
-#: internal/handler/admin_profile.go:254
+#: internal/handler/admin_profile.go:244
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -2335,19 +2036,19 @@ msgid ""
 "你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n"
 msgstr ""
 
-#: internal/handler/admin_profile.go:283
+#: internal/handler/admin_profile.go:271
 msgid "导出数据"
 msgstr ""
 
-#: internal/handler/admin_profile.go:315 internal/handler/admin_profile.go:347
+#: internal/handler/admin_profile.go:303 internal/handler/admin_profile.go:335
 msgid "删除账号"
 msgstr ""
 
-#: internal/handler/admin_profile.go:330
+#: internal/handler/admin_profile.go:318
 msgid "请输入 DELETE 确认删除。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:335 internal/handler/admin_user.go:77
+#: internal/handler/admin_profile.go:323 internal/handler/admin_user.go:77
 msgid "不能删除唯一的管理员账号。请先创建或指定另一个管理员。"
 msgstr ""
 
@@ -2501,65 +2202,60 @@ msgstr ""
 msgid "当前不是 hot 模式，不能切回内嵌模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:485
-#, c-format
-msgid "读取内嵌模板失败: %s"
-msgstr ""
-
-#: internal/handler/admin_settings.go:491
+#: internal/handler/admin_settings.go:484
 #, c-format
 msgid "切换回内嵌模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:503
+#: internal/handler/admin_settings.go:496
 msgid "当前资源管理器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:509
+#: internal/handler/admin_settings.go:502
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:521
+#: internal/handler/admin_settings.go:514
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:527
+#: internal/handler/admin_settings.go:520
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:540
+#: internal/handler/admin_settings.go:533
 msgid "当前不是 hot 模式，不能切回内嵌资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:553
+#: internal/handler/admin_settings.go:546
 msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:561
+#: internal/handler/admin_settings.go:554
 #, c-format
 msgid "读取内嵌翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:567
+#: internal/handler/admin_settings.go:560
 #, c-format
 msgid "释放翻译资源失败: %s"
+msgstr ""
+
+#: internal/handler/admin_settings.go:568
+#: internal/handler/admin_settings.go:595
+#, c-format
+msgid "重新加载翻译资源失败: %s"
 msgstr ""
 
 #: internal/handler/admin_settings.go:575
 #: internal/handler/admin_settings.go:602
 #, c-format
-msgid "重新加载翻译资源失败: %s"
-msgstr ""
-
-#: internal/handler/admin_settings.go:582
-#: internal/handler/admin_settings.go:609
-#, c-format
 msgid "重新加载主题翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:595
+#: internal/handler/admin_settings.go:588
 msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
 msgstr ""
 
@@ -2778,25 +2474,99 @@ msgstr ""
 msgid "编辑用户"
 msgstr ""
 
-#: internal/handler/auth.go:28 internal/handler/auth.go:39
-#: internal/handler/auth.go:50 internal/handler/auth.go:77
-#: internal/handler/auth.go:92 internal/handler/auth.go:98
+#: internal/handler/admin_user.go:188 internal/handler/auth_handler.go:117
+msgid "用户名和邮箱不能为空。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:55 internal/handler/auth_handler.go:76
+msgid "登录"
+msgstr ""
+
+#: internal/handler/auth_handler.go:57
+msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:77
+msgid "用户名或密码错误。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:98 internal/handler/auth_handler.go:112
+msgid "注册"
+msgstr ""
+
+#: internal/handler/auth_handler.go:128 internal/handler/comment.go:162
+msgid "邮箱格式不正确。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:137
+msgid "站点尚未配置 SMTP，暂时无法发送验证邮件。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:181
+#, c-format
+msgid "[%s] 注册邮箱验证"
+msgstr ""
+
+#: internal/handler/auth_handler.go:182
+#, c-format
+msgid ""
+"您好 %s，\n"
+"\n"
+"请点击以下链接验证邮箱并设置登录密码（24 小时内有效）：\n"
+"\n"
+"%s\n"
+"\n"
+"如果您没有请求注册，请忽略此邮件。\n"
+msgstr ""
+
+#: internal/handler/auth_handler.go:187
+msgid "验证邮件发送失败，请稍后重试或联系管理员。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:194
+msgid "验证邮件已发送，请检查邮箱并在 24 小时内完成注册。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:206 internal/handler/auth_handler.go:251
+msgid "完成注册"
+msgstr ""
+
+#: internal/handler/auth_handler.go:210 internal/handler/auth_handler.go:216
+#: internal/handler/auth_handler.go:276
+msgid "注册链接无效或已过期，请重新注册。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:224
+msgid "用户名已被占用，请重新注册。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:232
+msgid "邮箱已被注册，请重新注册。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:255
+msgid "注册链接无效或密码不能为空。"
+msgstr ""
+
+#: internal/handler/auth_handler.go:287 internal/handler/auth_handler.go:297
+#: internal/handler/auth_handler.go:306 internal/handler/auth_handler.go:331
+#: internal/handler/auth_handler.go:346 internal/handler/auth_handler.go:352
 msgid "忘记密码"
 msgstr ""
 
-#: internal/handler/auth.go:40
+#: internal/handler/auth_handler.go:298
 msgid "请输入邮箱地址。"
 msgstr ""
 
-#: internal/handler/auth.go:51 internal/handler/auth.go:99
+#: internal/handler/auth_handler.go:307 internal/handler/auth_handler.go:353
 msgid "如果该邮箱已注册，重置密码链接已发送。"
 msgstr ""
 
-#: internal/handler/auth.go:78
+#: internal/handler/auth_handler.go:332
 msgid "站点 URL 未配置，无法发送安全重置链接，请联系管理员。"
 msgstr ""
 
-#: internal/handler/auth.go:83
+#: internal/handler/auth_handler.go:338
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -2808,83 +2578,92 @@ msgid ""
 "如果您没有请求重置密码，请忽略此邮件。\n"
 msgstr ""
 
-#: internal/handler/auth.go:84
+#: internal/handler/auth_handler.go:339
 #, c-format
 msgid "[%s] 密码重置"
 msgstr ""
 
-#: internal/handler/auth.go:93
+#: internal/handler/auth_handler.go:347
 msgid "邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 
-#: internal/handler/auth.go:116 internal/handler/auth.go:122
-#: internal/handler/auth.go:142 internal/handler/auth.go:150
-#: internal/handler/auth.go:159 internal/handler/auth.go:183
+#: internal/handler/auth_handler.go:369 internal/handler/auth_handler.go:375
+#: internal/handler/auth_handler.go:394 internal/handler/auth_handler.go:402
+#: internal/handler/auth_handler.go:411 internal/handler/auth_handler.go:436
 msgid "重置密码"
 msgstr ""
 
-#: internal/handler/auth.go:117 internal/handler/auth.go:160
+#: internal/handler/auth_handler.go:370 internal/handler/auth_handler.go:412
 msgid "重置链接无效或已过期，请重新请求。"
 msgstr ""
 
-#: internal/handler/auth.go:184
+#: internal/handler/auth_handler.go:433
+#, c-format
+msgid ""
+"您好 %s，\n"
+"\n"
+"你的账户密码刚刚通过重置链接被修改。如果这不是你本人操作，请立即联系站点管理"
+"员。\n"
+msgstr ""
+
+#: internal/handler/auth_handler.go:437
 msgid "密码已重置，请使用新密码登录。"
 msgstr ""
 
-#: internal/handler/comment.go:61
+#: internal/handler/comment.go:60
 msgid "提交内容格式有误。"
 msgstr ""
 
-#: internal/handler/comment.go:77
+#: internal/handler/comment.go:76
 msgid "目标评论不存在。"
 msgstr ""
 
-#: internal/handler/comment.go:108
+#: internal/handler/comment.go:107
 msgid "评论已提交,等待审核后显示。"
 msgstr ""
 
-#: internal/handler/comment.go:110
+#: internal/handler/comment.go:109
 msgid "评论已发布。"
 msgstr ""
 
-#: internal/handler/comment.go:128 internal/handler/comment.go:139
+#: internal/handler/comment.go:127 internal/handler/comment.go:138
 msgid "提交失败。"
 msgstr ""
 
-#: internal/handler/comment.go:150
+#: internal/handler/comment.go:149
 msgid "昵称和内容不能为空。"
 msgstr ""
 
-#: internal/handler/comment.go:154
+#: internal/handler/comment.go:153
 msgid "评论长度不合适。"
 msgstr ""
 
-#: internal/handler/comment.go:158
+#: internal/handler/comment.go:157
 msgid "邮箱不能为空。"
 msgstr ""
 
-#: internal/handler/comment.go:170
+#: internal/handler/comment.go:169
 msgid "网站地址格式不正确。"
 msgstr ""
 
-#: internal/handler/comment.go:183
+#: internal/handler/comment.go:182
 msgid "目标文章不存在。"
 msgstr ""
 
-#: internal/handler/comment.go:189
+#: internal/handler/comment.go:188
 msgid "该文章评论已关闭。"
 msgstr ""
 
-#: internal/handler/comment.go:202 internal/handler/comment.go:206
+#: internal/handler/comment.go:201 internal/handler/comment.go:205
 msgid "评论太频繁,请稍后再试。"
 msgstr ""
 
-#: internal/handler/comment.go:267
+#: internal/handler/comment.go:258
 #, c-format
 msgid "[%s] 你的评论有新回复"
 msgstr ""
 
-#: internal/handler/comment.go:268
+#: internal/handler/comment.go:259
 #, c-format
 msgid ""
 "您好 %s，\n"

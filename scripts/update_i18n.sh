@@ -5,8 +5,14 @@ set -euo pipefail
 # -o pipefail 管道命令中任意一段失败就算失败
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-I18N_DIR="${I18N_DIR:-$ROOT_DIR/web/i18n}"
-TEMPLATE_DIR="${TEMPLATE_DIR:-$ROOT_DIR/web/templates}"
+
+# 两个翻译域：
+#   web/i18n/            — Go 代码 + admin/auth 模板（应用级翻译）
+#   web/themes/default/i18n/ — 前台模板（默认主题翻译，domain="default"）
+APP_I18N_DIR="${APP_I18N_DIR:-$ROOT_DIR/web/i18n}"
+ADMIN_TEMPLATE_DIR="${ADMIN_TEMPLATE_DIR:-$ROOT_DIR/web/templates}"
+THEME_I18N_DIR="${THEME_I18N_DIR:-$ROOT_DIR/web/themes/default/i18n}"
+THEME_TEMPLATE_DIR="${THEME_TEMPLATE_DIR:-$ROOT_DIR/web/themes/default/templates}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -26,14 +32,17 @@ require_cmd git
 # go install github.com/youthlin/t/cmd/xtemplate@latest
 require_cmd xtemplate
 
-mkdir -p "$I18N_DIR"
+mkdir -p "$APP_I18N_DIR"
+mkdir -p "$THEME_I18N_DIR"
 
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/blog-i18n.XXXXXX")"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 GO_POT="$TMP_DIR/go.pot"
-TEMPLATE_POT="$TMP_DIR/templates.pot"
-MERGED_POT="$I18N_DIR/messages.pot"
+ADMIN_TEMPLATE_POT="$TMP_DIR/admin_templates.pot"
+THEME_TEMPLATE_POT="$TMP_DIR/theme_templates.pot"
+APP_MERGED_POT="$APP_I18N_DIR/messages.pot"
+THEME_MERGED_POT="$THEME_I18N_DIR/messages.pot"
 XTEMPLATE_ERR="$TMP_DIR/xtemplate.stderr"
 
 # 同时纳入已跟踪与未跟踪(但未被 .gitignore 忽略)的 Go 文件，
@@ -55,6 +64,7 @@ if [ "${#GO_FILES[@]}" -eq 0 ]; then
   exit 1
 fi
 
+# --- 1. 抽取 Go 代码翻译 ---
 (
   cd "$ROOT_DIR"
   xgettext \
@@ -78,10 +88,11 @@ fi
     -- "${GO_FILES[@]}"
 )
 
+# --- 2. 抽取 admin/auth 模板翻译 → 应用域 ---
 xtemplate \
-  -i "$TEMPLATE_DIR/*.gohtml" \
+  -i "$ADMIN_TEMPLATE_DIR/*.gohtml" \
   -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
-  -o "$TEMPLATE_POT" \
+  -o "$ADMIN_TEMPLATE_POT" \
   2>"$XTEMPLATE_ERR"
 
 if [ -s "$XTEMPLATE_ERR" ]; then
@@ -89,48 +100,57 @@ if [ -s "$XTEMPLATE_ERR" ]; then
   exit 1
 fi
 
-python3 - "$TEMPLATE_POT" <<'PY'
+fix_charset() {
+  python3 - "$1" <<'PY'
 from pathlib import Path
 import sys
-
 pot = Path(sys.argv[1])
 text = pot.read_text(encoding='utf-8')
 text = text.replace('charset=CHARSET', 'charset=UTF-8')
 pot.write_text(text, encoding='utf-8')
 PY
+}
 
+fix_charset "$ADMIN_TEMPLATE_POT"
+
+# --- 3. 合并 Go + admin/auth 模板 → web/i18n/messages.pot ---
 msgcat \
   --use-first \
   --sort-output \
-  --output-file="$TMP_DIR/all.pot" \
-  "$GO_POT" "$TEMPLATE_POT"
+  --output-file="$TMP_DIR/app_all.pot" \
+  "$GO_POT" "$ADMIN_TEMPLATE_POT"
 
 msguniq \
   --use-first \
   --sort-by-file \
-  --output-file="$MERGED_POT" \
-  "$TMP_DIR/all.pot"
+  --output-file="$APP_MERGED_POT" \
+  "$TMP_DIR/app_all.pot"
 
-shopt -s nullglob
-PO_FILES=("$I18N_DIR"/*.po)
-for po in "${PO_FILES[@]}"; do
-  normalized_po="$TMP_DIR/$(basename "$po")"
-  msguniq \
-    --use-first \
-    --sort-by-file \
-    --output-file="$normalized_po" \
-    "$po"
-  cp "$normalized_po" "$po"
-  msgmerge --update --backup=none "$po" "$MERGED_POT"
-  # 删除 obsolete 条目，避免同一 msgid 被重新抽取后与历史 #~ 条目重复，
-  # 进而导致 msgfmt --check-format 报 duplicate message definition。
-  msgattrib --no-obsolete --output-file="$po" "$po"
-done
+# --- 4. 更新 web/i18n/*.po ---
+update_po_files() {
+  local i18n_dir="$1"
+  local merged_pot="$2"
+  shopt -s nullglob
+  local po_files=("$i18n_dir"/*.po)
+  for po in "${po_files[@]}"; do
+    local normalized_po="$TMP_DIR/$(basename "$po")"
+    msguniq \
+      --use-first \
+      --sort-by-file \
+      --output-file="$normalized_po" \
+      "$po"
+    cp "$normalized_po" "$po"
+    msgmerge --update --backup=none "$po" "$merged_pot"
+    msgattrib --no-obsolete --output-file="$po" "$po"
+  done
+  printf '已 merge %d 个现有翻译文件。\n' "${#po_files[@]}"
+}
 
-python3 - "$MERGED_POT" <<'PY'
+update_po_files "$APP_I18N_DIR" "$APP_MERGED_POT"
+
+python3 - "$APP_MERGED_POT" <<'PY'
 from pathlib import Path
 import sys
-
 pot = Path(sys.argv[1])
 count = 0
 for line in pot.read_text(encoding='utf-8').splitlines():
@@ -139,4 +159,35 @@ for line in pot.read_text(encoding='utf-8').splitlines():
 print(f'已更新 {pot}，共抽取 {count} 条消息。')
 PY
 
-printf '已 merge %d 个现有翻译文件。\n' "${#PO_FILES[@]}"
+# --- 5. 抽取前台模板翻译 → 默认主题域 ---
+xtemplate \
+  -i "$THEME_TEMPLATE_DIR/*.gohtml" \
+  -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
+  -o "$THEME_TEMPLATE_POT" \
+  2>"$XTEMPLATE_ERR"
+
+if [ -s "$XTEMPLATE_ERR" ]; then
+  cat "$XTEMPLATE_ERR" >&2
+  exit 1
+fi
+
+fix_charset "$THEME_TEMPLATE_POT"
+
+msguniq \
+  --use-first \
+  --sort-by-file \
+  --output-file="$THEME_MERGED_POT" \
+  "$THEME_TEMPLATE_POT"
+
+update_po_files "$THEME_I18N_DIR" "$THEME_MERGED_POT"
+
+python3 - "$THEME_MERGED_POT" <<'PY'
+from pathlib import Path
+import sys
+pot = Path(sys.argv[1])
+count = 0
+for line in pot.read_text(encoding='utf-8').splitlines():
+    if line.startswith('msgid "') and line != 'msgid ""':
+        count += 1
+print(f'已更新 {pot}，共抽取 {count} 条消息。')
+PY

@@ -92,9 +92,9 @@ func TestStaticRendererReleaseToHotDir(t *testing.T) {
 }
 
 func TestPaginationTemplateKeepsPageContext(t *testing.T) {
-	tplFS, err := fs.Sub(web.Templates, "templates")
+	tplFS, err := fs.Sub(web.DefaultTheme, "themes/default/templates")
 	if err != nil {
-		t.Fatalf("sub templates fs: %v", err)
+		t.Fatalf("sub default theme templates fs: %v", err)
 	}
 	tpl, err := parseTemplates(tplFS, "*.gohtml")
 	if err != nil {
