@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/internal/i18n"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,10 +22,11 @@ type Theme struct {
 	Dir string `yaml:"-" json:"-"`
 }
 
-// PageConfig 描述某个页面需要的数据和 sidebar widget。
+// PageConfig 描述某个页面需要的数据和 widget。
 type PageConfig struct {
-	Data    []string `yaml:"data" json:"data"`
-	Sidebar []string `yaml:"sidebar" json:"sidebar"`
+	Data []string `yaml:"data" json:"data"`
+	// Widgets 是该页面要渲染的 widget 列表。
+	Widgets []string `yaml:"widgets" json:"widgets"`
 }
 
 // Needs 检查页面配置是否声明了某个数据字段。
@@ -72,14 +74,31 @@ func (t *Theme) AssetsDir() string {
 	return filepath.Join(t.Dir, "assets")
 }
 
+// I18nDir 返回主题自带翻译文件目录路径。
+func (t *Theme) I18nDir() string {
+	return filepath.Join(t.Dir, "i18n")
+}
+
 // HasTemplates 检查主题是否包含模板目录。
 func (t *Theme) HasTemplates() bool {
 	info, err := os.Stat(t.TemplatesDir())
-	return err == nil && info.IsDir()
+	if err != nil || !info.IsDir() {
+		return false
+	}
+	matches, err := filepath.Glob(filepath.Join(t.TemplatesDir(), "*.gohtml"))
+	return err == nil && len(matches) > 0
 }
 
 // HasAssets 检查主题是否包含静态资源目录。
 func (t *Theme) HasAssets() bool {
 	info, err := os.Stat(t.AssetsDir())
 	return err == nil && info.IsDir()
+}
+
+// LoadTranslations 把主题 i18n 目录绑定到主题名称对应的文本域。
+func (t *Theme) LoadTranslations() error {
+	if t == nil {
+		return nil
+	}
+	return i18n.BindDomain(t.Name, t.I18nDir())
 }

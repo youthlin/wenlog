@@ -2,11 +2,13 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,6 +22,7 @@ import (
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
@@ -31,6 +34,7 @@ type Public struct {
 	cfg          *config.Config
 	log          *slog.Logger
 	themeManager *theme.Manager
+	renderer     *render.Renderer
 }
 
 const commentPageSize = 20
@@ -50,11 +54,11 @@ type publicSettings struct {
 }
 
 // NewPublic 构造前台处理器。
-func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.Manager) *Public {
-	return &Public{st: st, cfg: cfg, log: log, themeManager: tm}
+func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.Manager, renderer *render.Renderer) *Public {
+	return &Public{st: st, cfg: cfg, log: log, themeManager: tm, renderer: renderer}
 }
 
-// base 返回模板通用数据(站点名、菜单、当前年份、侧栏小组件、当前登录用户)。
+// base 返回模板通用数据(站点名、菜单、当前年份、widget、当前登录用户)。
 // pageCfg 来自 theme.yaml 的 pages.{page} 配置，为 nil 时查询所有数据（兼容无主题场景）。
 func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig) gin.H {
 	menu, _ := h.st.MenuPages(c)
@@ -117,19 +121,20 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		data["Tags"] = h.st.AllTags(c)
 	}
 
-	// 渲染 sidebar widgets
-	data["SidebarWidgets"] = h.renderSidebarWidgets(c, s, pageCfg)
+	// 渲染 widgets。
+	widgets := h.renderWidgets(c, s, pageCfg)
+	data["Widgets"] = widgets
 
 	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
 	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
 		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
 	}
-	return i18n.Inject(c, data)
+	return i18n.InjectDomain(c, data, h.currentThemeName(c))
 }
 
-// renderSidebarWidgets 根据 pageCfg 渲染 sidebar widget HTML 片段列表。
-func (h *Public) renderSidebarWidgets(c *gin.Context, s publicSettings, pageCfg *theme.PageConfig) []template.HTML {
-	if pageCfg == nil || len(pageCfg.Sidebar) == 0 {
+// renderWidgets 根据 pageCfg 渲染 widget HTML 片段列表。
+func (h *Public) renderWidgets(c *gin.Context, s publicSettings, pageCfg *theme.PageConfig) []template.HTML {
+	if pageCfg == nil || len(pageCfg.Widgets) == 0 {
 		return nil
 	}
 	currentUser := h.currentUser(c)
@@ -139,6 +144,7 @@ func (h *Public) renderSidebarWidgets(c *gin.Context, s publicSettings, pageCfg 
 		CurrentUserID:    currentUserID(c),
 		CurrentUserName:  displayUserName(currentUser),
 		RegistrationOpen: s.RegistrationOpen,
+		Keyword:          c.Query("q"),
 		CSRFToken:        "",
 	}
 	if uid := currentUserID(c); uid != 0 {
@@ -147,12 +153,12 @@ func (h *Public) renderSidebarWidgets(c *gin.Context, s publicSettings, pageCfg 
 		}
 	}
 	var widgets []template.HTML
-	for _, name := range pageCfg.Sidebar {
+	for _, name := range pageCfg.Widgets {
 		w := theme.Get(name)
 		if w == nil {
 			continue
 		}
-		html, err := w.Render(c, h.st, settings)
+		html, err := h.renderWidget(c, w, settings)
 		if err != nil {
 			if h.log != nil {
 				h.log.Error("render widget", "name", name, "error", err)
@@ -164,6 +170,58 @@ func (h *Public) renderSidebarWidgets(c *gin.Context, s publicSettings, pageCfg 
 		}
 	}
 	return widgets
+}
+
+func (h *Public) renderWidget(c *gin.Context, w theme.Widget, settings theme.WidgetSettings) (template.HTML, error) {
+	if h.renderer == nil {
+		return "", nil
+	}
+	tpl := h.renderer.Template()
+	name := theme.WidgetTemplateName(w.Name())
+	if tpl == nil || tpl.Lookup(name) == nil {
+		return "", nil
+	}
+	data, err := w.Data(c, h.st, settings)
+	if err != nil || data == nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := tpl.ExecuteTemplate(&buf, name, widgetTemplateData(c, data, h.currentThemeName(c))); err != nil {
+		return "", err
+	}
+	return template.HTML(buf.String()), nil
+}
+
+func widgetTemplateData(c *gin.Context, data any, domain string) gin.H {
+	result := gin.H{}
+	switch v := data.(type) {
+	case gin.H:
+		for key, value := range v {
+			result[key] = value
+		}
+	case map[string]any:
+		for key, value := range v {
+			result[key] = value
+		}
+	default:
+		rv := reflect.ValueOf(data)
+		if rv.IsValid() && rv.Kind() == reflect.Pointer {
+			rv = rv.Elem()
+		}
+		if rv.IsValid() && rv.Kind() == reflect.Struct {
+			rt := rv.Type()
+			for i := 0; i < rv.NumField(); i++ {
+				field := rt.Field(i)
+				if field.PkgPath != "" {
+					continue
+				}
+				result[field.Name] = rv.Field(i).Interface()
+			}
+		} else {
+			result["Data"] = data
+		}
+	}
+	return i18n.InjectDomain(c, result, domain)
 }
 
 func displayUserName(u *model.User) string {
@@ -182,10 +240,7 @@ func (h *Public) mailEnabled() bool {
 
 // pageConfig 从当前主题获取指定页面的配置，无主题时返回 nil。
 func (h *Public) pageConfig(c *gin.Context, pageName string) *theme.PageConfig {
-	if h.themeManager == nil {
-		return nil
-	}
-	t := h.themeManager.Current(c)
+	t := h.currentTheme(c)
 	if t == nil {
 		return nil
 	}
@@ -194,6 +249,20 @@ func (h *Public) pageConfig(c *gin.Context, pageName string) *theme.PageConfig {
 		return nil
 	}
 	return &cfg
+}
+
+func (h *Public) currentTheme(c *gin.Context) *theme.Theme {
+	if h.themeManager == nil {
+		return nil
+	}
+	return h.themeManager.Current(c)
+}
+
+func (h *Public) currentThemeName(c *gin.Context) string {
+	if t := h.currentTheme(c); t != nil {
+		return t.Name
+	}
+	return ""
 }
 
 func (h *Public) loadSettings(ctx context.Context) publicSettings {

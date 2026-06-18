@@ -576,6 +576,14 @@ func (h *Admin) ReleaseI18n(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
 	}
+	if h.themeManager != nil {
+		if err := h.themeManager.LoadTranslations(); err != nil {
+			data := h.settingsDataForTab(c, "resources")
+			data["Error"] = tr.T("重新加载主题翻译资源失败: %s", err.Error())
+			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+			return
+		}
+	}
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "i18n-released"))
 }
 
@@ -594,6 +602,14 @@ func (h *Admin) UseEmbeddedI18n(c *gin.Context) {
 		data["Error"] = tr.T("重新加载翻译资源失败: %s", err.Error())
 		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
 		return
+	}
+	if h.themeManager != nil {
+		if err := h.themeManager.LoadTranslations(); err != nil {
+			data := h.settingsDataForTab(c, "resources")
+			data["Error"] = tr.T("重新加载主题翻译资源失败: %s", err.Error())
+			c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+			return
+		}
 	}
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("resources", "i18n-embedded"))
 }

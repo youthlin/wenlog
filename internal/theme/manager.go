@@ -59,6 +59,20 @@ func (m *Manager) scan() error {
 			continue // 跳过无效主题
 		}
 		m.themes[t.Name] = t
+		_ = t.LoadTranslations()
+	}
+	return nil
+}
+
+// LoadTranslations 加载所有已安装主题自带的翻译文件。
+func (m *Manager) LoadTranslations() error {
+	if m == nil {
+		return nil
+	}
+	for _, t := range m.themes {
+		if err := t.LoadTranslations(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -125,6 +139,9 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 		return nil, err
 	}
 	m.themes[t.Name] = t
+	if err := t.LoadTranslations(); err != nil {
+		return nil, err
+	}
 	return t, nil
 }
 

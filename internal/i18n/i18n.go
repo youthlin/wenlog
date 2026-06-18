@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 
@@ -72,6 +73,38 @@ func Reload() error {
 	return loadTranslations()
 }
 
+// BindDomain 从本地路径加载翻译文件并绑定到指定文本域。
+// path 可以是包含 .po/.mo 的目录，也可以是单个翻译文件。
+func BindDomain(domain, path string) error {
+	domain = strings.TrimSpace(domain)
+	path = strings.TrimSpace(path)
+	if domain == "" || path == "" {
+		return nil
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if info.IsDir() {
+		matches, err := filepath.Glob(filepath.Join(path, "*.po"))
+		if err != nil {
+			return err
+		}
+		moMatches, err := filepath.Glob(filepath.Join(path, "*.mo"))
+		if err != nil {
+			return err
+		}
+		if len(matches)+len(moMatches) == 0 {
+			return nil
+		}
+	}
+	gettext.Bind(domain, path)
+	return nil
+}
+
 // Middleware 为当前请求决定语言,优先级: query lang > cookie > Accept-Language。
 func Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -128,6 +161,29 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 	data["usedLocale"] = used
 	data["htmlLang"] = htmlLang(used)
 	data["langURL"] = switchURLs
+	return data
+}
+
+// InjectDomain 向模板数据注入指定文本域的翻译能力。
+// 主题模板使用独立 domain 时，可继续在模板里写 .t.T / .t.N 等调用。
+func InjectDomain(c *gin.Context, data gin.H, domain string) gin.H {
+	data = Inject(c, data)
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
+		return data
+	}
+	translator := Get(c).D(domain)
+	data["t"] = translator
+	data["T"] = translator.T
+	data["N"] = translator.N
+	data["N1"] = translator.N1
+	data["N64"] = translator.N64
+	data["N1_64"] = translator.N1_64
+	data["X"] = translator.X
+	data["XN"] = translator.XN
+	data["XN1"] = translator.XN1
+	data["XN64"] = translator.XN64
+	data["XN1_64"] = translator.XN1_64
 	return data
 }
 

@@ -218,7 +218,7 @@ func extractThemeZip(r io.ReaderAt, size int64, dest string) error {
 func isAllowedThemeFile(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
 	switch ext {
-	case ".gohtml", ".html", ".css", ".js", ".json", ".yaml", ".yml",
+	case ".gohtml", ".html", ".css", ".js", ".json", ".yaml", ".yml", ".po", ".mo",
 		".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico",
 		".woff", ".woff2", ".ttf", ".eot":
 		return true

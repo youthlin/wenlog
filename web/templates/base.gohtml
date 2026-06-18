@@ -57,7 +57,7 @@
 
 {{define "footer"}}
 </main>
-{{template "sidebar" .}}
+{{template "widgets" .}}
 </div>
 <div class="scroll-tools">
   <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.t.T "回顶部"}}">↑</button>
@@ -96,8 +96,115 @@
 {{end}}
 {{end}}
 
-{{define "sidebar"}}
-<aside class="sidebar">
-  {{range .SidebarWidgets}}{{.}}{{end}}
+{{define "widgets"}}
+<aside class="widgets">
+  {{range .Widgets}}{{.}}{{end}}
 </aside>
+{{end}}
+
+{{define "widget_user_info"}}
+<section class="widget widget-user">
+  {{if .CurrentUserID}}
+  <h3>{{.t.T "%s, 你好" .CurrentUserName}}</h3>
+  <div class="widget-user-actions">
+    <a href="/admin">{{.t.T "控制台"}}</a>
+    <form method="post" action="/admin/logout">
+      {{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}
+      <button type="submit">{{.t.T "退出"}}</button>
+    </form>
+  </div>
+  {{else}}
+  <h3>{{.t.T "欢迎"}}</h3>
+  <div class="widget-user-actions">
+    <a href="/admin/login">{{.t.T "登录"}}</a>
+    {{if .RegistrationOpen}}<a href="/admin/register">{{.t.T "注册"}}</a>{{end}}
+  </div>
+  {{end}}
+</section>
+{{end}}
+
+{{define "widget_search"}}
+<section class="widget widget-search">
+  <h3>{{.t.T "搜索"}}</h3>
+  <form method="get" action="/search">
+    <input type="search" name="q" placeholder="{{.t.T "输入关键词…"}}" value="{{.Keyword}}">
+    <button type="submit">{{.t.T "搜索"}}</button>
+  </form>
+</section>
+{{end}}
+
+{{define "widget_saying"}}
+<section class="widget widget-saying">
+  <h3>{{.t.T "博主动态"}}</h3>
+  <div class="widget-saying-author">
+    <img class="avatar" src="{{avatarURL .AuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
+    <span>{{.AuthorName}}</span>
+  </div>
+  <ul>
+    {{range .Items}}
+    <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+
+{{define "widget_recent_posts"}}
+<section class="widget widget-recent-posts">
+  <h3>{{.t.T "近期文章"}}</h3>
+  <ul>
+    {{range .Posts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+  </ul>
+</section>
+{{end}}
+
+{{define "widget_recent_comments"}}
+<section class="widget widget-recent-comments">
+  <h3>{{.t.T "近期评论"}}</h3>
+  <ul>
+    {{range .Items}}
+    <li>
+      <div class="widget-comment-line">
+        <img class="avatar" src="{{avatarURL .Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
+        <a href="{{.CommentURL}}">{{.Snippet}}</a>
+      </div>
+      <div class="widget-comment-meta">
+        {{if .AuthorURL}}<a href="{{.AuthorURL}}" target="_blank" rel="nofollow noopener">{{.Comment.Author}}</a>{{else}}{{.Comment.Author}}{{end}}
+        {{$.t.T "发表在"}} <a href="{{.CommentURL}}">{{.Post.Title}}</a>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+
+{{define "widget_archive_months"}}
+<section class="widget widget-archive">
+  <h3>{{.t.T "归档"}}</h3>
+  <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入月份筛选…"}}" data-search-empty="{{.t.T "没有匹配的月份"}}">
+    <option value="">{{.t.T "选择月份…"}}</option>
+    {{range .Months}}
+    <option value="/archive#{{.Year}}">{{$.t.T "%d 年 %d 月(%d)" .Year .Month .Count}}</option>
+    {{end}}
+  </select>
+</section>
+{{end}}
+
+{{define "widget_categories"}}
+<section class="widget widget-categories">
+  <h3>{{.t.T "分类目录"}}</h3>
+  <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入分类名筛选…"}}" data-search-empty="{{.t.T "没有匹配的分类"}}">
+    <option value="">{{.t.T "选择分类…"}}</option>
+    {{range .Categories}}<option value="{{categoryURL .Slug}}">{{.Name}}</option>{{end}}
+  </select>
+</section>
+{{end}}
+
+{{define "widget_tags"}}
+<section class="widget widget-tags">
+  <h3>{{.t.T "标签"}}</h3>
+  <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">
+    <option value="">{{.t.T "选择标签…"}}</option>
+    {{range .Tags}}<option value="{{tagURL .Slug}}">{{.Name}}</option>{{end}}
+  </select>
+</section>
 {{end}}

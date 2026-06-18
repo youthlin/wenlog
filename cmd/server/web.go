@@ -102,7 +102,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 			log.Error("load current theme templates", slog.Any("error", err))
 		}
 	}
-	pub := handler.NewPublic(st, cfg, log, tm)
+	pub := handler.NewPublic(st, cfg, log, tm, tplRenderer)
 	rateLimiter := middleware.NewMemoryRateLimiter()
 	registerPublicRoutes(r, pub, rateLimiter)
 

@@ -19,12 +19,14 @@
 | `CSRFToken` | `string` | CSRF 令牌 |
 | `RegistrationOpen` | `bool` | 是否开放注册 |
 | `MailEnabled` | `bool` | 邮件服务是否已配置 |
-| `SidebarWidgets` | `[]interface{}` | 侧栏 widget 渲染结果（`template.HTML` 片段列表） |
+| `Widgets` | `[]interface{}` | widget 渲染结果（`template.HTML` 片段列表） |
 | `SQLDetails` | `*store.LazySQLDetails` | SQL 调试详情（仅管理员且开启时） |
 
 ### i18n 字段
 
 由 `i18n.Inject()` 注入：
+
+默认前台模板使用应用默认 domain；启用外部主题时，主题模板会使用 `theme.yaml` 的 `name` 作为 domain 注入翻译器，因此主题模板仍写 `.t.T`，但翻译来自主题包的 `i18n/*.po` / `i18n/*.mo`。
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -277,7 +279,7 @@ pages:
       - ArchiveMonths
       - Categories
       - Tags
-    sidebar:   # 侧栏 widget 列表
+    widgets:   # widget 列表
       - user_info
       - search
       - saying
@@ -289,23 +291,23 @@ pages:
 
   post:        # 文章详情
     data: [...]
-    sidebar: [...]
+    widgets: [...]
 
   page:        # 页面
     data: [...]
-    sidebar: [...]
+    widgets: [...]
 
   list:        # 列表页（搜索/分类/标签）
     data: [...]
-    sidebar: [...]
+    widgets: [...]
 
   archive:     # 归档页
     data: [...]
-    sidebar: [...]
+    widgets: [...]
 
   error:       # 错误页
     data: []
-    sidebar: []
+    widgets: []
 ```
 
 ### 可用 data 字段
@@ -319,7 +321,7 @@ pages:
 | `Categories` | 分类列表 | `.Categories` (`[]model.Category`) |
 | `Tags` | 标签列表 | `.Tags` (`[]model.Tag`) |
 
-### 可用 sidebar widget
+### 可用 widget
 
 | Widget 名 | 说明 |
 |---|---|
@@ -339,8 +341,8 @@ pages:
 | 模板名 | 说明 |
 |---|---|
 | `header` | 页面头部（`<head>` + `<header>` + `<main>` 开始） |
-| `footer` | 页面尾部（`</main>` + sidebar + 页脚 + `</body></html>`） |
-| `sidebar` | 侧栏（遍历 `.SidebarWidgets`） |
+| `footer` | 页面尾部（`</main>` + widgets + 页脚 + `</body></html>`） |
+| `widgets` | widget 区域（遍历 `.Widgets`） |
 | `pagination` | 分页导航 |
 | `comments` | 评论区域（含评论列表和评论表单） |
 | `comments_fragment.gohtml` | 评论列表片段（AJAX 用） |
@@ -349,3 +351,51 @@ pages:
 每个页面模板（如 `index.gohtml`）通过 `{{template "header" .}}` / `{{template "footer" .}}` 包裹内容。
 
 主题可以覆盖任意命名模板。主题未提供的模板自动回退到默认模板。
+
+## 主题翻译文件
+
+主题包可以提供自己的翻译文件：
+
+```text
+themes/my-theme/
+├── theme.yaml        # name: "my-theme"
+├── templates/
+└── i18n/
+    └── en_US.po
+```
+
+加载规则：
+
+- domain 使用 `theme.yaml` 的 `name` 值，例如 `my-theme`。
+- 主题激活后，页面模板和 widget 模板中的 `.t` 会注入为 `i18n.Get(c).D("my-theme")`。
+- 模板里仍然使用 `.t.T` / `.t.N` / `.t.X` / `.t.XN` 等；不需要在模板中显式写 domain。
+- 主题包上传时允许包含 `.po` / `.mo` 文件。
+- 默认主题 `default` 使用应用默认翻译资源。
+
+## Widget HTML 自定义
+
+内置 widget 的数据由 Go 代码提供，默认 HTML 位于模板中的 `widget_{name}` 命名模板。主题可以定义同名模板覆盖 HTML 结构；widget 模板会注入 `.t.T` 等 i18n 字段，可以像普通页面模板一样翻译文案。
+
+| Widget 名 | 覆盖模板名 | 数据类型 |
+|---|---|---|
+| `user_info` | `widget_user_info` | `theme.UserInfoWidgetData` |
+| `search` | `widget_search` | `theme.SearchWidgetData` |
+| `saying` | `widget_saying` | `theme.SayingWidgetData` |
+| `recent_posts` | `widget_recent_posts` | `theme.RecentPostsWidgetData` |
+| `recent_comments` | `widget_recent_comments` | `theme.RecentCommentsWidgetData` |
+| `archive_months` | `widget_archive_months` | `theme.ArchiveMonthsWidgetData` |
+| `categories` | `widget_categories` | `theme.CategoriesWidgetData` |
+| `tags` | `widget_tags` | `theme.TagsWidgetData` |
+
+示例：
+
+```gohtml
+{{define "widget_recent_posts"}}
+<section class="widget widget-recent-posts">
+  <h3>{{.t.T "最新文章"}}</h3>
+  <ul>
+    {{range .Posts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+  </ul>
+</section>
+{{end}}
+```

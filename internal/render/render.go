@@ -230,8 +230,8 @@ func (r *Renderer) ReleaseToHotDir(dir string) error {
 
 func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 	funcs := template.FuncMap{
-		"postURL":          func(p *model.Post) string { return permalink.Post(p) },
-		"pageURL":          func(p *model.Post) string { return permalink.Page(p) },
+		"postURL":          postURL,
+		"pageURL":          pageURL,
 		"categoryURL":      permalink.Category,
 		"tagURL":           permalink.Tag,
 		"safeHTML":         func(s string) template.HTML { return template.HTML(s) },
@@ -257,6 +257,28 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		return nil, errors.Wrap(err, "parse templates")
 	}
 	return tpl, nil
+}
+
+func postURL(p any) string {
+	switch v := p.(type) {
+	case *model.Post:
+		return permalink.Post(v)
+	case model.Post:
+		return permalink.Post(&v)
+	default:
+		return ""
+	}
+}
+
+func pageURL(p any) string {
+	switch v := p.(type) {
+	case *model.Post:
+		return permalink.Page(v)
+	case model.Post:
+		return permalink.Page(&v)
+	default:
+		return ""
+	}
 }
 
 // Template 返回当前缓存的底层模板。

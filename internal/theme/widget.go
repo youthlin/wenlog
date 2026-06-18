@@ -2,19 +2,19 @@ package theme
 
 import (
 	"context"
-	"html/template"
+	"strings"
 
+	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
 )
 
-// Widget 是一个可渲染的侧栏内容块。
+// Widget 是一个可渲染的内容块。
 // 每个 Widget 封装自己的数据查询和 HTML 渲染逻辑。
 type Widget interface {
-	// Name 返回 widget 的唯一标识名，对应 theme.yaml 中 sidebar 列表的值。
+	// Name 返回 widget 的唯一标识名，对应 theme.yaml 中 widgets 列表的值。
 	Name() string
-	// Render 查询数据并渲染为 HTML 片段。
-	// ctx 是请求上下文，st 用于数据库查询，settings 是当前站点设置。
-	Render(ctx context.Context, st *store.Store, settings WidgetSettings) (template.HTML, error)
+	// Data 查询并组装模板数据。返回 nil 表示该 widget 当前不需要渲染。
+	Data(ctx context.Context, st *store.Store, settings WidgetSettings) (any, error)
 }
 
 // WidgetSettings 是 Widget 渲染时需要的站点设置与当前请求上下文。
@@ -26,6 +26,53 @@ type WidgetSettings struct {
 	RegistrationOpen bool
 	Keyword          string // 搜索关键词
 	CSRFToken        string
+}
+
+// UserInfoWidgetData 是 user_info widget 的模板数据。
+type UserInfoWidgetData struct {
+	CurrentUserID    uint
+	CurrentUserName  string
+	RegistrationOpen bool
+	CSRFToken        string
+}
+
+// SearchWidgetData 是 search widget 的模板数据。
+type SearchWidgetData struct {
+	Keyword string
+}
+
+// SayingWidgetData 是 saying widget 的模板数据。
+type SayingWidgetData struct {
+	Items         []store.CommentWidgetItem
+	AuthorName    string
+	AuthorEmail   string
+	DefaultAvatar string
+}
+
+// RecentPostsWidgetData 是 recent_posts widget 的模板数据。
+type RecentPostsWidgetData struct {
+	Posts []model.Post
+}
+
+// RecentCommentsWidgetData 是 recent_comments widget 的模板数据。
+type RecentCommentsWidgetData struct {
+	Items         []store.CommentWidgetItem
+	DefaultAvatar string
+}
+
+// ArchiveMonthsWidgetData 是 archive_months widget 的模板数据。
+type ArchiveMonthsWidgetData struct {
+	Months []store.ArchiveMonth
+}
+
+// CategoriesWidgetData 是 categories widget 的模板数据。
+type CategoriesWidgetData struct {
+	Categories []model.Category
+}
+
+// TagsWidgetData 是 tags widget 的模板数据。
+type TagsWidgetData struct {
+	Tags []model.Tag
 }
 
 // registry 是全局 Widget 注册表。
@@ -48,4 +95,12 @@ func RegisteredNames() []string {
 		names = append(names, name)
 	}
 	return names
+}
+
+// WidgetTemplateName 返回主题可覆盖的 widget 模板名。
+// 例如 recent_posts 对应 {{define "widget_recent_posts"}}。
+func WidgetTemplateName(name string) string {
+	name = strings.TrimSpace(name)
+	name = strings.ReplaceAll(name, "-", "_")
+	return "widget_" + name
 }

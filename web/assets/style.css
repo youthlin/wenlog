@@ -247,19 +247,19 @@ img { max-width: 100%; }
 }
 
 /* ============================================================
-   5. 页面布局 (Layout) —— 主内容区 + 侧栏双栏布局
+   5. 页面布局 (Layout) —— 主内容区 + Widget 区
    ============================================================ */
 .layout { display: flex; gap: 32px; align-items: flex-start; padding-top: 28px; padding-bottom: 48px; }
 .main-col { flex: 1; min-width: 0; max-width: 100%; }
-.sidebar { width: 280px; flex-shrink: 0; }
+.widgets { width: 280px; flex-shrink: 0; }
 
 @media (max-width: 1080px) {
   .layout { gap: 24px; }
-  .sidebar { width: 260px; }
+  .widgets { width: 260px; }
 }
 @media (max-width: 860px) {
   .layout { flex-direction: column; }
-  .sidebar { width: 100%; }
+  .widgets { width: 100%; }
 }
 @media (max-width: 640px) {
   .container { padding: 0 12px; }
@@ -363,7 +363,7 @@ img { max-width: 100%; }
 .error-page h1 { font-size: 24px; }
 
 /* ============================================================
-   16. 侧栏 (Sidebar)
+   16. Widget
    ============================================================ */
 
 /* 16.1 通用小组件容器 */
@@ -520,7 +520,7 @@ img { max-width: 100%; }
    21. 打印样式
    ============================================================ */
 @media print {
-  .site-header, .sidebar, .scroll-tools, .site-footer, .comments, .post-nav { display: none; }
+  .site-header, .widgets, .scroll-tools, .site-footer, .comments, .post-nav { display: none; }
   body { background: #fff; color: #000; font-size: 12pt; }
   .container { max-width: 100%; padding: 0; }
   .layout { display: block; }

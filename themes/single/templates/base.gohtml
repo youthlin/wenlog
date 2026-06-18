@@ -1,4 +1,4 @@
-{{define "sidebar"}}{{end}}
+{{define "widgets"}}{{end}}
 
 {{define "header"}}<!DOCTYPE html>
 <html lang="{{.htmlLang}}" data-theme="dark"
@@ -64,7 +64,7 @@
 <footer class="site-footer">
   <div class="container">
     <div class="footer-widgets">
-      {{range .SidebarWidgets}}{{.}}{{end}}
+      {{range .Widgets}}{{.}}{{end}}
     </div>
     <p>&copy; {{.CurrentYear}} {{.SiteName}} · Powered by Go</p>
   </div>

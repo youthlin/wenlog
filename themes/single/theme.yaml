@@ -1,8 +1,8 @@
-# 单栏主题 — 无 sidebar，header / main / footer 布局
+# 单栏主题 — header / main / footer 布局
 # footer 中放置基本 widget
 name: "single"
 version: "1.0"
-description: "单栏布局，无侧栏，footer 中放置基本 widget"
+description: "单栏布局，footer 中放置基本 widget"
 author: "youthlin"
 
 pages:
@@ -14,7 +14,7 @@ pages:
       - ArchiveMonths
       - Categories
       - Tags
-    sidebar:
+    widgets:
       - user_info
       - search
       - recent_posts
@@ -31,7 +31,7 @@ pages:
       - ArchiveMonths
       - Categories
       - Tags
-    sidebar:
+    widgets:
       - user_info
       - search
       - recent_posts
@@ -48,7 +48,7 @@ pages:
       - ArchiveMonths
       - Categories
       - Tags
-    sidebar:
+    widgets:
       - user_info
       - search
       - recent_posts
@@ -65,7 +65,7 @@ pages:
       - ArchiveMonths
       - Categories
       - Tags
-    sidebar:
+    widgets:
       - user_info
       - search
       - recent_posts
@@ -82,7 +82,7 @@ pages:
       - ArchiveMonths
       - Categories
       - Tags
-    sidebar:
+    widgets:
       - user_info
       - search
       - recent_posts
@@ -93,4 +93,4 @@ pages:
 
   error:
     data: []
-    sidebar: []
+    widgets: []
