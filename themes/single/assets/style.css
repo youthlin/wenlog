@@ -342,6 +342,9 @@ img { max-width: 100%; height: auto; }
 .footer-col {
   min-width: 0;
 }
+.footer-col-1 .widget + .widget { margin-top: 20px; }
+.footer-col-2 .widget li,
+.footer-col-3 .widget li { text-align: left; }
 .footer-bottom {
   text-align: center; padding-top: 24px;
   border-top: 1px solid var(--border);
@@ -397,14 +400,7 @@ img { max-width: 100%; height: auto; }
 .footer-widgets .widget-user-actions form { margin: 0; }
 
 /* 搜索 widget */
-.footer-widgets .widget-search form { display: flex; gap: 6px; }
-.footer-widgets .widget-search button {
-  padding: 8px 16px; background: var(--accent); color: #fff;
-  border: none; border-radius: 6px; cursor: pointer;
-  font-size: 13px; font-weight: 500;
-  transition: opacity var(--transition);
-}
-.footer-widgets .widget-search button:hover { opacity: 0.85; }
+.footer-widgets .widget-search form { display: block; }
 
 /* 评论 widget */
 .footer-widgets .widget-comment-line {

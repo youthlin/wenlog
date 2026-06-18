@@ -26,6 +26,16 @@ type WidgetSettings struct {
 	RegistrationOpen bool
 	Keyword          string // 搜索关键词
 	CSRFToken        string
+
+	// 预查询数据，避免 widget Data() 重复查询。
+	// 由 base() 填充，widget 优先使用这些数据而非重新查询。
+	RecentPosts        []model.Post
+	RecentCommentItems []store.CommentWidgetItem
+	SayingCommentItems []store.CommentWidgetItem
+	ArchiveMonths      []store.ArchiveMonth
+	Categories         []model.Category
+	Tags               []model.Tag
+	ThemeName          string // 缓存的当前主题名，避免重复查库
 }
 
 // UserInfoWidgetData 是 user_info widget 的模板数据。

@@ -388,7 +388,11 @@ func (h *Admin) DeletePost(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/posts")
+	if p.PostType == model.PostTypePage {
+		c.Redirect(http.StatusSeeOther, "/admin/posts?type=page")
+	} else {
+		c.Redirect(http.StatusSeeOther, "/admin/posts")
+	}
 }
 
 var pageSlugReserved = map[string]bool{

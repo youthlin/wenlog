@@ -53,7 +53,10 @@ func (w *sayingWidget) Data(ctx context.Context, st *store.Store, settings Widge
 	if settings.SayingPostID == 0 {
 		return nil, nil
 	}
-	items := st.SayingCommentItems(ctx, settings.SayingPostID, 5, 20)
+	items := settings.SayingCommentItems
+	if items == nil {
+		items = st.SayingCommentItems(ctx, settings.SayingPostID, 5, 20)
+	}
 	if len(items) == 0 {
 		return nil, nil
 	}
@@ -77,7 +80,10 @@ type recentPostsWidget struct{}
 func (w *recentPostsWidget) Name() string { return "recent_posts" }
 
 func (w *recentPostsWidget) Data(ctx context.Context, st *store.Store, settings WidgetSettings) (any, error) {
-	posts := st.RecentPosts(ctx, 8)
+	posts := settings.RecentPosts
+	if posts == nil {
+		posts = st.RecentPosts(ctx, 8)
+	}
 	if len(posts) == 0 {
 		return nil, nil
 	}
@@ -91,7 +97,10 @@ type recentCommentsWidget struct{}
 func (w *recentCommentsWidget) Name() string { return "recent_comments" }
 
 func (w *recentCommentsWidget) Data(ctx context.Context, st *store.Store, settings WidgetSettings) (any, error) {
-	items := st.RecentCommentItems(ctx, 8, 20)
+	items := settings.RecentCommentItems
+	if items == nil {
+		items = st.RecentCommentItems(ctx, 8, 20)
+	}
 	if len(items) == 0 {
 		return nil, nil
 	}
@@ -105,7 +114,10 @@ type archiveMonthsWidget struct{}
 func (w *archiveMonthsWidget) Name() string { return "archive_months" }
 
 func (w *archiveMonthsWidget) Data(ctx context.Context, st *store.Store, settings WidgetSettings) (any, error) {
-	months := st.ArchiveMonths(ctx)
+	months := settings.ArchiveMonths
+	if months == nil {
+		months = st.ArchiveMonths(ctx)
+	}
 	if len(months) == 0 {
 		return nil, nil
 	}
@@ -119,7 +131,10 @@ type categoriesWidget struct{}
 func (w *categoriesWidget) Name() string { return "categories" }
 
 func (w *categoriesWidget) Data(ctx context.Context, st *store.Store, settings WidgetSettings) (any, error) {
-	cats := st.AllCategories(ctx)
+	cats := settings.Categories
+	if cats == nil {
+		cats = st.AllCategories(ctx)
+	}
 	if len(cats) == 0 {
 		return nil, nil
 	}
@@ -133,7 +148,10 @@ type tagsWidget struct{}
 func (w *tagsWidget) Name() string { return "tags" }
 
 func (w *tagsWidget) Data(ctx context.Context, st *store.Store, settings WidgetSettings) (any, error) {
-	tags := st.AllTags(ctx)
+	tags := settings.Tags
+	if tags == nil {
+		tags = st.AllTags(ctx)
+	}
 	if len(tags) == 0 {
 		return nil, nil
 	}

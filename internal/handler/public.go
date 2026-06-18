@@ -95,57 +95,89 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		return pageCfg.Needs(field)
 	}
 
+	var recentPosts []model.Post
+	var recentCommentItems []store.CommentWidgetItem
+	var sayingCommentItems []store.CommentWidgetItem
+	var archiveMonths []store.ArchiveMonth
+	var categories []model.Category
+	var tags []model.Tag
+
 	if needs("RecentPosts") {
-		data["RecentPosts"] = h.st.RecentPosts(c, 8)
+		recentPosts = h.st.RecentPosts(c, 8)
+		data["RecentPosts"] = recentPosts
 	}
 	if needs("RecentComments") {
-		data["RecentCommentItems"] = h.st.RecentCommentItems(c, 8, commentPageSize)
+		recentCommentItems = h.st.RecentCommentItems(c, 8, commentPageSize)
+		data["RecentCommentItems"] = recentCommentItems
 	}
 	if needs("SayingComments") {
-		data["SayingCommentItems"] = h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
+		sayingCommentItems = h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
+		data["SayingCommentItems"] = sayingCommentItems
 		if s.SayingPostID > 0 {
-			if items, ok := data["SayingCommentItems"].([]store.CommentWidgetItem); ok && len(items) > 0 {
-				data["SayingPost"] = &items[0].Post
+			if len(sayingCommentItems) > 0 {
+				data["SayingPost"] = &sayingCommentItems[0].Post
 			} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
 				data["SayingPost"] = p
 			}
 		}
 	}
 	if needs("ArchiveMonths") {
-		data["ArchiveMonths"] = h.st.ArchiveMonths(c)
+		archiveMonths = h.st.ArchiveMonths(c)
+		data["ArchiveMonths"] = archiveMonths
 	}
 	if needs("Categories") {
-		data["Categories"] = h.st.AllCategories(c)
+		categories = h.st.AllCategories(c)
+		data["Categories"] = categories
 	}
 	if needs("Tags") {
-		data["Tags"] = h.st.AllTags(c)
+		tags = h.st.AllTags(c)
+		data["Tags"] = tags
 	}
 
-	// 渲染 widgets。
-	widgets := h.renderWidgets(c, s, pageCfg)
+	// 缓存主题名，避免 renderWidgets 中每个 widget 都查一次
+	themeName := h.currentThemeName(c)
+
+	// 渲染 widgets，传入预查询数据避免重复查询。
+	widgets := h.renderWidgets(c, s, pageCfg, theme.WidgetSettings{
+		RecentPosts:        recentPosts,
+		RecentCommentItems: recentCommentItems,
+		SayingCommentItems: sayingCommentItems,
+		ArchiveMonths:      archiveMonths,
+		Categories:         categories,
+		Tags:               tags,
+		ThemeName:          themeName,
+	})
 	data["Widgets"] = widgets
 
 	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
 	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
 		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
 	}
-	return i18n.InjectDomain(c, data, h.currentThemeName(c))
+	return i18n.InjectDomain(c, data, themeName)
 }
 
 // renderWidgets 根据 pageCfg 渲染 widget HTML 片段列表。
-func (h *Public) renderWidgets(c *gin.Context, s publicSettings, pageCfg *theme.PageConfig) []template.HTML {
+// preData 包含 base() 中已查询的数据，避免 widget Data() 重复查询。
+func (h *Public) renderWidgets(c *gin.Context, s publicSettings, pageCfg *theme.PageConfig, preData theme.WidgetSettings) []template.HTML {
 	if pageCfg == nil || len(pageCfg.Widgets) == 0 {
 		return nil
 	}
 	currentUser := h.currentUser(c)
 	settings := theme.WidgetSettings{
-		SayingPostID:     s.SayingPostID,
-		DefaultAvatar:    s.DefaultAvatar,
-		CurrentUserID:    currentUserID(c),
-		CurrentUserName:  displayUserName(currentUser),
-		RegistrationOpen: s.RegistrationOpen,
-		Keyword:          c.Query("q"),
-		CSRFToken:        "",
+		SayingPostID:       s.SayingPostID,
+		DefaultAvatar:      s.DefaultAvatar,
+		CurrentUserID:      currentUserID(c),
+		CurrentUserName:    displayUserName(currentUser),
+		RegistrationOpen:   s.RegistrationOpen,
+		Keyword:            c.Query("q"),
+		CSRFToken:          "",
+		RecentPosts:        preData.RecentPosts,
+		RecentCommentItems: preData.RecentCommentItems,
+		SayingCommentItems: preData.SayingCommentItems,
+		ArchiveMonths:      preData.ArchiveMonths,
+		Categories:         preData.Categories,
+		Tags:               preData.Tags,
+		ThemeName:          preData.ThemeName,
 	}
 	if uid := currentUserID(c); uid != 0 {
 		if token, err := middleware.EnsureCSRFToken(c); err == nil {
@@ -186,7 +218,7 @@ func (h *Public) renderWidget(c *gin.Context, w theme.Widget, settings theme.Wid
 		return "", err
 	}
 	var buf bytes.Buffer
-	if err := tpl.ExecuteTemplate(&buf, name, widgetTemplateData(c, data, h.currentThemeName(c))); err != nil {
+	if err := tpl.ExecuteTemplate(&buf, name, widgetTemplateData(c, data, settings.ThemeName)); err != nil {
 		return "", err
 	}
 	return template.HTML(buf.String()), nil

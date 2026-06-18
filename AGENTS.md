@@ -301,6 +301,22 @@ go build -o blog ./cmd/server
 
 ## 7. 调试、重构与排障建议
 
+### SQL 查询分析流程
+
+当需要排查 SQL 查询数量或性能问题时，按以下步骤操作：
+
+1. **访问目标页面**：浏览器访问页面，从响应头中获取 `X-Trace-Id`（如 `bbc51f441ebb4685`）。
+2. **从日志中 grep SQL 查询**：
+   ```bash
+   grep "bbc51f441ebb4685" /path/to/logfile | grep -E "SQL|sql|query"
+   ```
+   日志中每条 SQL 查询都带有 trace ID，可以精确统计查询次数和内容。
+3. **分析重复查询**：按 SQL 语句分组统计，找出重复执行的查询。常见重复来源：
+   - `current_theme` 设置被多次读取（每次 `theme.Manager.Current()` 都会查库）
+   - Widget 数据（RecentPosts、RecentComments 等）在 `base()` 和 widget `Data()` 中各查一次
+   - 模板渲染中通过函数调用触发的隐式查询
+4. **优化方向**：缓存可复用的查询结果（如主题名、设置项），将 `base()` 中已查询的数据传递给 widget 复用。
+
 ### 需要先看的位置
 
 - 文章/页面访问异常：先看 `internal/permalink`、`cmd/server` 路由注册、`handler/public.go`
