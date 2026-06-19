@@ -67,24 +67,22 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 		return nil, fmt.Errorf("yaegi eval functions.go: %w", err)
 	}
 
-	// 查找并调用 Register 函数
+	// 查找并调用 Register 函数（无参数，Api 已通过 i.Use 注入为全局变量）
 	registerFn, err := i.Eval("theme.Register")
 	if err != nil {
-		return nil, fmt.Errorf("functions.go must define Register(*theme.API): %w", err)
+		return nil, fmt.Errorf("functions.go must define Register(): %w", err)
 	}
 
-	// 调用 Register(api)
-	registerVal := reflect.ValueOf(registerFn)
-	if registerVal.Kind() != reflect.Func {
-		return nil, fmt.Errorf("Register is not a function, got %s", registerVal.Kind())
+	// i.Eval 返回的 registerFn 已经是 reflect.Value
+	if registerFn.Kind() != reflect.Func {
+		return nil, fmt.Errorf("Register is not a function, got %s", registerFn.Kind())
 	}
 
-	apiVal := reflect.ValueOf(api)
-	if registerVal.Type().NumIn() != 1 {
-		return nil, fmt.Errorf("Register must accept exactly 1 argument (*theme.API)")
+	if registerFn.Type().NumIn() != 0 {
+		return nil, fmt.Errorf("Register must accept 0 arguments, got %d", registerFn.Type().NumIn())
 	}
 
-	registerVal.Call([]reflect.Value{apiVal})
+	registerFn.Call(nil)
 
 	if log != nil {
 		log.Info("functions.go compiled and registered",
@@ -100,9 +98,10 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 	}, nil
 }
 
-// injectThemeAPI 将 ThemeAPI 类型注入 yaegi 解释器，使 functions.go 可以使用。
+// injectThemeAPI 将 ThemeAPI 实例导出到 yaegi 解释器，使 functions.go 可以使用。
+// 使用 i.Use 导出 Go 值，yaegi 通过反射调用其方法。
 func injectThemeAPI(i *interp.Interpreter, api *API) error {
-	// 先声明 View 类型
+	// 先声明 View 类型，让 yaegi 知道这些类型
 	typeDecl := `
 package theme
 
@@ -171,62 +170,13 @@ type ArchiveMonthView struct {
 		return fmt.Errorf("declare view types: %w", err)
 	}
 
-	// 声明 API 类型（作为接口，让宿主注入实现）
-	apiDecl := `
-package theme
-
-type API interface {
-	Posts() []PostView
-	Post(id uint) *PostView
-	Pages() []PostView
-	PageBySlug(slug string) *PostView
-	RecentPosts(n int) []PostView
-	PostsByCategory(categorySlug string) []PostView
-	PostsByTag(tagSlug string) []PostView
-	PostsByYear(year int) []PostView
-	PostsByYearMonth(year, month int) []PostView
-	Categories() []CategoryView
-	Tags() []TagView
-	CommentsByPost(postID uint) []CommentView
-	RecentComments(n int) []CommentView
-	Users() []UserView
-	User(id uint) *UserView
-	Setting(key string) string
-	Settings(keys ...string) map[string]string
-	ArchiveMonths() []ArchiveMonthView
-	PostURL(p PostView) string
-	PageURL(p PostView) string
-	CategoryURL(slug string) string
-	TagURL(slug string) string
-	RegisterData(name string, fn func(args map[string]any) any)
-}
-`
-	if _, err := i.Eval(apiDecl); err != nil {
-		return fmt.Errorf("declare API interface: %w", err)
-	}
-
-	// 注入 api 实例为全局变量
-	setAPI := `
-package theme
-
-var api API
-`
-	if _, err := i.Eval(setAPI); err != nil {
-		return fmt.Errorf("declare api var: %w", err)
-	}
-
-	// 直接通过 Eval 设置变量值
-	_, err := i.Eval(`package theme; func setAPI(a API) { api = a }`)
-	if err != nil {
-		return fmt.Errorf("declare setAPI: %w", err)
-	}
-
-	// 调用 setAPI(api)
-	setAPIFn, err := i.Eval("theme.setAPI")
-	if err != nil {
-		return fmt.Errorf("get setAPI: %w", err)
-	}
-	reflect.ValueOf(setAPIFn).Call([]reflect.Value{reflect.ValueOf(api)})
+	// 使用 i.Use 导出 Go 的 *API 实例到 yaegi，避免类型不匹配
+	// 导出到 "themeapi" 包，脚本通过 import "themeapi" 引用
+	i.Use(interp.Exports{
+		"themeapi/themeapi": {
+			"Api": reflect.ValueOf(api),
+		},
+	})
 
 	return nil
 }

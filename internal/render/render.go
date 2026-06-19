@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -365,8 +366,65 @@ func postURL(p any) string {
 	case model.Post:
 		return permalink.Post(&v)
 	default:
+		// 处理 yaegi 返回的 theme.PostView（通过反射提取 ID/Title/Slug/PostType/PublishedAt/ModifiedAt）
+		rv := reflect.ValueOf(p)
+		if rv.Kind() == reflect.Struct {
+			id := reflectGetUint(rv, "ID")
+			title := reflectGetString(rv, "Title")
+			slug := reflectGetString(rv, "Slug")
+			postType := reflectGetString(rv, "PostType")
+			publishedAt, _ := reflectGetTime(rv, "PublishedAt")
+			modifiedAt, _ := reflectGetTime(rv, "ModifiedAt")
+			if id > 0 {
+				mp := &model.Post{
+					ID:          id,
+					Title:       title,
+					Slug:        slug,
+					PostType:    postType,
+					Status:      model.StatusPublished,
+					PublishedAt: publishedAt,
+					ModifiedAt:  modifiedAt,
+				}
+				if postType == model.PostTypePage {
+					return permalink.Page(mp)
+				}
+				return permalink.Post(mp)
+			}
+		}
 		return ""
 	}
+}
+
+func reflectGetUint(rv reflect.Value, field string) uint {
+	f := rv.FieldByName(field)
+	if f.IsValid() {
+		switch f.Kind() {
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return uint(f.Uint())
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			v := f.Int()
+			if v >= 0 {
+				return uint(v)
+			}
+		}
+	}
+	return 0
+}
+
+func reflectGetString(rv reflect.Value, field string) string {
+	f := rv.FieldByName(field)
+	if f.IsValid() && f.Kind() == reflect.String {
+		return f.String()
+	}
+	return ""
+}
+
+func reflectGetTime(rv reflect.Value, field string) (time.Time, bool) {
+	f := rv.FieldByName(field)
+	if f.IsValid() && f.Type() == reflect.TypeOf(time.Time{}) {
+		return f.Interface().(time.Time), true
+	}
+	return time.Time{}, false
 }
 
 // Template 返回当前缓存的底层模板。

@@ -18,6 +18,7 @@ pages:
       - search
       - saying
       - recent_posts
+      - popular_posts
       - recent_comments
       - archive_months
       - categories
@@ -36,6 +37,7 @@ pages:
       - search
       - saying
       - recent_posts
+      - popular_posts
       - recent_comments
       - archive_months
       - categories
@@ -54,6 +56,7 @@ pages:
       - search
       - saying
       - recent_posts
+      - popular_posts
       - recent_comments
       - archive_months
       - categories
@@ -72,6 +75,7 @@ pages:
       - search
       - saying
       - recent_posts
+      - popular_posts
       - recent_comments
       - archive_months
       - categories
@@ -90,6 +94,7 @@ pages:
       - search
       - saying
       - recent_posts
+      - popular_posts
       - recent_comments
       - archive_months
       - categories

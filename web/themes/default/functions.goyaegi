@@ -1,49 +1,53 @@
 package theme
 
-import "sort"
+import (
+	"sort"
+	"themeapi"
+)
 
 // Register 注册默认主题的内置数据提供者。
 // 这些 provider 替代了 v1 的 builtin_widgets.go。
-func Register(api *API) {
+// themeapi.Api 由宿主通过 i.Use 注入为全局变量。
+func Register() {
 	// recent_posts: 近期文章
-	api.RegisterData("recent_posts", func(args map[string]any) any {
+	themeapi.Api.RegisterData("recent_posts", func(args map[string]any) any {
 		n := getInt(args, "n", 8)
-		return api.RecentPosts(n)
+		return themeapi.Api.RecentPosts(n)
 	})
 
 	// recent_comments: 近期评论
-	api.RegisterData("recent_comments", func(args map[string]any) any {
+	themeapi.Api.RegisterData("recent_comments", func(args map[string]any) any {
 		n := getInt(args, "n", 8)
-		return api.RecentComments(n)
+		return themeapi.Api.RecentComments(n)
 	})
 
 	// categories: 分类列表
-	api.RegisterData("categories", func(args map[string]any) any {
-		return api.Categories()
+	themeapi.Api.RegisterData("categories", func(args map[string]any) any {
+		return themeapi.Api.Categories()
 	})
 
 	// tags: 标签列表
-	api.RegisterData("tags", func(args map[string]any) any {
-		return api.Tags()
+	themeapi.Api.RegisterData("tags", func(args map[string]any) any {
+		return themeapi.Api.Tags()
 	})
 
 	// archive_months: 归档月份
-	api.RegisterData("archive_months", func(args map[string]any) any {
-		return api.ArchiveMonths()
+	themeapi.Api.RegisterData("archive_months", func(args map[string]any) any {
+		return themeapi.Api.ArchiveMonths()
 	})
 
 	// saying: 博主动态（指定文章下博主本人的评论）
-	api.RegisterData("saying", func(args map[string]any) any {
+	themeapi.Api.RegisterData("saying", func(args map[string]any) any {
 		postID := getUint(args, "post_id", 0)
 		n := getInt(args, "n", 5)
 		if postID == 0 {
 			return nil
 		}
-		post := api.Post(postID)
+		post := themeapi.Api.Post(postID)
 		if post == nil {
 			return nil
 		}
-		allComments := api.CommentsByPost(postID)
+		allComments := themeapi.Api.CommentsByPost(postID)
 		var authorComments []CommentView
 		for _, c := range allComments {
 			if c.Author == post.Author.DisplayName || c.Author == post.Author.Username {
@@ -64,9 +68,9 @@ func Register(api *API) {
 	})
 
 	// popular_posts: 热门文章（按浏览量排序）
-	api.RegisterData("popular_posts", func(args map[string]any) any {
+	themeapi.Api.RegisterData("popular_posts", func(args map[string]any) any {
 		n := getInt(args, "n", 5)
-		posts := api.Posts()
+		posts := themeapi.Api.Posts()
 		sort.Slice(posts, func(i, j int) bool {
 			return posts[i].Views > posts[j].Views
 		})
