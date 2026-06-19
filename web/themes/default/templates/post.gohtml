@@ -30,13 +30,13 @@
 <section class="comments" id="comments">
   <h3>{{.t.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
   <div id="comments-box">
-    {{template "comments_fragment.gohtml" .}}
+    {{template "fragment_comments.gohtml" .}}
   </div>
 </section>
 <script src="/assets/comment.js"></script>
 {{end}}
 
-{{define "comments_fragment.gohtml"}}
+{{define "fragment_comments.gohtml"}}
   <ul class="comment-list">
     {{range .Comments}}
     {{if eq .ParentID 0}}

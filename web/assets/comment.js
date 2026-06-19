@@ -62,7 +62,7 @@
   function fetchCommentPage(page, push) {
     var url = new URL(window.location.href);
     url.searchParams.set("cpage", page);
-    url.searchParams.set("ajax", "comments");
+    url.searchParams.set("fragment", "comments");
     return fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
       .then(function (r) { return r.text(); })
       .then(function (html) {

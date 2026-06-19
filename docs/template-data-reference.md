@@ -340,7 +340,7 @@ pages:
 | `widgets` | widget 区域（遍历 `.Widgets`） |
 | `pagination` | 分页导航 |
 | `comments` | 评论区域（含评论列表和评论表单） |
-| `comments_fragment.gohtml` | 评论列表片段（AJAX 用） |
+| `fragment_<name>.gohtml` | 局部渲染片段（通过 `?fragment=<name>` 请求，如 `fragment_comments.gohtml`） |
 | `csrf_field` | CSRF 隐藏字段 |
 
 每个页面模板（如 `index.gohtml`）通过 `{{template "header" .}}` / `{{template "footer" .}}` 包裹内容。

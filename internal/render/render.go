@@ -178,6 +178,17 @@ func (r *Renderer) HasTemplate(name string) bool {
 	return tpl != nil && tpl.Lookup(name) != nil
 }
 
+// ResolveFragment 将 fragment 名（如 "comments"）转为模板名（如 "fragment_comments.gohtml"），
+// 并检查该模板是否存在。返回模板名和是否找到。
+// 主题通过定义 fragment_<name>.gohtml 来支持对应 fragment 的局部渲染。
+func (r *Renderer) ResolveFragment(name string) (string, bool) {
+	tplName := "fragment_" + name + ".gohtml"
+	if !r.HasTemplate(tplName) {
+		return "", false
+	}
+	return tplName, true
+}
+
 // fallbackFromDefaultFS 从 admin/auth 模板补充缺失的模板。
 func (r *Renderer) fallbackFromDefaultFS(themeTpl *template.Template) {
 	if r.defaultFS == nil || !hasMatchingFiles(r.defaultFS, r.pattern) {

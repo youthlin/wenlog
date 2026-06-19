@@ -47,7 +47,7 @@ themes/my-theme/
 │   ├── archive.gohtml      # 归档页（可选 → fallback list → index）
 │   ├── search.gohtml       # 搜索结果（可选 → fallback list → index）
 │   ├── error.gohtml        # 404/500（可选 → fallback index）
-│   ├── comments_fragment.gohtml  # AJAX 评论片段（可选，不定义则无 AJAX）
+│   ├── fragment_comments.gohtml  # AJAX 评论片段（可选，不定义则无 AJAX）
 │   ├── header.gohtml       # {{define "header"}}（可选，可内联在 index.gohtml）
 │   ├── footer.gohtml       # {{define "footer"}}（可选，可内联在 index.gohtml）
 │   └── sidebar.gohtml      # {{define "sidebar"}} — 就是个普通模板！
@@ -283,14 +283,33 @@ func getInt(args map[string]any, key string, def int) int {
 | `themes/single/theme.yaml` | 简化为纯元数据，移除 `pages:` 配置 |
 | `themes/single/templates/base.gohtml` | **已删除** — 合并到 index.gohtml |
 | `themes/single/templates/index.gohtml` | **新建** — 单文件最小主题：内联 header/footer/pagination/comments，用数据特征区分页面类型 |
-| `internal/render/render.go` | 移除 `fallbackFromDefaultTheme()`（跨主题 fallback）；新增 `TemplateHierarchy` + `ResolveTemplate()` + `HasTemplate()` |
-| `internal/handler/public.go` | 所有 `c.HTML` 调用改用 `h.renderer.ResolveTemplate(pageType)`；AJAX 评论仅在主题定义了 `comments_fragment.gohtml` 时启用 |
+| `internal/render/render.go` | 移除 `fallbackFromDefaultTheme()`（跨主题 fallback）；新增 `TemplateHierarchy` + `ResolveTemplate()` + `HasTemplate()` + `ResolveFragment()` |
+| `internal/handler/public.go` | 所有 `c.HTML` 调用改用 `h.renderer.ResolveTemplate(pageType)`；AJAX fragment 改为通用 `?fragment=<name>` 机制，由 `ResolveFragment()` 解析为 `<name>_fragment.gohtml` |
+| `web/assets/comment.js` | `?ajax=comments` 改为 `?fragment=comments` |
 
 ### 10.2 待实现
 
 （无）
 
-### 10.3 说明
+### 10.3 AJAX Fragment 方案对比
+
+| 方案 | Go 改动 | 主题改动 | JS 改动 | Go 硬编码残留 | 灵活性 | 带宽 |
+|------|---------|----------|---------|--------------|--------|------|
+| **现状**（硬编码 `fragment_comments.gohtml`） | 已完成 | 定义模板即可 | 无 | `?ajax=comments`、模板名 | 仅评论 | 省 |
+| **A**（JS 伪 AJAX，WP 经典做法） | 删除 4 处分支 | 零 | 改 DOM 截取 | `POST /comment`、数据注入 | 无 | 浪费 |
+| **B**（通用 Fragment，**已采用**） | ~20 行 | 定义 `fragment_<name>.gohtml` | `?fragment=<name>` | `POST /comment`、数据注入 | 任意 fragment | 省 |
+| **C**（主题注册路由，ThemeAPI 大改） | ~200-300 行 | `functions.goyaegi` 注册路由 | 端点 URL 改为主题路径 | **零** | 最高 | 省 |
+
+**选择方案 B 的理由**：改动量小（~20 行 Go），Go 不再硬编码 "comments" 字符串，只认 "fragment" 通用概念。主题可扩展任意 fragment（如 `search_fragment.gohtml`）。方案 C 是终极方案但当前只有评论一个 AJAX 场景，投入产出比不高，等未来有更多动态端点需求时再升级。
+
+### 10.4 Fragment 约定
+
+- 请求参数：`?fragment=<name>`（如 `?fragment=comments`）
+- 模板命名：`fragment_<name>.gohtml`（如 `fragment_comments.gohtml`）
+- 主题未定义对应模板时，走完整页面渲染（无 AJAX）
+- Go 代码不感知 fragment 的具体类型，只做通用解析
+
+### 10.5 说明
 
 - `themeData` 模板函数保留，自定义 DataProvider 继续可用
 - 项目处于本地 dev 阶段，无向后兼容负担

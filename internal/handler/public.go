@@ -435,8 +435,8 @@ func (h *Public) Page(c *gin.Context) {
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
-		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
+		c.HTML(http.StatusOK, fragName, data)
 		return
 	}
 	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("page"), data)
@@ -508,8 +508,8 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
-		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
+		c.HTML(http.StatusOK, fragName, data)
 		return
 	}
 	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("page"), data)
@@ -599,8 +599,8 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
-		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
+		c.HTML(http.StatusOK, fragName, data)
 		return true
 	}
 	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("post"), data)
@@ -680,8 +680,8 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	if next := loader.NextPost(p.PublishedAt); next != nil {
 		data["NextPost"] = next
 	}
-	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
-		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
+		c.HTML(http.StatusOK, fragName, data)
 		return true
 	}
 	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("post"), data)

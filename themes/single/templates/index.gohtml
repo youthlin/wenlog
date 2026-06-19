@@ -222,7 +222,7 @@
 
   {{if .CurrentUser}}
   <div class="comment-login-tip">{{if .CurrentUser.DisplayName}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.DisplayName))}}{{else}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.Username))}}{{end}}
-    <form class="inline" method="post" action="/auth/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "登出"}}</button></form>
+    <form class="inline" method="post" action="/auth/logout">{{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}<button type="submit">{{.t.T "登出"}}</button></form>
   </div>
   {{end}}
 
@@ -297,7 +297,7 @@
     {{end}}
   </article>
 
-  {{if .PrevPost or .NextPost}}
+  {{if or .PrevPost .NextPost}}
   <nav class="post-nav">
     <span class="prev">{{if .PrevPost}}<a href="{{postURL .PrevPost}}">← {{.PrevPost.Title}}</a>{{end}}</span>
     <span class="next">{{if .NextPost}}<a href="{{postURL .NextPost}}">{{.NextPost.Title}} →</a>{{end}}</span>
