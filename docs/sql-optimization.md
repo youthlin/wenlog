@@ -133,7 +133,27 @@ ctx = store.CtxWithSQLHint(ctx, "custom hint")
 
 **结论**：按个人博客的写作速度，全量加载方案可流畅运行 30 年以上。1C2G 机器完全够用。
 
-### 3.4 效果预估
+### 3.4 实测效果（2026-06-19 验证）
+
+| 页面 | 优化前 SQL | 首次请求（缓存冷） | 缓存命中 | 减少 |
+|---|---|---|---|---|
+| 首页 | 26 | 11 | **3** | -88% |
+| 文章页 | 37 | 13 | 13 | -65% |
+
+**首页缓存命中后仅 3 条 SQL**：
+- `syncPostPermalink` 查 3 个 permalink 设置（1 条）
+- `theme.Manager.Current` 查 `current_theme`（2 条，已知重复查询）
+
+**文章页 13 条 SQL 明细**：
+- `syncPostPermalink`（1 条）
+- `ResolvePostByPath` 含 Preload（6 条：users + post_categories + categories + post_tags + 主查询）
+- `IncrementViews`（1 条）
+- `VisibleCommentsPageForViewer`（4 条：COUNT + 顶层评论 + 子评论）
+- `current_theme`（2 条，重复）
+
+> 文章页的 `ResolvePostByPath` 仍保留 Preload（因为需要按永久链接路径精确匹配），后续可考虑改为先用 DataLoader 按 ID 查找再校验路径。
+
+### 3.5 效果预估（设计阶段）
 
 | 页面 | 当前 SQL | 优化后 SQL | 减少 |
 |---|---|---|---|
@@ -212,11 +232,12 @@ func (h *Public) Index(c *gin.Context) {
 
 ### 4.4 实施步骤
 
-1. **Phase 1**：创建 `DataLoader`，实现全量加载 + 索引构建
-2. **Phase 2**：改造 `Index()` 使用 DataLoader，验证效果
-3. **Phase 3**：逐步改造 `Post()`、`Page()`、`Category()`、`Tag()` 等
-4. **Phase 4**：清理 store 层所有 Preload 调用
-5. **Phase 5**：考虑全局缓存（写操作时失效），避免每次请求都全量加载
+1. **Phase 1** ✅：创建 `DataLoader`，实现全量加载 + 索引构建（`internal/store/loader.go`）
+2. **Phase 2** ✅：改造 `Index()` 使用 DataLoader
+3. **Phase 3** ✅：改造 `Post()`、`Page()`、`Archive()`、`Category()`、`Tag()` 使用 DataLoader
+4. **Phase 4** ✅：清理 store 层 Preload 调用（`PrevPost`、`NextPost`、`AllPostsForArchive` 已移除；其余保留给 admin/feed/search 路径）
+5. **Phase 5** ✅：全局缓存（`LoadAllCached` + `InvalidateCache`），写操作自动失效，缓存命中后首页仅 3 条 SQL
+6. **Phase 6**（后续）：文章页 `ResolvePostByPath` 改为 DataLoader 按 ID 查找 + 路径校验，可再减少 6 条 SQL
 
 ### 4.5 注意事项
 
