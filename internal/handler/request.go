@@ -111,3 +111,21 @@ func currentUserByStore(ctx context.Context, st *store.Store, c *gin.Context) *m
 	c.Set(ctxKeyCurrentUser, u)
 	return u
 }
+
+// currentUserFromLoader 从 DataLoader 内存中获取当前登录用户，避免查 DB。
+func currentUserFromLoader(c *gin.Context, loader *store.DataLoader) *model.User {
+	if cached, ok := c.Get(ctxKeyCurrentUser); ok {
+		if u, ok := cached.(*model.User); ok {
+			return u
+		}
+	}
+	uid := currentUserID(c)
+	if uid == 0 {
+		return nil
+	}
+	u := loader.Users[uid]
+	if u != nil {
+		c.Set(ctxKeyCurrentUser, u)
+	}
+	return u
+}

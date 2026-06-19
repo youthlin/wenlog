@@ -23,10 +23,11 @@ type DataLoader struct {
 	Settings   map[string]string
 
 	// 预计算索引
-	postCategories map[uint][]uint // postID → categoryIDs
-	postTags       map[uint][]uint // postID → tagIDs
-	commentsByPost map[uint][]uint // postID → commentIDs (approved only)
-	postsBySlug    map[string]*model.Post
+	postCategories    map[uint][]uint // postID → categoryIDs
+	postTags          map[uint][]uint // postID → tagIDs
+	commentsByPost    map[uint][]uint // postID → commentIDs (approved only, 公开)
+	allCommentsByPost map[uint][]uint // postID → commentIDs (approved + pending, 含登录用户可见)
+	postsBySlug       map[string]*model.Post
 	postsByType    map[string][]*model.Post // "post" or "page"
 	menuPages      []*model.Post
 	archiveMonths  []ArchiveMonth
@@ -58,18 +59,22 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 		}
 	}
 
-	// 2. 全部已批准评论
+	// 2. 全部已批准+待审评论（登录用户可见自己的待审评论）
 	var comments []model.Comment
-	if err := s.db(ctx).Where("status = ?", model.CommentApproved).
+	if err := s.db(ctx).Where("status IN ?", []string{model.CommentApproved, model.CommentPending}).
 		Find(&comments).Error; err != nil {
 		return nil, err
 	}
 	l.Comments = make(map[uint]*model.Comment, len(comments))
 	l.commentsByPost = make(map[uint][]uint)
+	l.allCommentsByPost = make(map[uint][]uint)
 	for i := range comments {
 		c := &comments[i]
 		l.Comments[c.ID] = c
-		l.commentsByPost[c.PostID] = append(l.commentsByPost[c.PostID], c.ID)
+		l.allCommentsByPost[c.PostID] = append(l.allCommentsByPost[c.PostID], c.ID)
+		if c.Status == model.CommentApproved {
+			l.commentsByPost[c.PostID] = append(l.commentsByPost[c.PostID], c.ID)
+		}
 	}
 
 	// 3. 全部分类
@@ -540,8 +545,9 @@ func (l *DataLoader) CommentWidgetItems(comments []model.Comment) []CommentWidge
 	return items
 }
 
-// CommentPage 从内存返回文章评论分页（仅已批准评论，适用于匿名访客）。
-func (l *DataLoader) CommentPage(postID uint, page, pageSize int) *CommentPageResult {
+// CommentPage 从内存返回文章评论分页。
+// currentUserID: 0 表示匿名访客（只看 approved），非 0 时额外可见自己的 pending 评论。
+func (l *DataLoader) CommentPage(postID uint, page, pageSize int, currentUserID uint) *CommentPageResult {
 	if page < 1 {
 		page = 1
 	}
@@ -549,12 +555,22 @@ func (l *DataLoader) CommentPage(postID uint, page, pageSize int) *CommentPageRe
 		pageSize = 20
 	}
 
+	// 选择索引：登录用户用 allCommentsByPost，匿名用 commentsByPost
 	commentIDs := l.commentsByPost[postID]
+	if currentUserID != 0 {
+		commentIDs = l.allCommentsByPost[postID]
+	}
 	allComments := make([]*model.Comment, 0, len(commentIDs))
 	for _, cid := range commentIDs {
-		if c := l.Comments[cid]; c != nil {
-			allComments = append(allComments, c)
+		c := l.Comments[cid]
+		if c == nil {
+			continue
 		}
+		// 登录用户：approved + 自己的 pending
+		if currentUserID != 0 && c.Status == model.CommentPending && (c.UserID == nil || *c.UserID != currentUserID) {
+			continue
+		}
+		allComments = append(allComments, c)
 	}
 
 	// 按 parent_id 分组

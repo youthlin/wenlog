@@ -72,7 +72,12 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		desc = s.SiteDescription
 	}
 	uid := currentUserID(c)
-	currentUser := h.currentUser(c)
+	var currentUser *model.User
+	if loader != nil {
+		currentUser = currentUserFromLoader(c, loader)
+	} else {
+		currentUser = h.currentUser(c)
+	}
 	csrfToken := ""
 	if uid != 0 {
 		if token, err := middleware.EnsureCSRFToken(c); err == nil {
@@ -562,8 +567,10 @@ func (h *Public) Page(c *gin.Context) {
 	var comments *store.CommentPageResult
 	uid := currentUserID(c)
 	pendingIDs := pendingCommentIDs(c)
-	if uid == 0 && len(pendingIDs) == 0 {
-		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	if uid != 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, uid)
+	} else if len(pendingIDs) == 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, 0)
 	} else {
 		var err error
 		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
@@ -633,8 +640,12 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 	var comments *store.CommentPageResult
 	uid := currentUserID(c)
 	pendingIDs := pendingCommentIDs(c)
-	if uid == 0 && len(pendingIDs) == 0 {
-		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	if uid != 0 {
+		// 登录用户：从内存取评论（含自己的待审评论）
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, uid)
+	} else if len(pendingIDs) == 0 {
+		// 匿名访客无待审：从内存取已批准评论
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, 0)
 	} else {
 		var err error
 		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
@@ -728,8 +739,10 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 	var comments *store.CommentPageResult
 	uid := currentUserID(c)
 	pendingIDs := pendingCommentIDs(c)
-	if uid == 0 && len(pendingIDs) == 0 {
-		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	if uid != 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, uid)
+	} else if len(pendingIDs) == 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, 0)
 	} else {
 		var cerr error
 		comments, cerr = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
@@ -800,9 +813,12 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	var comments *store.CommentPageResult
 	uid := currentUserID(c)
 	pendingIDs := pendingCommentIDs(c)
-	if uid == 0 && len(pendingIDs) == 0 {
+	if uid != 0 {
+		// 登录用户：从内存取评论（含自己的待审评论）
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, uid)
+	} else if len(pendingIDs) == 0 {
 		// 匿名访客：从内存取评论，不查 DB
-		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, 0)
 	} else {
 		var err error
 		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
