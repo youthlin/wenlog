@@ -59,6 +59,27 @@ func syncPostPermalink(ctx context.Context, st *store.Store) string {
 	return permalink.CurrentPostPattern()
 }
 
+// syncPostPermalinkFromLoader 从 DataLoader 内存中同步 permalink 设置，不查 DB。
+func syncPostPermalinkFromLoader(loader *store.DataLoader) string {
+	pattern := consts.SettingsPostPermalinkDefault
+	categoryPrefix := consts.SettingsCategoryPrefixDefault
+	tagPrefix := consts.SettingsTagPrefixDefault
+	if loader != nil {
+		if v := loader.GetSetting(consts.SettingsPostPermalink); strings.TrimSpace(v) != "" {
+			pattern = v
+		}
+		if v := loader.GetSetting(consts.SettingsCategoryPrefix); strings.TrimSpace(v) != "" {
+			categoryPrefix = v
+		}
+		if v := loader.GetSetting(consts.SettingsTagPrefix); strings.TrimSpace(v) != "" {
+			tagPrefix = v
+		}
+	}
+	permalink.SetPostPattern(pattern)
+	permalink.SetTaxonomyPrefixes(categoryPrefix, tagPrefix)
+	return permalink.CurrentPostPattern()
+}
+
 // currentUserID 从 session 读取当前登录用户 ID(未登录为 0)。
 func currentUserID(c *gin.Context) uint {
 	s := sessions.Default(c)

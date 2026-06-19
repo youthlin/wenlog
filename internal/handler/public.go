@@ -171,7 +171,12 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 	}
 
 	// 缓存主题名，避免 renderWidgets 中每个 widget 都查一次
-	themeName := h.currentThemeName(c)
+	var themeName string
+	if loader != nil {
+		themeName = h.currentThemeNameFromLoader(loader)
+	} else {
+		themeName = h.currentThemeName(c)
+	}
 
 	// 渲染 widgets，传入预查询数据避免重复查询。
 	widgets := h.renderWidgets(c, s, pageCfg, theme.WidgetSettings{
@@ -329,8 +334,28 @@ func (h *Public) currentTheme(c *gin.Context) *theme.Theme {
 	return h.themeManager.Current(c)
 }
 
+// currentThemeFromLoader 从 DataLoader 内存中读取 current_theme，不查 DB。
+func (h *Public) currentThemeFromLoader(loader *store.DataLoader) *theme.Theme {
+	if h.themeManager == nil {
+		return nil
+	}
+	name := loader.GetSetting("current_theme")
+	if name == "" {
+		name = "default"
+	}
+	return h.themeManager.Get(name)
+}
+
 func (h *Public) currentThemeName(c *gin.Context) string {
 	if t := h.currentTheme(c); t != nil {
+		return t.Name
+	}
+	return ""
+}
+
+// currentThemeNameFromLoader 从 DataLoader 内存中读取主题名，不查 DB。
+func (h *Public) currentThemeNameFromLoader(loader *store.DataLoader) string {
+	if t := h.currentThemeFromLoader(loader); t != nil {
 		return t.Name
 	}
 	return ""
@@ -383,7 +408,6 @@ func (h *Public) buildSettings(settings map[string]string) publicSettings {
 
 // DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。
 func (h *Public) DynamicOrLegacy(c *gin.Context) {
-	syncPostPermalink(c, h.st)
 	path := c.Request.URL.EscapedPath()
 	if slug, ok := singleSegmentSlug(path); ok {
 		if h.pageExists(c, slug) {
@@ -420,7 +444,6 @@ func (h *Public) currentUser(c *gin.Context) *model.User {
 
 func (h *Public) Index(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
-	syncPostPermalink(c, h.st)
 
 	// 全量预加载，后续所有数据从内存读取
 	loader, err := h.st.LoadAllCached(c)
@@ -428,12 +451,13 @@ func (h *Public) Index(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	syncPostPermalinkFromLoader(loader)
 
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, "", "")
 
-	// 提前获取 theme，避免 pageConfig 和 base 各查一次 current_theme
-	t := h.currentTheme(c)
+	// 从 loader 读主题名，避免 current_theme 查 DB
+	t := h.currentThemeFromLoader(loader)
 	pageCfg := h.pageConfigFromTheme(t, "index")
 	data := h.base(c, s.SiteName, "", s, pageCfg, loader)
 	data["List"] = res
@@ -469,7 +493,6 @@ func (h *Public) Search(c *gin.Context) {
 
 // Post 文章详情（按当前固定链接规则解析）。
 func (h *Public) Post(c *gin.Context) {
-	syncPostPermalink(c, h.st)
 	path := c.Request.URL.EscapedPath()
 	match, ok := permalink.ParsePostPath(path)
 	if !ok {
@@ -508,6 +531,7 @@ func (h *Public) Page(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	syncPostPermalinkFromLoader(loader)
 
 	if slug == "archive" {
 		h.renderArchive(c, h.specialPage(c, "archive", "归档"), loader)
@@ -532,7 +556,7 @@ func (h *Public) Page(c *gin.Context) {
 		return
 	}
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentTheme(c)
+	t := h.currentThemeFromLoader(loader)
 	pageCfg := h.pageConfigFromTheme(t, "page")
 	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
 	data["Post"] = p
@@ -566,6 +590,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		h.serverError(c, err)
 		return true
 	}
+	syncPostPermalinkFromLoader(loader)
 
 	p, err := h.st.ResolvePostByPath(c, path, match)
 	if err != nil {
@@ -597,7 +622,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		return true
 	}
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentTheme(c)
+	t := h.currentThemeFromLoader(loader)
 	pageCfg := h.pageConfigFromTheme(t, "post")
 	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
 	data["Post"] = p
@@ -653,7 +678,7 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post, loader *store.Data
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Year > groups[j].Year })
 
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentTheme(c)
+	t := h.currentThemeFromLoader(loader)
 	pageCfg := h.pageConfigFromTheme(t, "archive")
 	data := h.base(c, p.Title, "", s, pageCfg, loader)
 	data["Post"] = p
@@ -675,11 +700,12 @@ func (h *Public) Category(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	syncPostPermalinkFromLoader(loader)
 
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, slug, "")
 	tr := i18n.Get(c)
-	t := h.currentTheme(c)
+	t := h.currentThemeFromLoader(loader)
 	pageCfg := h.pageConfigFromTheme(t, "list")
 	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, pageCfg, loader)
 	data["Heading"] = tr.T("分类:%s", displaySlug)
@@ -702,11 +728,12 @@ func (h *Public) Tag(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
+	syncPostPermalinkFromLoader(loader)
 
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, "", slug)
 	tr := i18n.Get(c)
-	t := h.currentTheme(c)
+	t := h.currentThemeFromLoader(loader)
 	pageCfg := h.pageConfigFromTheme(t, "list")
 	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, pageCfg, loader)
 	data["Heading"] = tr.T("标签:%s", displaySlug)
