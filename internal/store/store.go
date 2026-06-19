@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/cockroachdb/errors"
 	"github.com/glebarez/sqlite"
@@ -17,6 +18,9 @@ import (
 // Store 封装 gorm DB。
 type Store struct {
 	gormDB *gorm.DB
+
+	cacheMu sync.RWMutex
+	cache   *DataLoader
 }
 
 // Open 打开 SQLite 数据库并执行自动迁移。

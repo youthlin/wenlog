@@ -19,9 +19,11 @@ func (s *Store) CategorySlugExists(ctx context.Context, slug string, excludeID u
 	return n > 0, errors.Wrap(err, "count category slug")
 }
 func (s *Store) SaveCategory(ctx context.Context, cat *model.Category) error {
+	defer s.InvalidateCache()
 	return errors.Wrap(s.db(ctx).Save(cat).Error, "save category")
 }
 func (s *Store) DeleteCategory(ctx context.Context, id uint) error {
+	defer s.InvalidateCache()
 	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
 		var cat model.Category
 		if err := tx.First(&cat, id).Error; err != nil {

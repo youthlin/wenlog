@@ -37,6 +37,7 @@ func (s *Store) GetSettings(ctx context.Context, keys ...string) (map[string]str
 	return out, nil
 }
 func (s *Store) SetSetting(ctx context.Context, key, value string) error {
+	defer s.InvalidateCache()
 	st := &model.Setting{Key: key, Value: value}
 	return errors.Wrap(s.db(ctx).Save(st).Error, "save setting")
 }

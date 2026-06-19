@@ -85,9 +85,11 @@ func (s *Store) NextPostID(ctx context.Context) (uint, error) {
 	return maxID + 1, nil
 }
 func (s *Store) SavePost(ctx context.Context, p *model.Post) error {
+	defer s.InvalidateCache()
 	return errors.Wrap(s.db(ctx).Save(p).Error, "save post")
 }
 func (s *Store) SavePostWithTerms(ctx context.Context, p *model.Post, catIDs []uint, tagNames []string) error {
+	defer s.InvalidateCache()
 	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(p).Error; err != nil {
 			return errors.Wrap(err, "save post")
@@ -125,6 +127,7 @@ func (s *Store) SavePostWithTerms(ctx context.Context, p *model.Post, catIDs []u
 	})
 }
 func (s *Store) DeletePost(ctx context.Context, id uint) error {
+	defer s.InvalidateCache()
 	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("post_id = ?", id).Delete(&model.Comment{}).Error; err != nil {
 			return err
@@ -327,7 +330,6 @@ func (s *Store) GetPostAnyStatus(ctx context.Context, id uint) (*model.Post, err
 func (s *Store) PrevPost(ctx context.Context, t time.Time) *model.Post {
 	var p model.Post
 	err := s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
-		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ? AND published_at < ?",
 			model.PostTypePost, model.StatusPublished, t).
 		Order("published_at DESC").First(&p).Error
@@ -339,7 +341,6 @@ func (s *Store) PrevPost(ctx context.Context, t time.Time) *model.Post {
 func (s *Store) NextPost(ctx context.Context, t time.Time) *model.Post {
 	var p model.Post
 	err := s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
-		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ? AND published_at > ?",
 			model.PostTypePost, model.StatusPublished, t).
 		Order("published_at ASC").First(&p).Error
@@ -364,7 +365,6 @@ func (s *Store) IncrementViews(ctx context.Context, id uint) error {
 func (s *Store) AllPostsForArchive(ctx context.Context) ([]model.Post, error) {
 	var posts []model.Post
 	err := s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
-		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Order("published_at DESC").Find(&posts).Error
 	if err != nil {

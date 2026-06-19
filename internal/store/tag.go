@@ -19,9 +19,11 @@ func (s *Store) TagSlugExists(ctx context.Context, slug string, excludeID uint) 
 	return n > 0, errors.Wrap(err, "count tag slug")
 }
 func (s *Store) SaveTag(ctx context.Context, tag *model.Tag) error {
+	defer s.InvalidateCache()
 	return errors.Wrap(s.db(ctx).Save(tag).Error, "save tag")
 }
 func (s *Store) DeleteTag(ctx context.Context, id uint) error {
+	defer s.InvalidateCache()
 	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec("DELETE FROM post_tags WHERE tag_id = ?", id).Error; err != nil {
 			return errors.Wrap(err, "delete tag relations")

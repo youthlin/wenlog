@@ -33,11 +33,13 @@ func (s *Store) AdminListCommentsForAuthor(ctx context.Context, status string, p
 	return comments, total, errors.Wrap(err, "admin list comments")
 }
 func (s *Store) SetCommentStatus(ctx context.Context, id uint, status string) error {
+	defer s.InvalidateCache()
 	return errors.Wrap(
 		s.db(ctx).Model(&model.Comment{}).Where("id = ?", id).Update("status", status).Error,
 		"set comment status")
 }
 func (s *Store) DeleteComment(ctx context.Context, id uint) error {
+	defer s.InvalidateCache()
 	return s.softDeleteComments(ctx, []uint{id})
 }
 func (s *Store) UpdateCommentFields(ctx context.Context, id uint, fields map[string]any) error {
@@ -49,6 +51,7 @@ func (s *Store) UpdateCommentFields(ctx context.Context, id uint, fields map[str
 		"update comment fields")
 }
 func (s *Store) BatchSetCommentStatus(ctx context.Context, ids []uint, status string) error {
+	defer s.InvalidateCache()
 	if len(ids) == 0 {
 		return nil
 	}
@@ -57,6 +60,7 @@ func (s *Store) BatchSetCommentStatus(ctx context.Context, ids []uint, status st
 		"batch set comment status")
 }
 func (s *Store) BatchDeleteComments(ctx context.Context, ids []uint) error {
+	defer s.InvalidateCache()
 	if len(ids) == 0 {
 		return nil
 	}
@@ -73,6 +77,7 @@ func (s *Store) ListCommentsByUser(ctx context.Context, userID uint, page, pageS
 	return comments, total, errors.Wrap(err, "list user comments")
 }
 func (s *Store) DeleteCommentByUser(ctx context.Context, commentID, userID uint) error {
+	defer s.InvalidateCache()
 	result := s.db(ctx).Model(&model.Comment{}).
 		Where("id = ? AND user_id = ?", commentID, userID).
 		Update("status", model.CommentDeleted)
@@ -380,6 +385,7 @@ func (s *Store) ResolveCommentReply(ctx context.Context, postID uint, replyToID 
 	return parent.ID, target.ID, nil
 }
 func (s *Store) CreateComment(ctx context.Context, c *model.Comment) error {
+	defer s.InvalidateCache()
 	return errors.Wrap(s.db(ctx).Create(c).Error, "create comment")
 }
 func (s *Store) GetCommentByID(ctx context.Context, id uint) (*model.Comment, error) {

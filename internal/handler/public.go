@@ -51,10 +51,6 @@ type publicSettings struct {
 	DefaultAvatar    string
 	RegistrationOpen bool
 	ShowSQLDetails   bool
-
-	// RecentPostsOverride 如果非 nil，base() 直接复用此数据而不重新查询。
-	// 首页第一页时 ListPosts 和 RecentPosts 查同一批文章，可避免重复查询。
-	RecentPostsOverride []model.Post
 }
 
 // NewPublic 构造前台处理器。
@@ -64,8 +60,14 @@ func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.
 
 // base 返回模板通用数据(站点名、菜单、当前年份、widget、当前登录用户)。
 // pageCfg 来自 theme.yaml 的 pages.{page} 配置，为 nil 时查询所有数据（兼容无主题场景）。
-func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig) gin.H {
-	menu, _ := h.st.MenuPages(c)
+// loader 为全量预加载的数据，为 nil 时回退到 store 查询（兼容后台等场景）。
+func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig, loader *store.DataLoader) gin.H {
+	var menu []model.Post
+	if loader != nil {
+		menu = loader.MenuPages()
+	} else {
+		menu, _ = h.st.MenuPages(c)
+	}
 	if strings.TrimSpace(desc) == "" {
 		desc = s.SiteDescription
 	}
@@ -107,38 +109,64 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 	var tags []model.Tag
 
 	if needs("RecentPosts") {
-		if s.RecentPostsOverride != nil {
-			recentPosts = s.RecentPostsOverride
+		if loader != nil {
+			recentPosts = loader.RecentPosts(8)
 		} else {
 			recentPosts = h.st.RecentPosts(c, 8)
 		}
 		data["RecentPosts"] = recentPosts
 	}
 	if needs("RecentComments") {
-		recentCommentItems = h.st.RecentCommentItems(c, 8, commentPageSize)
+		if loader != nil {
+			comments := loader.RecentComments(8)
+			recentCommentItems = loader.CommentWidgetItems(comments)
+		} else {
+			recentCommentItems = h.st.RecentCommentItems(c, 8, commentPageSize)
+		}
 		data["RecentCommentItems"] = recentCommentItems
 	}
 	if needs("SayingComments") {
-		sayingCommentItems = h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
+		if loader != nil {
+			comments := loader.SayingComments(s.SayingPostID, 5)
+			sayingCommentItems = loader.CommentWidgetItems(comments)
+		} else {
+			sayingCommentItems = h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
+		}
 		data["SayingCommentItems"] = sayingCommentItems
 		if s.SayingPostID > 0 {
 			if len(sayingCommentItems) > 0 {
 				data["SayingPost"] = &sayingCommentItems[0].Post
+			} else if loader != nil {
+				if p := loader.PostMeta(s.SayingPostID); p != nil {
+					data["SayingPost"] = p
+				}
 			} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
 				data["SayingPost"] = p
 			}
 		}
 	}
 	if needs("ArchiveMonths") {
-		archiveMonths = h.st.ArchiveMonths(c)
+		if loader != nil {
+			archiveMonths = loader.ArchiveMonths()
+		} else {
+			archiveMonths = h.st.ArchiveMonths(c)
+		}
 		data["ArchiveMonths"] = archiveMonths
 	}
 	if needs("Categories") {
-		categories = h.st.AllCategories(c)
+		if loader != nil {
+			categories = loader.AllCategories()
+		} else {
+			categories = h.st.AllCategories(c)
+		}
 		data["Categories"] = categories
 	}
 	if needs("Tags") {
-		tags = h.st.AllTags(c)
+		if loader != nil {
+			tags = loader.AllTags()
+		} else {
+			tags = h.st.AllTags(c)
+		}
 		data["Tags"] = tags
 	}
 
@@ -280,7 +308,10 @@ func (h *Public) mailEnabled() bool {
 
 // pageConfig 从当前主题获取指定页面的配置，无主题时返回 nil。
 func (h *Public) pageConfig(c *gin.Context, pageName string) *theme.PageConfig {
-	t := h.currentTheme(c)
+	return h.pageConfigFromTheme(h.currentTheme(c), pageName)
+}
+
+func (h *Public) pageConfigFromTheme(t *theme.Theme, pageName string) *theme.PageConfig {
 	if t == nil {
 		return nil
 	}
@@ -318,6 +349,23 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 	if err != nil && h.log != nil {
 		h.log.Error("load public settings", "error", err)
 	}
+	return h.buildSettings(settings)
+}
+
+func (h *Public) loadSettingsFromLoader(loader *store.DataLoader) publicSettings {
+	settings := loader.GetSettings(consts.SettingsSiteName,
+		consts.SettingsSiteDesc,
+		consts.SettingsPageSize,
+		consts.SettingsFeedSize,
+		consts.SettingsSayingPageID,
+		consts.SettingsDefaultAvatar,
+		consts.SettingsRegistrationOpen,
+		consts.SettingsShowSQLDetails,
+	)
+	return h.buildSettings(settings)
+}
+
+func (h *Public) buildSettings(settings map[string]string) publicSettings {
 	return publicSettings{
 		SiteName:         util.FirstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription:  settings[consts.SettingsSiteDesc],
@@ -373,17 +421,21 @@ func (h *Public) currentUser(c *gin.Context) *model.User {
 func (h *Public) Index(c *gin.Context) {
 	page := atoiDefault(c.Query("page"), 1)
 	syncPostPermalink(c, h.st)
-	s := h.loadSettings(c)
-	res, err := h.st.ListPosts(c, page, s.PageSize, "", "")
+
+	// 全量预加载，后续所有数据从内存读取
+	loader, err := h.st.LoadAllCached(c)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	// 首页第一页时，ListPosts 和 RecentPosts 查同一批文章，复用避免重复查询。
-	if page == 1 {
-		s.RecentPostsOverride = res.Posts
-	}
-	data := h.base(c, s.SiteName, "", s, h.pageConfig(c, "index"))
+
+	s := h.loadSettingsFromLoader(loader)
+	res := loader.ListPosts(page, s.PageSize, "", "")
+
+	// 提前获取 theme，避免 pageConfig 和 base 各查一次 current_theme
+	t := h.currentTheme(c)
+	pageCfg := h.pageConfigFromTheme(t, "index")
+	data := h.base(c, s.SiteName, "", s, pageCfg, loader)
 	data["List"] = res
 	data["Pager"] = pager(res, "/")
 	c.HTML(http.StatusOK, "index.gohtml", data)
@@ -407,7 +459,7 @@ func (h *Public) Search(c *gin.Context) {
 		}
 	}
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("搜索:%s", kw), "", s, h.pageConfig(c, "list"))
+	data := h.base(c, tr.T("搜索:%s", kw), "", s, h.pageConfig(c, "list"), nil)
 	data["Heading"] = tr.T("搜索「%s」", kw)
 	data["Keyword"] = kw
 	data["List"] = res
@@ -444,18 +496,25 @@ func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 
 // Page 处理 /{slug} 页面以及若干特殊页面(归档)。
 func (h *Public) Page(c *gin.Context) {
-	_ = h.loadSettings(c)
 	slug := strings.Trim(c.Param("slug"), "/")
 	if slug == "" {
 		h.notFound(c)
 		return
 	}
-	if slug == "archive" {
-		h.renderArchive(c, h.specialPage(c, "archive", "归档"))
+
+	// 全量预加载
+	loader, err := h.st.LoadAllCached(c)
+	if err != nil {
+		h.serverError(c, err)
 		return
 	}
-	p, err := h.st.GetPageBySlug(c, slug)
-	if err != nil {
+
+	if slug == "archive" {
+		h.renderArchive(c, h.specialPage(c, "archive", "归档"), loader)
+		return
+	}
+	p := loader.GetPageBySlug(slug)
+	if p == nil {
 		h.notFound(c)
 		return
 	}
@@ -472,8 +531,10 @@ func (h *Public) Page(c *gin.Context) {
 		h.serverError(c, err)
 		return
 	}
-	s := h.loadSettings(c)
-	data := h.base(c, p.Title, p.Excerpt, s, h.pageConfig(c, "page"))
+	s := h.loadSettingsFromLoader(loader)
+	t := h.currentTheme(c)
+	pageCfg := h.pageConfigFromTheme(t, "page")
+	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
 	data["Post"] = p
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
@@ -499,6 +560,13 @@ func (h *Public) pageExists(ctx context.Context, slug string) bool {
 }
 
 func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalink.PostPathMatch) bool {
+	// 全量预加载
+	loader, err := h.st.LoadAllCached(c)
+	if err != nil {
+		h.serverError(c, err)
+		return true
+	}
+
 	p, err := h.st.ResolvePostByPath(c, path, match)
 	if err != nil {
 		if match == nil || !match.HasPostID {
@@ -519,14 +587,19 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		}
 		p.Views++
 	}
+	// 从内存填充关联数据
+	loader.FillPost(p)
+
 	commentPage := atoiDefault(c.Query("cpage"), 1)
 	comments, err := h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
 	if err != nil {
 		h.serverError(c, err)
 		return true
 	}
-	s := h.loadSettings(c)
-	data := h.base(c, p.Title, p.Excerpt, s, h.pageConfig(c, "post"))
+	s := h.loadSettingsFromLoader(loader)
+	t := h.currentTheme(c)
+	pageCfg := h.pageConfigFromTheme(t, "post")
+	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
 	data["Post"] = p
 	data["IsDraft"] = p.Status == model.StatusDraft
 	data["Comments"] = comments.Comments
@@ -534,8 +607,12 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	data["PrevPost"] = h.st.PrevPost(c, p.PublishedAt)
-	data["NextPost"] = h.st.NextPost(c, p.PublishedAt)
+	if prev := loader.PrevPost(p.PublishedAt); prev != nil {
+		data["PrevPost"] = prev
+	}
+	if next := loader.NextPost(p.PublishedAt); next != nil {
+		data["NextPost"] = next
+	}
 	if c.Query("ajax") == "comments" {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return true
@@ -555,12 +632,8 @@ func (h *Public) specialPage(c *gin.Context, slug, fallbackTitle string) *model.
 	return &model.Post{Title: tr.T(fallbackTitle), Slug: slug, PostType: model.PostTypePage}
 }
 
-func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
-	posts, err := h.st.AllPostsForArchive(c)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
+func (h *Public) renderArchive(c *gin.Context, p *model.Post, loader *store.DataLoader) {
+	posts := loader.AllPostsForArchive()
 	// 按年份分组(已按发布时间倒序)。
 	type group struct {
 		Year  int
@@ -579,8 +652,10 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post) {
 	}
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Year > groups[j].Year })
 
-	s := h.loadSettings(c)
-	data := h.base(c, p.Title, "", s, h.pageConfig(c, "archive"))
+	s := h.loadSettingsFromLoader(loader)
+	t := h.currentTheme(c)
+	pageCfg := h.pageConfigFromTheme(t, "archive")
+	data := h.base(c, p.Title, "", s, pageCfg, loader)
 	data["Post"] = p
 	data["Groups"] = groups
 	c.HTML(http.StatusOK, "archive.gohtml", data)
@@ -594,14 +669,19 @@ func (h *Public) Category(c *gin.Context) {
 	}
 	slug := encodeTaxonomySlug(displaySlug)
 	page := atoiDefault(c.Query("page"), 1)
-	s := h.loadSettings(c)
-	tr := i18n.Get(c)
-	res, err := h.st.ListPosts(c, page, s.PageSize, slug, "")
+
+	loader, err := h.st.LoadAllCached(c)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, h.pageConfig(c, "list"))
+
+	s := h.loadSettingsFromLoader(loader)
+	res := loader.ListPosts(page, s.PageSize, slug, "")
+	tr := i18n.Get(c)
+	t := h.currentTheme(c)
+	pageCfg := h.pageConfigFromTheme(t, "list")
+	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, pageCfg, loader)
 	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
@@ -616,14 +696,19 @@ func (h *Public) Tag(c *gin.Context) {
 	}
 	slug := encodeTaxonomySlug(displaySlug)
 	page := atoiDefault(c.Query("page"), 1)
-	s := h.loadSettings(c)
-	tr := i18n.Get(c)
-	res, err := h.st.ListPosts(c, page, s.PageSize, "", slug)
+
+	loader, err := h.st.LoadAllCached(c)
 	if err != nil {
 		h.serverError(c, err)
 		return
 	}
-	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, h.pageConfig(c, "list"))
+
+	s := h.loadSettingsFromLoader(loader)
+	res := loader.ListPosts(page, s.PageSize, "", slug)
+	tr := i18n.Get(c)
+	t := h.currentTheme(c)
+	pageCfg := h.pageConfigFromTheme(t, "list")
+	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, pageCfg, loader)
 	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
@@ -659,7 +744,7 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 // notFound 渲染 404。
 func (h *Public) notFound(c *gin.Context) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), h.pageConfig(c, "error"))
+	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), h.pageConfig(c, "error"), nil)
 	data["Code"] = 404
 	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
 	c.HTML(http.StatusNotFound, "error.gohtml", data)
@@ -668,7 +753,7 @@ func (h *Public) notFound(c *gin.Context) {
 func (h *Public) serverError(c *gin.Context, err error) {
 	h.log.Error("handler error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), h.pageConfig(c, "error"))
+	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), h.pageConfig(c, "error"), nil)
 	data["Code"] = 500
 	data["Message"] = tr.T("服务器内部错误,请稍后重试。")
 	c.HTML(http.StatusInternalServerError, "error.gohtml", data)
