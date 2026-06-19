@@ -9,6 +9,7 @@ import (
 
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
+	"gorm.io/gorm"
 )
 
 // DataLoader 全量加载数据库到内存，后续查询均为内存操作。
@@ -539,6 +540,140 @@ func (l *DataLoader) CommentWidgetItems(comments []model.Comment) []CommentWidge
 	return items
 }
 
+// CommentPage 从内存返回文章评论分页（仅已批准评论，适用于匿名访客）。
+func (l *DataLoader) CommentPage(postID uint, page, pageSize int) *CommentPageResult {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	commentIDs := l.commentsByPost[postID]
+	allComments := make([]*model.Comment, 0, len(commentIDs))
+	for _, cid := range commentIDs {
+		if c := l.Comments[cid]; c != nil {
+			allComments = append(allComments, c)
+		}
+	}
+
+	// 按 parent_id 分组
+	byParent := make(map[uint][]*model.Comment)
+	for _, c := range allComments {
+		byParent[c.ParentID] = append(byParent[c.ParentID], c)
+	}
+
+	// 顶层评论按时间倒序
+	tops := byParent[0]
+	sort.Slice(tops, func(i, j int) bool {
+		return tops[i].CreatedAt.After(tops[j].CreatedAt)
+	})
+
+	totalAll := int64(len(allComments))
+	totalTop := int64(len(tops))
+	pages := int((totalTop + int64(pageSize) - 1) / int64(pageSize))
+	if pages == 0 {
+		pages = 1
+	}
+	if page > pages {
+		page = pages
+	}
+
+	// 分页取顶层评论
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if end > len(tops) {
+		end = len(tops)
+	}
+	pageTops := tops[start:end]
+
+	if len(pageTops) == 0 {
+		return &CommentPageResult{Page: page, Pages: pages, TotalTop: totalTop, TotalComments: totalAll}
+	}
+
+	// 递归收集所有子孙评论
+	rootByID := make(map[uint]uint)
+	for _, top := range pageTops {
+		rootByID[top.ID] = top.ID
+	}
+
+	var allDescendants []model.Comment
+	frontier := make([]uint, len(pageTops))
+	for i, top := range pageTops {
+		frontier[i] = top.ID
+	}
+	for len(frontier) > 0 {
+		var nextGen []*model.Comment
+		for _, pid := range frontier {
+			nextGen = append(nextGen, byParent[pid]...)
+		}
+		sort.Slice(nextGen, func(i, j int) bool {
+			return nextGen[i].CreatedAt.Before(nextGen[j].CreatedAt)
+		})
+		frontier = frontier[:0]
+		for _, c := range nextGen {
+			if _, seen := rootByID[c.ID]; seen {
+				continue
+			}
+			rootByID[c.ID] = rootByID[c.ParentID]
+			allDescendants = append(allDescendants, *c)
+			frontier = append(frontier, c.ID)
+		}
+	}
+
+	// 将深度 >1 的子孙评论 ParentID 重写为根顶层评论 ID
+	for i := range allDescendants {
+		origParent := allDescendants[i].ParentID
+		allDescendants[i].ParentID = rootByID[allDescendants[i].ParentID]
+		if allDescendants[i].ReplyToID == 0 {
+			allDescendants[i].ReplyToID = origParent
+		}
+	}
+
+	// 组装结果：顶层评论 + 子孙评论
+	result := make([]model.Comment, 0, len(pageTops)+len(allDescendants))
+	for _, top := range pageTops {
+		result = append(result, *top)
+	}
+	result = append(result, allDescendants...)
+
+	return &CommentPageResult{
+		Comments:      result,
+		TotalComments: totalAll,
+		TotalTop:      totalTop,
+		Page:          page,
+		Pages:         pages,
+	}
+}
+
+// ResolvePostByPath 从内存解析文章路径，替代 store.ResolvePostByPath 的 DB 查询。
+func (l *DataLoader) ResolvePostByPath(path string, match *permalink.PostPathMatch) (*model.Post, error) {
+	if match == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+	// 有 postID 时直接查内存
+	if match.HasPostID {
+		p := l.Posts[match.PostID]
+		if p == nil || p.PostType != model.PostTypePost || p.Status != model.StatusPublished {
+			return nil, gorm.ErrRecordNotFound
+		}
+		if permalink.Post(p) == path {
+			return p, nil
+		}
+		return nil, gorm.ErrRecordNotFound
+	}
+	// 无 postID 时遍历所有已发布文章匹配路径
+	for _, p := range l.Posts {
+		if p.PostType != model.PostTypePost || p.Status != model.StatusPublished {
+			continue
+		}
+		if permalink.Post(p) == path {
+			return p, nil
+		}
+	}
+	return nil, gorm.ErrRecordNotFound
+}
+
 // LoadAllCached 返回缓存的 DataLoader，缓存未命中时自动重建。
 // 这是前台 handler 的首选方法——首次请求加载后，后续请求直接复用。
 func (s *Store) LoadAllCached(ctx context.Context) (*DataLoader, error) {
@@ -546,6 +681,7 @@ func (s *Store) LoadAllCached(ctx context.Context) (*DataLoader, error) {
 	c := s.cache
 	s.cacheMu.RUnlock()
 	if c != nil {
+		cacheHits.Inc()
 		return c, nil
 	}
 
@@ -553,8 +689,10 @@ func (s *Store) LoadAllCached(ctx context.Context) (*DataLoader, error) {
 	defer s.cacheMu.Unlock()
 	// double-check
 	if s.cache != nil {
+		cacheHits.Inc()
 		return s.cache, nil
 	}
+	cacheMisses.Inc()
 	l, err := s.LoadAll(ctx)
 	if err != nil {
 		return nil, err

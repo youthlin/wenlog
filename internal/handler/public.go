@@ -409,25 +409,34 @@ func (h *Public) buildSettings(settings map[string]string) publicSettings {
 // DynamicOrLegacy 是前台兜底路由：页面、文章固定链接与旧链接兼容都在这里收口。
 func (h *Public) DynamicOrLegacy(c *gin.Context) {
 	path := c.Request.URL.EscapedPath()
+
+	// 全量预加载，后续所有数据从内存读取
+	loader, err := h.st.LoadAllCached(c)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	syncPostPermalinkFromLoader(loader)
+
 	if slug, ok := singleSegmentSlug(path); ok {
-		if h.pageExists(c, slug) {
+		if h.pageExistsFromLoader(loader, slug) {
 			c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-			h.Page(c)
+			h.pageWithLoader(c, loader)
 			return
 		}
 	}
 	if slug, ok := permalink.ParseCategoryPath(path); ok {
 		c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-		h.Category(c)
+		h.categoryWithLoader(c, loader)
 		return
 	}
 	if slug, ok := permalink.ParseTagPath(path); ok {
 		c.Params = append(c.Params, gin.Param{Key: "slug", Value: slug})
-		h.Tag(c)
+		h.tagWithLoader(c, loader)
 		return
 	}
 	if match, ok := permalink.ParsePostPath(path); ok {
-		if h.renderResolvedPost(c, path, match) {
+		if h.renderResolvedPostWithLoader(c, path, match, loader) {
 			return
 		}
 	}
@@ -550,10 +559,18 @@ func (h *Public) Page(c *gin.Context) {
 	}
 
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
-	if err != nil {
-		h.serverError(c, err)
-		return
+	var comments *store.CommentPageResult
+	uid := currentUserID(c)
+	pendingIDs := pendingCommentIDs(c)
+	if uid == 0 && len(pendingIDs) == 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	} else {
+		var err error
+		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
+		if err != nil {
+			h.serverError(c, err)
+			return
+		}
 	}
 	s := h.loadSettingsFromLoader(loader)
 	t := h.currentThemeFromLoader(loader)
@@ -583,16 +600,108 @@ func (h *Public) pageExists(ctx context.Context, slug string) bool {
 	return err == nil
 }
 
-func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalink.PostPathMatch) bool {
-	// 全量预加载
-	loader, err := h.st.LoadAllCached(c)
-	if err != nil {
-		h.serverError(c, err)
+func (h *Public) pageExistsFromLoader(loader *store.DataLoader, slug string) bool {
+	if slug == "archive" {
 		return true
 	}
-	syncPostPermalinkFromLoader(loader)
+	return loader.GetPageBySlug(slug) != nil
+}
 
-	p, err := h.st.ResolvePostByPath(c, path, match)
+func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
+	slug := strings.Trim(c.Param("slug"), "/")
+	if slug == "" {
+		h.notFound(c)
+		return
+	}
+	if slug == "archive" {
+		h.renderArchive(c, h.specialPageFromLoader(loader, "archive", "归档"), loader)
+		return
+	}
+	p := loader.GetPageBySlug(slug)
+	if p == nil {
+		h.notFound(c)
+		return
+	}
+	if p.Status == model.StatusPublished {
+		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
+			h.log.Error("increment page views", "error", err, "post_id", p.ID)
+		}
+		p.Views++
+	}
+
+	commentPage := atoiDefault(c.Query("cpage"), 1)
+	var comments *store.CommentPageResult
+	uid := currentUserID(c)
+	pendingIDs := pendingCommentIDs(c)
+	if uid == 0 && len(pendingIDs) == 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	} else {
+		var err error
+		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
+		if err != nil {
+			h.serverError(c, err)
+			return
+		}
+	}
+	s := h.loadSettingsFromLoader(loader)
+	t := h.currentThemeFromLoader(loader)
+	pageCfg := h.pageConfigFromTheme(t, "page")
+	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
+	data["Post"] = p
+	data["Comments"] = comments.Comments
+	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
+	data["CommentCount"] = comments.TotalComments
+	data["CommentOpen"] = p.CommentStatus != "closed"
+	data["RememberedCommenter"] = rememberedCommenter(c)
+	if c.Query("ajax") == "comments" {
+		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+		return
+	}
+	c.HTML(http.StatusOK, "page.gohtml", data)
+}
+
+func (h *Public) categoryWithLoader(c *gin.Context, loader *store.DataLoader) {
+	displaySlug := c.Param("slug")
+	if displaySlug == "" {
+		displaySlug = c.Query("slug")
+	}
+	slug := encodeTaxonomySlug(displaySlug)
+	page := atoiDefault(c.Query("page"), 1)
+
+	s := h.loadSettingsFromLoader(loader)
+	res := loader.ListPosts(page, s.PageSize, slug, "")
+	tr := i18n.Get(c)
+	t := h.currentThemeFromLoader(loader)
+	pageCfg := h.pageConfigFromTheme(t, "list")
+	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, pageCfg, loader)
+	data["Heading"] = tr.T("分类:%s", displaySlug)
+	data["List"] = res
+	data["Pager"] = pager(res, permalink.Category(slug))
+	c.HTML(http.StatusOK, "list.gohtml", data)
+}
+
+func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
+	displaySlug := c.Param("slug")
+	if displaySlug == "" {
+		displaySlug = c.Query("slug")
+	}
+	slug := encodeTaxonomySlug(displaySlug)
+	page := atoiDefault(c.Query("page"), 1)
+
+	s := h.loadSettingsFromLoader(loader)
+	res := loader.ListPosts(page, s.PageSize, "", slug)
+	tr := i18n.Get(c)
+	t := h.currentThemeFromLoader(loader)
+	pageCfg := h.pageConfigFromTheme(t, "list")
+	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, pageCfg, loader)
+	data["Heading"] = tr.T("标签:%s", displaySlug)
+	data["List"] = res
+	data["Pager"] = pager(res, permalink.Tag(slug))
+	c.HTML(http.StatusOK, "list.gohtml", data)
+}
+
+func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match *permalink.PostPathMatch, loader *store.DataLoader) bool {
+	p, err := loader.ResolvePostByPath(path, match)
 	if err != nil {
 		if match == nil || !match.HasPostID {
 			return false
@@ -616,10 +725,91 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	loader.FillPost(p)
 
 	commentPage := atoiDefault(c.Query("cpage"), 1)
-	comments, err := h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, currentUserID(c), pendingCommentIDs(c))
+	var comments *store.CommentPageResult
+	uid := currentUserID(c)
+	pendingIDs := pendingCommentIDs(c)
+	if uid == 0 && len(pendingIDs) == 0 {
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	} else {
+		var cerr error
+		comments, cerr = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
+		if cerr != nil {
+			h.serverError(c, cerr)
+			return true
+		}
+	}
+	s := h.loadSettingsFromLoader(loader)
+	t := h.currentThemeFromLoader(loader)
+	pageCfg := h.pageConfigFromTheme(t, "post")
+	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
+	data["Post"] = p
+	data["Comments"] = comments.Comments
+	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
+	data["CommentCount"] = comments.TotalComments
+	data["CommentOpen"] = p.CommentStatus != "closed"
+	data["RememberedCommenter"] = rememberedCommenter(c)
+	if c.Query("ajax") == "comments" {
+		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
+		return true
+	}
+	c.HTML(http.StatusOK, "post.gohtml", data)
+	return true
+}
+
+func (h *Public) specialPageFromLoader(loader *store.DataLoader, slug, fallbackTitle string) *model.Post {
+	if p := loader.GetPageBySlug(slug); p != nil {
+		return p
+	}
+	tr := i18n.Get(nil) // fallback: no context available
+	return &model.Post{Title: tr.T(fallbackTitle), Slug: slug, PostType: model.PostTypePage}
+}
+
+func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalink.PostPathMatch) bool {
+	// 全量预加载
+	loader, err := h.st.LoadAllCached(c)
 	if err != nil {
 		h.serverError(c, err)
 		return true
+	}
+	syncPostPermalinkFromLoader(loader)
+
+	p, err := loader.ResolvePostByPath(path, match)
+	if err != nil {
+		if match == nil || !match.HasPostID {
+			return false
+		}
+		p = h.draftForAuthor(c, match.PostID)
+		if p == nil {
+			return false
+		}
+	}
+	if got := permalink.Post(p); got != path {
+		c.Redirect(http.StatusMovedPermanently, got)
+		return true
+	}
+	if p.Status == model.StatusPublished {
+		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
+			h.log.Error("increment post views", "error", err, "post_id", p.ID)
+		}
+		p.Views++
+	}
+	// 从内存填充关联数据
+	loader.FillPost(p)
+
+	commentPage := atoiDefault(c.Query("cpage"), 1)
+	var comments *store.CommentPageResult
+	uid := currentUserID(c)
+	pendingIDs := pendingCommentIDs(c)
+	if uid == 0 && len(pendingIDs) == 0 {
+		// 匿名访客：从内存取评论，不查 DB
+		comments = loader.CommentPage(p.ID, commentPage, commentPageSize)
+	} else {
+		var err error
+		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
+		if err != nil {
+			h.serverError(c, err)
+			return true
+		}
 	}
 	s := h.loadSettingsFromLoader(loader)
 	t := h.currentThemeFromLoader(loader)

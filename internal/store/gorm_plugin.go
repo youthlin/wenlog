@@ -25,6 +25,16 @@ var (
 		Help:    "SQL 执行耗时(秒)",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"sql_type", "error"})
+
+	cacheHits = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "blog_dataloader_cache_hits_total",
+		Help: "DataLoader 缓存命中次数",
+	})
+
+	cacheMisses = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "blog_dataloader_cache_misses_total",
+		Help: "DataLoader 缓存未命中次数（触发全量加载）",
+	})
 )
 
 // 接口检测
