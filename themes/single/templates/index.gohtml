@@ -1,0 +1,338 @@
+{{define "header"}}<!DOCTYPE html>
+<html lang="{{.htmlLang}}"
+      data-comment-success="{{.t.T "评论已提交,等待审核后显示。"}}"
+      data-comment-fail="{{.t.T "提交失败,请稍后重试。"}}"
+      data-comment-network="{{.t.T "网络错误,请稍后重试。"}}"
+      data-nav-open-label="{{.t.T "打开菜单"}}"
+      data-nav-close-label="{{.t.T "收起菜单"}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/theme-assets/style.css">
+<link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+</head>
+<body>
+<a class="skip-link" href="#main-content">{{.t.T "跳到主要内容"}}</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="site-title" href="/">{{.SiteName}}</a>
+    <nav id="site-nav-menu" class="site-nav" data-nav-panel>
+      <div class="site-nav-links">
+        {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
+      </div>
+      <div class="site-nav-utility">
+        <label class="lang-select-wrap">
+          <span class="sr-only">{{.t.T "语言"}}</span>
+          <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
+            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+          </select>
+        </label>
+      </div>
+    </nav>
+    <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+  </div>
+</header>
+<div class="container layout">
+<main class="main-col" id="main-content">
+{{end}}
+
+{{define "footer"}}
+</main>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-widgets">
+      <div class="footer-col footer-col-1">
+        <section class="widget widget-user">
+          {{if .CurrentUserID}}
+          <h3>{{.t.T "%s, 你好" .CurrentUserName}}</h3>
+          <div class="widget-user-actions">
+            <a href="/admin">{{.t.T "控制台"}}</a>
+            <form method="post" action="/auth/logout">
+              {{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}
+              <button type="submit">{{.t.T "退出"}}</button>
+            </form>
+          </div>
+          {{else}}
+          <h3>{{.t.T "欢迎"}}</h3>
+          <div class="widget-user-actions">
+            <a href="/auth/login">{{.t.T "登录"}}</a>
+            {{if .RegistrationOpen}}<a href="/auth/register">{{.t.T "注册"}}</a>{{end}}
+          </div>
+          {{end}}
+        </section>
+        <section class="widget widget-search">
+          <h3>{{.t.T "搜索"}}</h3>
+          <form method="get" action="/search">
+            <input type="search" name="q" placeholder="{{.t.T "输入关键词…"}}" value="{{.Keyword}}">
+          </form>
+        </section>
+        {{if .Categories}}
+        <section class="widget widget-categories">
+          <h3>{{.t.T "分类目录"}}</h3>
+          <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入分类名筛选…"}}" data-search-empty="{{.t.T "没有匹配的分类"}}">
+            <option value="">{{.t.T "选择分类…"}}</option>
+            {{range .Categories}}<option value="{{categoryURL .Slug}}">{{.Name}}</option>{{end}}
+          </select>
+        </section>
+        {{end}}
+        {{if .Tags}}
+        <section class="widget widget-tags">
+          <h3>{{.t.T "标签"}}</h3>
+          <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">
+            <option value="">{{.t.T "选择标签…"}}</option>
+            {{range .Tags}}<option value="{{tagURL .Slug}}">{{.Name}}</option>{{end}}
+          </select>
+        </section>
+        {{end}}
+      </div>
+      <div class="footer-col footer-col-2">
+        {{if .RecentPosts}}
+        <section class="widget widget-recent-posts">
+          <h3>{{.t.T "近期文章"}}</h3>
+          <ul>
+            {{range .RecentPosts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+          </ul>
+        </section>
+        {{end}}
+      </div>
+      <div class="footer-col footer-col-3">
+        {{if .RecentCommentItems}}
+        <section class="widget widget-recent-comments">
+          <h3>{{.t.T "近期评论"}}</h3>
+          <ul>
+            {{range .RecentCommentItems}}
+            <li>
+              <div class="widget-comment-line">
+                <img class="avatar" src="{{avatarURL .Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
+                <a href="{{.CommentURL}}">{{.Snippet}}</a>
+              </div>
+              <div class="widget-comment-meta">
+                {{if .AuthorURL}}<a href="{{.AuthorURL}}" target="_blank" rel="nofollow noopener">{{.Comment.Author}}</a>{{else}}{{.Comment.Author}}{{end}}
+                {{$.t.T "发表在"}} <a href="{{.CommentURL}}">{{.Post.Title}}</a>
+              </div>
+            </li>
+            {{end}}
+          </ul>
+        </section>
+        {{end}}
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; {{.CurrentYear}} {{.SiteName}}</p>
+      <p class="footer-powered">Powered by Go</p>
+    </div>
+  </div>
+</footer>
+<div class="scroll-tools">
+  <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.t.T "回顶部"}}">↑</button>
+  <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.t.T "到底部"}}">↓</button>
+</div>
+{{if .SQLDetails}}
+{{if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.t.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{end}}
+{{end}}
+<script>
+(function(){
+  var toggle = document.querySelector('[data-nav-toggle]');
+  var nav = document.getElementById('site-nav-menu');
+  if (!toggle || !nav) return;
+  toggle.addEventListener('click', function(){
+    var open = nav.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open
+      ? document.documentElement.getAttribute('data-nav-close-label') || '收起菜单'
+      : document.documentElement.getAttribute('data-nav-open-label') || '打开菜单');
+  });
+})();
+</script>
+<script src="/assets/scroll.js"></script>
+</body>
+</html>
+{{end}}
+
+{{define "pagination"}}
+{{with .Pager}}
+{{if gt .Pages 1}}
+<nav class="pagination">
+  {{if gt .Page 1}}<a href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}" class="pagination-link">{{$.t.T "上一页"}}</a>{{end}}
+  <span class="page-info">{{.Page}} / {{.Pages}}</span>
+  {{if lt .Page .Pages}}<a href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}" class="pagination-link">{{$.t.T "下一页"}}</a>{{end}}
+</nav>
+{{end}}
+{{end}}
+{{end}}
+
+{{define "comments"}}
+<section class="comments" id="comments">
+  <h3>{{.t.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
+  <ul class="comment-list">
+    {{range .Comments}}
+    {{if eq .ParentID 0}}
+    <li class="comment{{if eq .Status "pending"}} comment-pending{{end}}" id="comment-{{.ID}}">
+      <div class="comment-head">
+        <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="40" height="40">
+        <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.t.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.t.T "管理员"}}{{else}}{{$.t.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.t.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
+        {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.t.T "评论审核中,当前仅自己可见"}}</span>{{end}}
+      </div>
+      <div class="comment-body">{{.Content}}</div>
+      <button class="comment-reply" type="button" data-reply="{{.ID}}" data-reply-target="comment-{{.ID}}">{{$.t.T "回复"}}</button>
+      {{$pid := .ID}}
+      <ul class="comment-children">
+        {{range $.Comments}}
+        {{if eq .ParentID $pid}}
+        <li class="comment{{if eq .Status "pending"}} comment-pending{{end}}" id="comment-{{.ID}}">
+          <div class="comment-head">
+            <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="40" height="40">
+            <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.t.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.t.T "管理员"}}{{else}}{{$.t.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.t.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
+            {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.t.T "评论审核中,当前仅自己可见"}}</span>{{end}}
+          </div>
+          <div class="comment-body">{{if .ReplyToAuthor}}<a class="comment-reply-to" href="#comment-{{.ReplyToID}}">{{$.t.T "回复 @%s" .ReplyToAuthor}}</a>{{end}}{{.Content}}</div>
+          <button class="comment-reply" type="button" data-reply="{{.ID}}" data-reply-target="comment-{{.ID}}">{{$.t.T "回复"}}</button>
+        </li>
+        {{end}}
+        {{end}}
+      </ul>
+    </li>
+    {{end}}
+    {{end}}
+  </ul>
+
+  {{if gt .CommentPager.Pages 1}}
+  <nav class="pagination comment-pagination">
+    {{if gt .CommentPager.Page 1}}<a href="{{.CommentPager.BaseURL}}?cpage={{sub .CommentPager.Page 1}}#comments">{{.t.T "上一页"}}</a>{{end}}
+    <span class="page-info">{{.CommentPager.Page}} / {{.CommentPager.Pages}}</span>
+    {{if lt .CommentPager.Page .CommentPager.Pages}}<a href="{{.CommentPager.BaseURL}}?cpage={{add .CommentPager.Page 1}}#comments">{{.t.T "下一页"}}</a>{{end}}
+  </nav>
+  {{end}}
+
+  {{if .CurrentUser}}
+  <div class="comment-login-tip">{{if .CurrentUser.DisplayName}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.DisplayName))}}{{else}}{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.Username))}}{{end}}
+    <form class="inline" method="post" action="/auth/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "登出"}}</button></form>
+  </div>
+  {{end}}
+
+  {{if .CommentOpen}}
+  <form class="comment-form" id="comment-form" method="post" action="/comment">
+    <input type="hidden" name="post_id" value="{{.Post.ID}}">
+    <input type="hidden" name="parent_id" value="0">
+    <input type="hidden" name="reply_to_id" value="0">
+    {{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}
+    {{if not .CurrentUser}}
+      <p><label class="sr-only" for="comment-author">{{.t.T "昵称"}}</label><input id="comment-author" type="text" name="author" value="{{.RememberedCommenter.Author}}" placeholder="{{.t.T "昵称 *"}}" autocomplete="name" required></p>
+      <p><label class="sr-only" for="comment-email">{{.t.T "邮箱"}}</label><input id="comment-email" type="email" name="email" value="{{.RememberedCommenter.Email}}" placeholder="{{.t.T "邮箱 *(不公开)"}}" autocomplete="email" required></p>
+      <p><label class="sr-only" for="comment-url">{{.t.T "网站"}}</label><input id="comment-url" type="url" name="url" value="{{.RememberedCommenter.URL}}" placeholder="{{.t.T "网站(可选)"}}" autocomplete="url"></p>
+    {{end}}
+    <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
+    <p><label class="sr-only" for="comment-content">{{.t.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="5" placeholder="{{.t.T "说点什么吧…… *"}}" required></textarea></p>
+    {{if .MailEnabled}}<p><label><input type="checkbox" name="notify"> {{.t.T "有回复时邮件通知我"}}</label></p>{{end}}
+    <p class="comment-form-actions"><button type="submit">{{.t.T "提交评论"}}</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>{{.t.T "取消回复"}}</button></p>
+    <p class="comment-tip">{{.t.T "评论提交后需经审核才会显示。"}}</p>
+  </form>
+  {{else}}
+  <p class="comment-closed">{{.t.T "评论已关闭"}}</p>
+  {{end}}
+</section>
+{{end}}
+
+{{/* index.gohtml — 兜底页面模板，用数据特征区分页面类型 */}}
+{{define "index.gohtml"}}
+{{template "header" .}}
+
+{{if .Code}}
+  {{/* 错误页 */}}
+  <div class="error-page">
+    <h1>{{.Code}}</h1>
+    <p>{{.Message}}</p>
+    <p><a href="/">{{.t.T "返回首页"}}</a></p>
+  </div>
+
+{{else if .Groups}}
+  {{/* 归档页 */}}
+  <article class="page-detail">
+    <h1 class="post-title">{{.Post.Title}}</h1>
+    {{if .Post.Content}}<div class="post-content">{{safeHTML .Post.Content}}</div>{{end}}
+    <div class="archive-groups">
+      {{range .Groups}}
+      <h3 class="archive-year" id="{{.Year}}">{{.Year}}</h3>
+      <ul class="archive-list">
+        {{range .Posts}}
+        <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{.Title}}</a></li>
+        {{end}}
+      </ul>
+      {{end}}
+    </div>
+  </article>
+
+{{else if .Post}}
+  {{/* 文章/页面详情 */}}
+  <article class="post-detail">
+    <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">{{.t.T "草稿预览"}}</span>{{end}}</h1>
+    <div class="post-meta">
+      <a class="post-date-link" href="{{postURL .Post}}"><time datetime="{{fmtDateTime .Post.PublishedAt}}">{{fmtDate .Post.PublishedAt}}</time></a>
+      {{if .Post.Author.DisplayName}}<span class="author">{{.Post.Author.DisplayName}}</span>{{end}}
+      {{range .Post.Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+      <span class="views">{{.t.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
+      {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.t.T "编辑"}}</a>{{end}}
+    </div>
+    <div class="post-content">{{detailHTML .Post}}</div>
+    {{if .Post.Tags}}
+    <div class="post-tags">
+      {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
+    </div>
+    {{end}}
+  </article>
+
+  {{if .PrevPost or .NextPost}}
+  <nav class="post-nav">
+    <span class="prev">{{if .PrevPost}}<a href="{{postURL .PrevPost}}">← {{.PrevPost.Title}}</a>{{end}}</span>
+    <span class="next">{{if .NextPost}}<a href="{{postURL .NextPost}}">{{.NextPost.Title}} →</a>{{end}}</span>
+  </nav>
+  {{end}}
+
+  {{template "comments" .}}
+
+{{else}}
+  {{/* 首页/列表 */}}
+  {{if .Heading}}<h1 class="archive-title">{{.Heading}}</h1>{{end}}
+  <div class="post-list">
+    {{range .List.Posts}}
+    <article class="post-summary">
+      <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
+      <div class="post-meta">
+        <time>{{fmtDate .PublishedAt}}</time>
+        {{if .Author.DisplayName}}<span class="author">{{.Author.DisplayName}}</span>{{end}}
+        {{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+        {{range .Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
+        <span class="views">{{$.t.N1_64 "%d 次阅读" .Views .Views}}</span>
+        {{if eq .CommentStatus "closed"}}<span class="comment-count">{{$.t.T "评论已关闭"}}</span>
+        {{else if eq .CommentCount 0}}<a class="comment-count" href="{{postURL .}}#comments">{{$.t.T "暂无评论"}}</a>
+        {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.t.N1_64 "%d 条评论" .CommentCount .CommentCount}}</a>{{end}}
+        {{if and $.CurrentUserID (eq $.CurrentUserID .AuthorID)}}<a class="edit-link" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>{{end}}
+      </div>
+      <div class="post-content">{{postExcerptHTML .}}</div>
+      {{if hasMore .Content}}<a class="read-more" href="{{postURL .}}#more-{{.ID}}">{{$.t.T "阅读全文 →"}}</a>{{end}}
+    </article>
+    {{else}}
+    <p>{{.t.T "没有找到匹配的文章。"}}</p>
+    {{end}}
+  </div>
+  {{template "pagination" .}}
+{{end}}
+
+{{template "footer" .}}
+{{end}}

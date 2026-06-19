@@ -43,14 +43,19 @@ themes/my-theme/
 │   ├── index.gohtml        # 首页 + 兜底模板（必须）
 │   ├── post.gohtml         # 文章页（可选 → fallback index）
 │   ├── page.gohtml         # 页面（可选 → fallback post → index）
-│   ├── archive.gohtml      # 分类/标签/归档/搜索（可选 → fallback index）
-│   ├── error.gohtml        # 404（可选 → 内置 fallback）
-│   ├── header.gohtml       # {{define "header"}}
-│   ├── footer.gohtml       # {{define "footer"}}
+│   ├── list.gohtml         # 分类/标签列表（可选 → fallback index）
+│   ├── archive.gohtml      # 归档页（可选 → fallback list → index）
+│   ├── search.gohtml       # 搜索结果（可选 → fallback list → index）
+│   ├── error.gohtml        # 404/500（可选 → fallback index）
+│   ├── comments_fragment.gohtml  # AJAX 评论片段（可选，不定义则无 AJAX）
+│   ├── header.gohtml       # {{define "header"}}（可选，可内联在 index.gohtml）
+│   ├── footer.gohtml       # {{define "footer"}}（可选，可内联在 index.gohtml）
 │   └── sidebar.gohtml      # {{define "sidebar"}} — 就是个普通模板！
 ├── assets/                 # CSS/JS/图片
 └── i18n/                   # 翻译文件 (.po/.mo)
 ```
+
+> **最小主题**：只需 `theme.yaml` + `templates/index.gohtml` 两个文件。`index.gohtml` 中内联 header/footer/pagination/comments 等所有 define，并用数据特征（`.Code` / `.Groups` / `.Post` / `.List`）区分页面类型。参见 `themes/single/`。
 
 ## 5. 模板层级（Template Hierarchy）
 
@@ -62,14 +67,14 @@ themes/my-theme/
 首页              index.gohtml
 文章页            post.gohtml → index.gohtml
 页面              page.gohtml → post.gohtml → index.gohtml
-分类列表          archive.gohtml → index.gohtml
-标签列表          archive.gohtml → index.gohtml
-归档列表          archive.gohtml → index.gohtml
-搜索结果          archive.gohtml → index.gohtml
-404               error.gohtml → 内置 fallback
+分类列表          list.gohtml → index.gohtml
+标签列表          list.gohtml → index.gohtml
+归档列表          archive.gohtml → list.gohtml → index.gohtml
+搜索结果          search.gohtml → list.gohtml → index.gohtml
+404               error.gohtml
 ```
 
-> **实现状态**：模板文件名已按页面类型拆分（index/post/page/archive/error），handler 中显式指定模板名。自动 fallback 链尚未实现，当前各页面类型直接使用对应模板名。
+> **实现状态**：已实现。`render.Renderer.ResolveTemplate(pageType)` 按 `TemplateHierarchy` 查找主题中第一个存在的模板。跨主题 fallback 已移除——每个主题必须自包含。
 
 ## 6. 全局模板数据
 
@@ -267,7 +272,7 @@ func getInt(args map[string]any, key string, def int) int {
 
 | 文件 | 改动 |
 |------|------|
-| `internal/theme/theme.go` | `PageConfig.Needs()` 始终返回 `true`；保留 `Data`/`Widgets` 字段兼容旧 yaml |
+| `internal/theme/theme.go` | `PageConfig` 结构体已完全移除；`Theme` 结构体仅保留元数据字段 |
 | `internal/handler/public.go` | `base()` 始终注入全部全局数据（RecentPosts、Categories、Tags、ArchiveMonths、RecentCommentItems、SayingCommentItems）；移除 `renderWidgets()` |
 | `internal/store/loader.go` | `PopularPosts()` 已移除（改为 functions.goyaegi 实现） |
 | `internal/theme/widget.go` | **已删除** |
@@ -275,14 +280,17 @@ func getInt(args map[string]any, key string, def int) int {
 | `web/themes/default/templates/sidebar.gohtml` | **新建** — 直接使用全局数据 + `themeData` 调用 |
 | `web/themes/default/theme.yaml` | 简化为纯元数据（name/version/description/author） |
 | `web/themes/default/functions.goyaegi` | 保留 `popular_posts` provider 作为 `themeData` 用法演示 |
+| `themes/single/theme.yaml` | 简化为纯元数据，移除 `pages:` 配置 |
+| `themes/single/templates/base.gohtml` | **已删除** — 合并到 index.gohtml |
+| `themes/single/templates/index.gohtml` | **新建** — 单文件最小主题：内联 header/footer/pagination/comments，用数据特征区分页面类型 |
+| `internal/render/render.go` | 移除 `fallbackFromDefaultTheme()`（跨主题 fallback）；新增 `TemplateHierarchy` + `ResolveTemplate()` + `HasTemplate()` |
+| `internal/handler/public.go` | 所有 `c.HTML` 调用改用 `h.renderer.ResolveTemplate(pageType)`；AJAX 评论仅在主题定义了 `comments_fragment.gohtml` 时启用 |
 
 ### 10.2 待实现
 
-- **模板层级自动 fallback** — 当前 handler 显式指定模板名，未实现 fallback 链
-- **`themes/single/` 主题同步** — single 主题不存在于磁盘，无需同步
+（无）
 
-### 10.3 向后兼容
+### 10.3 说明
 
-- 旧主题如果仍有 `widgets:` 配置，系统忽略（不报错）
-- 旧主题如果仍用 `base.gohtml` 单文件，系统检测并兼容
 - `themeData` 模板函数保留，自定义 DataProvider 继续可用
+- 项目处于本地 dev 阶段，无向后兼容负担

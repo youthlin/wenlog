@@ -57,9 +57,8 @@ func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.
 
 // base 返回模板通用数据(站点名、菜单、当前年份、当前登录用户)。
 // v3: 所有常用数据始终注入，不再按需查询。
-// pageCfg 保留以兼容旧调用，但不再使用 Data/Widgets 字段。
-// loader 为全量预加载的数据，为 nil 时回退到 store 查询（兼容后台等场景）。
-func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig, loader *store.DataLoader) gin.H {
+// loader 为全量预加载的数据，为 nil 时回退到 store 查询（后台等场景）。
+func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, loader *store.DataLoader) gin.H {
 	// 设置当前请求的 DataLoader 到 ThemeAPI（供 themeData 模板函数使用）
 	if loader != nil && h.themeManager != nil {
 		h.themeManager.SetLoaderForRequest(loader)
@@ -181,22 +180,6 @@ func displayUserName(u *model.User) string {
 
 func (h *Public) mailEnabled() bool {
 	return smtpConfigFromStore(context.Background(), h.st).Configured()
-}
-
-// pageConfig 从当前主题获取指定页面的配置，无主题时返回 nil。
-func (h *Public) pageConfig(c *gin.Context, pageName string) *theme.PageConfig {
-	return h.pageConfigFromTheme(h.currentTheme(c), pageName)
-}
-
-func (h *Public) pageConfigFromTheme(t *theme.Theme, pageName string) *theme.PageConfig {
-	if t == nil {
-		return nil
-	}
-	cfg, ok := t.Pages[pageName]
-	if !ok {
-		return nil
-	}
-	return &cfg
 }
 
 func (h *Public) currentTheme(c *gin.Context) *theme.Theme {
@@ -338,12 +321,10 @@ func (h *Public) Index(c *gin.Context) {
 	res := loader.ListPosts(page, s.PageSize, "", "")
 
 	// 从 loader 读主题名，避免 current_theme 查 DB
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "index")
-	data := h.base(c, s.SiteName, "", s, pageCfg, loader)
+	data := h.base(c, s.SiteName, "", s, loader)
 	data["List"] = res
 	data["Pager"] = pager(res, "/")
-	c.HTML(http.StatusOK, "index.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("index"), data)
 }
 
 // Search 全文搜索(标题/正文 LIKE)。
@@ -364,12 +345,12 @@ func (h *Public) Search(c *gin.Context) {
 		}
 	}
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("搜索:%s", kw), "", s, h.pageConfig(c, "list"), nil)
+	data := h.base(c, tr.T("搜索:%s", kw), "", s, nil)
 	data["Heading"] = tr.T("搜索「%s」", kw)
 	data["Keyword"] = kw
 	data["List"] = res
 	data["Pager"] = pager(res, "/search?q="+url.QueryEscape(kw))
-	c.HTML(http.StatusOK, "list.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("search"), data)
 }
 
 // Post 文章详情（按当前固定链接规则解析）。
@@ -447,20 +428,18 @@ func (h *Public) Page(c *gin.Context) {
 		}
 	}
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "page")
-	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
+	data := h.base(c, p.Title, p.Excerpt, s, loader)
 	data["Post"] = p
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	if c.Query("ajax") == "comments" {
+	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return
 	}
-	c.HTML(http.StatusOK, "page.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("page"), data)
 }
 
 func (h *Public) pageExists(ctx context.Context, slug string) bool {
@@ -522,20 +501,18 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 		}
 	}
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "page")
-	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
+	data := h.base(c, p.Title, p.Excerpt, s, loader)
 	data["Post"] = p
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	if c.Query("ajax") == "comments" {
+	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return
 	}
-	c.HTML(http.StatusOK, "page.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("page"), data)
 }
 
 func (h *Public) categoryWithLoader(c *gin.Context, loader *store.DataLoader) {
@@ -549,13 +526,11 @@ func (h *Public) categoryWithLoader(c *gin.Context, loader *store.DataLoader) {
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, slug, "")
 	tr := i18n.Get(c)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "list")
-	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, pageCfg, loader)
+	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, loader)
 	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
-	c.HTML(http.StatusOK, "list.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
@@ -569,13 +544,11 @@ func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, "", slug)
 	tr := i18n.Get(c)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "list")
-	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, pageCfg, loader)
+	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, loader)
 	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
-	c.HTML(http.StatusOK, "list.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match *permalink.PostPathMatch, loader *store.DataLoader) bool {
@@ -619,20 +592,18 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 		}
 	}
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "post")
-	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
+	data := h.base(c, p.Title, p.Excerpt, s, loader)
 	data["Post"] = p
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
-	if c.Query("ajax") == "comments" {
+	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return true
 	}
-	c.HTML(http.StatusOK, "post.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("post"), data)
 	return true
 }
 
@@ -695,9 +666,7 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		}
 	}
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "post")
-	data := h.base(c, p.Title, p.Excerpt, s, pageCfg, loader)
+	data := h.base(c, p.Title, p.Excerpt, s, loader)
 	data["Post"] = p
 	data["IsDraft"] = p.Status == model.StatusDraft
 	data["Comments"] = comments.Comments
@@ -711,11 +680,11 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 	if next := loader.NextPost(p.PublishedAt); next != nil {
 		data["NextPost"] = next
 	}
-	if c.Query("ajax") == "comments" {
+	if c.Query("ajax") == "comments" && h.renderer.HasTemplate("comments_fragment.gohtml") {
 		c.HTML(http.StatusOK, "comments_fragment.gohtml", data)
 		return true
 	}
-	c.HTML(http.StatusOK, "post.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("post"), data)
 	return true
 }
 
@@ -751,12 +720,10 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post, loader *store.Data
 	sort.Slice(groups, func(i, j int) bool { return groups[i].Year > groups[j].Year })
 
 	s := h.loadSettingsFromLoader(loader)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "archive")
-	data := h.base(c, p.Title, "", s, pageCfg, loader)
+	data := h.base(c, p.Title, "", s, loader)
 	data["Post"] = p
 	data["Groups"] = groups
-	c.HTML(http.StatusOK, "archive.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("archive"), data)
 }
 
 // Category 分类列表页。
@@ -778,13 +745,11 @@ func (h *Public) Category(c *gin.Context) {
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, slug, "")
 	tr := i18n.Get(c)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "list")
-	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, pageCfg, loader)
+	data := h.base(c, tr.T("分类:%s", displaySlug), "", s, loader)
 	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
-	c.HTML(http.StatusOK, "list.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 // Tag 标签列表页。
@@ -806,13 +771,11 @@ func (h *Public) Tag(c *gin.Context) {
 	s := h.loadSettingsFromLoader(loader)
 	res := loader.ListPosts(page, s.PageSize, "", slug)
 	tr := i18n.Get(c)
-	t := h.currentThemeFromLoader(loader)
-	pageCfg := h.pageConfigFromTheme(t, "list")
-	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, pageCfg, loader)
+	data := h.base(c, tr.T("标签:%s", displaySlug), "", s, loader)
 	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
-	c.HTML(http.StatusOK, "list.gohtml", data)
+	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 // LegacyQueryRedirect 处理 /?p={id} 旧链接 301 到永久链接。
@@ -844,19 +807,19 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 // notFound 渲染 404。
 func (h *Public) notFound(c *gin.Context) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), h.pageConfig(c, "error"), nil)
+	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), nil)
 	data["Code"] = 404
 	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
-	c.HTML(http.StatusNotFound, "error.gohtml", data)
+	c.HTML(http.StatusNotFound, h.renderer.ResolveTemplate("error"), data)
 }
 
 func (h *Public) serverError(c *gin.Context, err error) {
 	h.log.Error("handler error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), h.pageConfig(c, "error"), nil)
+	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), nil)
 	data["Code"] = 500
 	data["Message"] = tr.T("服务器内部错误,请稍后重试。")
-	c.HTML(http.StatusInternalServerError, "error.gohtml", data)
+	c.HTML(http.StatusInternalServerError, h.renderer.ResolveTemplate("error"), data)
 }
 
 // NotFoundOrLegacy 是兜底路由:先尝试 /?p=ID,否则 404。

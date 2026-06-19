@@ -123,14 +123,12 @@ func (r *Renderer) LoadTheme(themeDir string) error {
 		return nil
 	}
 	themeFS := os.DirFS(themeDir)
-	// 先解析主题模板
+	// 解析主题模板（主题必须自包含，不再从默认主题 fallback）
 	themeTpl, err := parseTemplates(themeFS, r.pattern)
 	if err != nil {
 		return err
 	}
-	// 再补充默认主题模板中缺失的（主题未提供的页面模板回退默认主题）
-	r.fallbackFromDefaultTheme(themeTpl)
-	// 最后补充 admin/auth 模板中缺失的
+	// 补充 admin/auth 模板中缺失的（基础设施，非主题范畴）
 	r.fallbackFromDefaultFS(themeTpl)
 	r.mu.Lock()
 	r.tpl = themeTpl
@@ -141,35 +139,43 @@ func (r *Renderer) LoadTheme(themeDir string) error {
 	return nil
 }
 
-// fallbackFromDefaultTheme 从默认主题模板补充缺失的模板。
-func (r *Renderer) fallbackFromDefaultTheme(themeTpl *template.Template) {
-	// 优先从磁盘默认主题加载
-	defaultThemeDir := filepath.Join("themes", "default", "templates")
-	if _, err := os.Stat(defaultThemeDir); err == nil {
-		defaultFS := os.DirFS(defaultThemeDir)
-		if hasMatchingFiles(defaultFS, r.pattern) {
-			defaultTpl, err := parseTemplates(defaultFS, r.pattern)
-			if err == nil {
-				for _, t := range defaultTpl.Templates() {
-					if themeTpl.Lookup(t.Name()) == nil {
-						_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
-					}
-				}
-			}
-		}
-		return
+// TemplateHierarchy 定义页面类型到模板文件名的 fallback 链。
+// 主题只需提供链中任一模板即可，系统按顺序查找第一个存在的。
+var TemplateHierarchy = map[string][]string{
+	"index":   {"index.gohtml"},
+	"post":    {"post.gohtml", "index.gohtml"},
+	"page":    {"page.gohtml", "post.gohtml", "index.gohtml"},
+	"search":  {"search.gohtml", "list.gohtml", "index.gohtml"},
+	"list":    {"list.gohtml", "index.gohtml"},
+	"archive": {"archive.gohtml", "list.gohtml", "index.gohtml"},
+	"error":   {"error.gohtml"},
+}
+
+// ResolveTemplate 根据页面类型查找主题中第一个存在的模板。
+// 如果链中所有模板都不存在，返回链中第一个（让 Go template 报错）。
+func (r *Renderer) ResolveTemplate(pageType string) string {
+	r.mu.RLock()
+	tpl := r.tpl
+	r.mu.RUnlock()
+
+	chain, ok := TemplateHierarchy[pageType]
+	if !ok {
+		return pageType + ".gohtml"
 	}
-	// 磁盘不存在时从 embed 加载
-	if r.defaultThemeFS != nil && hasMatchingFiles(r.defaultThemeFS, r.pattern) {
-		defaultTpl, err := parseTemplates(r.defaultThemeFS, r.pattern)
-		if err == nil {
-			for _, t := range defaultTpl.Templates() {
-				if themeTpl.Lookup(t.Name()) == nil {
-					_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
-				}
-			}
+	for _, name := range chain {
+		if tpl != nil && tpl.Lookup(name) != nil {
+			return name
 		}
 	}
+	return chain[0]
+}
+
+// HasTemplate 检查指定名称的模板是否存在于当前模板集中。
+func (r *Renderer) HasTemplate(name string) bool {
+	r.mu.RLock()
+	tpl := r.tpl
+	r.mu.RUnlock()
+	return tpl != nil && tpl.Lookup(name) != nil
 }
 
 // fallbackFromDefaultFS 从 admin/auth 模板补充缺失的模板。
