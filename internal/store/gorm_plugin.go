@@ -110,35 +110,69 @@ func injectSQLHint(db *gorm.DB) {
 	}
 }
 
-// callerHint 从调用栈中提取第一个有意义的调用者函数名作为 hint。
+// callerHint 从调用栈中提取调用链作为 hint，格式为 "caller -> callee"。
+// 例如 handler 调用 store 方法时，生成 "public.Index -> store.ListPosts"。
 func callerHint() string {
 	pcs := make([]uintptr, 32)
 	n := runtime.Callers(0, pcs)
 	frames := runtime.CallersFrames(pcs[:n])
+
+	// 第一遍：找到 store 层方法（callee）
+	callee := ""
 	for {
 		frame, more := frames.Next()
 		fn := frame.Function
-		// 跳过本文件内部函数、GORM 内部、runtime/reflect 内部
-		if strings.HasSuffix(fn, ".callerHint") ||
-			strings.HasSuffix(fn, ".injectSQLHint") ||
-			strings.HasSuffix(fn, ".wrap") ||
-			strings.HasSuffix(fn, ".beforeDefault") ||
-			strings.HasSuffix(fn, ".afterDefault") ||
-			strings.Contains(fn, "gorm.io/gorm") ||
-			strings.Contains(fn, "runtime.") ||
-			strings.Contains(fn, "reflect.") {
+		if isInternalFrame(fn) {
 			if !more {
 				break
 			}
 			continue
 		}
-		// 取最后一个 / 之后的简短函数名
-		if idx := strings.LastIndexByte(fn, '/'); idx >= 0 {
-			fn = fn[idx+1:]
-		}
-		return fn
+		callee = shortFuncName(fn)
+		break
 	}
-	return ""
+	if callee == "" {
+		return ""
+	}
+
+	// 第二遍：继续往上找调用者（caller），跳过 store 包自身
+	caller := ""
+	for {
+		frame, more := frames.Next()
+		fn := frame.Function
+		if isInternalFrame(fn) || strings.Contains(fn, "/store.") || strings.Contains(fn, "/store/") {
+			if !more {
+				break
+			}
+			continue
+		}
+		caller = shortFuncName(fn)
+		break
+	}
+	if caller == "" {
+		return callee
+	}
+	return caller + " -> " + callee
+}
+
+// isInternalFrame 判断是否为框架/运行时内部帧，应跳过。
+func isInternalFrame(fn string) bool {
+	return strings.HasSuffix(fn, ".callerHint") ||
+		strings.HasSuffix(fn, ".injectSQLHint") ||
+		strings.HasSuffix(fn, ".wrap") ||
+		strings.HasSuffix(fn, ".beforeDefault") ||
+		strings.HasSuffix(fn, ".afterDefault") ||
+		strings.Contains(fn, "gorm.io/gorm") ||
+		strings.Contains(fn, "runtime.") ||
+		strings.Contains(fn, "reflect.")
+}
+
+// shortFuncName 取完整函数名的简短形式（去掉包路径前缀）。
+func shortFuncName(fn string) string {
+	if idx := strings.LastIndexByte(fn, '/'); idx >= 0 {
+		fn = fn[idx+1:]
+	}
+	return fn
 }
 
 func (g *GormSQLTracer) wrap(fn func(*gorm.DB), sqlType string) func(*gorm.DB) {

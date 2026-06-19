@@ -51,6 +51,10 @@ type publicSettings struct {
 	DefaultAvatar    string
 	RegistrationOpen bool
 	ShowSQLDetails   bool
+
+	// RecentPostsOverride 如果非 nil，base() 直接复用此数据而不重新查询。
+	// 首页第一页时 ListPosts 和 RecentPosts 查同一批文章，可避免重复查询。
+	RecentPostsOverride []model.Post
 }
 
 // NewPublic 构造前台处理器。
@@ -103,7 +107,11 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 	var tags []model.Tag
 
 	if needs("RecentPosts") {
-		recentPosts = h.st.RecentPosts(c, 8)
+		if s.RecentPostsOverride != nil {
+			recentPosts = s.RecentPostsOverride
+		} else {
+			recentPosts = h.st.RecentPosts(c, 8)
+		}
 		data["RecentPosts"] = recentPosts
 	}
 	if needs("RecentComments") {
@@ -370,6 +378,10 @@ func (h *Public) Index(c *gin.Context) {
 	if err != nil {
 		h.serverError(c, err)
 		return
+	}
+	// 首页第一页时，ListPosts 和 RecentPosts 查同一批文章，复用避免重复查询。
+	if page == 1 {
+		s.RecentPostsOverride = res.Posts
 	}
 	data := h.base(c, s.SiteName, "", s, h.pageConfig(c, "index"))
 	data["List"] = res

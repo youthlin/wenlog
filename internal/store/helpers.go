@@ -232,12 +232,6 @@ func (s *Store) buildCommentWidgetItems(ctx context.Context, comments []model.Co
 	}
 
 	items := make([]CommentWidgetItem, 0, len(comments))
-	// 批量计算所有评论的页码，避免 N+1 查询
-	commentPtrs := make([]*model.Comment, len(comments))
-	for i := range comments {
-		commentPtrs[i] = &comments[i]
-	}
-	pages := s.CommentPagesForComments(ctx, commentPtrs, pageSize)
 	for i := range comments {
 		c := &comments[i]
 		p, ok := postMap[c.PostID]
@@ -250,14 +244,12 @@ func (s *Store) buildCommentWidgetItems(ctx context.Context, comments []model.Co
 		} else {
 			base = permalink.Post(p)
 		}
-		cpage := pages[c.ID]
-		if cpage < 1 {
-			cpage = 1
-		}
+		// 近期评论大概率在第一页，省略 cpage 计算（省掉每篇文章一次 SQL），
+		// 直接用 #comment-{id} fragment 定位。
 		items = append(items, CommentWidgetItem{
 			Comment:    *c,
 			Post:       *p,
-			CommentURL: base + "?cpage=" + strconv.Itoa(cpage) + "#comment-" + strconv.Itoa(int(c.ID)),
+			CommentURL: base + "#comment-" + strconv.Itoa(int(c.ID)),
 			AuthorURL:  strings.TrimSpace(c.URL),
 			Snippet:    commentSnippet(c.Content, consts.CommentSnippetMaxRune),
 		})
