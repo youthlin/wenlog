@@ -365,6 +365,26 @@ func (l *DataLoader) GetPageBySlug(slug string) *model.Post {
 	return l.postsBySlug[slug]
 }
 
+// PostsByType 返回指定类型的文章列表（"post" 或 "page"）。
+func (l *DataLoader) PostsByType(postType string) []*model.Post {
+	return l.postsByType[postType]
+}
+
+// PostCategoryIDs 返回文章的分类 ID 列表。
+func (l *DataLoader) PostCategoryIDs(postID uint) []uint {
+	return l.postCategories[postID]
+}
+
+// PostTagIDs 返回文章的标签 ID 列表。
+func (l *DataLoader) PostTagIDs(postID uint) []uint {
+	return l.postTags[postID]
+}
+
+// CommentIDsByPost 返回文章的已批准评论 ID 列表。
+func (l *DataLoader) CommentIDsByPost(postID uint) []uint {
+	return l.commentsByPost[postID]
+}
+
 // GetPostByID 按 ID 查找已发布文章。
 func (l *DataLoader) GetPostByID(id uint) *model.Post {
 	p := l.Posts[id]

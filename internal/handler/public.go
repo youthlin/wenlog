@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -62,6 +61,10 @@ func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.
 // pageCfg 来自 theme.yaml 的 pages.{page} 配置，为 nil 时查询所有数据（兼容无主题场景）。
 // loader 为全量预加载的数据，为 nil 时回退到 store 查询（兼容后台等场景）。
 func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig, loader *store.DataLoader) gin.H {
+	// 设置当前请求的 DataLoader 到 ThemeAPI（供 themeData 模板函数使用）
+	if loader != nil && h.themeManager != nil {
+		h.themeManager.SetLoaderForRequest(loader)
+	}
 	var menu []model.Post
 	if loader != nil {
 		menu = loader.MenuPages()
@@ -175,7 +178,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		data["Tags"] = tags
 	}
 
-	// 缓存主题名，避免 renderWidgets 中每个 widget 都查一次
+	// 缓存主题名
 	var themeName string
 	if loader != nil {
 		themeName = h.currentThemeNameFromLoader(loader)
@@ -183,16 +186,27 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		themeName = h.currentThemeName(c)
 	}
 
-	// 渲染 widgets，传入预查询数据避免重复查询。
-	widgets := h.renderWidgets(c, s, pageCfg, theme.WidgetSettings{
-		RecentPosts:        recentPosts,
-		RecentCommentItems: recentCommentItems,
-		SayingCommentItems: sayingCommentItems,
-		ArchiveMonths:      archiveMonths,
-		Categories:         categories,
-		Tags:               tags,
-		ThemeName:          themeName,
-	})
+	// 补充 widget 模板需要的字段
+	data["Keyword"] = c.Query("q")
+	if currentUser != nil {
+		data["CurrentUserName"] = displayUserName(currentUser)
+	} else {
+		data["CurrentUserName"] = ""
+	}
+	// saying widget 需要的作者信息
+	if sp, ok := data["SayingPost"]; ok && loader != nil {
+		if p, ok := sp.(*model.Post); ok && p != nil {
+			if u, ok := loader.Users[p.AuthorID]; ok {
+				data["SayingAuthorName"] = u.DisplayName
+				data["SayingAuthorEmail"] = u.Email
+			}
+		}
+	}
+
+	// 渲染 widgets：每个 widget 模板接收完整的 base 数据
+	// 先注入 i18n，确保 .t 可用
+	widgetData := i18n.InjectDomain(c, data, themeName)
+	widgets := h.renderWidgets(c, pageCfg, widgetData)
 	data["Widgets"] = widgets
 
 	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
@@ -203,103 +217,36 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 }
 
 // renderWidgets 根据 pageCfg 渲染 widget HTML 片段列表。
-// preData 包含 base() 中已查询的数据，避免 widget Data() 重复查询。
-func (h *Public) renderWidgets(c *gin.Context, s publicSettings, pageCfg *theme.PageConfig, preData theme.WidgetSettings) []template.HTML {
+// 每个 widget 模板直接接收 base() 返回的完整 gin.H 数据。
+func (h *Public) renderWidgets(c *gin.Context, pageCfg *theme.PageConfig, baseData gin.H) []template.HTML {
 	if pageCfg == nil || len(pageCfg.Widgets) == 0 {
 		return nil
 	}
-	currentUser := h.currentUser(c)
-	settings := theme.WidgetSettings{
-		SayingPostID:       s.SayingPostID,
-		DefaultAvatar:      s.DefaultAvatar,
-		CurrentUserID:      currentUserID(c),
-		CurrentUserName:    displayUserName(currentUser),
-		RegistrationOpen:   s.RegistrationOpen,
-		Keyword:            c.Query("q"),
-		CSRFToken:          "",
-		RecentPosts:        preData.RecentPosts,
-		RecentCommentItems: preData.RecentCommentItems,
-		SayingCommentItems: preData.SayingCommentItems,
-		ArchiveMonths:      preData.ArchiveMonths,
-		Categories:         preData.Categories,
-		Tags:               preData.Tags,
-		ThemeName:          preData.ThemeName,
+	if h.renderer == nil {
+		return nil
 	}
-	if uid := currentUserID(c); uid != 0 {
-		if token, err := middleware.EnsureCSRFToken(c); err == nil {
-			settings.CSRFToken = token
-		}
+	tpl := h.renderer.Template()
+	if tpl == nil {
+		return nil
 	}
 	var widgets []template.HTML
 	for _, name := range pageCfg.Widgets {
-		w := theme.Get(name)
-		if w == nil {
+		tplName := theme.WidgetTemplateName(name)
+		if tpl.Lookup(tplName) == nil {
 			continue
 		}
-		html, err := h.renderWidget(c, w, settings)
-		if err != nil {
+		var buf bytes.Buffer
+		if err := tpl.ExecuteTemplate(&buf, tplName, baseData); err != nil {
 			if h.log != nil {
 				h.log.Error("render widget", "name", name, "error", err)
 			}
 			continue
 		}
-		if html != "" {
-			widgets = append(widgets, html)
+		if buf.Len() > 0 {
+			widgets = append(widgets, template.HTML(buf.String()))
 		}
 	}
 	return widgets
-}
-
-func (h *Public) renderWidget(c *gin.Context, w theme.Widget, settings theme.WidgetSettings) (template.HTML, error) {
-	if h.renderer == nil {
-		return "", nil
-	}
-	tpl := h.renderer.Template()
-	name := theme.WidgetTemplateName(w.Name())
-	if tpl == nil || tpl.Lookup(name) == nil {
-		return "", nil
-	}
-	data, err := w.Data(c, h.st, settings)
-	if err != nil || data == nil {
-		return "", err
-	}
-	var buf bytes.Buffer
-	if err := tpl.ExecuteTemplate(&buf, name, widgetTemplateData(c, data, settings.ThemeName)); err != nil {
-		return "", err
-	}
-	return template.HTML(buf.String()), nil
-}
-
-func widgetTemplateData(c *gin.Context, data any, domain string) gin.H {
-	result := gin.H{}
-	switch v := data.(type) {
-	case gin.H:
-		for key, value := range v {
-			result[key] = value
-		}
-	case map[string]any:
-		for key, value := range v {
-			result[key] = value
-		}
-	default:
-		rv := reflect.ValueOf(data)
-		if rv.IsValid() && rv.Kind() == reflect.Pointer {
-			rv = rv.Elem()
-		}
-		if rv.IsValid() && rv.Kind() == reflect.Struct {
-			rt := rv.Type()
-			for i := 0; i < rv.NumField(); i++ {
-				field := rt.Field(i)
-				if field.PkgPath != "" {
-					continue
-				}
-				result[field.Name] = rv.Field(i).Interface()
-			}
-		} else {
-			result["Data"] = data
-		}
-	}
-	return i18n.InjectDomain(c, result, domain)
 }
 
 func displayUserName(u *model.User) string {

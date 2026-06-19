@@ -137,11 +137,11 @@
 <section class="widget widget-saying">
   <h3>{{.t.T "博主动态"}}</h3>
   <div class="widget-saying-author">
-    <img class="avatar" src="{{avatarURL .AuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
-    <span>{{.AuthorName}}</span>
+    <img class="avatar" src="{{avatarURL .SayingAuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
+    <span>{{.SayingAuthorName}}</span>
   </div>
   <ul>
-    {{range .Items}}
+    {{range .SayingCommentItems}}
     <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>
     {{end}}
   </ul>
@@ -152,7 +152,7 @@
 <section class="widget widget-recent-posts">
   <h3>{{.t.T "近期文章"}}</h3>
   <ul>
-    {{range .Posts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+    {{range .RecentPosts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
   </ul>
 </section>
 {{end}}
@@ -161,7 +161,7 @@
 <section class="widget widget-recent-comments">
   <h3>{{.t.T "近期评论"}}</h3>
   <ul>
-    {{range .Items}}
+    {{range .RecentCommentItems}}
     <li>
       <div class="widget-comment-line">
         <img class="avatar" src="{{avatarURL .Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
@@ -173,7 +173,6 @@
       </div>
     </li>
     {{end}}
-  </ul>
 </section>
 {{end}}
 
@@ -182,7 +181,7 @@
   <h3>{{.t.T "归档"}}</h3>
   <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入月份筛选…"}}" data-search-empty="{{.t.T "没有匹配的月份"}}">
     <option value="">{{.t.T "选择月份…"}}</option>
-    {{range .Months}}
+    {{range .ArchiveMonths}}
     <option value="/archive#{{.Year}}">{{$.t.T "%d 年 %d 月(%d)" .Year .Month .Count}}</option>
     {{end}}
   </select>

@@ -2,9 +2,11 @@ package theme
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/cockroachdb/errors"
 )
@@ -25,6 +27,14 @@ type Manager struct {
 	themesDir string
 	store     settingStore
 	themes    map[string]*Theme // name → Theme
+
+	// v2 新增字段
+	mu            sync.RWMutex
+	renderer      ThemeRenderer
+	log           *slog.Logger
+	currentScript *FunctionsScript
+	currentAPI    *API
+	recoveryInfo  *RecoveryInfo
 }
 
 // NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。

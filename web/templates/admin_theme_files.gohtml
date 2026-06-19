@@ -1,0 +1,166 @@
+{{define "admin_theme_files.gohtml"}}
+{{template "admin_header" .}}
+<h1>{{.t.T "编辑主题文件"}}</h1>
+
+{{if .RecoveryInfo}}
+<div class="err-banner" style="display:flex;justify-content:space-between;align-items:center;">
+  <span>{{.t.T "主题「%s」加载失败，已自动切换为默认主题。错误: %s" .RecoveryInfo.FailedTheme .RecoveryInfo.Error}}</span>
+  <span>
+    <button class="btn-secondary btn-sm" onclick="clearRecovery()">{{.t.T "关闭"}}</button>
+  </span>
+</div>
+{{end}}
+
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <div style="display:flex;gap:1rem;align-items:flex-start;">
+        <!-- 文件树 -->
+        <div style="width:250px;flex-shrink:0;">
+          <h3>{{.t.T "文件列表"}}</h3>
+          <select id="theme-selector" onchange="switchTheme(this.value)" style="width:100%;margin-bottom:0.5rem;">
+            {{range .Themes}}
+            <option value="{{.Name}}" {{if eq .Name $.EditTheme}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+          </select>
+          <ul id="file-tree" style="list-style:none;padding:0;margin:0;max-height:60vh;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+            {{range .ThemeFiles}}
+            <li>
+              <a href="#" class="file-link" data-path="{{.Path}}" onclick="loadFile('{{.Path}}');return false;"
+                 style="display:block;padding:4px 8px;text-decoration:none;font-size:0.85rem;border-bottom:1px solid var(--border-light);">
+                {{.Path}}
+              </a>
+            </li>
+            {{else}}
+            <li style="padding:8px;color:var(--text-muted);">{{.t.T "无可编辑文件"}}</li>
+            {{end}}
+          </ul>
+          <div style="margin-top:0.5rem;">
+            <button class="btn-secondary btn-sm" onclick="reloadTheme()">{{.t.T "重载主题"}}</button>
+          </div>
+        </div>
+
+        <!-- 编辑器 -->
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <h3 id="current-file" style="margin:0;">{{.t.T "选择文件"}}</h3>
+            <div>
+              <button id="save-btn" class="btn btn-sm" onclick="saveFile()" disabled>{{.t.T "保存"}}</button>
+              <button id="delete-btn" class="link-danger" onclick="deleteFile()" disabled style="margin-left:0.5rem;">{{.t.T "删除"}}</button>
+            </div>
+          </div>
+          <textarea id="file-editor" style="width:100%;height:60vh;font-family:monospace;font-size:0.85rem;padding:8px;border:1px solid var(--border);border-radius:4px;resize:vertical;"
+                    placeholder="{{.t.T "选择左侧文件开始编辑"}}" disabled></textarea>
+          <div id="editor-status" style="margin-top:0.25rem;font-size:0.8rem;color:var(--text-muted);"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+let currentTheme = '{{.EditTheme}}';
+let currentPath = '';
+let currentContent = '';
+
+function switchTheme(name) {
+  window.location.href = '/admin/theme/files?theme=' + encodeURIComponent(name);
+}
+
+function loadFile(path) {
+  currentPath = path;
+  document.getElementById('current-file').textContent = path;
+  document.getElementById('editor-status').textContent = '{{.t.T "加载中..."}}';
+  document.getElementById('save-btn').disabled = true;
+  document.getElementById('delete-btn').disabled = true;
+  document.getElementById('file-editor').disabled = true;
+
+  fetch('/admin/theme/file?theme=' + encodeURIComponent(currentTheme) + '&path=' + encodeURIComponent(path))
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('editor-status').textContent = data.error;
+        return;
+      }
+      currentContent = data.content;
+      document.getElementById('file-editor').value = data.content;
+      document.getElementById('file-editor').disabled = false;
+      document.getElementById('save-btn').disabled = false;
+      document.getElementById('delete-btn').disabled = (path === 'theme.yaml' || path === 'functions.go');
+      document.getElementById('editor-status').textContent = '';
+      // 高亮当前文件
+      document.querySelectorAll('.file-link').forEach(el => el.style.background = '');
+      document.querySelector('.file-link[data-path="' + path + '"]').style.background = 'var(--highlight-bg, #e8f0fe)';
+    })
+    .catch(err => {
+      document.getElementById('editor-status').textContent = '{{.t.T "加载失败"}}: ' + err;
+    });
+}
+
+function saveFile() {
+  if (!currentPath) return;
+  const content = document.getElementById('file-editor').value;
+  document.getElementById('editor-status').textContent = '{{.t.T "保存中..."}}';
+
+  fetch('/admin/theme/file', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({theme: currentTheme, path: currentPath, content: content})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('editor-status').textContent = data.error;
+        return;
+      }
+      currentContent = content;
+      if (data.reloaded) {
+        document.getElementById('editor-status').textContent = '{{.t.T "已保存并重载主题"}}';
+      } else {
+        document.getElementById('editor-status').textContent = '{{.t.T "已保存"}}';
+      }
+    })
+    .catch(err => {
+      document.getElementById('editor-status').textContent = '{{.t.T "保存失败"}}: ' + err;
+    });
+}
+
+function deleteFile() {
+  if (!currentPath) return;
+  if (!confirm('{{.t.T "确定要删除 %s 吗？"}}'.replace('%s', currentPath))) return;
+
+  fetch('/admin/theme/file/delete', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({theme: currentTheme, path: currentPath})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      location.reload();
+    });
+}
+
+function reloadTheme() {
+  document.getElementById('editor-status').textContent = '{{.t.T "重载中..."}}';
+  fetch('/admin/theme/reload', {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('editor-status').textContent = data.error;
+      } else {
+        document.getElementById('editor-status').textContent = '{{.t.T "主题已重载"}}';
+      }
+    });
+}
+
+function clearRecovery() {
+  fetch('/admin/theme/recovery/clear', {method: 'POST'})
+    .then(() => location.reload());
+}
+</script>
+{{template "admin_footer" .}}
+{{end}}

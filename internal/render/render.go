@@ -239,6 +239,21 @@ func (r *Renderer) SetDefaultThemeFS(fsys fs.FS) {
 	r.mu.Unlock()
 }
 
+// themeDataProvider 是 themeData 模板函数的实际实现，由 theme.Manager 注入。
+var themeDataProvider func(name string, args ...any) any
+
+// SetThemeDataProvider 设置 themeData 模板函数的实现（由 theme.Manager 注入）。
+func SetThemeDataProvider(fn func(name string, args ...any) any) {
+	themeDataProvider = fn
+}
+
+func themeData(name string, args ...any) any {
+	if themeDataProvider == nil {
+		return nil
+	}
+	return themeDataProvider(name, args...)
+}
+
 // loadThemeFS 从 fs.FS 加载主题模板（如 embed 默认主题），再补充 admin/auth 回退。
 func (r *Renderer) loadThemeFS(themeFS fs.FS) error {
 	themeTpl, err := parseTemplates(themeFS, r.pattern)
@@ -334,6 +349,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"add":              func(a, b int) int { return a + b },
 		"sub":              func(a, b int) int { return a - b },
 		"seq":              seq,
+		"themeData":        themeData,
 	}
 	tpl, err := template.New("").Funcs(funcs).ParseFS(fsys, pattern)
 	if err != nil {

@@ -30,6 +30,9 @@
             <td data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
             <td data-label="{{$.t.T "描述"}}">{{.Description}}</td>
             <td class="actions" data-label="{{$.t.T "操作"}}">
+              {{if eq .Name $.CurrentTheme.Name}}
+              <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm">{{$.t.T "编辑文件"}}</a>
+              {{end}}
               {{if ne .Name $.CurrentTheme.Name}}
               <form class="inline" method="post" action="/admin/theme/activate">
                 {{template "csrf_field" $}}

@@ -1,0 +1,114 @@
+package theme
+
+import "sort"
+
+// Register 注册默认主题的内置数据提供者。
+// 这些 provider 替代了 v1 的 builtin_widgets.go。
+func Register(api *API) {
+	// recent_posts: 近期文章
+	api.RegisterData("recent_posts", func(args map[string]any) any {
+		n := getInt(args, "n", 8)
+		return api.RecentPosts(n)
+	})
+
+	// recent_comments: 近期评论
+	api.RegisterData("recent_comments", func(args map[string]any) any {
+		n := getInt(args, "n", 8)
+		return api.RecentComments(n)
+	})
+
+	// categories: 分类列表
+	api.RegisterData("categories", func(args map[string]any) any {
+		return api.Categories()
+	})
+
+	// tags: 标签列表
+	api.RegisterData("tags", func(args map[string]any) any {
+		return api.Tags()
+	})
+
+	// archive_months: 归档月份
+	api.RegisterData("archive_months", func(args map[string]any) any {
+		return api.ArchiveMonths()
+	})
+
+	// saying: 博主动态（指定文章下博主本人的评论）
+	api.RegisterData("saying", func(args map[string]any) any {
+		postID := getUint(args, "post_id", 0)
+		n := getInt(args, "n", 5)
+		if postID == 0 {
+			return nil
+		}
+		post := api.Post(postID)
+		if post == nil {
+			return nil
+		}
+		allComments := api.CommentsByPost(postID)
+		var authorComments []CommentView
+		for _, c := range allComments {
+			if c.Author == post.Author.DisplayName || c.Author == post.Author.Username {
+				authorComments = append(authorComments, c)
+			}
+		}
+		sort.Slice(authorComments, func(i, j int) bool {
+			return authorComments[i].CreatedAt.After(authorComments[j].CreatedAt)
+		})
+		if n > len(authorComments) {
+			n = len(authorComments)
+		}
+		return map[string]any{
+			"Items":        authorComments[:n],
+			"AuthorName":   post.Author.DisplayName,
+			"AuthorEmail":  post.Author.Email,
+		}
+	})
+
+	// popular_posts: 热门文章（按浏览量排序）
+	api.RegisterData("popular_posts", func(args map[string]any) any {
+		n := getInt(args, "n", 5)
+		posts := api.Posts()
+		sort.Slice(posts, func(i, j int) bool {
+			return posts[i].Views > posts[j].Views
+		})
+		if n > len(posts) {
+			n = len(posts)
+		}
+		return posts[:n]
+	})
+}
+
+func getInt(args map[string]any, key string, def int) int {
+	if v, ok := args[key]; ok {
+		switch n := v.(type) {
+		case int:
+			return n
+		case int64:
+			return int(n)
+		case float64:
+			return int(n)
+		}
+	}
+	return def
+}
+
+func getUint(args map[string]any, key string, def uint) uint {
+	if v, ok := args[key]; ok {
+		switch n := v.(type) {
+		case uint:
+			return n
+		case int:
+			if n >= 0 {
+				return uint(n)
+			}
+		case int64:
+			if n >= 0 {
+				return uint(n)
+			}
+		case float64:
+			if n >= 0 {
+				return uint(n)
+			}
+		}
+	}
+	return def
+}

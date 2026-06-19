@@ -108,18 +108,10 @@ func (h *Admin) ThemeActivate(c *gin.Context) {
 		h.redirectThemeSettings(c, tr.T("激活主题失败: %s", err.Error()))
 		return
 	}
-	// 加载主题模板到 renderer
-	t := tm.Get(name)
-	if t != nil && t.HasTemplates() && h.renderer != nil {
-		if err := h.renderer.LoadTheme(t.TemplatesDir()); err != nil {
-			h.redirectThemeSettings(c, tr.T("加载主题模板失败: %s", err.Error()))
-			return
-		}
-	} else if h.renderer != nil {
-		if err := h.renderer.ResetToDefault(); err != nil {
-			h.redirectThemeSettings(c, tr.T("重置模板失败: %s", err.Error()))
-			return
-		}
+	// v2: 使用 LoadTheme 加载模板 + functions.go（含恢复机制）
+	if err := tm.LoadTheme(c, name); err != nil {
+		h.redirectThemeSettings(c, tr.T("主题已激活，但加载失败，已回退默认主题: %s", err.Error()))
+		return
 	}
 	h.redirectThemeSettings(c, tr.T("已激活主题「%s」", name))
 }
@@ -148,14 +140,7 @@ func (h *Admin) ThemeDelete(c *gin.Context) {
 	// 如果删除的是当前主题，回退到默认
 	if wasCurrent {
 		_ = tm.Activate(c, "default")
-	}
-	current := tm.Current(c)
-	if current != nil && current.HasTemplates() && h.renderer != nil {
-		if err := h.renderer.LoadTheme(current.TemplatesDir()); err != nil {
-			_ = h.renderer.ResetToDefault()
-		}
-	} else if h.renderer != nil {
-		_ = h.renderer.ResetToDefault()
+		_ = tm.LoadTheme(c, "default")
 	}
 	h.redirectThemeSettings(c, tr.T("主题「%s」已删除", name))
 }

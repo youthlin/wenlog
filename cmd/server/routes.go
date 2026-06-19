@@ -152,4 +152,12 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.POST("/theme/upload", adm.ThemeUpload)
 	adminGroup.POST("/theme/activate", adm.ThemeActivate)
 	adminGroup.POST("/theme/delete", adm.ThemeDelete)
+
+	// 主题文件编辑器 (v2)
+	adminGroup.GET("/theme/files", adm.ThemeFilesPage)
+	adminGroup.GET("/theme/file", adm.ThemeFileRead)
+	adminGroup.POST("/theme/file", adm.ThemeFileSave)
+	adminGroup.POST("/theme/file/delete", adm.ThemeFileDelete)
+	adminGroup.POST("/theme/recovery/clear", adm.ThemeRecoveryClear)
+	adminGroup.POST("/theme/reload", adm.ThemeReload)
 }
