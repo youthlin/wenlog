@@ -1,0 +1,28 @@
+{{define "footer"}}
+</main>
+{{template "sidebar" .}}
+</div>
+<div class="scroll-tools">
+  <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.t.T "回顶部"}}">↑</button>
+  <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.t.T "到底部"}}">↓</button>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <p>&copy; {{.CurrentYear}} {{.SiteName}} · Powered by Go</p>
+  </div>
+</footer>
+{{if .SQLDetails}}
+{{if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.t.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{end}}
+{{end}}
+<script src="/assets/theme.js"></script>
+<script src="/assets/scroll.js"></script>
+</body>
+</html>
+{{end}}
