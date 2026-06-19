@@ -1,0 +1,288 @@
+# 主题系统 v3 设计方案
+
+## 1. 动机：v2 的痛点
+
+v2 开发一个主题需要同时维护三个地方：
+
+| 步骤 | 文件 | 作用 |
+|------|------|------|
+| 1 | `functions.goyaegi` | 注册 DataProvider（数据获取逻辑） |
+| 2 | `theme.yaml` | 声明 `widgets:` 列表（排序） |
+| 3 | `base.gohtml` | 定义 `{{define "widget_xxx"}}` 模板 |
+
+其中第 2 步和第 3 步是重复声明——模板已经叫 `widget_popular_posts` 了，yaml 里再写一遍 `popular_posts` 只是告诉系统渲染顺序。
+
+**核心问题**：引入了"Widget"这个自定义概念，主题开发者需要学习 DataProvider、widget 注册、yaml 声明三套机制。
+
+## 2. 借鉴 WordPress 的哲学
+
+WordPress 主题开发的核心原则：
+
+- **文件名即约定** — `single.php`、`page.php`、`archive.php`，不需要配置文件声明
+- **模板标签全局可用** — `the_title()`、`the_content()`、`wp_list_pages()` 在任何模板里都能用
+- **没有 Widget 抽象** — `sidebar.php` 就是个普通模板，直接写 HTML + 模板标签
+- **模板层级自动 fallback** — `single.php` 不存在就用 `index.php`
+- **最小主题只需两个文件** — `style.css` + `index.php`
+
+## 3. v3 设计目标
+
+1. **去掉 Widget 概念** — 侧边栏就是普通模板，直接写 HTML
+2. **常用数据全局可用** — 模板里直接用 `.RecentPosts`、`.Categories`、`.Tags` 等
+3. **模板文件名决定页面** — `index.gohtml`、`post.gohtml`、`page.gohtml`，自动 fallback
+4. **`theme.yaml` 退化为纯元数据** — 只有 name、version、author、description
+5. **`functions.goyaegi` 只写真正自定义的逻辑** — 简单查询不需要它，同时作为 `themeData` 用法演示
+6. **最小主题只需两个文件** — `theme.yaml` + `templates/index.gohtml`
+
+## 4. 主题目录结构
+
+```
+themes/my-theme/
+├── theme.yaml              # 仅元数据（name, version, author, description）
+├── functions.goyaegi       # 可选，只写自定义数据变换（如 popular_posts）
+├── templates/
+│   ├── index.gohtml        # 首页 + 兜底模板（必须）
+│   ├── post.gohtml         # 文章页（可选 → fallback index）
+│   ├── page.gohtml         # 页面（可选 → fallback post → index）
+│   ├── archive.gohtml      # 分类/标签/归档/搜索（可选 → fallback index）
+│   ├── error.gohtml        # 404（可选 → 内置 fallback）
+│   ├── header.gohtml       # {{define "header"}}
+│   ├── footer.gohtml       # {{define "footer"}}
+│   └── sidebar.gohtml      # {{define "sidebar"}} — 就是个普通模板！
+├── assets/                 # CSS/JS/图片
+└── i18n/                   # 翻译文件 (.po/.mo)
+```
+
+## 5. 模板层级（Template Hierarchy）
+
+仿 WordPress 的 fallback 链：
+
+```
+请求类型          查找顺序
+─────────────────────────────────────────
+首页              index.gohtml
+文章页            post.gohtml → index.gohtml
+页面              page.gohtml → post.gohtml → index.gohtml
+分类列表          archive.gohtml → index.gohtml
+标签列表          archive.gohtml → index.gohtml
+归档列表          archive.gohtml → index.gohtml
+搜索结果          archive.gohtml → index.gohtml
+404               error.gohtml → 内置 fallback
+```
+
+> **实现状态**：模板文件名已按页面类型拆分（index/post/page/archive/error），handler 中显式指定模板名。自动 fallback 链尚未实现，当前各页面类型直接使用对应模板名。
+
+## 6. 全局模板数据
+
+所有模板中以下数据始终可用，无需在 yaml 中声明：
+
+```go
+// 站点信息
+.SiteName          string
+.SiteDescription   string
+.CurrentYear       int
+
+// 当前用户
+.CurrentUserID     uint
+.CurrentUserName   string
+.CSRFToken         string
+
+// 文章数据（按发布时间倒序）
+.RecentPosts       []model.Post  // 最近 8 篇
+
+// 分类 & 标签
+.Categories        []model.Category
+.Tags              []model.Tag
+
+// 评论
+.RecentCommentItems []CommentWidgetItem  // 最近 8 条评论（含文章信息）
+.SayingCommentItems []CommentWidgetItem  // 博主动态（saying 页面下博主评论）
+
+// 归档
+.ArchiveMonths     []ArchiveMonth
+
+// 导航菜单
+.Menu              []model.Post  // menu_order > 0 的页面
+
+// 页面特定数据（仅在对应页面类型时存在）
+.Post              *model.Post   // 当前文章/页面
+.Comments          []model.Comment  // 当前文章评论
+.Pager             *Pager         // 分页信息
+.Keyword           string         // 搜索关键词
+
+// 工具
+.t                 *i18n.Translator
+.langURL           map[string]string
+.usedLocale        string
+.htmlLang          string
+.DefaultAvatar     string
+```
+
+> **注意**：`.PopularPosts` 不是全局数据，而是通过 `functions.goyaegi` 注册的 `themeData` provider 提供，作为自定义 DataProvider 的用法演示。模板中通过 `{{themeData "popular_posts" "n" 5}}` 调用。
+
+## 7. 模板约定
+
+### 7.1 必须定义的模板块
+
+```gohtml
+{{define "header"}}...{{end}}   <!-- <!DOCTYPE html> 到 <main> 之前 -->
+{{define "footer"}}...{{end}}   <!-- </main> 之后到 </html> -->
+```
+
+### 7.2 可选模板块
+
+```gohtml
+{{define "sidebar"}}...{{end}}  <!-- 侧边栏，在 footer 中通过 {{template "sidebar" .}} 调用 -->
+{{define "head"}}...{{end}}     <!-- 额外的 <head> 内容（meta、link、script） -->
+{{define "pagination"}}...{{end}}<!-- 分页导航 -->
+```
+
+### 7.3 完整示例：最小主题
+
+**theme.yaml**:
+```yaml
+name: "minimal"
+version: "1.0"
+description: "极简主题"
+author: "youthlin"
+```
+
+**templates/index.gohtml**:
+```gohtml
+{{define "header"}}<!DOCTYPE html>
+<html lang="{{.htmlLang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/theme-assets/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">{{.SiteName}}</a></h1>
+  <nav>{{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}</nav>
+</header>
+<main>
+{{end}}
+
+{{define "footer"}}
+</main>
+<footer>&copy; {{.CurrentYear}} {{.SiteName}}</footer>
+</body></html>
+{{end}}
+
+{{define "sidebar"}}
+<aside>
+  <section>
+    <h3>搜索</h3>
+    <form action="/search"><input name="q" value="{{.Keyword}}"></form>
+  </section>
+  <section>
+    <h3>近期文章</h3>
+    <ul>{{range .RecentPosts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}</ul>
+  </section>
+  <section>
+    <h3>最热文章</h3>
+    <ul>{{range themeData "popular_posts" "n" 5}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}</ul>
+  </section>
+  <section>
+    <h3>分类</h3>
+    <ul>{{range .Categories}}<li><a href="{{categoryURL .Slug}}">{{.Name}}</a></li>{{end}}</ul>
+  </section>
+</aside>
+{{end}}
+```
+
+注意：侧边栏就是普通模板，直接写 HTML + 模板标签，不需要注册 DataProvider、不需要 yaml 声明、不需要 widget 概念。
+
+## 8. functions.goyaegi 的角色变化
+
+v2 中 `functions.goyaegi` 承担了大量"内置数据提供者"的注册（recent_posts、categories、tags 等），这些在 v3 中由系统直接注入模板数据，不再需要脚本注册。
+
+v3 中 `functions.goyaegi` **只用于真正自定义的数据变换**。默认主题保留 `popular_posts` provider 作为 `themeData` 用法演示：
+
+```go
+package theme
+
+import (
+    "sort"
+    "themeapi"
+)
+
+// Register 注册主题的自定义数据提供者。
+// 常用数据（RecentPosts、Categories、Tags 等）已全局可用，无需在此注册。
+// 这里演示如何通过 themeapi.Api 实现自定义数据逻辑。
+// themeapi.Api 由宿主通过 i.Use 注入为全局变量。
+func Register() {
+    // popular_posts: 热门文章（按浏览量排序）—— 演示自定义 DataProvider 用法
+    themeapi.Api.RegisterData("popular_posts", func(args map[string]any) any {
+        n := getInt(args, "n", 5)
+        posts := themeapi.Api.Posts()
+        sort.Slice(posts, func(i, j int) bool {
+            return posts[i].Views > posts[j].Views
+        })
+        if n > len(posts) {
+            n = len(posts)
+        }
+        return posts[:n]
+    })
+}
+
+func getInt(args map[string]any, key string, def int) int {
+    if v, ok := args[key]; ok {
+        switch n := v.(type) {
+        case int:
+            return n
+        case int64:
+            return int(n)
+        case float64:
+            return int(n)
+        }
+    }
+    return def
+}
+```
+
+模板中通过 `themeData` 函数调用：
+
+```gohtml
+{{$popular := themeData "popular_posts" "n" 5}}
+{{range $popular}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+```
+
+## 9. 与 v2 的对比
+
+| 方面 | v2 | v3 |
+|------|----|----|
+| 最小主题文件数 | 3（theme.yaml + base.gohtml + functions.goyaegi） | 2（theme.yaml + index.gohtml） |
+| 加一个侧边栏模块 | 改 3 个文件 | 在 sidebar.gohtml 写几行 HTML |
+| 需要学习的概念 | Widget、DataProvider、yaml widgets 列表 | 模板标签（和 WordPress 一样） |
+| 数据声明 | yaml 里声明 `data:` 和 `widgets:` | 不需要，全局可用 |
+| 模板文件名 | `base.gohtml`（所有页面共用） | `index.gohtml`、`post.gohtml` 等（按页面类型） |
+| 模板 fallback | 无 | 自动 fallback 链 |
+| functions.goyaegi | 必须注册所有数据源 | 只写自定义逻辑 |
+
+## 10. 实现记录
+
+### 10.1 已完成
+
+| 文件 | 改动 |
+|------|------|
+| `internal/theme/theme.go` | `PageConfig.Needs()` 始终返回 `true`；保留 `Data`/`Widgets` 字段兼容旧 yaml |
+| `internal/handler/public.go` | `base()` 始终注入全部全局数据（RecentPosts、Categories、Tags、ArchiveMonths、RecentCommentItems、SayingCommentItems）；移除 `renderWidgets()` |
+| `internal/store/loader.go` | `PopularPosts()` 已移除（改为 functions.goyaegi 实现） |
+| `internal/theme/widget.go` | **已删除** |
+| `web/themes/default/templates/base.gohtml` | 移除所有 widget define；footer 改为 `{{template "sidebar" .}}` |
+| `web/themes/default/templates/sidebar.gohtml` | **新建** — 直接使用全局数据 + `themeData` 调用 |
+| `web/themes/default/theme.yaml` | 简化为纯元数据（name/version/description/author） |
+| `web/themes/default/functions.goyaegi` | 保留 `popular_posts` provider 作为 `themeData` 用法演示 |
+
+### 10.2 待实现
+
+- **模板层级自动 fallback** — 当前 handler 显式指定模板名，未实现 fallback 链
+- **`themes/single/` 主题同步** — single 主题不存在于磁盘，无需同步
+
+### 10.3 向后兼容
+
+- 旧主题如果仍有 `widgets:` 配置，系统忽略（不报错）
+- 旧主题如果仍用 `base.gohtml` 单文件，系统检测并兼容
+- `themeData` 模板函数保留，自定义 DataProvider 继续可用

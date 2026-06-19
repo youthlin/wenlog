@@ -22,21 +22,16 @@ type Theme struct {
 	Dir string `yaml:"-" json:"-"`
 }
 
-// PageConfig 描述某个页面需要的数据和 widget。
+// PageConfig 描述某个页面的配置（v3 中退化为空，保留以兼容旧 theme.yaml）。
 type PageConfig struct {
-	Data []string `yaml:"data" json:"data"`
-	// Widgets 是该页面要渲染的 widget 列表。
+	// Data 和 Widgets 在 v3 中不再使用，保留字段以兼容旧配置。
+	Data    []string `yaml:"data" json:"data"`
 	Widgets []string `yaml:"widgets" json:"widgets"`
 }
 
-// Needs 检查页面配置是否声明了某个数据字段。
+// Needs 检查页面配置是否声明了某个数据字段（v3 中始终返回 true，数据全局可用）。
 func (pc PageConfig) Needs(field string) bool {
-	for _, d := range pc.Data {
-		if d == field {
-			return true
-		}
-	}
-	return false
+	return true
 }
 
 // LoadTheme 从目录加载 theme.yaml 并返回 Theme。

@@ -2,9 +2,7 @@
 package handler
 
 import (
-	"bytes"
 	"context"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -57,8 +55,9 @@ func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.
 	return &Public{st: st, cfg: cfg, log: log, themeManager: tm, renderer: renderer}
 }
 
-// base 返回模板通用数据(站点名、菜单、当前年份、widget、当前登录用户)。
-// pageCfg 来自 theme.yaml 的 pages.{page} 配置，为 nil 时查询所有数据（兼容无主题场景）。
+// base 返回模板通用数据(站点名、菜单、当前年份、当前登录用户)。
+// v3: 所有常用数据始终注入，不再按需查询。
+// pageCfg 保留以兼容旧调用，但不再使用 Data/Widgets 字段。
 // loader 为全量预加载的数据，为 nil 时回退到 store 查询（兼容后台等场景）。
 func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, pageCfg *theme.PageConfig, loader *store.DataLoader) gin.H {
 	// 设置当前请求的 DataLoader 到 ThemeAPI（供 themeData 模板函数使用）
@@ -101,81 +100,41 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		"MailEnabled":      h.mailEnabled(),
 	}
 
-	// 按需查询数据（根据 theme.yaml 的 pages.{page}.data 声明）
-	needs := func(field string) bool {
-		if pageCfg == nil {
-			return true // 无主题配置时查询所有
-		}
-		return pageCfg.Needs(field)
-	}
+	// v3: 所有常用数据始终注入，不再按需查询
+	if loader != nil {
+		data["RecentPosts"] = loader.RecentPosts(8)
+		data["Categories"] = loader.AllCategories()
+		data["Tags"] = loader.AllTags()
+		data["ArchiveMonths"] = loader.ArchiveMonths()
 
-	var recentPosts []model.Post
-	var recentCommentItems []store.CommentWidgetItem
-	var sayingCommentItems []store.CommentWidgetItem
-	var archiveMonths []store.ArchiveMonth
-	var categories []model.Category
-	var tags []model.Tag
+		recentComments := loader.RecentComments(8)
+		data["RecentCommentItems"] = loader.CommentWidgetItems(recentComments)
 
-	if needs("RecentPosts") {
-		if loader != nil {
-			recentPosts = loader.RecentPosts(8)
-		} else {
-			recentPosts = h.st.RecentPosts(c, 8)
-		}
-		data["RecentPosts"] = recentPosts
-	}
-	if needs("RecentComments") {
-		if loader != nil {
-			comments := loader.RecentComments(8)
-			recentCommentItems = loader.CommentWidgetItems(comments)
-		} else {
-			recentCommentItems = h.st.RecentCommentItems(c, 8, commentPageSize)
-		}
-		data["RecentCommentItems"] = recentCommentItems
-	}
-	if needs("SayingComments") {
-		if loader != nil {
-			comments := loader.SayingComments(s.SayingPostID, 5)
-			sayingCommentItems = loader.CommentWidgetItems(comments)
-		} else {
-			sayingCommentItems = h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
-		}
-		data["SayingCommentItems"] = sayingCommentItems
+		sayingComments := loader.SayingComments(s.SayingPostID, 5)
+		sayingItems := loader.CommentWidgetItems(sayingComments)
+		data["SayingCommentItems"] = sayingItems
 		if s.SayingPostID > 0 {
-			if len(sayingCommentItems) > 0 {
-				data["SayingPost"] = &sayingCommentItems[0].Post
-			} else if loader != nil {
-				if p := loader.PostMeta(s.SayingPostID); p != nil {
-					data["SayingPost"] = p
-				}
+			if len(sayingItems) > 0 {
+				data["SayingPost"] = &sayingItems[0].Post
+			} else if p := loader.PostMeta(s.SayingPostID); p != nil {
+				data["SayingPost"] = p
+			}
+		}
+	} else {
+		data["RecentPosts"] = h.st.RecentPosts(c, 8)
+		data["Categories"] = h.st.AllCategories(c)
+		data["Tags"] = h.st.AllTags(c)
+		data["ArchiveMonths"] = h.st.ArchiveMonths(c)
+		data["RecentCommentItems"] = h.st.RecentCommentItems(c, 8, commentPageSize)
+		sayingItems := h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
+		data["SayingCommentItems"] = sayingItems
+		if s.SayingPostID > 0 {
+			if len(sayingItems) > 0 {
+				data["SayingPost"] = &sayingItems[0].Post
 			} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
 				data["SayingPost"] = p
 			}
 		}
-	}
-	if needs("ArchiveMonths") {
-		if loader != nil {
-			archiveMonths = loader.ArchiveMonths()
-		} else {
-			archiveMonths = h.st.ArchiveMonths(c)
-		}
-		data["ArchiveMonths"] = archiveMonths
-	}
-	if needs("Categories") {
-		if loader != nil {
-			categories = loader.AllCategories()
-		} else {
-			categories = h.st.AllCategories(c)
-		}
-		data["Categories"] = categories
-	}
-	if needs("Tags") {
-		if loader != nil {
-			tags = loader.AllTags()
-		} else {
-			tags = h.st.AllTags(c)
-		}
-		data["Tags"] = tags
 	}
 
 	// 缓存主题名
@@ -186,7 +145,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		themeName = h.currentThemeName(c)
 	}
 
-	// 补充 widget 模板需要的字段
+	// 补充模板需要的字段
 	data["Keyword"] = c.Query("q")
 	if currentUser != nil {
 		data["CurrentUserName"] = displayUserName(currentUser)
@@ -203,50 +162,11 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, page
 		}
 	}
 
-	// 渲染 widgets：每个 widget 模板接收完整的 base 数据
-	// 先注入 i18n，确保 .t 可用
-	widgetData := i18n.InjectDomain(c, data, themeName)
-	widgets := h.renderWidgets(c, pageCfg, widgetData)
-	data["Widgets"] = widgets
-
 	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
 	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
 		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
 	}
 	return i18n.InjectDomain(c, data, themeName)
-}
-
-// renderWidgets 根据 pageCfg 渲染 widget HTML 片段列表。
-// 每个 widget 模板直接接收 base() 返回的完整 gin.H 数据。
-func (h *Public) renderWidgets(c *gin.Context, pageCfg *theme.PageConfig, baseData gin.H) []template.HTML {
-	if pageCfg == nil || len(pageCfg.Widgets) == 0 {
-		return nil
-	}
-	if h.renderer == nil {
-		return nil
-	}
-	tpl := h.renderer.Template()
-	if tpl == nil {
-		return nil
-	}
-	var widgets []template.HTML
-	for _, name := range pageCfg.Widgets {
-		tplName := theme.WidgetTemplateName(name)
-		if tpl.Lookup(tplName) == nil {
-			continue
-		}
-		var buf bytes.Buffer
-		if err := tpl.ExecuteTemplate(&buf, tplName, baseData); err != nil {
-			if h.log != nil {
-				h.log.Error("render widget", "name", name, "error", err)
-			}
-			continue
-		}
-		if buf.Len() > 0 {
-			widgets = append(widgets, template.HTML(buf.String()))
-		}
-	}
-	return widgets
 }
 
 func displayUserName(u *model.User) string {
