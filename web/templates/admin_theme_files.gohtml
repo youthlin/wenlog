@@ -14,44 +14,44 @@
 <div class="settings-main">
   <div class="settings-stack">
     <section class="card settings-card">
-      <div style="display:flex;gap:1rem;align-items:flex-start;">
+      <div class="theme-editor-layout">
         <!-- 文件树 -->
-        <div style="width:250px;flex-shrink:0;">
-          <h3>{{.t.T "文件列表"}}</h3>
+        <div class="theme-editor-sidebar">
+          <div class="theme-editor-sidebar-header">
+            <h3>{{.t.T "文件列表"}}</h3>
+            <button type="button" class="theme-editor-toggle" id="file-tree-toggle" onclick="toggleFileTree()" aria-label="{{.t.T "切换文件列表"}}">☰</button>
+          </div>
           <select id="theme-selector" onchange="switchTheme(this.value)" style="width:100%;margin-bottom:0.5rem;">
             {{range .Themes}}
             <option value="{{.Name}}" {{if eq .Name $.EditTheme}}selected{{end}}>{{.Name}}</option>
             {{end}}
           </select>
-          <ul id="file-tree" style="list-style:none;padding:0;margin:0;max-height:60vh;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+          <ul id="file-tree" class="theme-editor-file-tree">
             {{range .ThemeFiles}}
             <li>
-              <a href="#" class="file-link" data-path="{{.Path}}" onclick="loadFile('{{.Path}}');return false;"
-                 style="display:block;padding:4px 8px;text-decoration:none;font-size:0.85rem;border-bottom:1px solid var(--border-light);">
-                {{.Path}}
-              </a>
+              <a href="#" class="theme-editor-file-link" data-path="{{.Path}}" onclick="loadFile('{{.Path}}');return false;">{{.Path}}</a>
             </li>
             {{else}}
-            <li style="padding:8px;color:var(--text-muted);">{{.t.T "无可编辑文件"}}</li>
+            <li class="empty">{{.t.T "无可编辑文件"}}</li>
             {{end}}
           </ul>
-          <div style="margin-top:0.5rem;">
+          <div class="theme-editor-actions">
             <button class="btn-secondary btn-sm" onclick="reloadTheme()">{{.t.T "重载主题"}}</button>
           </div>
         </div>
 
         <!-- 编辑器 -->
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-            <h3 id="current-file" style="margin:0;">{{.t.T "选择文件"}}</h3>
-            <div>
+        <div class="theme-editor-main">
+          <div class="theme-editor-toolbar">
+            <h3 id="current-file">{{.t.T "选择文件"}}</h3>
+            <div class="theme-editor-toolbar-actions">
               <button id="save-btn" class="btn btn-sm" onclick="saveFile()" disabled>{{.t.T "保存"}}</button>
-              <button id="delete-btn" class="link-danger" onclick="deleteFile()" disabled style="margin-left:0.5rem;">{{.t.T "删除"}}</button>
+              <button id="delete-btn" class="link-danger" onclick="deleteFile()" disabled>{{.t.T "删除"}}</button>
             </div>
           </div>
-          <textarea id="file-editor" style="width:100%;height:60vh;font-family:monospace;font-size:0.85rem;padding:8px;border:1px solid var(--border);border-radius:4px;resize:vertical;"
+          <textarea id="file-editor" class="theme-editor-textarea"
                     placeholder="{{.t.T "选择左侧文件开始编辑"}}" disabled></textarea>
-          <div id="editor-status" style="margin-top:0.25rem;font-size:0.8rem;color:var(--text-muted);"></div>
+          <div id="editor-status" class="theme-editor-status"></div>
         </div>
       </div>
     </section>
@@ -89,8 +89,9 @@ function loadFile(path) {
       document.getElementById('delete-btn').disabled = (path === 'theme.yaml' || path === 'functions.go');
       document.getElementById('editor-status').textContent = '';
       // 高亮当前文件
-      document.querySelectorAll('.file-link').forEach(el => el.style.background = '');
-      document.querySelector('.file-link[data-path="' + path + '"]').style.background = 'var(--highlight-bg, #e8f0fe)';
+      document.querySelectorAll('.theme-editor-file-link').forEach(el => el.classList.remove('active'));
+      var link = document.querySelector('.theme-editor-file-link[data-path="' + path + '"]');
+      if (link) link.classList.add('active');
     })
     .catch(err => {
       document.getElementById('editor-status').textContent = '{{.t.T "加载失败"}}: ' + err;
@@ -160,6 +161,10 @@ function reloadTheme() {
 function clearRecovery() {
   fetch('/admin/theme/recovery/clear', {method: 'POST'})
     .then(() => location.reload());
+}
+
+function toggleFileTree() {
+  document.getElementById('file-tree').classList.toggle('collapsed');
 }
 </script>
 {{template "admin_footer" .}}

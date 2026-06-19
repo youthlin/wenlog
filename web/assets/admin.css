@@ -1238,6 +1238,26 @@ body.admin.nav-open { overflow: hidden; }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
 .settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
 /* ============================================================
+   18.1 主题文件编辑器 (Theme File Editor)
+   ============================================================ */
+.theme-editor-layout { display: flex; gap: 1rem; align-items: flex-start; }
+.theme-editor-sidebar { width: 250px; flex-shrink: 0; }
+.theme-editor-sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.theme-editor-sidebar-header h3 { margin: 0; }
+.theme-editor-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--fg); font-size: 1.1rem; line-height: 1; }
+.theme-editor-file-tree { list-style: none; padding: 0; margin: 0; max-height: 60vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; }
+.theme-editor-file-link { display: block; padding: 4px 8px; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid var(--border-light); color: var(--fg); }
+.theme-editor-file-link:hover { background: var(--highlight-bg, #e8f0fe); }
+.theme-editor-file-link.active { background: var(--highlight-bg, #e8f0fe); }
+.theme-editor-file-tree .empty { padding: 8px; color: var(--text-muted); }
+.theme-editor-main { flex: 1; min-width: 0; }
+.theme-editor-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.theme-editor-toolbar h3 { margin: 0; }
+.theme-editor-toolbar-actions { display: flex; align-items: center; gap: 0.5rem; }
+.theme-editor-textarea { width: 100%; height: 60vh; font-family: monospace; font-size: 0.85rem; padding: 8px; border: 1px solid var(--border); border-radius: 4px; resize: vertical; background: var(--bg); color: var(--fg); }
+.theme-editor-status { margin-top: 0.25rem; font-size: 0.8rem; color: var(--text-muted); }
+.theme-editor-actions { margin-top: 0.5rem; }
+/* ============================================================
    19. 导入/导出页 (Import/Export)
    ============================================================ */
 .import-result { margin-top: 16px; }
@@ -1491,6 +1511,10 @@ body.admin.nav-open { overflow: hidden; }
   .themes-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
   .themes-table .actions { display: grid !important; gap: 8px; }
   .themes-table .actions .inline + .inline { margin-top: 0; }
+
+  /* 主题编辑器 — 平板: 文件树变窄 */
+  .theme-editor-sidebar { width: 200px; }
+  .theme-editor-textarea { height: 50vh; }
 }
 
 @media (max-width: 640px) {
@@ -1507,6 +1531,16 @@ body.admin.nav-open { overflow: hidden; }
   .batch-bar .check-all { width: 100%; }
   .table-scroll { margin-bottom: 8px; }
   .edit-form { padding: 14px; }
+
+  /* 主题编辑器 — 手机: 上下堆叠，文件树可折叠 */
+  .theme-editor-layout { flex-direction: column; }
+  .theme-editor-sidebar { width: 100%; }
+  .theme-editor-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  .theme-editor-file-tree { max-height: none; }
+  .theme-editor-file-tree.collapsed { display: none; }
+  .theme-editor-textarea { height: 40vh; }
+  .theme-editor-toolbar { flex-wrap: wrap; gap: 0.5rem; }
+  .theme-editor-toolbar h3 { font-size: 0.95rem; word-break: break-all; }
 }
 
 /* SQL 执行详情 footer */
