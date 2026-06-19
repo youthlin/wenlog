@@ -98,7 +98,15 @@
 
 {{define "widgets"}}
 <aside class="widgets">
-  {{range .Widgets}}{{.}}{{end}}
+  {{template "widget_user_info" .}}
+  {{template "widget_search" .}}
+  {{template "widget_saying" .}}
+  {{template "widget_recent_posts" .}}
+  {{template "widget_popular_posts" .}}
+  {{template "widget_recent_comments" .}}
+  {{template "widget_archive_months" .}}
+  {{template "widget_categories" .}}
+  {{template "widget_tags" .}}
 </aside>
 {{end}}
 
