@@ -541,8 +541,13 @@ func SanitizeHTML(src string) string {
 // imgSrcSetRe 匹配 <img ... src="/wp-content/uploads/..." ...> 标签。
 var imgSrcSetRe = regexp.MustCompile(`<img\b([^>]*)\bsrc="(/wp-content/uploads/[^"]+)"([^>]*)>`)
 
+// wpThumbSuffixRe 匹配 WordPress 缩略图后缀（如 -150x150、-300x300、-768w）。
+var wpThumbSuffixRe = regexp.MustCompile(`-\d+x\d+$|-\d+w$`)
+
 // addSrcSet 为本地图片自动添加 srcset + sizes + loading=lazy 属性。
-// 缩略图命名规则: xxx.png → xxx-150w.png, xxx-300w.png, xxx-768w.png
+// 缩略图命名规则（WordPress 兼容）:
+//
+//	xxx.png → xxx-150x150.png (150w), xxx-300x300.png (300w), xxx-768w.png (768w)
 func addSrcSet(html string) string {
 	return imgSrcSetRe.ReplaceAllStringFunc(html, func(img string) string {
 		m := imgSrcSetRe.FindStringSubmatch(img)
@@ -562,9 +567,10 @@ func addSrcSet(html string) string {
 		hasLoading := strings.Contains(before, "loading=") || strings.Contains(after, "loading=")
 
 		ext := filepath.Ext(src)
-		base := strings.TrimSuffix(src, ext)
+		// 如果 src 本身已经是缩略图（如 xxx-150x150.png），还原为原图路径
+		base := wpThumbSuffixRe.ReplaceAllString(strings.TrimSuffix(src, ext), "")
 
-		srcset := fmt.Sprintf(`%s-150w%s 150w, %s-300w%s 300w, %s-768w%s 768w, %s%s %dw`,
+		srcset := fmt.Sprintf(`%s-150x150%s 150w, %s-300x300%s 300w, %s-768w%s 768w, %s%s %dw`,
 			base, ext, base, ext, base, ext, src, ext, 1920)
 
 		sizes := `sizes="(max-width: 150px) 150px, (max-width: 300px) 300px, (max-width: 768px) 768px, 100vw"`
