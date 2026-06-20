@@ -1,0 +1,44 @@
+{{define "admin_revision_view.gohtml"}}
+{{- template "admin_header" . -}}
+<div class="page-head">
+  <h1>{{.t.T "查看修订版本"}}</h1>
+  <div>
+    <a class="btn-secondary" href="/admin/post/{{.Post.ID}}/revisions">{{.t.T "返回版本列表"}}</a>
+    <a class="btn-secondary" href="/admin/post/{{.Post.ID}}">{{.t.T "返回编辑"}}</a>
+  </div>
+</div>
+
+<p class="tip">
+  {{.t.T "文章"}}：<strong>{{if .Post.Title}}{{.Post.Title}}{{else}}{{.t.T "（无标题）"}}{{end}}</strong>（ID: {{.Post.ID}}）
+  · {{.t.T "版本时间"}}：<time datetime="{{fmtDateTime .Revision.CreatedAt}}">{{fmtDateTime .Revision.CreatedAt}}</time>
+</p>
+
+<div class="cards settings-cards">
+  <section class="card settings-card">
+    <h3>{{.t.T "标题"}}</h3>
+    <p>{{if .Revision.Title}}{{.Revision.Title}}{{else}}{{.t.T "（无标题）"}}{{end}}</p>
+  </section>
+
+  <section class="card settings-card">
+    <h3>{{.t.T "摘要"}}</h3>
+    <p>{{if .Revision.Excerpt}}{{.Revision.Excerpt}}{{else}}{{.t.T "（无摘要）"}}{{end}}</p>
+  </section>
+
+  <section class="card settings-card">
+    <h3>{{.t.T "Markdown 原文"}}</h3>
+    <pre class="revision-content">{{.Revision.ContentMD}}</pre>
+  </section>
+
+  <section class="card settings-card">
+    <h3>{{.t.T "渲染预览"}}</h3>
+    <div class="revision-preview">{{.Revision.Content | safeHTML}}</div>
+  </section>
+</div>
+
+<form class="edit-form" method="post" action="/admin/post/{{.Post.ID}}/revision/{{.Revision.ID}}/restore" onsubmit="return confirm('{{.t.T "确定要回滚到此版本吗？当前内容将被覆盖。"}}')">
+  {{template "csrf_field" .}}
+  <p><button type="submit" class="btn-warning">{{.t.T "回滚到此版本"}}</button></p>
+</form>
+
+{{template "admin_footer" .}}
+{{end}}

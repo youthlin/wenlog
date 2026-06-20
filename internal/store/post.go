@@ -138,6 +138,9 @@ func (s *Store) DeletePost(ctx context.Context, id uint) error {
 		if err := tx.Exec("DELETE FROM post_tags WHERE post_id = ?", id).Error; err != nil {
 			return err
 		}
+		if err := tx.Where("post_id = ?", id).Delete(&model.PostRevision{}).Error; err != nil {
+			return err
+		}
 		return tx.Delete(&model.Post{}, id).Error
 	})
 }

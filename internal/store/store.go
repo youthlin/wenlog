@@ -67,6 +67,7 @@ func (s *Store) migrate() error {
 		&model.Comment{},
 		&model.Setting{},
 		&model.Upload{},
+		&model.PostRevision{},
 	)
 	if err != nil {
 		return errors.Wrap(err, "auto migrate")

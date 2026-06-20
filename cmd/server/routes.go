@@ -108,6 +108,9 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	contentGroup.GET("/uploads.json", adm.UploadsJSON)
 	contentGroup.POST("/upload", adm.UploadFile)
 	contentGroup.POST("/upload/:id/delete", adm.DeleteUpload)
+	contentGroup.GET("/post/:id/revisions", adm.RevisionsPage)
+	contentGroup.GET("/post/:id/revision/:revId", adm.RevisionView)
+	contentGroup.POST("/post/:id/revision/:revId/restore", adm.RevisionRestore)
 
 	// admin only: 设置、工具、用户管理。
 	adminGroup := r.Group("/admin")

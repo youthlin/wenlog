@@ -157,6 +157,17 @@ type Setting struct {
 	UpdatedAt time.Time
 }
 
+// PostRevision 是文章修订版本，保存文章时自动创建（内容有变化才存）。
+type PostRevision struct {
+	ID        uint      `gorm:"primaryKey"`
+	PostID    uint      `gorm:"index"` // 关联的文章 ID
+	Title     string    `gorm:"size:512"`
+	ContentMD string    `gorm:"type:text"` // Markdown 原文快照
+	Content   string    `gorm:"type:text"` // 渲染后 HTML 快照
+	Excerpt   string    `gorm:"type:text"`
+	CreatedAt time.Time `gorm:"index"`
+}
+
 // Upload 是后台上传文件的元数据记录。
 type Upload struct {
 	ID            uint   `gorm:"primaryKey"`

@@ -87,7 +87,7 @@
       </select>
     </label>
   </div>
-  <p><button type="submit" class="btn">{{.t.T "保存"}}</button> <a href="/admin/posts?type={{.PostType}}">{{.t.T "取消"}}</a></p>
+  <p><button type="submit" class="btn">{{.t.T "保存"}}</button> <a href="/admin/posts?type={{.PostType}}">{{.t.T "取消"}}</a>{{if .IsEdit}} <a class="btn-secondary" href="/admin/post/{{.Post.ID}}/revisions">{{.t.T "修订版本"}}</a>{{end}}</p>
 </form>
 <script src="/assets/admin.js"></script>
 {{template "admin_footer" .}}
