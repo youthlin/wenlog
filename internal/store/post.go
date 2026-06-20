@@ -419,6 +419,20 @@ func (s *Store) RecentPosts(ctx context.Context, n int) []model.Post {
 		Order("published_at DESC").Limit(n).Find(&ps)
 	return ps
 }
+// PublishScheduled 将已到发布时间的定时文章改为已发布状态，返回受影响行数。
+func (s *Store) PublishScheduled(ctx context.Context) (int64, error) {
+	result := s.db(ctx).Model(&model.Post{}).
+		Where("status = ? AND published_at <= ?", model.StatusScheduled, time.Now()).
+		Update("status", model.StatusPublished)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	if result.RowsAffected > 0 {
+		s.InvalidateCache()
+	}
+	return result.RowsAffected, nil
+}
+
 func (s *Store) ArchiveMonths(ctx context.Context) []ArchiveMonth {
 	type row struct {
 		Ym string

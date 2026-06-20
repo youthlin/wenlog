@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -35,6 +36,53 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(quit)
+
+	// 定时发布 goroutine：每分钟检查一次
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				n, err := st.PublishScheduled(ctx)
+				if err != nil {
+					log.Error("publish scheduled", slog.Any("error", err))
+				} else if n > 0 {
+					log.Info("published scheduled posts", slog.Int64("count", n))
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	// 自动备份 goroutine：每天凌晨 3 点执行
+	go func() {
+		for {
+			now := time.Now()
+			next := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
+			if now.After(next) {
+				next = next.Add(24 * time.Hour)
+			}
+			d := next.Sub(now)
+			log.Info("next auto backup", slog.Time("at", next), slog.Duration("in", d))
+			select {
+			case <-time.After(d):
+			case <-ctx.Done():
+				return
+			}
+			path, err := st.BackupDB()
+			if err != nil {
+				log.Error("auto backup", slog.Any("error", err))
+			} else {
+				log.Info("auto backup done", slog.String("path", path))
+				_ = st.CleanOldBackups(10)
+			}
+		}
+	}()
+
 	go func() {
 		<-quit
 		log.Info("shutting down")
@@ -81,10 +129,11 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 
 	// 静态资源
 	// 历史图片(原路径)+ css/js。开发环境优先直接读磁盘,避免每次改样式/JS 都重启。
-	r.Static("/wp-content", filepath.Join(cfg.PublicDir, "wp-content"))
-	r.Static("/uploads", filepath.Join(cfg.PublicDir, "uploads"))
+	// 添加 Cache-Control 头：历史图片/上传文件 1 天，全局资源 1 天。
+	r.GET("/wp-content/*filepath", cacheStatic(http.Dir(filepath.Join(cfg.PublicDir, "wp-content")), 86400))
+	r.GET("/uploads/*filepath", cacheStatic(http.Dir(filepath.Join(cfg.PublicDir, "uploads")), 86400))
 	assetLocalFS := assetFS()
-	r.StaticFS("/assets", assetLocalFS)
+	r.GET("/assets/*filepath", cacheStatic(assetLocalFS, 86400))
 
 	// 监控与健康检查。/metrics 使用后台可配置密码保护,避免公网暴露指标。
 	r.GET("/metrics", middleware.MetricsBasicAuth(st), gin.WrapH(promhttp.Handler()))
@@ -122,6 +171,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 
 	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
 	// 管理员预览主题时优先使用预览主题的资源。
+	// 主题资源带版本号（?v=1.0.0），可长期缓存 1 年。
 	r.GET("/theme-assets/*filepath", func(c *gin.Context) {
 		current := tm.Current(c)
 		if previewName := middleware.GetPreviewTheme(c); previewName != "" {
@@ -138,6 +188,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 			c.Status(http.StatusNotFound)
 			return
 		}
+		c.Header("Cache-Control", "public, max-age=31536000")
 		c.File(filepath.Join(current.AssetsDir(), name))
 	})
 	return r
@@ -228,5 +279,16 @@ func ensureThemesOnDisk() {
 		}); err != nil {
 			slog.Warn("release theme from embed", "theme", themeName, "error", err)
 		}
+	}
+}
+
+// cacheStatic 返回一个 gin handler，从 fsys 提供静态文件并设置 Cache-Control 头。
+func cacheStatic(fsys http.FileSystem, maxAgeSeconds int) gin.HandlerFunc {
+	server := http.FileServer(fsys)
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", fmt.Sprintf("public, max-age=%d", maxAgeSeconds))
+		// 去掉 Gin 路由前缀，让 http.FileServer 正确处理路径
+		c.Request.URL.Path = c.Param("filepath")
+		server.ServeHTTP(c.Writer, c.Request)
 	}
 }

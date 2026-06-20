@@ -366,6 +366,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"defaultAvatarURL": defaultAvatarURL,
 		"fmtDate":          func(t time.Time) string { return t.Format("2006-01-02") },
 		"fmtDateTime":      func(t time.Time) string { return t.Format("2006-01-02 15:04") },
+		"fmtDateTimeLocal": func(t time.Time) string { return t.Format("2006-01-02T15:04") },
 		"fmtFileSize":      fmtFileSize,
 		"year":             func(t time.Time) int { return t.Year() },
 		"add":              func(a, b int) int { return a + b },
@@ -511,17 +512,17 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 func postExcerptHTML(p *model.Post) template.HTML {
 	above, hasMore := wxr.SplitMore(p.Content)
 	if hasMore {
-		return template.HTML(HighlightCodeBlocks(SanitizeHTML(above)))
+		return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(above))))
 	}
 	if p.Excerpt != "" {
-		return template.HTML(HighlightCodeBlocks(SanitizeHTML(p.Excerpt)))
+		return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(p.Excerpt))))
 	}
-	return template.HTML(HighlightCodeBlocks(SanitizeHTML(p.Content)))
+	return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(p.Content))))
 }
 
 // detailHTML 返回详情页完整正文,把 <!--more--> 替换为锚点。
 func detailHTML(p *model.Post) template.HTML {
-	return template.HTML(HighlightCodeBlocks(SanitizeHTML(wxr.RenderDetail(p.Content, p.ID))))
+	return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(wxr.RenderDetail(p.Content, p.ID)))))
 }
 
 var fencedCodeRe = regexp.MustCompile(`(?s)<pre><code(?: class="language-([^"]+)")?>(.*?)</code></pre>`)
@@ -535,6 +536,45 @@ var htmlSanitizer = func() *bluemonday.Policy {
 // SanitizeHTML 清理用户可编辑/导入的正文 HTML,保留常见富文本但移除脚本与事件属性。
 func SanitizeHTML(src string) string {
 	return htmlSanitizer.Sanitize(src)
+}
+
+// imgSrcSetRe 匹配 <img ... src="/wp-content/uploads/..." ...> 标签。
+var imgSrcSetRe = regexp.MustCompile(`<img\b([^>]*)\bsrc="(/wp-content/uploads/[^"]+)"([^>]*)>`)
+
+// addSrcSet 为本地图片自动添加 srcset + sizes + loading=lazy 属性。
+// 缩略图命名规则: xxx.png → xxx-150w.png, xxx-300w.png, xxx-768w.png
+func addSrcSet(html string) string {
+	return imgSrcSetRe.ReplaceAllStringFunc(html, func(img string) string {
+		m := imgSrcSetRe.FindStringSubmatch(img)
+		if m == nil {
+			return img
+		}
+		before := m[1]
+		src := m[2]
+		after := m[3]
+
+		// 已有 srcset 则跳过
+		if strings.Contains(before, "srcset=") || strings.Contains(after, "srcset=") {
+			return img
+		}
+
+		// 已有 loading 则跳过
+		hasLoading := strings.Contains(before, "loading=") || strings.Contains(after, "loading=")
+
+		ext := filepath.Ext(src)
+		base := strings.TrimSuffix(src, ext)
+
+		srcset := fmt.Sprintf(`%s-150w%s 150w, %s-300w%s 300w, %s-768w%s 768w, %s%s %dw`,
+			base, ext, base, ext, base, ext, src, ext, 1920)
+
+		sizes := `sizes="(max-width: 150px) 150px, (max-width: 300px) 300px, (max-width: 768px) 768px, 100vw"`
+
+		result := fmt.Sprintf(`<img%s src="%s"%s srcset="%s" %s`, before, src, after, srcset, sizes)
+		if !hasLoading {
+			result += ` loading="lazy"`
+		}
+		return result
+	})
 }
 
 // HighlightCodeBlocks 为 HTML 中的 <pre><code> 做服务端高亮与行号输出。

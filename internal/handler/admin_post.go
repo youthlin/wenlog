@@ -171,6 +171,7 @@ type postForm struct {
 	MenuOrder     int    `form:"menu_order"`
 	CategoryIDs   []uint `form:"category_ids"`
 	Tags          string `form:"tags"`
+	PublishedAt   string `form:"published_at"` // HTML datetime-local: "2006-01-02T15:04"
 }
 
 // SavePost 保存文章/页面。正文以 Markdown 原文存 ContentMD,渲染后的 HTML 存 Content。
@@ -184,8 +185,14 @@ func (h *Admin) SavePost(c *gin.Context) {
 	if f.PostType != model.PostTypePage {
 		f.PostType = model.PostTypePost
 	}
+	now := time.Now()
 	if f.Status != model.StatusDraft {
-		f.Status = model.StatusPublished
+		// 解析发布时间，若为未来时间则设为定时发布
+		if pt, err := time.ParseInLocation("2006-01-02T15:04", f.PublishedAt, time.Local); err == nil && pt.After(now) {
+			f.Status = model.StatusScheduled
+		} else {
+			f.Status = model.StatusPublished
+		}
 	}
 	allCategories := h.st.AllCategories(c)
 	if f.PostType == model.PostTypePost && !hasSelectedCategory(f.CategoryIDs, allCategories) {
@@ -193,7 +200,6 @@ func (h *Admin) SavePost(c *gin.Context) {
 		return
 	}
 
-	now := time.Now()
 	p, err := h.resolvePostForSave(c, f, now)
 	if err != nil {
 		if err == errPostNotFound {
@@ -223,6 +229,13 @@ func (h *Admin) SavePost(c *gin.Context) {
 	p.CommentStatus = f.CommentStatus
 	p.MenuOrder = f.MenuOrder
 	p.ModifiedAt = now
+
+	// 发布时间：表单有值时使用表单值，否则保持 resolvePostForSave 的默认值
+	if f.PublishedAt != "" {
+		if pt, err := time.ParseInLocation("2006-01-02T15:04", f.PublishedAt, time.Local); err == nil {
+			p.PublishedAt = pt
+		}
+	}
 
 	// 正文:Markdown 原文 + 渲染后的 HTML 一并保存。
 	p.ContentMD = f.ContentMD
@@ -272,7 +285,7 @@ func (h *Admin) postEditError(c *gin.Context, errMsg string, f postForm, allCate
 	data["AllCategories"] = allCategories
 	data["SelectedCats"] = selectedCats
 	data["TagsCSV"] = f.Tags
-	data["Post"] = &model.Post{ID: f.ID, Title: strings.TrimSpace(f.Title), Slug: strings.TrimSpace(f.Slug), ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
+	data["Post"] = &model.Post{ID: f.ID, Title: strings.TrimSpace(f.Title), Slug: strings.TrimSpace(f.Slug), ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder, PublishedAt: parsePublishedAt(f.PublishedAt)}
 	data["IsEdit"] = f.ID > 0
 	c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
 }
@@ -462,4 +475,15 @@ func selectedCats(ids []uint) map[uint]bool {
 		out[id] = true
 	}
 	return out
+}
+
+func parsePublishedAt(s string) time.Time {
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.ParseInLocation("2006-01-02T15:04", s, time.Local)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
 }

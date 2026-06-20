@@ -88,6 +88,8 @@
                 <span>{{.t.T "用户"}}</span></a>
               <a class="admin-nav-link{{if eq .CurrentAdminNav "themes"}} is-active{{end}}" href="/admin/themes">
                 <span>{{.t.T "外观"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "backup"}} is-active{{end}}" href="/admin/backup">
+                <span>{{.t.T "备份"}}</span></a>
             </div>
           </div>
           {{end}}

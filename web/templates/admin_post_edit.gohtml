@@ -76,8 +76,10 @@
       <select name="status">
         <option value="published" {{if and .Post (eq .Post.Status "published")}}selected{{end}}>{{.t.T "发布"}}</option>
         <option value="draft" {{if and .Post (eq .Post.Status "draft")}}selected{{end}}>{{.t.T "草稿"}}</option>
+        <option value="scheduled" {{if and .Post (eq .Post.Status "scheduled")}}selected{{end}}>{{.t.T "定时发布"}}</option>
       </select>
     </label>
+    <label>{{.t.T "发布时间"}}<input type="datetime-local" name="published_at" value="{{if .Post}}{{if not .Post.PublishedAt.IsZero}}{{fmtDateTimeLocal .Post.PublishedAt}}{{end}}{{end}}"></label>
     <label>{{.t.T "评论"}}
       <select name="comment_status">
         <option value="open" {{if and .Post (ne .Post.CommentStatus "closed")}}selected{{end}}>{{.t.T "开放"}}</option>

@@ -1,0 +1,87 @@
+{{define "admin_backup.gohtml"}}
+{{template "admin_header" .}}
+<h1>{{.t.T "数据库备份"}}</h1>
+
+{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
+{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+
+<div class="cards settings-cards">
+  <section class="card settings-card">
+    <h3>{{.t.T "手动备份"}}</h3>
+    <p class="tip">{{.t.T "数据库路径：%s" .DBPath}}</p>
+    <form class="edit-form" method="post" action="/admin/backup">
+      {{template "csrf_field" .}}
+      <p><button type="submit" class="btn">{{.t.T "立即备份"}}</button></p>
+    </form>
+  </section>
+
+  <section class="card settings-card">
+    <h3>{{.t.T "邮件备份"}}</h3>
+    <p class="tip">{{.t.T "创建备份并通过邮件发送到指定邮箱。"}}</p>
+    <form class="edit-form" method="post" action="/admin/backup/email">
+      {{template "csrf_field" .}}
+      <label>{{.t.T "收件人邮箱"}}
+        <input type="email" name="email_to" required placeholder="user@example.com">
+      </label>
+      <p><button type="submit" class="btn">{{.t.T "备份并发送邮件"}}</button></p>
+    </form>
+  </section>
+
+  <section class="card settings-card">
+    <h3>{{.t.T "从备份恢复"}}</h3>
+    <p class="warn-banner">{{.t.T "警告：恢复操作会覆盖当前数据库。系统会在恢复前自动创建紧急备份。"}}</p>
+    {{if .Backups}}
+    <form class="edit-form" method="post" action="/admin/backup/restore" onsubmit="return confirm('{{.t.T "确定要从该备份恢复吗？当前数据将被覆盖。"}}')">
+      {{template "csrf_field" .}}
+      <label>{{.t.T "选择备份文件"}}
+        <select name="filename" required>
+          <option value="">{{.t.T "请选择备份文件"}}</option>
+          {{range .Backups}}
+          <option value="{{.Name}}">{{.Name}} ({{.Size | fmtFileSize}})</option>
+          {{end}}
+        </select>
+      </label>
+      <p><button type="submit" class="btn-danger">{{.t.T "恢复"}}</button></p>
+    </form>
+    {{else}}
+    <p class="tip">{{.t.T "暂无备份文件"}}</p>
+    {{end}}
+  </section>
+</div>
+
+{{if .Backups}}
+<section class="card settings-card">
+  <h3>{{.t.T "备份列表"}} ({{len .Backups}})</h3>
+  <div class="table-scroll">
+    <table class="data-table backup-table">
+      <thead>
+      <tr>
+        <th>{{.t.T "文件名"}}</th>
+        <th>{{.t.T "大小"}}</th>
+        <th>{{.t.T "时间"}}</th>
+        <th>{{.t.T "操作"}}</th>
+      </tr>
+      </thead>
+      <tbody>
+      {{range .Backups}}
+      <tr>
+        <td data-label="{{$.t.T "文件名"}}">{{.Name}}</td>
+        <td data-label="{{$.t.T "大小"}}">{{.Size | fmtFileSize}}</td>
+        <td data-label="{{$.t.T "时间"}}">{{.ModTime.Format "2006-01-02 15:04:05"}}</td>
+        <td class="actions" data-label="{{$.t.T "操作"}}">
+          <form class="inline" method="post" action="/admin/backup/delete" onsubmit="return confirm('{{$.t.T "确定要删除此备份吗？"}}')">
+            {{template "csrf_field" $}}
+            <input type="hidden" name="filename" value="{{.Name}}">
+            <button type="submit" class="btn-secondary btn-sm">{{$.t.T "删除"}}</button>
+          </form>
+        </td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}
+
+{{template "admin_footer" .}}
+{{end}}

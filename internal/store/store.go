@@ -18,6 +18,7 @@ import (
 // Store 封装 gorm DB。
 type Store struct {
 	gormDB *gorm.DB
+	dbPath string
 
 	cacheMu sync.RWMutex
 	cache   *DataLoader
@@ -40,7 +41,7 @@ func Open(dbPath string) (*Store, error) {
 	if err := db.Use(&GormSQLTracer{}); err != nil {
 		return nil, errors.Wrap(err, "register sql tracer")
 	}
-	s := &Store{gormDB: db}
+	s := &Store{gormDB: db, dbPath: dbPath}
 	if err := s.migrate(); err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import "time"
 const (
 	StatusPublished = "published"
 	StatusDraft     = "draft"
+	StatusScheduled = "scheduled"
 
 	CommentApproved = "approved"
 	CommentPending  = "pending"
@@ -158,13 +159,16 @@ type Setting struct {
 
 // Upload 是后台上传文件的元数据记录。
 type Upload struct {
-	ID         uint   `gorm:"primaryKey"`
-	Path       string `gorm:"size:512;index"` // 站内 URL,如 /wp-content/uploads/2026/06/xxx.png
-	OrigName   string `gorm:"size:255"`
-	MimeType   string `gorm:"size:128"`
-	Size       int64
-	Width      int
-	Height     int
-	UploaderID uint      `gorm:"index"`
-	CreatedAt  time.Time `gorm:"index"`
+	ID            uint   `gorm:"primaryKey"`
+	Path          string `gorm:"size:512;index"` // 站内 URL,如 /wp-content/uploads/2026/06/xxx.png
+	OrigName      string `gorm:"size:255"`
+	MimeType      string `gorm:"size:128"`
+	Size          int64
+	Width         int
+	Height        int
+	Thumb150Path  string `gorm:"size:512"` // 150px 宽缩略图 URL
+	Thumb300Path  string `gorm:"size:512"` // 300px 宽缩略图 URL
+	Thumb768Path  string `gorm:"size:512"` // 768px 宽缩略图 URL
+	UploaderID    uint      `gorm:"index"`
+	CreatedAt     time.Time `gorm:"index"`
 }

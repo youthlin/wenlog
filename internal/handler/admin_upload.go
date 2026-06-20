@@ -6,6 +6,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/imageutil"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/util"
 )
@@ -82,8 +84,26 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	width, height := imageSize(absPath)
 	urlPath := "/" + filepath.ToSlash(filepath.Join(relDir, fileName))
 	record := &model.Upload{Path: urlPath, OrigName: fh.Filename, MimeType: mimeType, Size: fh.Size, Width: width, Height: height, UploaderID: u.ID, CreatedAt: now}
+
+	// 生成缩略图
+	thumbs, err := imageutil.GenerateThumbnails(absPath, urlPath)
+	if err != nil && h.log != nil {
+		h.log.Warn("generate thumbnails", slog.String("path", absPath), slog.Any("error", err))
+	}
+	for _, t := range thumbs {
+		switch t.Width {
+		case 150:
+			record.Thumb150Path = t.URL
+		case 300:
+			record.Thumb300Path = t.URL
+		case 768:
+			record.Thumb768Path = t.URL
+		}
+	}
+
 	if err := h.st.SaveUpload(c, record); err != nil {
 		_ = os.Remove(absPath)
+		imageutil.RemoveThumbnails(absPath)
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("保存上传记录失败")})
 		return
 	}
@@ -144,6 +164,7 @@ func (h *Admin) DeleteUpload(c *gin.Context) {
 	}
 	absPath := filepath.Join(h.cfg.PublicDir, strings.TrimPrefix(filepath.FromSlash(u.Path), string(filepath.Separator)))
 	_ = os.Remove(absPath)
+	imageutil.RemoveThumbnails(absPath)
 	if err := h.st.DeleteUpload(c, id); err != nil {
 		h.serverError(c, err)
 		return

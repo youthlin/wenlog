@@ -38,9 +38,9 @@ type DataLoader struct {
 func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 	l := &DataLoader{}
 
-	// 1. 全部已发布文章+页面
+	// 1. 全部已发布+定时文章+页面
 	var posts []model.Post
-	if err := s.db(ctx).Where("status = ?", model.StatusPublished).
+	if err := s.db(ctx).Where("status IN ?", []string{model.StatusPublished, model.StatusScheduled}).
 		Find(&posts).Error; err != nil {
 		return nil, err
 	}
@@ -53,7 +53,10 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 	for i := range posts {
 		p := &posts[i]
 		l.Posts[p.ID] = p
-		l.postsByType[p.PostType] = append(l.postsByType[p.PostType], p)
+		// postsByType 只包含已发布文章，定时文章不出现在前台列表/搜索中
+		if p.Status == model.StatusPublished {
+			l.postsByType[p.PostType] = append(l.postsByType[p.PostType], p)
+		}
 		if p.PostType == model.PostTypePage && p.Slug != "" {
 			l.postsBySlug[p.Slug] = p
 		}

@@ -56,7 +56,7 @@
           <div class="post-title-main">
             <a href="{{$viewURL}}" target="_blank" rel="noreferrer">{{if .Title}}{{.Title}}{{else}}{{$.t.T "（无标题）"}}{{end}}</a>
             {{if ne .Status "published"}}
-            <span class="post-status-badge is-draft">{{if eq .Status "draft"}}{{$.t.T "草稿"}}{{else}}{{.Status}}{{end}}</span>
+            <span class="post-status-badge is-draft">{{if eq .Status "draft"}}{{$.t.T "草稿"}}{{else if eq .Status "scheduled"}}{{$.t.T "定时"}}{{else}}{{.Status}}{{end}}</span>
             {{end}}
           </div>
           <div class="post-meta-list">

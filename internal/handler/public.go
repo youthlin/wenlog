@@ -144,13 +144,18 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		}
 	}
 
-	// 缓存主题名
+	// 缓存主题名和版本号
 	var themeName string
+	var themeVersion string
 	if loader != nil {
 		themeName = h.currentThemeNameFromLoader(c, loader)
 	} else {
 		themeName = h.currentThemeName(c)
 	}
+	if t := h.themeManager.Get(themeName); t != nil {
+		themeVersion = t.Version
+	}
+	data["ThemeVersion"] = themeVersion
 
 	// 补充模板需要的字段
 	data["Keyword"] = c.Query("q")
