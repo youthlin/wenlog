@@ -10,10 +10,10 @@
 
 ## 🟡 中优先级
 
-- [ ] **Handler 层 HTTP 测试缺失** — 登录、文章 CRUD、评论审核、设置保存等核心流程无自动化回归
-- [ ] **Middleware 无测试** — CSRF、Session、认证中间件无覆盖
-- [ ] **主题文件编辑器缺「新建文件」** — 只能编辑已有文件，无法通过后台创建新模板/CSS
-- [ ] **`theme.yaml` 字段可扩展** — 可加 `screenshot`、`license`、`tags` 等元数据
+- [x] **Handler 层 HTTP 测试缺失** — 登录、文章 CRUD、评论审核、设置保存等核心流程无自动化回归
+- [x] **Middleware 无测试** — CSRF、Session、认证中间件无覆盖
+- [x] **主题文件编辑器缺「新建文件」** — 只能编辑已有文件，无法通过后台创建新模板/CSS
+- [x] **`theme.yaml` 字段可扩展** — 可加 `screenshot`、`license`、`tags` 等元数据
 
 ## 🟢 低优先级
 

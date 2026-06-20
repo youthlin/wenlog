@@ -119,6 +119,17 @@ func (m *Manager) Current(ctx context.Context) *Theme {
 	return t
 }
 
+// CurrentWithPreview 返回预览主题（如果 previewName 有效），否则返回当前激活主题。
+// previewName 为空时等同于 Current()。
+func (m *Manager) CurrentWithPreview(ctx context.Context, previewName string) *Theme {
+	if previewName != "" {
+		if t := m.themes[previewName]; t != nil {
+			return t
+		}
+	}
+	return m.Current(ctx)
+}
+
 // Activate 激活指定主题并持久化。
 func (m *Manager) Activate(ctx context.Context, name string) error {
 	if _, ok := m.themes[name]; !ok {

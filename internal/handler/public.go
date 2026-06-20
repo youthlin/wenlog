@@ -141,7 +141,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 	// 缓存主题名
 	var themeName string
 	if loader != nil {
-		themeName = h.currentThemeNameFromLoader(loader)
+		themeName = h.currentThemeNameFromLoader(c, loader)
 	} else {
 		themeName = h.currentThemeName(c)
 	}
@@ -188,13 +188,26 @@ func (h *Public) currentTheme(c *gin.Context) *theme.Theme {
 	if h.themeManager == nil {
 		return nil
 	}
+	// 管理员主题预览：从 session 读取预览主题名
+	if previewName := middleware.GetPreviewTheme(c); previewName != "" {
+		if t := h.themeManager.Get(previewName); t != nil {
+			return t
+		}
+	}
 	return h.themeManager.Current(c)
 }
 
 // currentThemeFromLoader 从 DataLoader 内存中读取 current_theme，不查 DB。
-func (h *Public) currentThemeFromLoader(loader *store.DataLoader) *theme.Theme {
+// 同时支持管理员主题预览（从 session 读取）。
+func (h *Public) currentThemeFromLoader(c *gin.Context, loader *store.DataLoader) *theme.Theme {
 	if h.themeManager == nil {
 		return nil
+	}
+	// 管理员主题预览：从 session 读取预览主题名
+	if previewName := middleware.GetPreviewTheme(c); previewName != "" {
+		if t := h.themeManager.Get(previewName); t != nil {
+			return t
+		}
 	}
 	name := loader.GetSetting("current_theme")
 	if name == "" {
@@ -211,8 +224,8 @@ func (h *Public) currentThemeName(c *gin.Context) string {
 }
 
 // currentThemeNameFromLoader 从 DataLoader 内存中读取主题名，不查 DB。
-func (h *Public) currentThemeNameFromLoader(loader *store.DataLoader) string {
-	if t := h.currentThemeFromLoader(loader); t != nil {
+func (h *Public) currentThemeNameFromLoader(c *gin.Context, loader *store.DataLoader) string {
+	if t := h.currentThemeFromLoader(c, loader); t != nil {
 		return t.Name
 	}
 	return ""

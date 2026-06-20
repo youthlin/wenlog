@@ -1237,6 +1237,14 @@ body.admin.nav-open { overflow: hidden; }
 .settings-stack { display: grid; gap: 18px; }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
 .settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+/* 主题截图 */
+.theme-screenshot-cell { width: 120px; text-align: center; vertical-align: middle; }
+.theme-screenshot-thumb { max-width: 100px; max-height: 75px; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto; }
+.theme-no-screenshot { color: var(--text-muted); font-size: 1.5rem; }
+.theme-meta-link { font-size: 0.8rem; color: var(--link); }
+.theme-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.theme-tag { display: inline-block; padding: 1px 6px; font-size: 0.75rem; background: var(--highlight-bg, #e8f0fe); border-radius: 3px; color: var(--fg); }
+.theme-license { font-size: 0.8rem; color: var(--text-muted); }
 /* ============================================================
    18.1 主题文件编辑器 (Theme File Editor)
    ============================================================ */
@@ -1254,9 +1262,18 @@ body.admin.nav-open { overflow: hidden; }
 .theme-editor-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .theme-editor-toolbar h3 { margin: 0; }
 .theme-editor-toolbar-actions { display: flex; align-items: center; gap: 0.5rem; }
-.theme-editor-textarea { width: 100%; height: 60vh; font-family: monospace; font-size: 0.85rem; padding: 8px; border: 1px solid var(--border); border-radius: 4px; resize: vertical; background: var(--bg); color: var(--fg); }
+.theme-editor-textarea { width: 100%; height: 60vh; font-family: monospace; font-size: 0.85rem; padding: 8px; border: 1px solid var(--border); border-radius: 4px; resize: vertical; background: var(--bg); color: var(--fg); white-space: pre; overflow-wrap: normal; overflow-x: auto; tab-size: 4; }
 .theme-editor-status { margin-top: 0.25rem; font-size: 0.8rem; color: var(--text-muted); }
-.theme-editor-actions { margin-top: 0.5rem; }
+.theme-editor-actions { margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+/* 新建文件弹窗 */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
+.modal-dialog { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; min-width: 320px; max-width: 90vw; box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
+.modal-dialog h3 { margin: 0 0 0.75rem; }
+.modal-dialog .form-group { margin-bottom: 0.75rem; }
+.modal-dialog .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+.modal-dialog .form-group .hint { font-weight: 400; font-size: 0.8rem; color: var(--text-muted); }
+.modal-dialog .form-input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--fg); font-size: 0.9rem; box-sizing: border-box; }
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
 /* ============================================================
    19. 导入/导出页 (Import/Export)
    ============================================================ */

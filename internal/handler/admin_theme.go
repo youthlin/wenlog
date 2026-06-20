@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/middleware"
 )
 
 const maxThemeUploadSize = 5 << 20 // 5MB
@@ -25,6 +26,10 @@ func (h *Admin) ThemesPage(c *gin.Context) {
 	if h.themeManager != nil {
 		data["Themes"] = h.themeManager.List()
 		data["CurrentTheme"] = h.themeManager.Current(c)
+		// 预览主题信息
+		if previewName := middleware.GetPreviewTheme(c); previewName != "" {
+			data["PreviewTheme"] = h.themeManager.Get(previewName)
+		}
 	}
 	if msg := c.Query("message"); msg != "" {
 		data["Notice"] = msg
@@ -148,6 +153,61 @@ func (h *Admin) ThemeDelete(c *gin.Context) {
 func (h *Admin) redirectThemeSettings(c *gin.Context, msg string) {
 	u := "/admin/themes?message=" + url.QueryEscape(msg)
 	c.Redirect(http.StatusSeeOther, u)
+}
+
+// ThemePreview 设置管理员主题预览（写入 session，不持久化到 DB）。
+func (h *Admin) ThemePreview(c *gin.Context) {
+	tr := i18n.Get(c)
+	name := strings.TrimSpace(c.PostForm("theme_name"))
+	if name == "" {
+		h.redirectThemeSettings(c, tr.T("未指定主题名称"))
+		return
+	}
+	tm := h.themeManager
+	if tm == nil {
+		h.redirectThemeSettings(c, tr.T("主题管理器未初始化"))
+		return
+	}
+	if tm.Get(name) == nil {
+		h.redirectThemeSettings(c, tr.T("主题「%s」不存在", name))
+		return
+	}
+	middleware.SetPreviewTheme(c, name)
+	h.redirectThemeSettings(c, tr.T("正在预览主题「%s」，前台已生效。", name))
+}
+
+// ThemePreviewClear 清除管理员主题预览。
+func (h *Admin) ThemePreviewClear(c *gin.Context) {
+	tr := i18n.Get(c)
+	middleware.ClearPreviewTheme(c)
+	h.redirectThemeSettings(c, tr.T("已退出主题预览"))
+}
+
+// ThemeScreenshot 提供主题截图文件。
+func (h *Admin) ThemeScreenshot(c *gin.Context) {
+	name := c.Param("name")
+	file := c.Param("file")
+	if name == "" || file == "" {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	tm := h.themeManager
+	if tm == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	t := tm.Get(name)
+	if t == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	// 安全检查：只允许文件名
+	base := filepath.Base(file)
+	if base != file || base == "." || base == ".." {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	c.File(filepath.Join(t.Dir, base))
 }
 
 // extractThemeZip 解压 zip 到目标目录，带路径穿越防护。

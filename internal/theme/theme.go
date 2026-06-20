@@ -2,6 +2,7 @@
 package theme
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,6 +18,18 @@ type Theme struct {
 	Version     string `yaml:"version" json:"version"`
 	Description string `yaml:"description" json:"description"`
 	Author      string `yaml:"author" json:"author"`
+	// Screenshot 是主题目录内的截图文件名（如 screenshot.png），为空表示无截图。
+	Screenshot string `yaml:"screenshot" json:"screenshot"`
+	// ThemeURI 是主题主页 URL。
+	ThemeURI string `yaml:"theme_uri" json:"theme_uri"`
+	// AuthorURI 是作者主页 URL。
+	AuthorURI string `yaml:"author_uri" json:"author_uri"`
+	// License 是许可证名称（如 MIT、GPL-2.0）。
+	License string `yaml:"license" json:"license"`
+	// LicenseURI 是许可证全文 URL。
+	LicenseURI string `yaml:"license_uri" json:"license_uri"`
+	// Tags 是主题标签列表。
+	Tags []string `yaml:"tags" json:"tags"`
 	// Dir 是主题在磁盘上的根目录（如 themes/default），由 Manager 填充。
 	Dir string `yaml:"-" json:"-"`
 }
@@ -71,6 +84,24 @@ func (t *Theme) HasTemplates() bool {
 func (t *Theme) HasAssets() bool {
 	info, err := os.Stat(t.AssetsDir())
 	return err == nil && info.IsDir()
+}
+
+// ScreenshotURL 返回主题截图的访问 URL，无截图时返回空字符串。
+func (t *Theme) ScreenshotURL() string {
+	if t.Screenshot == "" {
+		return ""
+	}
+	// 安全检查：只允许文件名，不允许路径
+	name := filepath.Base(t.Screenshot)
+	if name == "." || name == ".." || name != t.Screenshot {
+		return ""
+	}
+	// 检查文件是否存在
+	fullPath := filepath.Join(t.Dir, name)
+	if _, err := os.Stat(fullPath); err != nil {
+		return ""
+	}
+	return "/admin/theme/screenshot/" + url.PathEscape(t.Name) + "/" + url.PathEscape(name)
 }
 
 // LoadTranslations 把主题 i18n 目录绑定到主题名称对应的文本域。

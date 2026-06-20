@@ -124,6 +124,75 @@ func (h *Admin) ThemeFileSave(c *gin.Context) {
 	})
 }
 
+// ThemeFileCreate 新建主题文件。
+func (h *Admin) ThemeFileCreate(c *gin.Context) {
+	tr := i18n.Get(c)
+	var req struct {
+		Theme   string `json:"theme"`
+		Path    string `json:"path"`
+		Content string `json:"content"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	req.Path = strings.TrimSpace(req.Path)
+	if req.Theme == "" || req.Path == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "theme and path are required"})
+		return
+	}
+	// 安全检查：不允许路径穿越
+	if strings.Contains(req.Path, "..") || filepath.IsAbs(req.Path) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": tr.T("无效的文件路径")})
+		return
+	}
+	// 只允许可编辑的文件类型
+	if !isEditableThemeFilePath(req.Path) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": tr.T("不支持的文件类型")})
+		return
+	}
+	tm := h.themeManager
+	if tm == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "theme manager not initialized"})
+		return
+	}
+	fullPath, err := tm.ThemeFilePath(req.Theme, req.Path)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// 检查文件是否已存在
+	if _, err := os.Stat(fullPath); err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": tr.T("文件已存在")})
+		return
+	}
+	// 确保父目录存在
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "create dir: " + err.Error()})
+		return
+	}
+	// 写入文件
+	if err := os.WriteFile(fullPath, []byte(req.Content), 0o644); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "write file: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "path": req.Path})
+}
+
+// isEditableThemeFilePath 检查新建文件路径是否属于可编辑类型。
+func isEditableThemeFilePath(path string) bool {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".gohtml", ".html", ".css", ".js", ".yaml", ".yml", ".po", ".mo":
+		return true
+	case ".go", ".goyaegi":
+		base := filepath.Base(path)
+		return base == "functions.go" || base == "functions.goyaegi"
+	default:
+		return false
+	}
+}
+
 // ThemeFileDelete 删除主题文件。
 func (h *Admin) ThemeFileDelete(c *gin.Context) {
 	tr := i18n.Get(c)

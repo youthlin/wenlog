@@ -3,3 +3,7 @@ name: "default"
 version: "1.0"
 description: "默认主题，内容+边栏双栏设计，带多种颜色外观"
 author: "youthlin"
+author_uri: "https://github.com/youthlin"
+theme_uri: "https://github.com/youthlin/blog"
+license: "MIT"
+tags: ["双栏", "响应式", "多配色"]

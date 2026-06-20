@@ -3,6 +3,15 @@
 <h1>{{.t.T "外观"}}</h1>
 {{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
 {{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{if .PreviewTheme}}
+<p class="notice-banner theme-preview-notice">
+  {{.t.T "正在预览主题「%s」v%s，前台已生效。仅你可见，其他访客不受影响。" .PreviewTheme.Name .PreviewTheme.Version}}
+  <form class="inline" method="post" action="/admin/theme/preview/clear" style="margin-left:1em">
+    {{template "csrf_field" .}}
+    <button type="submit" class="btn-secondary btn-sm">{{.t.T "退出预览"}}</button>
+  </form>
+</p>
+{{end}}
 
 <div class="settings-main">
   <div class="settings-stack">
@@ -17,18 +26,38 @@
         <table class="data-table themes-table">
           <thead>
           <tr>
+            <th>{{.t.T "截图"}}</th>
             <th>{{.t.T "主题名"}}</th>
             <th>{{.t.T "版本"}}</th>
             <th>{{.t.T "描述"}}</th>
+            <th>{{.t.T "作者"}}</th>
             <th>{{.t.T "操作"}}</th>
           </tr>
           </thead>
           <tbody>
           {{range .Themes}}
           <tr>
-            <td data-label="{{$.t.T "主题名"}}">{{.Name}}{{if eq .Name $.CurrentTheme.Name}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}</td>
+            <td data-label="{{$.t.T "截图"}}" class="theme-screenshot-cell">
+              {{if .ScreenshotURL}}
+              <img src="{{.ScreenshotURL}}" alt="{{.Name}} screenshot" class="theme-screenshot-thumb" loading="lazy">
+              {{else}}
+              <span class="theme-no-screenshot">—</span>
+              {{end}}
+            </td>
+            <td data-label="{{$.t.T "主题名"}}">
+              <strong>{{.Name}}</strong>{{if eq .Name $.CurrentTheme.Name}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
+              {{if .ThemeURI}}<br><a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{$.t.T "主页"}}</a>{{end}}
+            </td>
             <td data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
-            <td data-label="{{$.t.T "描述"}}">{{.Description}}</td>
+            <td data-label="{{$.t.T "描述"}}">
+              {{.Description}}
+              {{if .Tags}}<br><span class="theme-tags">{{range .Tags}}<span class="theme-tag">{{.}}</span>{{end}}</span>{{end}}
+            </td>
+            <td data-label="{{$.t.T "作者"}}">
+              {{.Author}}
+              {{if .AuthorURI}}<br><a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{$.t.T "作者主页"}}</a>{{end}}
+              {{if .License}}<br><span class="theme-license">{{.License}}</span>{{end}}
+            </td>
             <td class="actions" data-label="{{$.t.T "操作"}}">
               {{if eq .Name $.CurrentTheme.Name}}
               <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm">{{$.t.T "编辑文件"}}</a>
@@ -38,6 +67,13 @@
                 {{template "csrf_field" $}}
                 <input type="hidden" name="theme_name" value="{{.Name}}">
                 <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
+              </form>
+              {{end}}
+              {{if ne .Name $.CurrentTheme.Name}}
+              <form class="inline" method="post" action="/admin/theme/preview">
+                {{template "csrf_field" $}}
+                <input type="hidden" name="theme_name" value="{{.Name}}">
+                <button type="submit" class="btn-secondary btn-sm">{{$.t.T "预览"}}</button>
               </form>
               {{end}}
               {{if ne .Name "default"}}

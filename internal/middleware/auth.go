@@ -19,6 +19,9 @@ const SessionRoleKey = "role"
 // SessionVersionKey 是 session 中存储用户会话版本的键。
 const SessionVersionKey = "session_version"
 
+// SessionPreviewThemeKey 是 session 中存储管理员预览主题名的键。
+const SessionPreviewThemeKey = "preview_theme"
+
 // AuthRequired 保护 /admin:未登录跳转登录页。
 func AuthRequired(st ...*store.Store) gin.HandlerFunc {
 	return AuthRequiredRedirect("/auth/login", st...)
@@ -91,11 +94,43 @@ func sessionUserID(s sessions.Session) uint {
 		return 0
 	}
 	if v := s.Get(SessionUserKey); v != nil {
-		if id, ok := v.(uint); ok {
-			return id
+		switch n := v.(type) {
+		case uint:
+			return n
+		case int:
+			return uint(n)
+		case int64:
+			return uint(n)
+		case float64:
+			return uint(n)
 		}
 	}
 	return 0
+}
+
+// SetPreviewTheme 将预览主题名写入 session（仅管理员可用）。
+func SetPreviewTheme(c *gin.Context, themeName string) {
+	s := sessions.Default(c)
+	s.Set(SessionPreviewThemeKey, themeName)
+	_ = s.Save()
+}
+
+// ClearPreviewTheme 清除 session 中的预览主题。
+func ClearPreviewTheme(c *gin.Context) {
+	s := sessions.Default(c)
+	s.Delete(SessionPreviewThemeKey)
+	_ = s.Save()
+}
+
+// GetPreviewTheme 从 session 读取预览主题名，无预览时返回空字符串。
+func GetPreviewTheme(c *gin.Context) string {
+	s := sessions.Default(c)
+	if v := s.Get(SessionPreviewThemeKey); v != nil {
+		if name, ok := v.(string); ok && name != "" {
+			return name
+		}
+	}
+	return ""
 }
 
 func sessionInt64(v any) int64 {
