@@ -569,9 +569,10 @@ func addSrcSet(html string) string {
 		ext := filepath.Ext(src)
 		// 如果 src 本身已经是缩略图（如 xxx-150x150.png），还原为原图路径
 		base := wpThumbSuffixRe.ReplaceAllString(strings.TrimSuffix(src, ext), "")
+		origURL := base + ext
 
-		srcset := fmt.Sprintf(`%s-150x150%s 150w, %s-300x300%s 300w, %s-768w%s 768w, %s%s %dw`,
-			base, ext, base, ext, base, ext, src, ext, 1920)
+		srcset := fmt.Sprintf(`%s-150x150%s 150w, %s-300x300%s 300w, %s-768w%s 768w, %s %dw`,
+			base, ext, base, ext, base, ext, origURL, 1920)
 
 		sizes := `sizes="(max-width: 150px) 150px, (max-width: 300px) 300px, (max-width: 768px) 768px, 100vw"`
 
