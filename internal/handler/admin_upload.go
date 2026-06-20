@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 
@@ -61,11 +63,27 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	now := time.Now()
 	ext := safeImageExt(fh.Filename, mimeType)
 	relDir := filepath.Join("wp-content", "uploads", now.Format("2006"), now.Format("01"))
-	fileName := util.GenerateRandomString(consts.TokenLengthUpload, util.WithAlphaNumer()) + ext
 	absDir := filepath.Join(h.cfg.PublicDir, relDir)
 	if err = os.MkdirAll(absDir, 0o755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": tr.T("创建上传目录失败")})
 		return
+	}
+
+	// 尽量保留原始文件名，做安全清理后使用；冲突时追加序号
+	baseName := sanitizeFilename(strings.TrimSuffix(fh.Filename, ext))
+	fileName := baseName + ext
+	if _, err := os.Stat(filepath.Join(absDir, fileName)); err == nil {
+		for i := 1; i < 100; i++ {
+			candidate := fmt.Sprintf("%s-%d%s", baseName, i, ext)
+			if _, err := os.Stat(filepath.Join(absDir, candidate)); os.IsNotExist(err) {
+				fileName = candidate
+				break
+			}
+		}
+		// 极端情况：100 个同名文件都冲突，回退到随机名
+		if fileName == baseName+ext {
+			fileName = util.GenerateRandomString(consts.TokenLengthUpload, util.WithAlphaNumer()) + ext
+		}
 	}
 	absPath := filepath.Join(absDir, fileName)
 	out, err := os.Create(absPath)
@@ -218,4 +236,31 @@ func imageSize(path string) (int, int) {
 		return 0, 0
 	}
 	return cfg.Width, cfg.Height
+}
+
+// sanitizeFilename 清理文件名，移除路径分隔符、特殊字符，空格转连字符，转小写，限制长度。
+func sanitizeFilename(name string) string {
+	var b strings.Builder
+	b.Grow(len(name))
+	for _, r := range name {
+		switch {
+		case r == ' ' || r == '_':
+			b.WriteByte('-')
+		case r == '.' || r == '-' || unicode.IsLetter(r) || unicode.IsDigit(r):
+			b.WriteRune(unicode.ToLower(r))
+		default:
+			// 跳过其他字符
+		}
+	}
+	result := b.String()
+	// 去除首尾连字符
+	result = strings.Trim(result, "-")
+	// 限制长度
+	if len(result) > 100 {
+		result = result[:100]
+	}
+	if result == "" {
+		return "file"
+	}
+	return result
 }
