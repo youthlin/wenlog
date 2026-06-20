@@ -84,6 +84,7 @@ themes/my-theme/
 // 站点信息
 .SiteName          string
 .SiteDescription   string
+.SiteLogo          string  // 站点 Logo URL（后台设置，可为空）
 .CurrentYear       int
 
 // 当前用户

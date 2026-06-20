@@ -125,6 +125,8 @@
         {{template "csrf_field" .}}
         <label>{{.t.T "站点名称"}}<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
         <label>{{.t.T "站点描述"}}<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
+        <label>{{.t.T "站点 Logo URL"}}<input type="url" name="site_logo" value="{{.SiteLogoValue}}" placeholder="https://example.com/logo.png"></label>
+        <p class="tip">{{.t.T "可选。设置后在主题 header 中显示 Logo 图片。可使用「文件管理」上传图片后复制链接。"}}</p>
         <label>{{.t.T "文章固定链接结构"}}<input type="text" name="post_permalink" value="{{.PostPermalinkValue}}" required></label>
         <p class="tip">{{.t.T "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% %post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%%post_id%.html。"}}</p>
         <div class="form-row">

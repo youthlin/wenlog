@@ -39,6 +39,7 @@ const commentPageSize = 20
 type publicSettings struct {
 	SiteName         string
 	SiteDescription  string
+	SiteLogo         string
 	PostPermalink    string
 	CategoryPrefix   string
 	TagPrefix        string
@@ -87,6 +88,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 	}
 	data := gin.H{
 		"SiteName":         s.SiteName,
+		"SiteLogo":         s.SiteLogo,
 		"Title":            title,
 		"Description":      desc,
 		"Menu":             menu,
@@ -219,6 +221,7 @@ func (h *Public) currentThemeNameFromLoader(loader *store.DataLoader) string {
 func (h *Public) loadSettings(ctx context.Context) publicSettings {
 	settings, err := h.st.GetSettings(ctx, consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
+		consts.SettingsSiteLogo,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
@@ -235,6 +238,7 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 func (h *Public) loadSettingsFromLoader(loader *store.DataLoader) publicSettings {
 	settings := loader.GetSettings(consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
+		consts.SettingsSiteLogo,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
 		consts.SettingsSayingPageID,
@@ -249,6 +253,7 @@ func (h *Public) buildSettings(settings map[string]string) publicSettings {
 	return publicSettings{
 		SiteName:         util.FirstNonEmpty(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault),
 		SiteDescription:  settings[consts.SettingsSiteDesc],
+		SiteLogo:         settings[consts.SettingsSiteLogo],
 		PostPermalink:    permalink.CurrentPostPattern(),
 		CategoryPrefix:   permalink.CurrentCategoryPrefix(),
 		TagPrefix:        permalink.CurrentTagPrefix(),
@@ -327,25 +332,26 @@ func (h *Public) Index(c *gin.Context) {
 	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("index"), data)
 }
 
-// Search 全文搜索(标题/正文 LIKE)。
+// Search 全文搜索(标题/正文子串匹配，使用 DataLoader 内存搜索)。
 func (h *Public) Search(c *gin.Context) {
 	kw := strings.TrimSpace(c.Query("q"))
 	page := atoiDefault(c.Query("page"), 1)
 	syncPostPermalink(c, h.st)
-	s := h.loadSettings(c)
+
+	loader, loadErr := h.st.LoadAllCached(c)
+	if loadErr != nil {
+		h.serverError(c, loadErr)
+		return
+	}
+	s := h.loadSettingsFromLoader(loader)
 	var res *store.ListPostsResult
-	var err error
 	if kw == "" {
 		res = &store.ListPostsResult{Page: 1}
 	} else {
-		res, err = h.st.SearchPosts(c, kw, page, s.PageSize)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
+		res = loader.SearchPosts(kw, page, s.PageSize)
 	}
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("搜索:%s", kw), "", s, nil)
+	data := h.base(c, tr.T("搜索:%s", kw), "", s, loader)
 	data["Heading"] = tr.T("搜索「%s」", kw)
 	data["Keyword"] = kw
 	data["List"] = res

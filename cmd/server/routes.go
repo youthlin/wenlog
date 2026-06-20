@@ -29,6 +29,7 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public, limiter middleware
 	})
 
 	r.GET("/search", pub.Search)
+	r.GET("/sitemap.xml", pub.Sitemap)
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)
 

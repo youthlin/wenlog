@@ -198,6 +198,7 @@ img { max-width: 100%; }
 .site-header { background: var(--header-bg); border-bottom: 1px solid var(--accent); position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(140%) blur(10px); box-shadow: var(--header-shadow); }
 .header-inner { display: flex; align-items: center; gap: 16px; min-height: 64px; }
 .site-title { font-size: 20px; font-weight: 700; color: var(--fg); }
+.site-logo { height: 36px; width: auto; vertical-align: middle; }
 .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .desktop-header-controls { display: flex; align-items: center; gap: 8px; }
 

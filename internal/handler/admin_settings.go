@@ -75,6 +75,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["CurrentSettingsSection"] = currentSection
 	settings, err := h.st.GetSettings(c, consts.SettingsSiteName,
 		consts.SettingsSiteDesc,
+		consts.SettingsSiteLogo,
 		consts.SettingsPostPermalink,
 		consts.SettingsCategoryPrefix,
 		consts.SettingsTagPrefix,
@@ -97,6 +98,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	data["SiteNameValue"] = util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, settings[consts.SettingsSiteName])
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
+	data["SiteLogoValue"] = settings[consts.SettingsSiteLogo]
 	data["PostPermalinkValue"] = util.FirstNonEmptyOr(consts.SettingsPostPermalinkDefault, settings[consts.SettingsPostPermalink])
 	data["CategoryPrefixValue"] = util.FirstNonEmptyOr(consts.SettingsCategoryPrefixDefault, settings[consts.SettingsCategoryPrefix])
 	data["TagPrefixValue"] = util.FirstNonEmptyOr(consts.SettingsTagPrefixDefault, settings[consts.SettingsTagPrefix])
@@ -198,6 +200,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	tr := i18n.Get(c)
 	name := strings.TrimSpace(c.PostForm("site_name"))
 	desc := strings.TrimSpace(c.PostForm("site_description"))
+	siteLogo := strings.TrimSpace(c.PostForm("site_logo"))
 	postPermalink := strings.TrimSpace(c.PostForm("post_permalink"))
 	categoryPrefix := strings.TrimSpace(c.PostForm("category_prefix"))
 	tagPrefix := strings.TrimSpace(c.PostForm("tag_prefix"))
@@ -217,6 +220,7 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 	settings := map[string]string{
 		consts.SettingsSiteName:       name,
 		consts.SettingsSiteDesc:       desc,
+		consts.SettingsSiteLogo:       siteLogo,
 		consts.SettingsPostPermalink:  permalink.NormalizePostPattern(postPermalink),
 		consts.SettingsCategoryPrefix: catNorm,
 		consts.SettingsTagPrefix:      tagNorm,

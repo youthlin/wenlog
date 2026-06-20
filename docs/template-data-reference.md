@@ -9,6 +9,7 @@
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `SiteName` | `string` | 站点名称 |
+| `SiteLogo` | `string` | 站点 Logo URL（后台设置，可为空） |
 | `Title` | `string` | 页面标题（`<title>` 标签） |
 | `Description` | `string` | 页面描述（`<meta name="description">`） |
 | `Menu` | `[]model.Post` | 导航菜单页面列表 |

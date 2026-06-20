@@ -8,6 +8,8 @@ const (
 	SettingsSiteNameDefault = "我的博客"
 	// 站点描述
 	SettingsSiteDesc = "site_description"
+	// 站点 Logo URL
+	SettingsSiteLogo = "site_logo"
 	// 首页文章分页数量
 	SettingsPageSize = "page_size"
 	// Feed 输出数量

@@ -536,6 +536,50 @@ func (l *DataLoader) AllPostsForArchive() []model.Post {
 	return result
 }
 
+// SearchPosts 从内存搜索文章（标题/正文子串匹配，按发布时间倒序分页）。
+func (l *DataLoader) SearchPosts(keyword string, page, pageSize int) *ListPostsResult {
+	kw := strings.ToLower(keyword)
+	posts := l.postsByType[model.PostTypePost]
+
+	// 过滤匹配的文章
+	var matched []*model.Post
+	for _, p := range posts {
+		if strings.Contains(strings.ToLower(p.Title), kw) ||
+			strings.Contains(strings.ToLower(p.Content), kw) {
+			matched = append(matched, p)
+		}
+	}
+
+	// 按发布时间倒序
+	sort.Slice(matched, func(i, j int) bool {
+		return matched[i].PublishedAt.After(matched[j].PublishedAt)
+	})
+
+	total := int64(len(matched))
+	pages := int((total + int64(pageSize) - 1) / int64(pageSize))
+	if page < 1 {
+		page = 1
+	}
+	if page > pages && pages > 0 {
+		page = pages
+	}
+
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if end > len(matched) {
+		end = len(matched)
+	}
+
+	result := make([]model.Post, 0, end-start)
+	for i := start; i < end; i++ {
+		p := *matched[i]
+		l.FillPost(&p)
+		result = append(result, p)
+	}
+
+	return &ListPostsResult{Posts: result, Total: total, Page: page, Pages: pages}
+}
+
 // CommentWidgetItems 从内存构建评论 widget 数据。
 func (l *DataLoader) CommentWidgetItems(comments []model.Comment) []CommentWidgetItem {
 	if len(comments) == 0 {

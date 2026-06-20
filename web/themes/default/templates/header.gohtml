@@ -18,7 +18,7 @@
 <a class="skip-link" href="#main-content">{{.t.T "跳到主要内容"}}</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="site-title" href="/">{{.SiteName}}</a>
+    <a class="site-title" href="/">{{if .SiteLogo}}<img class="site-logo" src="{{.SiteLogo}}" alt="{{.SiteName}}">{{else}}{{.SiteName}}{{end}}</a>
     <nav id="site-nav-menu" class="site-nav" data-nav-panel>
       <div class="site-nav-links">
         {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
