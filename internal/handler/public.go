@@ -319,7 +319,7 @@ func (h *Public) DynamicOrLegacy(c *gin.Context) {
 			return
 		}
 	}
-	if h.LegacyQueryRedirect(c) {
+	if h.LegacyQueryRedirect(c, loader) {
 		return
 	}
 	h.notFound(c)
@@ -805,7 +805,8 @@ func (h *Public) Tag(c *gin.Context) {
 
 // LegacyQueryRedirect 处理 /?p={id} 旧链接 301 到永久链接。
 // 返回 true 表示已处理。
-func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
+// loader 非 nil 时优先从内存查找，避免 DB 查询。
+func (h *Public) LegacyQueryRedirect(c *gin.Context, loader ...*store.DataLoader) bool {
 	syncPostPermalink(c, h.st)
 	pid := c.Query("p")
 	if pid == "" {
@@ -815,13 +816,34 @@ func (h *Public) LegacyQueryRedirect(c *gin.Context) bool {
 	if err != nil {
 		return false
 	}
-	p, err := h.st.PostMeta(c, uint(id))
+	uid := uint(id)
+
+	// 优先从 DataLoader 内存查找
+	if len(loader) > 0 && loader[0] != nil {
+		if p := loader[0].PostMeta(uid); p != nil {
+			if p.Status != model.StatusPublished {
+				if d := h.draftForAuthor(c, uid); d == nil {
+					return false
+				}
+			}
+			c.Redirect(http.StatusMovedPermanently, permalink.Post(p))
+			return true
+		}
+		// 内存中不存在，草稿也查一下
+		if d := h.draftForAuthor(c, uid); d != nil {
+			c.Redirect(http.StatusMovedPermanently, permalink.Post(d))
+			return true
+		}
+		return false
+	}
+
+	p, err := h.st.PostMeta(c, uid)
 	if err != nil {
 		return false
 	}
 	// 草稿:仅作者本人可预览,跳到永久链接。
 	if p.Status != model.StatusPublished {
-		if d := h.draftForAuthor(c, uint(id)); d == nil {
+		if d := h.draftForAuthor(c, uid); d == nil {
 			return false
 		}
 	}
