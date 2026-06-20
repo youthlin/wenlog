@@ -121,8 +121,14 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	registerAdminRoutes(r, adm, auth, st, rateLimiter)
 
 	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
+	// 管理员预览主题时优先使用预览主题的资源。
 	r.GET("/theme-assets/*filepath", func(c *gin.Context) {
 		current := tm.Current(c)
+		if previewName := middleware.GetPreviewTheme(c); previewName != "" {
+			if pt := tm.Get(previewName); pt != nil && pt.HasAssets() {
+				current = pt
+			}
+		}
 		if current == nil || !current.HasAssets() {
 			c.Status(http.StatusNotFound)
 			return
