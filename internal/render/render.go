@@ -8,6 +8,7 @@ import (
 	stdhtml "html"
 	"html/template"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -31,6 +32,7 @@ import (
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/internal/wxr"
+	"github.com/youthlin/blog/web"
 )
 
 // Renderer 持有模板配置,既支持静态模板,也支持开发期热更新。
@@ -120,8 +122,8 @@ func (r *Renderer) UseFS(fsys fs.FS, hot bool) error {
 	return nil
 }
 
-// LoadTheme 加载主题模板目录。先解析主题模板，再补充默认主题模板中缺失的，
-// 最后补充 admin/auth 模板中缺失的。主题模板覆盖同名的默认/后台模板。
+// LoadTheme 加载主题模板目录。先解析主题模板，再补充内置组件模板，
+// 再补充主题自定义组件模板（覆盖内置），最后补充 admin/auth 模板中缺失的。
 func (r *Renderer) LoadTheme(themeDir string) error {
 	if r == nil {
 		return nil
@@ -132,6 +134,14 @@ func (r *Renderer) LoadTheme(themeDir string) error {
 	if err != nil {
 		return err
 	}
+	// 补充主题自定义组件模板（themes/<name>/widgets/），优先于内置
+	widgetsDir := filepath.Join(filepath.Dir(themeDir), "widgets")
+	if _, err := os.Stat(widgetsDir); err == nil {
+		widgetsFS := os.DirFS(widgetsDir)
+		r.fallbackWidgets(themeTpl, widgetsFS)
+	}
+	// 补充内置组件模板（web/widgets/），仅补充主题未提供的
+	r.fallbackWidgets(themeTpl, nil)
 	// 补充 admin/auth 模板中缺失的（基础设施，非主题范畴）
 	r.fallbackFromDefaultFS(themeTpl)
 	r.mu.Lock()
@@ -209,6 +219,31 @@ func (r *Renderer) fallbackFromDefaultFS(themeTpl *template.Template) {
 	}
 }
 
+// fallbackWidgets 补充组件模板。如果 widgetsFS 为 nil，从 embed web.Widgets 加载内置组件；
+// 否则从指定 FS 加载（主题自定义组件）。仅补充 themeTpl 中不存在的模板。
+func (r *Renderer) fallbackWidgets(themeTpl *template.Template, widgetsFS fs.FS) {
+	if widgetsFS == nil {
+		// 从 embed 加载内置组件（web.Widgets embed 根是 widgets/ 子目录）
+		var err error
+		widgetsFS, err = fs.Sub(web.Widgets, "widgets")
+		if err != nil {
+			return
+		}
+	}
+	if !hasMatchingFiles(widgetsFS, r.pattern) {
+		return
+	}
+	widgetsTpl, err := parseTemplates(widgetsFS, r.pattern)
+	if err != nil {
+		return
+	}
+	for _, t := range widgetsTpl.Templates() {
+		if themeTpl.Lookup(t.Name()) == nil {
+			_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
+		}
+	}
+}
+
 // ResetToDefault 重置为默认主题模板 + admin/auth 回退。
 // 优先从磁盘 themes/default/templates/ 加载，不存在时回退 embed。
 func (r *Renderer) ResetToDefault() error {
@@ -269,11 +304,81 @@ func SetThemeDataProvider(fn func(name string, args ...any) any) {
 	themeDataProvider = fn
 }
 
+// optionProvider 是 themeData "option" 调用的实现，由 web.go 注入。
+var optionProvider func(optionID string) string
+
+// SetOptionProvider 设置 option 读取函数。
+func SetOptionProvider(fn func(optionID string) string) {
+	optionProvider = fn
+}
+
 func themeData(name string, args ...any) any {
+	// "option" 是特殊 provider：读取主题选项
+	if name == "option" && optionProvider != nil {
+		if len(args) > 0 {
+			if id, ok := args[0].(string); ok {
+				return optionProvider(id)
+			}
+		}
+		return ""
+	}
 	if themeDataProvider == nil {
 		return nil
 	}
 	return themeDataProvider(name, args...)
+}
+
+// themeWidgetsProvider 是 themeWidgets 模板函数的实际实现，由 handler 层注入。
+var themeWidgetsProvider func(area string) any
+
+// SetThemeWidgetsProvider 设置 themeWidgets 模板函数的实现。
+func SetThemeWidgetsProvider(fn func(area string) any) {
+	themeWidgetsProvider = fn
+}
+
+func themeWidgets(area string) any {
+	if themeWidgetsProvider == nil {
+		return nil
+	}
+	return themeWidgetsProvider(area)
+}
+
+// currentTemplate 存储当前模板实例，供 renderWidgets 使用。
+var currentTemplate *template.Template
+
+// SetCurrentTemplate 设置当前模板实例。
+func SetCurrentTemplate(t *template.Template) {
+	currentTemplate = t
+}
+
+// renderWidgets 渲染指定区域的所有组件，返回 HTML。
+func renderWidgets(area string, data any) template.HTML {
+	if themeWidgetsProvider == nil || currentTemplate == nil {
+		return ""
+	}
+	widgets := themeWidgetsProvider(area)
+	if widgets == nil {
+		return ""
+	}
+	// widgets is []theme.WidgetInfo, use reflection to avoid circular import
+	rv := reflect.ValueOf(widgets)
+	if rv.Kind() != reflect.Slice {
+		return ""
+	}
+	var result strings.Builder
+	for i := 0; i < rv.Len(); i++ {
+		item := rv.Index(i)
+		if item.Kind() == reflect.Struct {
+			tmplName := item.FieldByName("TemplateName")
+			if !tmplName.IsValid() {
+				continue
+			}
+			if err := currentTemplate.ExecuteTemplate(&result, tmplName.String(), data); err != nil {
+				continue
+			}
+		}
+	}
+	return template.HTML(result.String())
 }
 
 // loadThemeFS 从 fs.FS 加载主题模板（如 embed 默认主题），再补充 admin/auth 回退。
@@ -282,6 +387,8 @@ func (r *Renderer) loadThemeFS(themeFS fs.FS) error {
 	if err != nil {
 		return err
 	}
+	// 补充内置组件模板
+	r.fallbackWidgets(themeTpl, nil)
 	// 补充 admin/auth 模板
 	if r.defaultFS != nil && hasMatchingFiles(r.defaultFS, r.pattern) {
 		defaultTpl, err := parseTemplates(r.defaultFS, r.pattern)
@@ -372,7 +479,28 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"add":              func(a, b int) int { return a + b },
 		"sub":              func(a, b int) int { return a - b },
 		"seq":              seq,
+		"toInt":            func(s string) int { n, _ := strconv.Atoi(s); return n },
+		"default": func(def, val any) any {
+			if val == nil {
+				return def
+			}
+			rv := reflect.ValueOf(val)
+			if !rv.IsValid() || rv.IsZero() {
+				return def
+			}
+			return val
+		},
 		"themeData":        themeData,
+		"themeWidgets":     themeWidgets,
+		"renderWidgets":    renderWidgets,
+		"widgetInConfig":   func(id string, config []string) bool {
+			for _, c := range config {
+				if c == id {
+					return true
+				}
+			}
+			return false
+		},
 	}
 	tpl, err := template.New("").Funcs(funcs).ParseFS(fsys, pattern)
 	if err != nil {
@@ -461,7 +589,23 @@ func (r *Renderer) Instance(name string, data any) ginrender.Render {
 	r.mu.RLock()
 	tpl := r.tpl
 	r.mu.RUnlock()
-	return ginrender.HTML{Template: tpl, Name: name, Data: data}
+	return &widgetHTMLRender{tmpl: tpl, name: name, data: data}
+}
+
+// widgetHTMLRender 在渲染前设置 currentTemplate，使 renderWidgets 能访问模板实例。
+type widgetHTMLRender struct {
+	tmpl *template.Template
+	name string
+	data any
+}
+
+func (w *widgetHTMLRender) Render(rw http.ResponseWriter) error {
+	SetCurrentTemplate(w.tmpl)
+	return w.tmpl.ExecuteTemplate(rw, w.name, w.data)
+}
+
+func (w *widgetHTMLRender) WriteContentType(rw http.ResponseWriter) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 }
 
 // LoadPreviewTheme 加载预览主题的模板到独立缓存，不影响主模板。
@@ -474,6 +618,14 @@ func (r *Renderer) LoadPreviewTheme(themeDir, themeName string) error {
 	if err != nil {
 		return err
 	}
+	// 补充主题自定义组件模板
+	widgetsDir := filepath.Join(filepath.Dir(themeDir), "widgets")
+	if _, err := os.Stat(widgetsDir); err == nil {
+		widgetsFS := os.DirFS(widgetsDir)
+		r.fallbackWidgets(themeTpl, widgetsFS)
+	}
+	// 补充内置组件模板
+	r.fallbackWidgets(themeTpl, nil)
 	r.fallbackFromDefaultFS(themeTpl)
 	r.mu.Lock()
 	r.previewTpl = themeTpl
@@ -503,9 +655,9 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 	r.mu.RUnlock()
 
 	if previewName != "" && previewTpl != nil && previewName == cachedName {
-		return ginrender.HTML{Template: previewTpl, Name: name, Data: data}
+		return &widgetHTMLRender{tmpl: previewTpl, name: name, data: data}
 	}
-	return ginrender.HTML{Template: mainTpl, Name: name, Data: data}
+	return &widgetHTMLRender{tmpl: mainTpl, name: name, data: data}
 }
 
 // postExcerptHTML 返回列表页应展示的文章摘要 HTML: 有 more 标记则只取之前部分。

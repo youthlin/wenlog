@@ -169,6 +169,35 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS, tm)
 	registerAdminRoutes(r, adm, auth, st, rateLimiter)
 
+	// 注入 themeWidgets 模板函数实现
+	render.SetThemeWidgetsProvider(func(area string) any {
+		t := tm.Current(nil)
+		if t == nil {
+			return nil
+		}
+		config, _ := st.GetSetting(context.Background(), "widget_"+area)
+		return theme.ResolveWidgets(config, t, area)
+	})
+
+	// 注入 option 模板函数实现（themeData "option" 调用）
+	render.SetOptionProvider(func(optionID string) string {
+		t := tm.Current(nil)
+		if t == nil {
+			return ""
+		}
+		key := theme.OptionKey(t.Name, optionID)
+		val, _ := st.GetSetting(context.Background(), key)
+		if val == "" {
+			// 回退到 theme.yaml 中的 default
+			for _, opt := range t.Options {
+				if opt.ID == optionID {
+					return opt.Default
+				}
+			}
+		}
+		return val
+	})
+
 	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
 	// 管理员预览主题时优先使用预览主题的资源。
 	// 主题资源带版本号（?v=1.0.0），可长期缓存 1 年。

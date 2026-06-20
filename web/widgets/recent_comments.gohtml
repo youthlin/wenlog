@@ -1,0 +1,19 @@
+{{define "widget_recent_comments"}}
+<section class="widget widget-recent-comments">
+  <h3>{{.t.T "近期评论"}}</h3>
+  <ul>
+    {{range .RecentCommentItems}}
+    <li>
+      <div class="widget-comment-line">
+        <img class="avatar" src="{{avatarURL .Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
+        <a href="{{.CommentURL}}">{{.Snippet}}</a>
+      </div>
+      <div class="widget-comment-meta">
+        {{if .AuthorURL}}<a href="{{.AuthorURL}}" target="_blank" rel="nofollow noopener">{{.Comment.Author}}</a>{{else}}{{.Comment.Author}}{{end}}
+        {{$.t.T "发表在"}} <a href="{{.CommentURL}}">{{.Post.Title}}</a>
+      </div>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}

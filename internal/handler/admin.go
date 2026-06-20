@@ -236,6 +236,13 @@ func (h *Admin) currentUser(c *gin.Context) *model.User {
 	return currentUserByStore(c, h.st, c)
 }
 
+func (h *Admin) currentTheme(c *gin.Context) *theme.Theme {
+	if h.themeManager == nil {
+		return nil
+	}
+	return h.themeManager.Current(c)
+}
+
 func normalizeTermSlug(s string) string {
 	return util.Slugify(s)
 }

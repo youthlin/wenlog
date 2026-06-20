@@ -1,0 +1,68 @@
+{{define "admin_theme_options.gohtml"}}
+{{- template "admin_header" . -}}
+<div class="page-head">
+  <h1>{{.t.T "主题选项"}} — {{.ThemeName}}</h1>
+</div>
+
+{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+
+{{if .NoOptions}}
+<p class="tip">{{.t.T "当前主题未声明任何可配置选项。"}}</p>
+{{else}}
+<form method="post" action="/admin/theme-options">
+  {{template "csrf_field" .}}
+  {{range .Options}}
+  <section class="card settings-card">
+    <label for="option_{{.ID}}"><strong>{{.Label}}</strong></label>
+    {{if .Description}}<p class="tip">{{.Description}}</p>{{end}}
+
+    {{if eq .Type "text"}}
+    <input type="text" id="option_{{.ID}}" name="option_{{.ID}}" value="{{.Value}}">
+
+    {{else if eq .Type "textarea"}}
+    <textarea id="option_{{.ID}}" name="option_{{.ID}}" rows="4">{{.Value}}</textarea>
+
+    {{else if eq .Type "number"}}
+    <input type="number" id="option_{{.ID}}" name="option_{{.ID}}" value="{{.Value}}"
+      {{if .Min}}min="{{.Min}}"{{end}} {{if .Max}}max="{{.Max}}"{{end}}>
+
+    {{else if eq .Type "image"}}
+    <input type="text" id="option_{{.ID}}" name="option_{{.ID}}" value="{{.Value}}" placeholder="/uploads/...">
+    {{if .Value}}<p><img src="{{.Value}}" style="max-width:200px;max-height:200px" alt=""></p>{{end}}
+
+    {{else if eq .Type "color"}}
+    <input type="color" id="option_{{.ID}}" name="option_{{.ID}}" value="{{.Value}}">
+
+    {{else if eq .Type "css"}}
+    <textarea id="option_{{.ID}}" name="option_{{.ID}}" rows="8" class="code-textarea" spellcheck="false">{{.Value}}</textarea>
+
+    {{else if eq .Type "html"}}
+    <textarea id="option_{{.ID}}" name="option_{{.ID}}" rows="8" class="code-textarea" spellcheck="false">{{.Value}}</textarea>
+
+    {{else if eq .Type "select"}}
+    <select id="option_{{.ID}}" name="option_{{.ID}}">
+      {{range .Options}}
+      <option value="{{.Value}}" {{if eq .Value $.Value}}selected{{end}}>{{.Label}}</option>
+      {{end}}
+    </select>
+
+    {{else if eq .Type "bool"}}
+    <label class="checkbox-label">
+      <input type="checkbox" id="option_{{.ID}}" name="option_{{.ID}}" value="true" {{if eq .Value "true"}}checked{{end}}>
+      <span>{{.t.T "启用"}}</span>
+    </label>
+
+    {{else}}
+    <input type="text" id="option_{{.ID}}" name="option_{{.ID}}" value="{{.Value}}">
+    {{end}}
+
+    {{if .Default}}<p class="tip">{{$.t.T "默认值：%s" .Default}}</p>{{end}}
+  </section>
+  {{end}}
+
+  <p><button type="submit" class="btn">{{.t.T "保存"}}</button></p>
+</form>
+{{end}}
+
+{{template "admin_footer" .}}
+{{end}}

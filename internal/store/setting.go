@@ -41,6 +41,17 @@ func (s *Store) SetSetting(ctx context.Context, key, value string) error {
 	st := &model.Setting{Key: key, Value: value}
 	return errors.Wrap(s.db(ctx).Save(st).Error, "save setting")
 }
+
+// SaveSetting 保存设置（SetSetting 的别名，语义更清晰）。
+func (s *Store) SaveSetting(ctx context.Context, key, value string) error {
+	return s.SetSetting(ctx, key, value)
+}
+
+// DeleteSetting 删除设置。
+func (s *Store) DeleteSetting(ctx context.Context, key string) error {
+	defer s.InvalidateCache()
+	return s.db(ctx).Where("key = ?", key).Delete(&model.Setting{}).Error
+}
 func (s *Store) DebugQuery(ctx context.Context, sql string) ([]map[string]any, error) {
 	rows, err := s.db(ctx).Raw(sql).Rows()
 	if err != nil {

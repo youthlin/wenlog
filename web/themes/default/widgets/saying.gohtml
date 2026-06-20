@@ -1,0 +1,14 @@
+{{define "widget_saying"}}
+<section class="widget widget-saying">
+  <h3>{{.t.T "博主动态"}}</h3>
+  <div class="widget-saying-author">
+    <img class="avatar" src="{{avatarURL .SayingAuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
+    <span>{{.SayingAuthorName}}</span>
+  </div>
+  <ul>
+    {{range .SayingCommentItems}}
+    <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>
+    {{end}}
+  </ul>
+</section>
+{{end}}

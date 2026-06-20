@@ -1,0 +1,8 @@
+{{define "widget_popular_posts"}}
+<section class="widget widget-popular-posts">
+  <h3>{{.t.T "最热文章"}}</h3>
+  <ul>
+    {{range themeData "popular_posts" "n" 5}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+  </ul>
+</section>
+{{end}}

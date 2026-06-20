@@ -1,4 +1,4 @@
-# 默认主题配置 — v3: 纯元数据，数据全局可用，模板文件名决定页面类型
+# 默认主题配置 — v5: 支持可自定义侧边栏组件 + 主题选项
 name: "default"
 version: "1.0"
 description: "默认主题，内容+边栏双栏设计，带多种颜色外观"
@@ -7,3 +7,49 @@ author_uri: "https://github.com/youthlin"
 theme_uri: "https://github.com/youthlin/blog"
 license: "MIT"
 tags: ["双栏", "响应式", "多配色"]
+
+widget_areas:
+  sidebar:
+    name: "侧边栏"
+    description: "文章页侧边栏区域"
+
+widgets:
+  - id: user_info
+    area: sidebar
+  - id: search
+    area: sidebar
+  - id: saying
+    area: sidebar
+  - id: recent_posts
+    area: sidebar
+  - id: popular_posts
+    area: sidebar
+  - id: recent_comments
+    area: sidebar
+  - id: archive_months
+    area: sidebar
+  - id: categories
+    area: sidebar
+  - id: tag_cloud
+    area: sidebar
+
+options:
+  - id: recent_posts_count
+    type: number
+    label: "最新文章显示数量"
+    description: "侧边栏「最新文章」组件显示的文章数"
+    default: "5"
+    min: 1
+    max: 20
+
+  - id: custom_css
+    type: css
+    label: "自定义 CSS"
+    description: "会注入到页面 <head> 中"
+    default: ""
+
+  - id: footer_text
+    type: text
+    label: "页脚文字"
+    description: "显示在页面底部"
+    default: "Powered by Blog"

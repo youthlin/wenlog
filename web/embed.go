@@ -25,3 +25,8 @@ var I18n embed.FS
 //
 //go:embed themes/*
 var Themes embed.FS
+
+// Widgets 是内置组件模板。
+//
+//go:embed widgets/*.gohtml
+var Widgets embed.FS

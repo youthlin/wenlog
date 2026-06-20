@@ -1,0 +1,9 @@
+{{define "widget_tag_cloud"}}
+<section class="widget widget-tags">
+  <h3>{{.t.T "标签"}}</h3>
+  <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">
+    <option value="">{{.t.T "选择标签…"}}</option>
+    {{range .Tags}}<option value="{{tagURL .Slug}}">{{.Name}}</option>{{end}}
+  </select>
+</section>
+{{end}}

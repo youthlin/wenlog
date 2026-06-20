@@ -1,0 +1,48 @@
+{{define "admin_widgets.gohtml"}}
+{{- template "admin_header" . -}}
+<div class="page-head">
+  <h1>{{.t.T "组件管理"}}</h1>
+</div>
+
+{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+
+{{if .Areas}}
+<form method="post" action="/admin/widgets">
+  {{template "csrf_field" .}}
+  {{range .Areas}}
+  <section class="card settings-card">
+    <h3>{{.Area.Name}}</h3>
+    {{if .Area.Description}}<p class="tip">{{.Area.Description}}</p>{{end}}
+
+    {{if .Missing}}
+    <p class="warn-banner">{{$.t.T "以下组件在当前主题中不可用，已自动跳过："}}
+      {{range .Missing}}<code>{{.}}</code> {{end}}
+    </p>
+    {{end}}
+
+    <div class="widget-config-list" data-area="{{.Area.Name}}">
+      {{range .Widgets}}
+      <label class="widget-config-item">
+        <input type="checkbox" name="widgets_{{$.Area.Name}}" value="{{.ID}}"
+          {{if widgetInConfig .ID $.Config}}checked{{end}}>
+        <span class="widget-config-id">{{.ID}}</span>
+      </label>
+      {{else}}
+      <p class="tip">{{$.t.T "当前主题未声明任何组件。"}}</p>
+      {{end}}
+    </div>
+
+    {{if .Widgets}}
+    <p class="tip">{{$.t.T "勾选要显示的组件，拖拽调整顺序。"}}</p>
+    {{end}}
+  </section>
+  {{end}}
+
+  <p><button type="submit" class="btn">{{.t.T "保存"}}</button></p>
+</form>
+{{else}}
+<p>{{.t.T "当前主题未声明任何组件区域。"}}</p>
+{{end}}
+
+{{template "admin_footer" .}}
+{{end}}

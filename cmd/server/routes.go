@@ -176,4 +176,12 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.POST("/backup/email", adm.BackupEmail)
 	adminGroup.POST("/backup/restore", adm.BackupRestore)
 	adminGroup.POST("/backup/delete", adm.BackupDelete)
+
+	// 组件管理
+	adminGroup.GET("/widgets", adm.WidgetsPage)
+	adminGroup.POST("/widgets", adm.SaveWidgets)
+
+	// 主题选项 (v5)
+	adminGroup.GET("/theme-options", adm.ThemeOptionsPage)
+	adminGroup.POST("/theme-options", adm.SaveThemeOptions)
 }

@@ -1,0 +1,9 @@
+{{define "widget_recent_posts"}}
+{{$n := themeData "option" "recent_posts_count" | toInt | default 5}}
+<section class="widget widget-recent-posts">
+  <h3>{{.t.T "近期文章"}}</h3>
+  <ul>
+    {{range $i, $p := .RecentPosts}}{{if lt $i $n}}<li><a href="{{postURL $p}}">{{$p.Title}}</a></li>{{end}}{{end}}
+  </ul>
+</section>
+{{end}}

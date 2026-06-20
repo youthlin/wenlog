@@ -1,0 +1,9 @@
+{{define "widget_categories"}}
+<section class="widget widget-categories">
+  <h3>{{.t.T "分类目录"}}</h3>
+  <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入分类名筛选…"}}" data-search-empty="{{.t.T "没有匹配的分类"}}">
+    <option value="">{{.t.T "选择分类…"}}</option>
+    {{range .Categories}}<option value="{{categoryURL .Slug}}">{{.Name}}</option>{{end}}
+  </select>
+</section>
+{{end}}
