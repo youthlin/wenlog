@@ -75,6 +75,21 @@
     </section>
 
     <section class="card settings-card">
+      <h3>{{.t.T "主题资源"}}</h3>
+      {{if .CurrentThemeName}}
+      <p class="tip">{{.t.T "当前主题：%s (v%s)" .CurrentThemeName .CurrentThemeVersion}}</p>
+      <p class="tip">{{.t.T "主题目录：%s" .CurrentThemeDir}}</p>
+      <p class="tip">{{.t.T "主题在启动时自动从内嵌资源释放到 `themes/` 目录。修改模板或 functions.go 后，可通过后台「主题管理 → 编辑文件」或下方按钮重载。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/theme/reload">
+        {{template "csrf_field" .}}
+        <p><button type="submit" class="btn-secondary">{{.t.T "重载当前主题"}}</button></p>
+      </form>
+      {{else}}
+      <p class="tip">{{.t.T "未检测到激活的主题。"}}</p>
+      {{end}}
+    </section>
+
+    <section class="card settings-card">
       <h3>{{.t.T "Metrics 访问设置"}}</h3>
       <form class="edit-form" method="post" action="/admin/settings/metrics">
         {{template "csrf_field" .}}

@@ -123,6 +123,15 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
+	// 主题信息
+	if h.themeManager != nil {
+		current := h.themeManager.Current(c)
+		if current != nil {
+			data["CurrentThemeName"] = current.Name
+			data["CurrentThemeDir"] = current.Dir
+			data["CurrentThemeVersion"] = current.Version
+		}
+	}
 	if c != nil && c.Query("message") == "templates-reloaded" {
 		data["Notice"] = tr.T("模板已重新解析。")
 	}
@@ -155,6 +164,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "sql-details-saved" {
 		data["Notice"] = tr.T("SQL 调试设置已保存。")
+	}
+	if c != nil && c.Query("message") == "theme-reloaded" {
+		data["Notice"] = tr.T("主题已重载。")
 	}
 	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
 		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
@@ -620,4 +632,22 @@ func releaseDirFromFS(src fs.FS, targetDir string) error {
 		}
 		return os.WriteFile(target, data, 0o644)
 	})
+}
+
+// ReloadTheme 从开发设置页重载当前主题。
+func (h *Admin) ReloadTheme(c *gin.Context) {
+	tr := i18n.Get(c)
+	if h.themeManager == nil {
+		data := h.settingsDataForTab(c, "developer")
+		data["Error"] = tr.T("主题管理器未初始化。")
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if err := h.themeManager.ReloadCurrentTheme(c); err != nil {
+		data := h.settingsDataForTab(c, "developer")
+		data["Error"] = tr.T("重载主题失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "theme-reloaded"))
 }

@@ -127,6 +127,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.POST("/settings/templates/release", adm.ReleaseTemplates)
 	adminGroup.POST("/settings/templates/embed", adm.UseEmbeddedTemplates)
 	adminGroup.POST("/settings/templates/reload", adm.ReloadTemplates)
+	adminGroup.POST("/settings/theme/reload", adm.ReloadTheme)
 	adminGroup.GET("/debug", adm.DebugPage)
 	adminGroup.POST("/debug", adm.DebugPage)
 	adminGroup.GET("/terms", adm.TermsPage)
