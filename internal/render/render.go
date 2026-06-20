@@ -44,6 +44,10 @@ type Renderer struct {
 	defaultHot     bool
 	defaultThemeFS fs.FS // 默认主题模板（embed），用于 ResetToDefault 时从 embed 加载
 	themeDir       string
+
+	// 主题预览：单独缓存预览主题的模板，不影响主模板
+	previewTpl       *template.Template
+	previewThemeName string
 }
 
 const pattern = "*.gohtml"
@@ -457,6 +461,50 @@ func (r *Renderer) Instance(name string, data any) ginrender.Render {
 	tpl := r.tpl
 	r.mu.RUnlock()
 	return ginrender.HTML{Template: tpl, Name: name, Data: data}
+}
+
+// LoadPreviewTheme 加载预览主题的模板到独立缓存，不影响主模板。
+func (r *Renderer) LoadPreviewTheme(themeDir, themeName string) error {
+	if r == nil {
+		return nil
+	}
+	themeFS := os.DirFS(themeDir)
+	themeTpl, err := parseTemplates(themeFS, r.pattern)
+	if err != nil {
+		return err
+	}
+	r.fallbackFromDefaultFS(themeTpl)
+	r.mu.Lock()
+	r.previewTpl = themeTpl
+	r.previewThemeName = themeName
+	r.mu.Unlock()
+	return nil
+}
+
+// ClearPreviewTheme 清除预览主题模板缓存。
+func (r *Renderer) ClearPreviewTheme() {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	r.previewTpl = nil
+	r.previewThemeName = ""
+	r.mu.Unlock()
+}
+
+// PreviewInstance 返回预览主题的模板实例。previewName 需与 LoadPreviewTheme 时一致。
+// 如果预览未激活或名称不匹配，回退到主模板。
+func (r *Renderer) PreviewInstance(name string, data any, previewName string) ginrender.Render {
+	r.mu.RLock()
+	previewTpl := r.previewTpl
+	cachedName := r.previewThemeName
+	mainTpl := r.tpl
+	r.mu.RUnlock()
+
+	if previewName != "" && previewTpl != nil && previewName == cachedName {
+		return ginrender.HTML{Template: previewTpl, Name: name, Data: data}
+	}
+	return ginrender.HTML{Template: mainTpl, Name: name, Data: data}
 }
 
 // postExcerptHTML 返回列表页应展示的文章摘要 HTML: 有 more 标记则只取之前部分。

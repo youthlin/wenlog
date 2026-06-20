@@ -56,6 +56,12 @@ func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.
 	return &Public{st: st, cfg: cfg, log: log, themeManager: tm, renderer: renderer}
 }
 
+// renderHTML 渲染模板，管理员预览主题时使用预览模板，否则使用主模板。
+func (h *Public) renderHTML(c *gin.Context, code int, name string, data gin.H) {
+	previewName := middleware.GetPreviewTheme(c)
+	c.Render(code, h.renderer.PreviewInstance(name, data, previewName))
+}
+
 // base 返回模板通用数据(站点名、菜单、当前年份、当前登录用户)。
 // v3: 所有常用数据始终注入，不再按需查询。
 // loader 为全量预加载的数据，为 nil 时回退到 store 查询（后台等场景）。
@@ -342,7 +348,7 @@ func (h *Public) Index(c *gin.Context) {
 	data := h.base(c, s.SiteName, "", s, loader)
 	data["List"] = res
 	data["Pager"] = pager(res, "/")
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("index"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("index"), data)
 }
 
 // Search 全文搜索(标题/正文子串匹配，使用 DataLoader 内存搜索)。
@@ -369,7 +375,7 @@ func (h *Public) Search(c *gin.Context) {
 	data["Keyword"] = kw
 	data["List"] = res
 	data["Pager"] = pager(res, "/search?q="+url.QueryEscape(kw))
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("search"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("search"), data)
 }
 
 // Post 文章详情（按当前固定链接规则解析）。
@@ -455,10 +461,10 @@ func (h *Public) Page(c *gin.Context) {
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
 	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
-		c.HTML(http.StatusOK, fragName, data)
+		h.renderHTML(c, http.StatusOK, fragName, data)
 		return
 	}
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("page"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("page"), data)
 }
 
 func (h *Public) pageExists(ctx context.Context, slug string) bool {
@@ -528,10 +534,10 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
 	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
-		c.HTML(http.StatusOK, fragName, data)
+		h.renderHTML(c, http.StatusOK, fragName, data)
 		return
 	}
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("page"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("page"), data)
 }
 
 func (h *Public) categoryWithLoader(c *gin.Context, loader *store.DataLoader) {
@@ -549,7 +555,7 @@ func (h *Public) categoryWithLoader(c *gin.Context, loader *store.DataLoader) {
 	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
@@ -567,7 +573,7 @@ func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
 	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match *permalink.PostPathMatch, loader *store.DataLoader) bool {
@@ -619,10 +625,10 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
 	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
-		c.HTML(http.StatusOK, fragName, data)
+		h.renderHTML(c, http.StatusOK, fragName, data)
 		return true
 	}
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("post"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("post"), data)
 	return true
 }
 
@@ -700,10 +706,10 @@ func (h *Public) renderResolvedPost(c *gin.Context, path string, match *permalin
 		data["NextPost"] = next
 	}
 	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
-		c.HTML(http.StatusOK, fragName, data)
+		h.renderHTML(c, http.StatusOK, fragName, data)
 		return true
 	}
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("post"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("post"), data)
 	return true
 }
 
@@ -742,7 +748,7 @@ func (h *Public) renderArchive(c *gin.Context, p *model.Post, loader *store.Data
 	data := h.base(c, p.Title, "", s, loader)
 	data["Post"] = p
 	data["Groups"] = groups
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("archive"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("archive"), data)
 }
 
 // Category 分类列表页。
@@ -768,7 +774,7 @@ func (h *Public) Category(c *gin.Context) {
 	data["Heading"] = tr.T("分类:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 // Tag 标签列表页。
@@ -794,7 +800,7 @@ func (h *Public) Tag(c *gin.Context) {
 	data["Heading"] = tr.T("标签:%s", displaySlug)
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
-	c.HTML(http.StatusOK, h.renderer.ResolveTemplate("list"), data)
+	h.renderHTML(c, http.StatusOK, h.renderer.ResolveTemplate("list"), data)
 }
 
 // LegacyQueryRedirect 处理 /?p={id} 旧链接 301 到永久链接。
@@ -829,7 +835,7 @@ func (h *Public) notFound(c *gin.Context) {
 	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), nil)
 	data["Code"] = 404
 	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
-	c.HTML(http.StatusNotFound, h.renderer.ResolveTemplate("error"), data)
+	h.renderHTML(c, http.StatusNotFound, h.renderer.ResolveTemplate("error"), data)
 }
 
 func (h *Public) serverError(c *gin.Context, err error) {
@@ -838,7 +844,7 @@ func (h *Public) serverError(c *gin.Context, err error) {
 	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), nil)
 	data["Code"] = 500
 	data["Message"] = tr.T("服务器内部错误,请稍后重试。")
-	c.HTML(http.StatusInternalServerError, h.renderer.ResolveTemplate("error"), data)
+	h.renderHTML(c, http.StatusInternalServerError, h.renderer.ResolveTemplate("error"), data)
 }
 
 // NotFoundOrLegacy 是兜底路由:先尝试 /?p=ID,否则 404。

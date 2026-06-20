@@ -172,8 +172,8 @@ func (h *Admin) ThemePreview(c *gin.Context) {
 		h.redirectThemeSettings(c, tr.T("主题「%s」不存在", name))
 		return
 	}
-	// 加载预览主题的模板到 Renderer（不经过恢复机制，预览失败不影响当前主题）
-	if err := tm.LoadTheme(c, name); err != nil {
+	// 加载预览主题模板到 Renderer 独立缓存（不影响主模板，访客不受影响）
+	if err := tm.LoadPreviewTheme(name); err != nil {
 		h.redirectThemeSettings(c, tr.T("加载预览主题失败: %s", err.Error()))
 		return
 	}
@@ -185,9 +185,8 @@ func (h *Admin) ThemePreview(c *gin.Context) {
 func (h *Admin) ThemePreviewClear(c *gin.Context) {
 	tr := i18n.Get(c)
 	middleware.ClearPreviewTheme(c)
-	// 重新加载实际激活的主题
 	if h.themeManager != nil {
-		_ = h.themeManager.LoadTheme(c, "")
+		h.themeManager.ClearPreviewTheme()
 	}
 	h.redirectThemeSettings(c, tr.T("已退出主题预览"))
 }

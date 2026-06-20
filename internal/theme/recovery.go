@@ -18,6 +18,8 @@ import (
 type ThemeRenderer interface {
 	LoadTheme(themeDir string) error
 	ResetToDefault() error
+	LoadPreviewTheme(themeDir, themeName string) error
+	ClearPreviewTheme()
 }
 
 // RecoveryInfo 记录主题加载失败时的恢复信息。
@@ -168,6 +170,29 @@ func (m *Manager) ReloadCurrentTheme(ctx context.Context) error {
 		name = defaultThemeName
 	}
 	return m.LoadTheme(ctx, name)
+}
+
+// LoadPreviewTheme 加载预览主题的模板到 Renderer 的独立缓存，不影响主模板。
+func (m *Manager) LoadPreviewTheme(name string) error {
+	m.mu.RLock()
+	t := m.themes[name]
+	renderer := m.renderer
+	m.mu.RUnlock()
+
+	if t == nil {
+		return fmt.Errorf("theme %q not found", name)
+	}
+	if renderer == nil {
+		return nil
+	}
+	return renderer.LoadPreviewTheme(t.TemplatesDir(), name)
+}
+
+// ClearPreviewTheme 清除 Renderer 中的预览主题模板缓存。
+func (m *Manager) ClearPreviewTheme() {
+	if m.renderer != nil {
+		m.renderer.ClearPreviewTheme()
+	}
 }
 
 // ThemeDir 返回指定主题的根目录路径。
