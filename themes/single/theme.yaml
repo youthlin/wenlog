@@ -1,9 +1,0 @@
-# 极简暗黑主题 — 单栏布局，纯暗色，无颜色切换
-name: "single"
-version: "3.0"
-description: "极简暗黑单栏主题，纯暗色外观"
-author: "youthlin"
-author_uri: "https://github.com/youthlin"
-theme_uri: "https://github.com/youthlin/blog"
-license: "MIT"
-tags: ["单栏", "暗色", "极简"]
