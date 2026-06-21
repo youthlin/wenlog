@@ -10,42 +10,34 @@
 <form method="post" action="/admin/widgets" id="widgets-form">
   {{template "csrf_field" .}}
 
-  {{/* 可用组件列表 */}}
-  <section class="card settings-card">
-    <h3>{{.t.T "可用组件"}}</h3>
-    <p class="tip">{{.t.T "选择组件和区域，点击添加。"}}</p>
-    <div class="widget-add-row">
-      <select id="widget-add-select" class="widget-add-select">
-        <option value="">{{.t.T "— 选择组件 —"}}</option>
-        {{range .AvailableWidgets}}
-        <option value="{{.ID}}" data-area="{{.Area}}" data-label="{{.Label}}" data-source="{{.Source}}">{{.Label}} ({{if eq .Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}})</option>
-        {{end}}
-      </select>
-      <select id="widget-area-select" class="widget-add-select">
-        <option value="">{{.t.T "— 选择区域 —"}}</option>
-        {{range .Areas}}
-        <option value="{{.AreaKey}}">{{.Area.Name}}</option>
-        {{end}}
-      </select>
-      <button type="button" class="btn btn-secondary" id="widget-add-btn">{{.t.T "添加"}}</button>
-    </div>
-  </section>
-
   {{/* 区域面板 */}}
   {{range .Areas}}
   {{$areaKey := .AreaKey}}
   <section class="card settings-card widget-area-panel" data-area="{{$areaKey}}">
-    <h3>{{.Area.Name}}</h3>
-    {{if .Area.Description}}<p class="tip">{{.Area.Description}}</p>{{end}}
+    <div class="widget-area-title-row">
+      <div>
+        <h3>{{.Area.Name}}</h3>
+        {{if .Area.Description}}<p class="tip">{{.Area.Description}}</p>{{end}}
+      </div>
+      <div class="widget-area-add-row">
+        <select class="widget-add-select" data-area="{{$areaKey}}">
+          <option value="">{{$.t.T "— 选择组件 —"}}</option>
+          {{range $.AvailableWidgets}}
+          <option value="{{.ID}}" data-label="{{.Label}}" data-source="{{.Source}}">{{.Label}} ({{if eq .Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}})</option>
+          {{end}}
+        </select>
+        <button type="button" class="btn btn-secondary widget-add-btn" data-area="{{$areaKey}}">{{$.t.T "添加"}}</button>
+      </div>
+    </div>
 
     {{if .ConfiguredWidgets}}
-    <ul class="widget-config-list" data-area="{{$areaKey}}">
+    <div class="widget-config-list" data-area="{{$areaKey}}">
       {{range .ConfiguredWidgets}}
       {{$w := .}}
-      <li class="widget-config-item" data-widget-id="{{$w.ID}}" data-index="{{$w.Index}}">
+      <div class="widget-config-item" data-widget-id="{{$w.ID}}" data-index="{{$w.Index}}">
         <input type="hidden" name="widgets_{{$areaKey}}" value="{{$w.ID}}">
 
-        <div class="widget-config-header">
+        <div class="widget-config-header" tabindex="0" role="button" aria-expanded="{{if $w.Decl.Options}}false{{else}}false{{end}}">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
           <span class="widget-config-name">{{$w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
           <div class="widget-config-actions">
@@ -56,10 +48,6 @@
         </div>
 
         {{if $w.Decl.Options}}
-        <button type="button" class="widget-config-toggle" aria-expanded="false">
-          <span class="widget-config-toggle-icon">▶</span>
-          <span>{{$.t.T "配置选项"}}</span>
-        </button>
         <div class="widget-config-body" hidden>
           {{range $w.Decl.Options}}
           {{$opt := .}}
@@ -99,11 +87,11 @@
           {{end}}
         </div>
         {{end}}
-      </li>
+      </div>
       {{end}}
-    </ul>
+    </div>
     {{else}}
-    <p class="tip widget-area-empty">{{$.t.T "此区域暂无组件，从上方可用组件列表中添加。"}}</p>
+    <p class="tip widget-area-empty">{{$.t.T "此区域暂无组件，请从右侧选择组件添加。"}}</p>
     {{end}}
   </section>
   {{end}}
@@ -127,24 +115,21 @@
     decls.forEach(function(d) { widgetDecls[d.id] = d; });
   } catch(e) {}
 
-  // ---- 添加组件 ----
-  var addBtn = document.getElementById('widget-add-btn');
-  var widgetSelect = document.getElementById('widget-add-select');
-  var areaSelect = document.getElementById('widget-area-select');
-
-  if (addBtn) {
-    addBtn.addEventListener('click', function() {
-      var widgetId = widgetSelect.value;
-      var areaKey = areaSelect.value;
-      if (!widgetId || !areaKey) return;
-
+  // ---- 添加组件（每个区域独立） ----
+  document.querySelectorAll('.widget-add-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var areaKey = btn.getAttribute('data-area');
       var panel = document.querySelector('.widget-area-panel[data-area="' + areaKey + '"]');
       if (!panel) return;
+
+      var select = panel.querySelector('.widget-add-select');
+      var widgetId = select.value;
+      if (!widgetId) return;
 
       var list = panel.querySelector('.widget-config-list');
       if (!list) {
         var empty = panel.querySelector('.widget-area-empty');
-        list = document.createElement('ul');
+        list = document.createElement('div');
         list.className = 'widget-config-list';
         list.setAttribute('data-area', areaKey);
         if (empty) empty.replaceWith(list);
@@ -153,27 +138,30 @@
       }
 
       var index = list.children.length;
-      var opt = widgetSelect.options[widgetSelect.selectedIndex];
+      var opt = select.options[select.selectedIndex];
       var label = opt.getAttribute('data-label') || opt.text;
       var source = opt.getAttribute('data-source') || 'theme';
 
-      var li = document.createElement('li');
-      li.className = 'widget-config-item';
-      li.setAttribute('data-widget-id', widgetId);
-      li.setAttribute('data-index', index);
-      li.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source);
-      list.appendChild(li);
+      var div = document.createElement('div');
+      div.className = 'widget-config-item';
+      div.setAttribute('data-widget-id', widgetId);
+      div.setAttribute('data-index', index);
+      div.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source);
+      list.appendChild(div);
 
       reindexList(list);
-      bindItemEvents(li);
-      widgetSelect.value = '';
+      bindItemEvents(div);
+      select.value = '';
     });
-  }
+  });
 
   function buildWidgetItemHTML(widgetId, label, areaKey, index, source) {
     var sourceLabel = source === 'builtin' ? t('内置') : t('主题');
+    var decl = widgetDecls[widgetId];
+    var hasOpts = decl && decl.options && decl.options.length > 0;
+
     var html = '<input type="hidden" name="widgets_' + areaKey + '" value="' + widgetId + '">';
-    html += '<div class="widget-config-header">';
+    html += '<div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">';
     html += '<span class="widget-config-handle" aria-label="' + t('拖拽排序') + '">⠿</span>';
     html += '<span class="widget-config-name">' + escapeHTML(label) + ' <span class="widget-source-badge widget-source-' + source + '">' + sourceLabel + '</span></span>';
     html += '<div class="widget-config-actions">';
@@ -182,13 +170,7 @@
     html += '<button type="button" class="btn-icon widget-remove" title="' + t('移除') + '" aria-label="' + t('移除') + '">✕</button>';
     html += '</div></div>';
 
-    // 如果组件有选项，生成配置表单
-    var decl = widgetDecls[widgetId];
-    if (decl && decl.options && decl.options.length > 0) {
-      html += '<button type="button" class="widget-config-toggle" aria-expanded="false">';
-      html += '<span class="widget-config-toggle-icon">▶</span>';
-      html += '<span>' + t('配置选项') + '</span>';
-      html += '</button>';
+    if (hasOpts) {
       html += '<div class="widget-config-body" hidden>';
       for (var i = 0; i < decl.options.length; i++) {
         var opt = decl.options[i];
@@ -250,7 +232,8 @@
   function bindItemEvents(item) {
     var upBtn = item.querySelector('.widget-move-up');
     if (upBtn) {
-      upBtn.addEventListener('click', function() {
+      upBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
         var prev = item.previousElementSibling;
         if (prev && prev.classList.contains('widget-config-item')) {
           item.parentNode.insertBefore(item, prev);
@@ -261,7 +244,8 @@
 
     var downBtn = item.querySelector('.widget-move-down');
     if (downBtn) {
-      downBtn.addEventListener('click', function() {
+      downBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
         var next = item.nextElementSibling;
         if (next && next.classList.contains('widget-config-item')) {
           item.parentNode.insertBefore(next, item);
@@ -272,7 +256,8 @@
 
     var removeBtn = item.querySelector('.widget-remove');
     if (removeBtn) {
-      removeBtn.addEventListener('click', function() {
+      removeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
         var list = item.parentNode;
         item.remove();
         reindexList(list);
@@ -280,21 +265,27 @@
           var panel = list.closest('.widget-area-panel');
           var tip = document.createElement('p');
           tip.className = 'tip widget-area-empty';
-          tip.textContent = '此区域暂无组件，从上方可用组件列表中添加。';
+          tip.textContent = '此区域暂无组件，请从右侧选择组件添加。';
           list.replaceWith(tip);
         }
       });
     }
 
-    var toggle = item.querySelector('.widget-config-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function() {
-        var body = item.querySelector('.widget-config-body');
-        var icon = toggle.querySelector('.widget-config-toggle-icon');
-        var expanded = toggle.getAttribute('aria-expanded') === 'true';
-        toggle.setAttribute('aria-expanded', String(!expanded));
-        body.hidden = expanded;
-        icon.textContent = expanded ? '▶' : '▼';
+    // 点击卡片头部展开/折叠配置
+    var header = item.querySelector('.widget-config-header');
+    var body = item.querySelector('.widget-config-body');
+    if (header && body) {
+      header.addEventListener('click', function(e) {
+        if (e.target.closest('.widget-config-actions') || e.target.closest('.widget-config-handle')) return;
+        var expanded = header.getAttribute('aria-expanded') === 'true';
+        header.setAttribute('aria-expanded', String(!expanded));
+        body.hidden = !expanded;
+      });
+      header.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          header.click();
+        }
       });
     }
   }
@@ -332,7 +323,7 @@
       dragEl = item;
       var pos = getPos(e);
       dragEl.classList.add('is-dragging');
-      placeholder = document.createElement('li');
+      placeholder = document.createElement('div');
       placeholder.className = 'widget-config-placeholder';
       placeholder.style.height = dragEl.offsetHeight + 'px';
       list.insertBefore(placeholder, dragEl.nextSibling);

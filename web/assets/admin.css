@@ -1599,23 +1599,40 @@ body.admin.nav-open { overflow: hidden; }
    组件管理页（v6）
    ============================================================ */
 
-/* 添加组件行 */
-.widget-add-row {
+/* 区域标题行：标题 + 添加按钮 */
+.widget-area-title-row {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  padding: 4px 0;
+}
+.widget-area-title-row h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+.widget-area-title-row .tip {
+  margin: 0;
+  font-size: .85rem;
+  color: var(--muted);
+}
+.widget-area-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
 }
 .widget-add-select {
-  flex: 1;
   min-width: 180px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
   color: var(--fg);
-  font-size: .92rem;
+  font-size: .88rem;
   font-family: inherit;
   cursor: pointer;
   transition: border-color .18s, box-shadow .18s;
@@ -1636,62 +1653,58 @@ body.admin.nav-open { overflow: hidden; }
 .widget-area-panel {
   padding: 24px;
 }
-.widget-area-panel h3 {
-  margin: 0 0 4px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--fg);
-}
-.widget-area-panel > .tip {
-  margin: 0 0 16px;
-  font-size: .85rem;
-  color: var(--muted);
-}
 
-/* 组件配置列表 */
+/* 组件配置列表（卡片容器） */
 .widget-config-list {
-  list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 组件卡片 */
+.widget-config-item {
   border: 1px solid var(--border);
   border-radius: 10px;
-  overflow: hidden;
   background: var(--card);
   box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
-}
-.widget-config-item {
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-  transition: background .15s, box-shadow .15s;
-}
-.widget-config-item:last-child {
-  border-bottom: none;
+  transition: box-shadow .15s, border-color .15s;
+  overflow: hidden;
 }
 .widget-config-item:hover {
-  background: color-mix(in srgb, var(--accent) 3%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
 }
 .widget-config-item.is-dragging {
   opacity: .92;
-  background: var(--card);
   box-shadow: 0 12px 32px rgba(15, 23, 42, .18);
-  border-radius: 10px;
   border: 1.5px solid var(--accent);
   transform: scale(1.01);
 }
 .widget-config-placeholder {
   border: 2px dashed var(--accent);
-  border-radius: 8px;
-  margin: 4px 10px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--accent) 8%, transparent);
+  min-height: 48px;
   transition: all .15s;
 }
 
-/* 组件头部行 */
+/* 组件头部行（可点击展开/折叠） */
 .widget-config-header {
   display: flex;
   align-items: center;
   gap: 0;
   user-select: none;
   min-height: 48px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.widget-config-header:hover {
+  background: color-mix(in srgb, var(--accent) 3%, var(--card));
+}
+.widget-config-header[aria-expanded="true"] {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
 }
 .widget-config-handle {
   display: flex;
@@ -1797,42 +1810,9 @@ body.admin.nav-open { overflow: hidden; }
   border-color: rgba(231, 76, 60, .25);
 }
 
-/* 配置展开/折叠 */
-.widget-config-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 16px 10px 56px;
-  border: none;
-  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-  background: color-mix(in srgb, var(--bg) 40%, var(--card));
-  color: var(--muted);
-  font-size: .85rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: color .15s, background .15s;
-  text-align: left;
-}
-.widget-config-toggle:hover {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 6%, var(--card));
-}
-.widget-config-toggle[aria-expanded="true"] {
-  color: var(--accent);
-  font-weight: 500;
-}
-.widget-config-toggle-icon {
-  font-size: .65rem;
-  transition: transform .2s ease;
-  display: inline-block;
-}
-.widget-config-toggle[aria-expanded="true"] .widget-config-toggle-icon {
-  transform: rotate(90deg);
-}
+/* 配置表单体（点击卡片头部展开） */
 .widget-config-body {
   padding: 16px 16px 16px 56px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
   background: color-mix(in srgb, var(--bg) 55%, var(--card));
 }
 .widget-config-body[hidden] {
@@ -1928,11 +1908,15 @@ body.admin.nav-open { overflow: hidden; }
 
 /* 手机端适配 */
 @media (max-width: 640px) {
-  .widget-add-row {
+  .widget-area-title-row {
     flex-direction: column;
-    align-items: stretch;
+    gap: 12px;
+  }
+  .widget-area-add-row {
+    width: 100%;
   }
   .widget-add-select {
+    flex: 1;
     min-width: 0;
   }
   .widget-area-panel {
@@ -1949,9 +1933,6 @@ body.admin.nav-open { overflow: hidden; }
   }
   .widget-config-body {
     padding: 14px 12px;
-  }
-  .widget-config-toggle {
-    padding-left: 12px;
   }
   .widget-option-field input[type="text"],
   .widget-option-field input[type="number"],
