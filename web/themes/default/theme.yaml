@@ -71,6 +71,16 @@ widgets:
     label: "标签云"
     area: sidebar
 
+  - id: custom_html
+    label: "自定义 HTML"
+    area: sidebar
+    options:
+      - id: html
+        type: textarea
+        label: "HTML 内容"
+        description: "任意 HTML 代码，会原样输出到页面中"
+        default: ""
+
 options:
   - id: custom_css
     type: css
