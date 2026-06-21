@@ -400,14 +400,24 @@ img { max-width: 100%; height: auto; }
 .footer-widgets .widget-user-actions form { margin: 0; }
 
 /* 搜索 widget */
-.footer-widgets .widget-search form { display: block; }
+.footer-widgets .widget-search form { display: flex; gap: 6px; }
+.footer-widgets .widget-search input[type=search] { flex: 1; min-width: 0; }
+.footer-widgets .widget-search button {
+  padding: 8px 14px;
+  background: var(--accent); color: var(--bg);
+  border: 1px solid var(--accent); border-radius: 6px;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition);
+}
+.footer-widgets .widget-search button:hover { opacity: 0.85; }
 
 /* 评论 widget */
 .footer-widgets .widget-comment-line {
   display: flex; align-items: center; gap: 6px;
 }
 .footer-widgets .widget-comment-line a {
-  display: inline-block; width: 100%;
+  min-width: 0; flex: 1;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .footer-widgets .widget-comment-meta {
