@@ -8,7 +8,7 @@ import (
 )
 
 // BuiltinWidgetIDs 内置组件 ID 列表。
-var BuiltinWidgetIDs = []string{"search", "recent_posts", "categories", "tag_cloud", "recent_comments"}
+var BuiltinWidgetIDs = []string{"search", "recent_posts", "categories", "tag_cloud", "recent_comments", "custom_html"}
 
 // IsBuiltinWidget 判断是否为内置组件。
 func IsBuiltinWidget(id string) bool {

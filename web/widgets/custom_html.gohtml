@@ -1,0 +1,8 @@
+{{define "widget_custom_html"}}
+{{$html := widgetOption "html"}}
+{{if $html}}
+<section class="widget widget-custom-html">
+  {{safeHTML $html}}
+</section>
+{{end}}
+{{end}}

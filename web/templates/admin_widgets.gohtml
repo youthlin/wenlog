@@ -18,7 +18,7 @@
       <select id="widget-add-select" class="widget-add-select">
         <option value="">{{.t.T "— 选择组件 —"}}</option>
         {{range .AvailableWidgets}}
-        <option value="{{.ID}}" data-area="{{.Area}}" data-label="{{.Label}}">{{.Label}}</option>
+        <option value="{{.ID}}" data-area="{{.Area}}" data-label="{{.Label}}" data-source="{{.Source}}">{{.Label}} ({{if eq .Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}})</option>
         {{end}}
       </select>
       <select id="widget-area-select" class="widget-add-select">
@@ -47,7 +47,7 @@
 
         <div class="widget-config-header">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
-          <span class="widget-config-name">{{$w.Label}}</span>
+          <span class="widget-config-name">{{$w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
           <div class="widget-config-actions">
             <button type="button" class="btn-icon widget-move-up" title="{{$.t.T "上移"}}" aria-label="{{$.t.T "上移"}}">↑</button>
             <button type="button" class="btn-icon widget-move-down" title="{{$.t.T "下移"}}" aria-label="{{$.t.T "下移"}}">↓</button>
@@ -155,12 +155,13 @@
       var index = list.children.length;
       var opt = widgetSelect.options[widgetSelect.selectedIndex];
       var label = opt.getAttribute('data-label') || opt.text;
+      var source = opt.getAttribute('data-source') || 'theme';
 
       var li = document.createElement('li');
       li.className = 'widget-config-item';
       li.setAttribute('data-widget-id', widgetId);
       li.setAttribute('data-index', index);
-      li.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index);
+      li.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source);
       list.appendChild(li);
 
       reindexList(list);
@@ -169,11 +170,12 @@
     });
   }
 
-  function buildWidgetItemHTML(widgetId, label, areaKey, index) {
+  function buildWidgetItemHTML(widgetId, label, areaKey, index, source) {
+    var sourceLabel = source === 'builtin' ? t('内置') : t('主题');
     var html = '<input type="hidden" name="widgets_' + areaKey + '" value="' + widgetId + '">';
     html += '<div class="widget-config-header">';
     html += '<span class="widget-config-handle" aria-label="' + t('拖拽排序') + '">⠿</span>';
-    html += '<span class="widget-config-name">' + escapeHTML(label) + '</span>';
+    html += '<span class="widget-config-name">' + escapeHTML(label) + ' <span class="widget-source-badge widget-source-' + source + '">' + sourceLabel + '</span></span>';
     html += '<div class="widget-config-actions">';
     html += '<button type="button" class="btn-icon widget-move-up" title="' + t('上移') + '" aria-label="' + t('上移') + '">↑</button>';
     html += '<button type="button" class="btn-icon widget-move-down" title="' + t('下移') + '" aria-label="' + t('下移') + '">↓</button>';
@@ -240,7 +242,7 @@
   }
 
   function t(key) {
-    var map = { '拖拽排序': '拖拽排序', '上移': '上移', '下移': '下移', '移除': '移除', '配置选项': '配置选项', '启用': '启用', '默认值：': '默认值：' };
+    var map = { '拖拽排序': '拖拽排序', '上移': '上移', '下移': '下移', '移除': '移除', '配置选项': '配置选项', '启用': '启用', '默认值：': '默认值：', '内置': '内置', '主题': '主题' };
     return map[key] || key;
   }
 

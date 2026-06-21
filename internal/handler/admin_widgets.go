@@ -14,11 +14,12 @@ import (
 
 // configuredWidget 是模板中一个已配置组件的展示数据。
 type configuredWidget struct {
-	ID    string            // 组件 ID
-	Label string            // 中文显示名
-	Decl  theme.WidgetDecl  // 主题声明（含选项定义）
-	Opts  map[string]string // 当前选项值
-	Index int               // 在区域内的序号
+	ID     string            // 组件 ID
+	Label  string            // 中文显示名
+	Decl   theme.WidgetDecl  // 主题声明（含选项定义）
+	Opts   map[string]string // 当前选项值
+	Index  int               // 在区域内的序号
+	Source string            // "builtin" 或 "theme"
 }
 
 // areaPanel 是模板中一个区域面板的展示数据。
@@ -45,9 +46,10 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 
 	// 可用组件列表（用于"添加"下拉）
 	type availWidget struct {
-		ID    string
-		Label string
-		Area  string // 默认区域
+		ID     string
+		Label  string
+		Area   string // 默认区域
+		Source string // "builtin" 或 "theme"
 	}
 	var availableWidgets []availWidget
 	for _, w := range t.Widgets {
@@ -55,10 +57,15 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		if label == "" {
 			label = w.ID
 		}
+		source := "theme"
+		if theme.IsBuiltinWidget(w.ID) {
+			source = "builtin"
+		}
 		availableWidgets = append(availableWidgets, availWidget{
-			ID:    w.ID,
-			Label: label,
-			Area:  w.Area,
+			ID:     w.ID,
+			Label:  label,
+			Area:   w.Area,
+			Source: source,
 		})
 	}
 
@@ -83,12 +90,17 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 			if opts == nil {
 				opts = make(map[string]string)
 			}
+			source := "theme"
+			if theme.IsBuiltinWidget(item.ID) {
+				source = "builtin"
+			}
 			configured = append(configured, configuredWidget{
-				ID:    item.ID,
-				Label: label,
-				Decl:  decl,
-				Opts:  opts,
-				Index: i,
+				ID:     item.ID,
+				Label:  label,
+				Decl:   decl,
+				Opts:   opts,
+				Index:  i,
+				Source: source,
 			})
 		}
 

@@ -1739,6 +1739,27 @@ body.admin.nav-open { overflow: hidden; }
   border-radius: 5px;
   white-space: nowrap;
 }
+/* 组件来源徽章 */
+.widget-source-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: .72rem;
+  font-weight: 500;
+  padding: 1px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.widget-source-builtin {
+  color: #216e39;
+  background: rgba(46, 160, 67, .12);
+  border: 1px solid rgba(46, 160, 67, .25);
+}
+.widget-source-theme {
+  color: #6f42c1;
+  background: rgba(111, 66, 193, .10);
+  border: 1px solid rgba(111, 66, 193, .22);
+}
 .widget-config-actions {
   display: flex;
   gap: 4px;
