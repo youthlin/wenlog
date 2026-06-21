@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -98,9 +99,13 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		})
 	}
 
+	// 构建完整组件声明 JSON（含 Options），供 JS 动态构建选项表单
+	widgetDeclsJSON, _ := json.Marshal(t.Widgets)
+
 	data := h.base(c, tr.T("组件管理"))
 	data["AvailableWidgets"] = availableWidgets
 	data["Areas"] = areas
+	data["WidgetDeclsJSON"] = template.JS(widgetDeclsJSON)
 	data["CurrentAdminNav"] = "widgets"
 	c.HTML(http.StatusOK, "admin_widgets.gohtml", data)
 }

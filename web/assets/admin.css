@@ -1602,53 +1602,87 @@ body.admin.nav-open { overflow: hidden; }
 /* 添加组件行 */
 .widget-add-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  padding: 4px 0;
 }
 .widget-add-select {
   flex: 1;
-  min-width: 160px;
-  padding: 8px 12px;
+  min-width: 180px;
+  padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
+  border-radius: 8px;
+  background: var(--bg);
   color: var(--fg);
   font-size: .92rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .18s, box-shadow .18s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a94a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.widget-add-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* 区域面板 */
+.widget-area-panel {
+  padding: 24px;
+}
+.widget-area-panel h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+.widget-area-panel > .tip {
+  margin: 0 0 16px;
+  font-size: .85rem;
+  color: var(--muted);
 }
 
 /* 组件配置列表 */
 .widget-config-list {
   list-style: none;
-  margin: 12px 0;
+  margin: 0;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: var(--card);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
 }
 .widget-config-item {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   transition: background .15s, box-shadow .15s;
 }
 .widget-config-item:last-child {
   border-bottom: none;
 }
 .widget-config-item:hover {
-  background: var(--th-bg);
+  background: color-mix(in srgb, var(--accent) 3%, var(--card));
 }
 .widget-config-item.is-dragging {
-  opacity: .85;
+  opacity: .92;
   background: var(--card);
-  box-shadow: 0 8px 24px rgba(0,0,0,.15);
-  border-radius: 8px;
-  border: 1px solid var(--accent);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .18);
+  border-radius: 10px;
+  border: 1.5px solid var(--accent);
+  transform: scale(1.01);
 }
 .widget-config-placeholder {
   border: 2px dashed var(--accent);
-  border-radius: 6px;
-  margin: 2px 8px;
+  border-radius: 8px;
+  margin: 4px 10px;
   background: color-mix(in srgb, var(--accent) 8%, transparent);
+  transition: all .15s;
 }
 
 /* 组件头部行 */
@@ -1657,51 +1691,58 @@ body.admin.nav-open { overflow: hidden; }
   align-items: center;
   gap: 0;
   user-select: none;
+  min-height: 48px;
 }
 .widget-config-handle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  min-width: 36px;
+  width: 40px;
+  min-width: 40px;
   align-self: stretch;
   cursor: grab;
   color: var(--muted);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   letter-spacing: 2px;
   background: transparent;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
   transition: color .15s, background .15s;
   -webkit-user-select: none;
   user-select: none;
   touch-action: none;
-  padding: 10px 0;
 }
 .widget-config-handle:active {
   cursor: grabbing;
 }
 .widget-config-item:hover .widget-config-handle {
   color: var(--fg);
-  background: var(--th-bg);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
 }
 .widget-config-name {
   flex: 1;
-  padding: 10px 14px;
+  padding: 0 16px;
   font-size: .92rem;
+  font-weight: 500;
   color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 .widget-config-name code {
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: .85rem;
+  font-size: .8rem;
+  font-weight: 400;
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 10%, transparent);
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
 }
 .widget-config-actions {
   display: flex;
-  gap: 2px;
-  padding-right: 8px;
+  gap: 4px;
+  padding-right: 10px;
 }
 
 /* 按钮图标 */
@@ -1709,95 +1750,159 @@ body.admin.nav-open { overflow: hidden; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: .85rem;
-  transition: color .15s, background .15s, border-color .15s;
+  font-size: .9rem;
+  transition: color .15s, background .15s, border-color .15s, transform .12s;
   padding: 0;
 }
 .btn-icon:hover {
   color: var(--fg);
-  background: var(--th-bg);
-  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  transform: scale(1.08);
+}
+.btn-icon:active {
+  transform: scale(.95);
 }
 .widget-remove:hover {
   color: #e74c3c;
-  border-color: #e74c3c;
+  background: rgba(231, 76, 60, .08);
+  border-color: rgba(231, 76, 60, .25);
 }
 
 /* 配置展开/折叠 */
 .widget-config-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  padding: 8px 14px 8px 50px;
+  padding: 10px 16px 10px 56px;
   border: none;
-  border-top: 1px solid var(--border);
-  background: transparent;
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  background: color-mix(in srgb, var(--bg) 40%, var(--card));
   color: var(--muted);
   font-size: .85rem;
+  font-family: inherit;
   cursor: pointer;
   transition: color .15s, background .15s;
   text-align: left;
 }
 .widget-config-toggle:hover {
   color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+}
+.widget-config-toggle[aria-expanded="true"] {
+  color: var(--accent);
+  font-weight: 500;
 }
 .widget-config-toggle-icon {
-  font-size: .7rem;
-  transition: transform .15s;
+  font-size: .65rem;
+  transition: transform .2s ease;
+  display: inline-block;
+}
+.widget-config-toggle[aria-expanded="true"] .widget-config-toggle-icon {
+  transform: rotate(90deg);
 }
 .widget-config-body {
-  padding: 12px 14px 12px 50px;
-  border-top: 1px solid var(--border);
-  background: color-mix(in srgb, var(--card) 50%, var(--th-bg));
+  padding: 16px 16px 16px 56px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, var(--card));
+}
+.widget-config-body[hidden] {
+  display: none;
 }
 .widget-option-field {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .widget-option-field:last-child {
   margin-bottom: 0;
 }
 .widget-option-field label strong {
   display: block;
-  font-size: .9rem;
-  margin-bottom: 2px;
+  font-size: .88rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--fg);
+}
+.widget-option-field .tip {
+  margin: 0 0 8px;
+  font-size: .82rem;
+  color: var(--muted);
 }
 .widget-option-field input[type="text"],
 .widget-option-field input[type="number"],
 .widget-option-field textarea,
 .widget-option-field select {
   width: 100%;
-  max-width: 400px;
-  padding: 6px 10px;
+  max-width: 420px;
+  padding: 9px 12px;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
+  border-radius: 8px;
+  background: var(--bg);
   color: var(--fg);
   font-size: .9rem;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.widget-option-field input:focus,
+.widget-option-field textarea:focus,
+.widget-option-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .widget-option-field textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 72px;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+.widget-option-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a94a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
 }
 .widget-option-field .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: .9rem;
   cursor: pointer;
+  padding: 4px 0;
 }
 .widget-option-field .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
   accent-color: var(--accent);
+  cursor: pointer;
+}
+.option-default-hint {
+  margin-top: 6px;
+  font-size: .8rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* 空状态提示 */
+.widget-area-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .9rem;
+  border: 2px dashed color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 50%, var(--card));
 }
 
 /* 手机端适配 */
@@ -1809,20 +1914,23 @@ body.admin.nav-open { overflow: hidden; }
   .widget-add-select {
     min-width: 0;
   }
+  .widget-area-panel {
+    padding: 16px;
+  }
   .widget-config-handle {
     width: 44px;
     min-width: 44px;
     font-size: 1.3rem;
   }
   .widget-config-name {
-    padding: 12px 10px;
+    padding: 0 12px;
     font-size: .95rem;
   }
   .widget-config-body {
-    padding: 12px 10px 12px 10px;
+    padding: 14px 12px;
   }
   .widget-config-toggle {
-    padding-left: 10px;
+    padding-left: 12px;
   }
   .widget-option-field input[type="text"],
   .widget-option-field input[type="number"],

@@ -108,7 +108,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 
 	// v3: 所有常用数据始终注入，不再按需查询
 	if loader != nil {
-		data["RecentPosts"] = loader.RecentPosts(8)
+		data["RecentPosts"] = loader.RecentPosts(20)
 		data["Categories"] = loader.AllCategories()
 		data["Tags"] = loader.AllTags()
 		data["ArchiveMonths"] = loader.ArchiveMonths()
@@ -116,7 +116,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		recentComments := loader.RecentComments(8)
 		data["RecentCommentItems"] = loader.CommentWidgetItems(recentComments)
 	} else {
-		data["RecentPosts"] = h.st.RecentPosts(c, 8)
+		data["RecentPosts"] = h.st.RecentPosts(c, 20)
 		data["Categories"] = h.st.AllCategories(c)
 		data["Tags"] = h.st.AllTags(c)
 		data["ArchiveMonths"] = h.st.ArchiveMonths(c)

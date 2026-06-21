@@ -18,7 +18,7 @@
       <select id="widget-add-select" class="widget-add-select">
         <option value="">{{.t.T "— 选择组件 —"}}</option>
         {{range .AvailableWidgets}}
-        <option value="{{.ID}}" data-area="{{.Area}}">{{.Label}} ({{.ID}})</option>
+        <option value="{{.ID}}" data-area="{{.Area}}" data-label="{{.Label}}">{{.Label}}</option>
         {{end}}
       </select>
       <select id="widget-area-select" class="widget-add-select">
@@ -47,7 +47,7 @@
 
         <div class="widget-config-header">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
-          <span class="widget-config-name">{{$w.Label}} <code>{{$w.ID}}</code></span>
+          <span class="widget-config-name">{{$w.Label}}</span>
           <div class="widget-config-actions">
             <button type="button" class="btn-icon widget-move-up" title="{{$.t.T "上移"}}" aria-label="{{$.t.T "上移"}}">↑</button>
             <button type="button" class="btn-icon widget-move-down" title="{{$.t.T "下移"}}" aria-label="{{$.t.T "下移"}}">↓</button>
@@ -103,7 +103,7 @@
       {{end}}
     </ul>
     {{else}}
-    <p class="tip">{{$.t.T "此区域暂无组件，从上方可用组件列表中添加。"}}</p>
+    <p class="tip widget-area-empty">{{$.t.T "此区域暂无组件，从上方可用组件列表中添加。"}}</p>
     {{end}}
   </section>
   {{end}}
@@ -114,8 +114,19 @@
 <p>{{.t.T "当前主题未声明任何组件区域。"}}</p>
 {{end}}
 
+{{/* 组件声明 JSON，供 JS 动态构建选项表单 */}}
+<script id="widget-decls-json" type="application/json">{{.WidgetDeclsJSON}}</script>
+
 <script>
 (function() {
+  // ---- 组件声明数据 ----
+  var widgetDecls = {};
+  try {
+    var raw = document.getElementById('widget-decls-json').textContent;
+    var decls = JSON.parse(raw);
+    decls.forEach(function(d) { widgetDecls[d.id] = d; });
+  } catch(e) {}
+
   // ---- 添加组件 ----
   var addBtn = document.getElementById('widget-add-btn');
   var widgetSelect = document.getElementById('widget-add-select');
@@ -132,17 +143,18 @@
 
       var list = panel.querySelector('.widget-config-list');
       if (!list) {
-        // 创建空列表
-        var tip = panel.querySelector('.tip');
+        var empty = panel.querySelector('.widget-area-empty');
         list = document.createElement('ul');
         list.className = 'widget-config-list';
         list.setAttribute('data-area', areaKey);
-        if (tip) tip.replaceWith(list);
+        if (empty) empty.replaceWith(list);
         else panel.appendChild(list);
+        initDragSort(list);
       }
 
       var index = list.children.length;
-      var label = widgetSelect.options[widgetSelect.selectedIndex].text;
+      var opt = widgetSelect.options[widgetSelect.selectedIndex];
+      var label = opt.getAttribute('data-label') || opt.text;
 
       var li = document.createElement('li');
       li.className = 'widget-config-item';
@@ -151,11 +163,8 @@
       li.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index);
       list.appendChild(li);
 
-      // 重新编号
       reindexList(list);
-      // 绑定事件
       bindItemEvents(li);
-      // 重置选择
       widgetSelect.value = '';
     });
   }
@@ -164,12 +173,63 @@
     var html = '<input type="hidden" name="widgets_' + areaKey + '" value="' + widgetId + '">';
     html += '<div class="widget-config-header">';
     html += '<span class="widget-config-handle" aria-label="' + t('拖拽排序') + '">⠿</span>';
-    html += '<span class="widget-config-name">' + escapeHTML(label) + ' <code>' + escapeHTML(widgetId) + '</code></span>';
+    html += '<span class="widget-config-name">' + escapeHTML(label) + '</span>';
     html += '<div class="widget-config-actions">';
     html += '<button type="button" class="btn-icon widget-move-up" title="' + t('上移') + '" aria-label="' + t('上移') + '">↑</button>';
     html += '<button type="button" class="btn-icon widget-move-down" title="' + t('下移') + '" aria-label="' + t('下移') + '">↓</button>';
     html += '<button type="button" class="btn-icon widget-remove" title="' + t('移除') + '" aria-label="' + t('移除') + '">✕</button>';
     html += '</div></div>';
+
+    // 如果组件有选项，生成配置表单
+    var decl = widgetDecls[widgetId];
+    if (decl && decl.options && decl.options.length > 0) {
+      html += '<button type="button" class="widget-config-toggle" aria-expanded="false">';
+      html += '<span class="widget-config-toggle-icon">▶</span>';
+      html += '<span>' + t('配置选项') + '</span>';
+      html += '</button>';
+      html += '<div class="widget-config-body" hidden>';
+      for (var i = 0; i < decl.options.length; i++) {
+        var opt = decl.options[i];
+        var fieldId = 'opts_' + areaKey + '_' + index + '_' + opt.id;
+        html += '<div class="widget-option-field">';
+        html += '<label for="' + fieldId + '"><strong>' + escapeHTML(opt.label) + '</strong></label>';
+        if (opt.description) html += '<p class="tip">' + escapeHTML(opt.description) + '</p>';
+
+        var defVal = opt.default || '';
+        switch (opt.type) {
+          case 'textarea':
+            html += '<textarea id="' + fieldId + '" name="' + fieldId + '" rows="3">' + escapeHTML(defVal) + '</textarea>';
+            break;
+          case 'number':
+            html += '<input type="number" id="' + fieldId + '" name="' + fieldId + '" value="' + escapeHTML(defVal) + '"';
+            if (opt.min != null) html += ' min="' + opt.min + '"';
+            if (opt.max != null) html += ' max="' + opt.max + '"';
+            html += '>';
+            break;
+          case 'select':
+            html += '<select id="' + fieldId + '" name="' + fieldId + '">';
+            if (opt.options) {
+              for (var j = 0; j < opt.options.length; j++) {
+                var sel = opt.options[j];
+                html += '<option value="' + escapeHTML(sel.value) + '"' + (sel.value === defVal ? ' selected' : '') + '>' + escapeHTML(sel.label) + '</option>';
+              }
+            }
+            html += '</select>';
+            break;
+          case 'bool':
+            html += '<label class="checkbox-label">';
+            html += '<input type="checkbox" id="' + fieldId + '" name="' + fieldId + '" value="true"' + (defVal === 'true' ? ' checked' : '') + '>';
+            html += '<span>' + t('启用') + '</span>';
+            html += '</label>';
+            break;
+          default:
+            html += '<input type="text" id="' + fieldId + '" name="' + fieldId + '" value="' + escapeHTML(defVal) + '">';
+        }
+        if (opt.default) html += '<p class="option-default-hint">' + t('默认值：') + escapeHTML(opt.default) + '</p>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
     return html;
   }
 
@@ -180,20 +240,12 @@
   }
 
   function t(key) {
-    // 从页面 data 属性读取翻译
-    var el = document.documentElement;
-    var map = {
-      '拖拽排序': el.getAttribute('data-nav-open-label') ? '拖拽排序' : '拖拽排序',
-      '上移': '上移',
-      '下移': '下移',
-      '移除': '移除'
-    };
+    var map = { '拖拽排序': '拖拽排序', '上移': '上移', '下移': '下移', '移除': '移除', '配置选项': '配置选项', '启用': '启用', '默认值：': '默认值：' };
     return map[key] || key;
   }
 
   // ---- 排序 / 移除 / 展开 ----
   function bindItemEvents(item) {
-    // 上移
     var upBtn = item.querySelector('.widget-move-up');
     if (upBtn) {
       upBtn.addEventListener('click', function() {
@@ -205,7 +257,6 @@
       });
     }
 
-    // 下移
     var downBtn = item.querySelector('.widget-move-down');
     if (downBtn) {
       downBtn.addEventListener('click', function() {
@@ -217,25 +268,22 @@
       });
     }
 
-    // 移除
     var removeBtn = item.querySelector('.widget-remove');
     if (removeBtn) {
       removeBtn.addEventListener('click', function() {
         var list = item.parentNode;
         item.remove();
         reindexList(list);
-        // 如果列表为空，显示提示
         if (list.children.length === 0) {
           var panel = list.closest('.widget-area-panel');
           var tip = document.createElement('p');
-          tip.className = 'tip';
+          tip.className = 'tip widget-area-empty';
           tip.textContent = '此区域暂无组件，从上方可用组件列表中添加。';
           list.replaceWith(tip);
         }
       });
     }
 
-    // 展开/折叠配置
     var toggle = item.querySelector('.widget-config-toggle');
     if (toggle) {
       toggle.addEventListener('click', function() {
@@ -254,16 +302,10 @@
     var areaKey = list.getAttribute('data-area');
     items.forEach(function(item, i) {
       item.setAttribute('data-index', i);
-      // 更新 hidden input 的 name
       var input = item.querySelector('input[type="hidden"]');
-      if (input) {
-        input.name = 'widgets_' + areaKey;
-      }
-      // 更新选项字段的 name 前缀
+      if (input) input.name = 'widgets_' + areaKey;
       item.querySelectorAll('[name^="opts_"]').forEach(function(field) {
-        var oldName = field.name;
-        var parts = oldName.split('_');
-        // opts_{areaKey}_{oldIndex}_{optID} -> opts_{areaKey}_{newIndex}_{optID}
+        var parts = field.name.split('_');
         if (parts.length >= 4) {
           parts[2] = String(i);
           field.name = parts.join('_');
@@ -281,15 +323,12 @@
 
   // ---- 拖拽排序 ----
   function initDragSort(list) {
-    var dragEl = null;
-    var placeholder = null;
-    var startY = 0;
+    var dragEl = null, placeholder = null;
 
     function onStart(e, item) {
       if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
       dragEl = item;
       var pos = getPos(e);
-      startY = pos.y;
       dragEl.classList.add('is-dragging');
       placeholder = document.createElement('li');
       placeholder.className = 'widget-config-placeholder';
@@ -309,11 +348,8 @@
       var pos = getPos(e);
       dragEl.style.top = (pos.y - 10) + 'px';
       var after = getDropTarget(list, pos.y);
-      if (after && after !== placeholder) {
-        list.insertBefore(placeholder, after);
-      } else if (!after && placeholder.nextSibling) {
-        list.appendChild(placeholder);
-      }
+      if (after && after !== placeholder) list.insertBefore(placeholder, after);
+      else if (!after && placeholder.nextSibling) list.appendChild(placeholder);
     }
 
     function onEnd() {
@@ -352,15 +388,12 @@
     list.addEventListener('mousedown', function(e) {
       var item = e.target.closest('.widget-config-item');
       if (!item) return;
-      var handle = e.target.closest('.widget-config-handle');
-      if (handle) onStart(e, item);
+      if (e.target.closest('.widget-config-handle')) onStart(e, item);
     });
-
     list.addEventListener('touchstart', function(e) {
       var item = e.target.closest('.widget-config-item');
       if (!item) return;
-      var handle = e.target.closest('.widget-config-handle');
-      if (handle) onStart(e, item);
+      if (e.target.closest('.widget-config-handle')) onStart(e, item);
     }, { passive: false });
 
     document.addEventListener('mousemove', onMove);
