@@ -59,6 +59,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 
 	// 2. 编译 functions.go（如果存在）
 	api := NewAPI(nil) // loader 在请求时注入
+	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
 		return m.fallbackToDefaultLocked(ctx, name, errors.Wrap(err, "compile functions.go"))

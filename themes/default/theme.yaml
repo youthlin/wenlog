@@ -34,6 +34,13 @@ widgets:
     area: sidebar
 
 options:
+  - id: saying_post_id
+    type: number
+    label: "博主动态文章 ID"
+    description: "用于「博主动态」组件的文章/页面 ID，组件会读取该文章下博主本人的评论"
+    default: "456"
+    min: 1
+
   - id: recent_posts_count
     type: number
     label: "最新文章显示数量"

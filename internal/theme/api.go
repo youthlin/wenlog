@@ -170,8 +170,9 @@ type DataProvider func(args map[string]any) any
 // 每个请求共享同一个 API 实例（持有 DataLoader 引用），
 // 但 DataProvider 函数每次请求都会重新执行。
 type API struct {
-	loader    *store.DataLoader
-	providers map[string]DataProvider
+	loader       *store.DataLoader
+	providers    map[string]DataProvider
+	themeOptions []OptionDecl // 主题声明的选项（含默认值），用于 GetOption 回退
 }
 
 // NewAPI 创建 ThemeAPI 实例。
@@ -370,6 +371,27 @@ func (api *API) User(id uint) *UserView {
 // Setting 读取设置项。
 func (api *API) Setting(key string) string {
 	return api.loader.GetSetting(key)
+}
+
+// SetThemeOptions 设置主题声明的选项列表（含默认值），供 GetOption 回退使用。
+func (api *API) SetThemeOptions(opts []OptionDecl) {
+	api.themeOptions = opts
+}
+
+// GetOption 读取主题选项，未配置时回退到 theme.yaml 中的默认值。
+func (api *API) GetOption(themeName, optionID string) string {
+	key := OptionKey(themeName, optionID)
+	val := api.loader.GetSetting(key)
+	if val != "" {
+		return val
+	}
+	// 回退到 theme.yaml 默认值
+	for _, opt := range api.themeOptions {
+		if opt.ID == optionID {
+			return opt.Default
+		}
+	}
+	return ""
 }
 
 // Settings 批量读取设置项。

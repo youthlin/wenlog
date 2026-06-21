@@ -24,7 +24,7 @@ func Register() {
 
 	// saying: 博主动态（读取 saying_post_id 主题选项，返回博主评论）
 	themeapi.Api.RegisterData("saying", func(args map[string]any) any {
-		postIDStr := themeapi.Api.Setting("option_default_saying_post_id")
+		postIDStr := themeapi.Api.GetOption("default", "saying_post_id")
 		if postIDStr == "" {
 			return nil
 		}
