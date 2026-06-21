@@ -1,4 +1,4 @@
-# 默认主题配置 — v5: 支持可自定义侧边栏组件 + 主题选项
+# 默认主题配置 — v6: 组件级选项 + 可重复组件
 name: "default"
 version: "1.0"
 description: "默认主题，内容+边栏双栏设计，带多种颜色外观"
@@ -15,40 +15,63 @@ widget_areas:
 
 widgets:
   - id: user_info
+    label: "用户信息"
     area: sidebar
+
   - id: search
+    label: "搜索"
     area: sidebar
+
   - id: saying
+    label: "博主动态"
     area: sidebar
+    options:
+      - id: post_id
+        type: number
+        label: "文章 ID"
+        description: "用于读取博主评论的文章/页面 ID"
+        default: "456"
+        min: 1
+
   - id: recent_posts
+    label: "近期文章"
     area: sidebar
+    options:
+      - id: count
+        type: number
+        label: "显示数量"
+        default: "5"
+        min: 1
+        max: 20
+
   - id: popular_posts
+    label: "热门文章"
     area: sidebar
+    options:
+      - id: count
+        type: number
+        label: "显示数量"
+        default: "5"
+        min: 1
+        max: 20
+
   - id: recent_comments
+    label: "近期评论"
     area: sidebar
+
   - id: archive_months
+    label: "归档"
     area: sidebar
+
   - id: categories
+    label: "分类目录"
     area: sidebar
+
   - id: tag_cloud
+    label: "标签云"
     area: sidebar
 
 options:
-  - id: saying_post_id
-    type: number
-    label: "博主动态文章 ID"
-    description: "用于「博主动态」组件的文章/页面 ID，组件会读取该文章下博主本人的评论"
-    default: "456"
-    min: 1
-
-  - id: recent_posts_count
-    type: number
-    label: "最新文章显示数量"
-    description: "侧边栏「最新文章」组件显示的文章数"
-    default: "5"
-    min: 1
-    max: 20
-
   - id: custom_css
     type: css
     label: "自定义 CSS"

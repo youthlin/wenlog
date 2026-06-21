@@ -48,8 +48,10 @@ type WidgetArea struct {
 
 // WidgetDecl 描述主题声明的一个可用组件。
 type WidgetDecl struct {
-	ID   string `yaml:"id" json:"id"`
-	Area string `yaml:"area" json:"area"`
+	ID      string       `yaml:"id" json:"id"`
+	Label   string       `yaml:"label" json:"label"`              // v6: 中文显示名
+	Area    string       `yaml:"area" json:"area"`                // 默认区域
+	Options []OptionDecl `yaml:"options,omitempty" json:"options,omitempty"` // v6: 组件级选项
 }
 
 // OptionDecl 描述主题声明的一个可配置选项（v5）。

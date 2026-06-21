@@ -22,46 +22,68 @@ func IsBuiltinWidget(id string) bool {
 
 // WidgetInfo 渲染时使用的组件信息。
 type WidgetInfo struct {
-	ID           string // 组件 ID
-	TemplateName string // 模板 define 名称，如 "widget_search"
+	ID           string            // 组件 ID
+	TemplateName string            // 模板 define 名称，如 "widget_search"
+	Options      map[string]string // v6: 组件选项
+}
+
+// WidgetConfigItem 是 v6 配置格式中的一个条目。
+type WidgetConfigItem struct {
+	ID  string            `json:"id"`
+	Opts map[string]string `json:"opts,omitempty"`
 }
 
 // ResolveWidgets 根据用户配置和主题声明，解析某个区域应渲染的组件列表。
-// userConfigJSON 是 Setting 表中存储的 JSON 数组（如 `["search","recent_posts"]`），为空则使用主题默认。
-// theme 是当前主题，area 是区域名（如 "sidebar"）。
-// 返回按序排列的组件信息列表，缺失模板的组件会被跳过。
+// userConfigJSON 是 Setting 表中存储的 JSON，支持两种格式：
+//   - v4/v5 旧格式: `["search","recent_posts"]`
+//   - v6 新格式: `[{"id":"search"},{"id":"recent_posts","opts":{"count":"10"}}]`
+// 为空则使用主题默认。
 func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
-	var ids []string
-	if userConfigJSON != "" {
-		if err := json.Unmarshal([]byte(userConfigJSON), &ids); err != nil {
-			ids = nil
-		}
-	}
-	if len(ids) == 0 {
+	items := ParseWidgetConfig(userConfigJSON)
+	if len(items) == 0 {
 		// 使用主题默认：该区域声明的全部组件，按 yaml 声明顺序
 		for _, w := range t.Widgets {
 			if w.Area == area {
-				ids = append(ids, w.ID)
+				items = append(items, WidgetConfigItem{ID: w.ID})
 			}
 		}
 	}
 
-	// 构建当前主题可用组件集合
-	available := make(map[string]bool)
-	for _, w := range t.Widgets {
-		available[w.ID] = true
-	}
-
 	var result []WidgetInfo
-	for _, id := range ids {
-		// 检查模板是否存在：主题 widgets/ 目录 > 内置 web/widgets/
-		tmplName := "widget_" + id
-		if !widgetTemplateExists(t, id) && !IsBuiltinWidget(id) {
-			continue // 主题未提供且非内置，跳过
+	for _, item := range items {
+		tmplName := "widget_" + item.ID
+		if !widgetTemplateExists(t, item.ID) && !IsBuiltinWidget(item.ID) {
+			continue
 		}
-		result = append(result, WidgetInfo{ID: id, TemplateName: tmplName})
+		result = append(result, WidgetInfo{
+			ID:           item.ID,
+			TemplateName: tmplName,
+			Options:      item.Opts,
+		})
 	}
 	return result
+}
+
+// ParseWidgetConfig 解析用户配置 JSON，兼容新旧两种格式。
+func ParseWidgetConfig(userConfigJSON string) []WidgetConfigItem {
+	if userConfigJSON == "" {
+		return nil
+	}
+	// 先尝试 v6 新格式: [{"id":"x","opts":{...}}]
+	var items []WidgetConfigItem
+	if err := json.Unmarshal([]byte(userConfigJSON), &items); err == nil {
+		return items
+	}
+	// 回退到 v4/v5 旧格式: ["id1","id2"]
+	var ids []string
+	if err := json.Unmarshal([]byte(userConfigJSON), &ids); err == nil {
+		items = make([]WidgetConfigItem, len(ids))
+		for i, id := range ids {
+			items[i] = WidgetConfigItem{ID: id}
+		}
+		return items
+	}
+	return nil
 }
 
 // widgetTemplateExists 检查主题是否提供了指定组件的模板文件。
@@ -73,11 +95,8 @@ func widgetTemplateExists(t *Theme, id string) bool {
 
 // MissingWidgets 返回用户配置中存在但当前主题未声明的组件 ID 列表。
 func MissingWidgets(userConfigJSON string, t *Theme) []string {
-	if userConfigJSON == "" {
-		return nil
-	}
-	var ids []string
-	if err := json.Unmarshal([]byte(userConfigJSON), &ids); err != nil {
+	items := ParseWidgetConfig(userConfigJSON)
+	if len(items) == 0 {
 		return nil
 	}
 	available := make(map[string]bool)
@@ -85,9 +104,11 @@ func MissingWidgets(userConfigJSON string, t *Theme) []string {
 		available[w.ID] = true
 	}
 	var missing []string
-	for _, id := range ids {
-		if !available[id] {
-			missing = append(missing, id)
+	seen := make(map[string]bool)
+	for _, item := range items {
+		if !available[item.ID] && !seen[item.ID] {
+			missing = append(missing, item.ID)
+			seen[item.ID] = true
 		}
 	}
 	sort.Strings(missing)

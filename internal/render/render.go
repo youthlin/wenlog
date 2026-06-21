@@ -351,6 +351,22 @@ func SetCurrentTemplate(t *template.Template) {
 	currentTemplate = t
 }
 
+// currentWidgetOptions 存储当前渲染组件的选项，供 widgetOption 模板函数使用。
+var currentWidgetOptions map[string]string
+
+// SetCurrentWidgetOptions 设置当前渲染组件的选项。
+func SetCurrentWidgetOptions(opts map[string]string) {
+	currentWidgetOptions = opts
+}
+
+// widgetOption 模板函数：读取当前渲染组件的选项值。
+func widgetOption(key string) string {
+	if currentWidgetOptions == nil {
+		return ""
+	}
+	return currentWidgetOptions[key]
+}
+
 // renderWidgets 渲染指定区域的所有组件，返回 HTML。
 func renderWidgets(area string, data any) template.HTML {
 	if themeWidgetsProvider == nil || currentTemplate == nil {
@@ -373,11 +389,19 @@ func renderWidgets(area string, data any) template.HTML {
 			if !tmplName.IsValid() {
 				continue
 			}
+			// v6: 设置当前组件选项
+			optsField := item.FieldByName("Options")
+			if optsField.IsValid() && !optsField.IsNil() {
+				SetCurrentWidgetOptions(optsField.Interface().(map[string]string))
+			} else {
+				SetCurrentWidgetOptions(nil)
+			}
 			if err := currentTemplate.ExecuteTemplate(&result, tmplName.String(), data); err != nil {
 				continue
 			}
 		}
 	}
+	SetCurrentWidgetOptions(nil)
 	return template.HTML(result.String())
 }
 
@@ -493,6 +517,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"themeData":        themeData,
 		"themeWidgets":     themeWidgets,
 		"renderWidgets":    renderWidgets,
+		"widgetOption":     widgetOption,
 		"widgetInConfig":   func(id string, config []string) bool {
 			for _, c := range config {
 				if c == id {

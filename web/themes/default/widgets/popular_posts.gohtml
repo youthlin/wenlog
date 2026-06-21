@@ -1,8 +1,9 @@
 {{define "widget_popular_posts"}}
+{{$n := widgetOption "count" | toInt | default 5}}
 <section class="widget widget-popular-posts">
   <h3>{{.t.T "最热文章"}}</h3>
   <ul>
-    {{range themeData "popular_posts" "n" 5}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+    {{range themeData "popular_posts" "n" $n}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
   </ul>
 </section>
 {{end}}

@@ -1,5 +1,6 @@
 {{define "widget_saying"}}
-{{$saying := themeData "saying" "n" 5}}
+{{$postID := widgetOption "post_id" | toInt}}
+{{$saying := themeData "saying" "n" 5 "post_id" $postID}}
 {{if $saying}}
 <section class="widget widget-saying">
   <h3>{{.t.T "博主动态"}}</h3>

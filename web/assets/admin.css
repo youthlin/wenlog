@@ -1596,9 +1596,29 @@ body.admin.nav-open { overflow: hidden; }
 }
 
 /* ============================================================
-   组件排序列表（拖拽）
+   组件管理页（v6）
    ============================================================ */
-.widget-sort-list {
+
+/* 添加组件行 */
+.widget-add-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.widget-add-select {
+  flex: 1;
+  min-width: 160px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: .92rem;
+}
+
+/* 组件配置列表 */
+.widget-config-list {
   list-style: none;
   margin: 12px 0;
   padding: 0;
@@ -1607,35 +1627,38 @@ body.admin.nav-open { overflow: hidden; }
   overflow: hidden;
   background: var(--card);
 }
-.widget-sort-item {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 0;
+.widget-config-item {
   border-bottom: 1px solid var(--border);
   transition: background .15s, box-shadow .15s;
-  user-select: none;
 }
-.widget-sort-item:last-child {
+.widget-config-item:last-child {
   border-bottom: none;
 }
-.widget-sort-item:hover {
+.widget-config-item:hover {
   background: var(--th-bg);
 }
-.widget-sort-item.is-dragging {
+.widget-config-item.is-dragging {
   opacity: .85;
   background: var(--card);
   box-shadow: 0 8px 24px rgba(0,0,0,.15);
   border-radius: 8px;
   border: 1px solid var(--accent);
 }
-.widget-sort-placeholder {
+.widget-config-placeholder {
   border: 2px dashed var(--accent);
   border-radius: 6px;
   margin: 2px 8px;
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
-.widget-sort-handle {
+
+/* 组件头部行 */
+.widget-config-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  user-select: none;
+}
+.widget-config-handle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1652,53 +1675,160 @@ body.admin.nav-open { overflow: hidden; }
   -webkit-user-select: none;
   user-select: none;
   touch-action: none;
+  padding: 10px 0;
 }
-.widget-sort-handle:active {
+.widget-config-handle:active {
   cursor: grabbing;
 }
-.widget-sort-item:hover .widget-sort-handle {
+.widget-config-item:hover .widget-config-handle {
   color: var(--fg);
   background: var(--th-bg);
 }
-.widget-sort-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+.widget-config-name {
   flex: 1;
-  cursor: pointer;
+  padding: 10px 14px;
   font-size: .92rem;
   color: var(--fg);
 }
-.widget-sort-label input[type="checkbox"] {
+.widget-config-name code {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: .85rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.widget-config-actions {
+  display: flex;
+  gap: 2px;
+  padding-right: 8px;
+}
+
+/* 按钮图标 */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .85rem;
+  transition: color .15s, background .15s, border-color .15s;
+  padding: 0;
+}
+.btn-icon:hover {
+  color: var(--fg);
+  background: var(--th-bg);
+  border-color: var(--accent);
+}
+.widget-remove:hover {
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+/* 配置展开/折叠 */
+.widget-config-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 14px 8px 50px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: .85rem;
+  cursor: pointer;
+  transition: color .15s, background .15s;
+  text-align: left;
+}
+.widget-config-toggle:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.widget-config-toggle-icon {
+  font-size: .7rem;
+  transition: transform .15s;
+}
+.widget-config-body {
+  padding: 12px 14px 12px 50px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 50%, var(--th-bg));
+}
+.widget-option-field {
+  margin-bottom: 12px;
+}
+.widget-option-field:last-child {
+  margin-bottom: 0;
+}
+.widget-option-field label strong {
+  display: block;
+  font-size: .9rem;
+  margin-bottom: 2px;
+}
+.widget-option-field input[type="text"],
+.widget-option-field input[type="number"],
+.widget-option-field textarea,
+.widget-option-field select {
+  width: 100%;
+  max-width: 400px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: .9rem;
+}
+.widget-option-field textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+.widget-option-field .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .9rem;
+  cursor: pointer;
+}
+.widget-option-field .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
   accent-color: var(--accent);
-  flex-shrink: 0;
-}
-.widget-sort-name {
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: .88rem;
-}
-.widget-sort-item.is-active .widget-sort-name {
-  color: var(--accent);
-  font-weight: 600;
 }
 
-/* 手机端：手柄更大，方便触摸 */
+/* 手机端适配 */
 @media (max-width: 640px) {
-  .widget-sort-handle {
+  .widget-add-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .widget-add-select {
+    min-width: 0;
+  }
+  .widget-config-handle {
     width: 44px;
     min-width: 44px;
     font-size: 1.3rem;
   }
-  .widget-sort-label {
-    padding: 12px 14px;
+  .widget-config-name {
+    padding: 12px 10px;
     font-size: .95rem;
   }
-  .widget-sort-label input[type="checkbox"] {
-    width: 22px;
-    height: 22px;
+  .widget-config-body {
+    padding: 12px 10px 12px 10px;
+  }
+  .widget-config-toggle {
+    padding-left: 10px;
+  }
+  .widget-option-field input[type="text"],
+  .widget-option-field input[type="number"],
+  .widget-option-field textarea,
+  .widget-option-field select {
+    max-width: 100%;
   }
 }
 

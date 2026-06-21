@@ -2,7 +2,6 @@ package theme
 
 import (
 	"sort"
-	"strconv"
 	"themeapi"
 )
 
@@ -22,14 +21,10 @@ func Register() {
 		return posts[:n]
 	})
 
-	// saying: 博主动态（读取 saying_post_id 主题选项，返回博主评论）
+	// saying: 博主动态（从参数读取 post_id，由 widgetOption 传入）
 	themeapi.Api.RegisterData("saying", func(args map[string]any) any {
-		postIDStr := themeapi.Api.GetOption("default", "saying_post_id")
-		if postIDStr == "" {
-			return nil
-		}
-		postID, err := strconv.Atoi(postIDStr)
-		if err != nil || postID <= 0 {
+		postID := getInt(args, "post_id", 0)
+		if postID <= 0 {
 			return nil
 		}
 		n := getInt(args, "n", 5)

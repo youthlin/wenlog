@@ -1,5 +1,5 @@
 {{define "widget_recent_posts"}}
-{{$n := themeData "option" "recent_posts_count" | toInt | default 5}}
+{{$n := widgetOption "count" | toInt | default 5}}
 <section class="widget widget-recent-posts">
   <h3>{{.t.T "近期文章"}}</h3>
   <ul>
