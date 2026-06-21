@@ -45,7 +45,6 @@ type publicSettings struct {
 	TagPrefix        string
 	PageSize         int
 	FeedSize         int
-	SayingPostID     uint
 	DefaultAvatar    string
 	RegistrationOpen bool
 	ShowSQLDetails   bool
@@ -116,32 +115,12 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 
 		recentComments := loader.RecentComments(8)
 		data["RecentCommentItems"] = loader.CommentWidgetItems(recentComments)
-
-		sayingComments := loader.SayingComments(s.SayingPostID, 5)
-		sayingItems := loader.CommentWidgetItems(sayingComments)
-		data["SayingCommentItems"] = sayingItems
-		if s.SayingPostID > 0 {
-			if len(sayingItems) > 0 {
-				data["SayingPost"] = &sayingItems[0].Post
-			} else if p := loader.PostMeta(s.SayingPostID); p != nil {
-				data["SayingPost"] = p
-			}
-		}
 	} else {
 		data["RecentPosts"] = h.st.RecentPosts(c, 8)
 		data["Categories"] = h.st.AllCategories(c)
 		data["Tags"] = h.st.AllTags(c)
 		data["ArchiveMonths"] = h.st.ArchiveMonths(c)
 		data["RecentCommentItems"] = h.st.RecentCommentItems(c, 8, commentPageSize)
-		sayingItems := h.st.SayingCommentItems(c, s.SayingPostID, 5, commentPageSize)
-		data["SayingCommentItems"] = sayingItems
-		if s.SayingPostID > 0 {
-			if len(sayingItems) > 0 {
-				data["SayingPost"] = &sayingItems[0].Post
-			} else if p, err := h.st.PostMeta(c, s.SayingPostID); err == nil && p.Status == model.StatusPublished {
-				data["SayingPost"] = p
-			}
-		}
 	}
 
 	// 缓存主题名和版本号
@@ -164,16 +143,6 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 	} else {
 		data["CurrentUserName"] = ""
 	}
-	// saying widget 需要的作者信息
-	if sp, ok := data["SayingPost"]; ok && loader != nil {
-		if p, ok := sp.(*model.Post); ok && p != nil {
-			if u, ok := loader.Users[p.AuthorID]; ok {
-				data["SayingAuthorName"] = u.DisplayName
-				data["SayingAuthorEmail"] = u.Email
-			}
-		}
-	}
-
 	// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
 	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
 		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
@@ -248,7 +217,6 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 		consts.SettingsSiteLogo,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
-		consts.SettingsSayingPageID,
 		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
 		consts.SettingsShowSQLDetails,
@@ -265,7 +233,6 @@ func (h *Public) loadSettingsFromLoader(loader *store.DataLoader) publicSettings
 		consts.SettingsSiteLogo,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
-		consts.SettingsSayingPageID,
 		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
 		consts.SettingsShowSQLDetails,
@@ -283,7 +250,6 @@ func (h *Public) buildSettings(settings map[string]string) publicSettings {
 		TagPrefix:        permalink.CurrentTagPrefix(),
 		PageSize:         positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize),
 		FeedSize:         positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
-		SayingPostID:     uint(positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)),
 		DefaultAvatar:    util.NormalizeDefaultAvatar(settings[consts.SettingsDefaultAvatar]),
 		RegistrationOpen: settings[consts.SettingsRegistrationOpen] == "true",
 		ShowSQLDetails:   settings[consts.SettingsShowSQLDetails] == "true",

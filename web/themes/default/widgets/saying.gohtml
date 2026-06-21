@@ -1,14 +1,19 @@
 {{define "widget_saying"}}
+{{$saying := themeData "saying" "n" 5}}
+{{if $saying}}
 <section class="widget widget-saying">
   <h3>{{.t.T "博主动态"}}</h3>
+  {{if $saying}}
   <div class="widget-saying-author">
-    <img class="avatar" src="{{avatarURL .SayingAuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
-    <span>{{.SayingAuthorName}}</span>
+    <img class="avatar" src="{{avatarURL (index $saying 0).AuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
+    <span>{{(index $saying 0).AuthorName}}</span>
   </div>
+  {{end}}
   <ul>
-    {{range .SayingCommentItems}}
+    {{range $saying}}
     <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>
     {{end}}
   </ul>
 </section>
+{{end}}
 {{end}}

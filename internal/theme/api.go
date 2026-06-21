@@ -3,6 +3,7 @@ package theme
 
 import (
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/youthlin/blog/internal/model"
@@ -426,4 +427,70 @@ func (api *API) CategoryURL(slug string) string {
 // TagURL 生成标签永久链接。
 func (api *API) TagURL(slug string) string {
 	return permalink.Tag(slug)
+}
+
+// --- Saying（博主动态） ---
+
+// SayingItem 是博主动态组件的一条评论项。
+type SayingItem struct {
+	CommentURL string
+	AuthorURL  string
+	Snippet    string
+	AuthorName  string
+	AuthorEmail string
+}
+
+// SayingItems 返回指定文章下博主本人的评论，用于博主动态组件。
+// postID 为 0 时返回 nil。
+func (api *API) SayingItems(postID uint, n int) []SayingItem {
+	if postID == 0 || api.loader == nil {
+		return nil
+	}
+	comments := api.loader.SayingComments(postID, n)
+	if len(comments) == 0 {
+		return nil
+	}
+	// 获取博主信息
+	p := api.loader.Posts[postID]
+	if p == nil {
+		return nil
+	}
+	author, ok := api.loader.Users[p.AuthorID]
+	if !ok {
+		return nil
+	}
+	authorName := author.DisplayName
+	authorEmail := author.Email
+
+	// 构建评论链接前缀
+	base := "/"
+	if p.PostType == model.PostTypePage {
+		base = permalink.Page(p)
+	} else {
+		base = permalink.Post(p)
+	}
+
+	var items []SayingItem
+	for i := range comments {
+		c := &comments[i]
+		item := SayingItem{
+			CommentURL:  base + "#comment-" + strconv.Itoa(int(c.ID)),
+			Snippet:     commentSnippet(c.Content),
+			AuthorName:  authorName,
+			AuthorEmail: authorEmail,
+		}
+		if c.URL != "" {
+			item.AuthorURL = c.URL
+		}
+		items = append(items, item)
+	}
+	return items
+}
+
+func commentSnippet(content string) string {
+	runes := []rune(content)
+	if len(runes) <= 36 {
+		return content
+	}
+	return string(runes[:36]) + "…"
 }

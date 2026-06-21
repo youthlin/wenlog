@@ -81,7 +81,6 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsTagPrefix,
 		consts.SettingsPageSize,
 		consts.SettingsFeedSize,
-		consts.SettingsSayingPageID,
 		consts.SettingsDefaultAvatar,
 		consts.SettingsSessionSecret,
 		consts.SettingsRegistrationOpen,
@@ -104,7 +103,6 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["TagPrefixValue"] = util.FirstNonEmptyOr(consts.SettingsTagPrefixDefault, settings[consts.SettingsTagPrefix])
 	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
 	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
-	data["SayingPageIDValue"] = positiveIntSetting(settings[consts.SettingsSayingPageID], consts.SettingsSayingPageIDDefault)
 	data["DefaultAvatarValue"] = util.NormalizeDefaultAvatar(settings[consts.SettingsDefaultAvatar])
 	data["RegistrationOpenValue"] = settings[consts.SettingsRegistrationOpen] == "true"
 	data["SMTPHostValue"] = settings[consts.SettingsSMTPHost]
@@ -209,7 +207,6 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		pageSize = defaultPublicPageSize
 	}
 	feedSize := positiveIntSetting(c.PostForm("feed_size"), defaultFeedSize)
-	sayingPageID := positiveIntSetting(c.PostForm("saying_page_id"), consts.SettingsSayingPageIDDefault)
 	defaultAvatar := util.NormalizeDefaultAvatar(c.PostForm("default_avatar"))
 
 	catNorm, tagNorm, ok := h.validateSiteSettingsPermalink(c, tr, postPermalink, categoryPrefix, tagPrefix)
@@ -226,7 +223,6 @@ func (h *Admin) SaveSiteSettings(c *gin.Context) {
 		consts.SettingsTagPrefix:      tagNorm,
 		consts.SettingsPageSize:       strconv.Itoa(pageSize),
 		consts.SettingsFeedSize:       strconv.Itoa(feedSize),
-		consts.SettingsSayingPageID:   strconv.Itoa(sayingPageID),
 		consts.SettingsDefaultAvatar:  defaultAvatar,
 	}
 	if err := h.setSettings(c, settings); err != nil {

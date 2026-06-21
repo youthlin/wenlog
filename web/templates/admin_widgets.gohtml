@@ -7,7 +7,7 @@
 {{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
 
 {{if .Areas}}
-<form method="post" action="/admin/widgets">
+<form method="post" action="/admin/widgets" id="widgets-form">
   {{template "csrf_field" .}}
   {{range .Areas}}
   <section class="card settings-card">
@@ -20,20 +20,22 @@
     </p>
     {{end}}
 
-    <div class="widget-config-list" data-area="{{.Area.Name}}">
-      {{range .Widgets}}
-      <label class="widget-config-item">
-        <input type="checkbox" name="widgets_{{$.Area.Name}}" value="{{.ID}}"
-          {{if widgetInConfig .ID $.Config}}checked{{end}}>
-        <span class="widget-config-id">{{.ID}}</span>
-      </label>
-      {{else}}
-      <p class="tip">{{$.t.T "当前主题未声明任何组件。"}}</p>
-      {{end}}
-    </div>
-
     {{if .Widgets}}
-    <p class="tip">{{$.t.T "勾选要显示的组件，拖拽调整顺序。"}}</p>
+    <ul class="widget-sort-list" data-area="{{.Area.Name}}">
+      {{range .Widgets}}
+      <li class="widget-sort-item{{if widgetInConfig .ID $.Config}} is-active{{end}}">
+        <span class="widget-sort-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
+        <label class="widget-sort-label">
+          <input type="checkbox" name="widgets_{{$.Area.Name}}" value="{{.ID}}"
+            {{if widgetInConfig .ID $.Config}}checked{{end}}>
+          <span class="widget-sort-name">{{.ID}}</span>
+        </label>
+      </li>
+      {{end}}
+    </ul>
+    <p class="tip">{{$.t.T "勾选要显示的组件，拖拽 ⠿ 手柄调整顺序。"}}</p>
+    {{else}}
+    <p class="tip">{{$.t.T "当前主题未声明任何组件。"}}</p>
     {{end}}
   </section>
   {{end}}
@@ -43,6 +45,106 @@
 {{else}}
 <p>{{.t.T "当前主题未声明任何组件区域。"}}</p>
 {{end}}
+
+<script>
+(function() {
+  function initSortList(list) {
+    var items = list.querySelectorAll('.widget-sort-item');
+    var dragEl = null;
+    var dragStartY = 0;
+    var dragStartX = 0;
+    var placeholder = null;
+    var initialIndex = -1;
+
+    function getEventPos(e) {
+      if (e.touches && e.touches.length) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      if (e.changedTouches && e.changedTouches.length) {
+        return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function onStart(e, item) {
+      if (e.target.tagName === 'INPUT') return;
+      dragEl = item;
+      var pos = getEventPos(e);
+      dragStartY = pos.y;
+      dragStartX = pos.x;
+      initialIndex = Array.prototype.indexOf.call(list.children, item);
+      dragEl.classList.add('is-dragging');
+      placeholder = document.createElement('li');
+      placeholder.className = 'widget-sort-placeholder';
+      placeholder.style.height = dragEl.offsetHeight + 'px';
+      list.insertBefore(placeholder, dragEl.nextSibling);
+      dragEl.style.position = 'fixed';
+      dragEl.style.zIndex = '1000';
+      dragEl.style.width = list.offsetWidth + 'px';
+      dragEl.style.left = list.getBoundingClientRect().left + 'px';
+      dragEl.style.top = (pos.y - 10) + 'px';
+      dragEl.style.pointerEvents = 'none';
+    }
+
+    function onMove(e) {
+      if (!dragEl) return;
+      e.preventDefault();
+      var pos = getEventPos(e);
+      dragEl.style.top = (pos.y - 10) + 'px';
+
+      var after = getDropTarget(list, pos.y);
+      if (after && after !== placeholder) {
+        list.insertBefore(placeholder, after);
+      } else if (!after && placeholder.nextSibling) {
+        list.appendChild(placeholder);
+      }
+    }
+
+    function onEnd(e) {
+      if (!dragEl) return;
+      dragEl.classList.remove('is-dragging');
+      dragEl.style.position = '';
+      dragEl.style.zIndex = '';
+      dragEl.style.width = '';
+      dragEl.style.left = '';
+      dragEl.style.top = '';
+      dragEl.style.pointerEvents = '';
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.insertBefore(dragEl, placeholder);
+        placeholder.parentNode.removeChild(placeholder);
+      }
+      dragEl = null;
+      placeholder = null;
+    }
+
+    function getDropTarget(container, y) {
+      var items = container.querySelectorAll('.widget-sort-item:not(.is-dragging)');
+      for (var i = 0; i < items.length; i++) {
+        var rect = items[i].getBoundingClientRect();
+        if (y < rect.top + rect.height / 2) {
+          return items[i];
+        }
+      }
+      return null;
+    }
+
+    items.forEach(function(item) {
+      var handle = item.querySelector('.widget-sort-handle');
+      if (!handle) return;
+
+      handle.addEventListener('mousedown', function(e) { onStart(e, item); });
+      handle.addEventListener('touchstart', function(e) { onStart(e, item); }, { passive: false });
+    });
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
+
+  document.querySelectorAll('.widget-sort-list').forEach(initSortList);
+})();
+</script>
 
 {{template "admin_footer" .}}
 {{end}}

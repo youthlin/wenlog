@@ -1594,3 +1594,204 @@ body.admin.nav-open { overflow: hidden; }
   max-height: 400px;
   overflow-y: auto;
 }
+
+/* ============================================================
+   组件排序列表（拖拽）
+   ============================================================ */
+.widget-sort-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+}
+.widget-sort-item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s, box-shadow .15s;
+  user-select: none;
+}
+.widget-sort-item:last-child {
+  border-bottom: none;
+}
+.widget-sort-item:hover {
+  background: var(--th-bg);
+}
+.widget-sort-item.is-dragging {
+  opacity: .85;
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+}
+.widget-sort-placeholder {
+  border: 2px dashed var(--accent);
+  border-radius: 6px;
+  margin: 2px 8px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.widget-sort-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  align-self: stretch;
+  cursor: grab;
+  color: var(--muted);
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  background: transparent;
+  border-right: 1px solid var(--border);
+  transition: color .15s, background .15s;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+.widget-sort-handle:active {
+  cursor: grabbing;
+}
+.widget-sort-item:hover .widget-sort-handle {
+  color: var(--fg);
+  background: var(--th-bg);
+}
+.widget-sort-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  flex: 1;
+  cursor: pointer;
+  font-size: .92rem;
+  color: var(--fg);
+}
+.widget-sort-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.widget-sort-name {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: .88rem;
+}
+.widget-sort-item.is-active .widget-sort-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 手机端：手柄更大，方便触摸 */
+@media (max-width: 640px) {
+  .widget-sort-handle {
+    width: 44px;
+    min-width: 44px;
+    font-size: 1.3rem;
+  }
+  .widget-sort-label {
+    padding: 12px 14px;
+    font-size: .95rem;
+  }
+  .widget-sort-label input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* ============================================================
+   主题选项页
+   ============================================================ */
+.theme-options-form .settings-card {
+  padding: 20px 24px;
+}
+.theme-options-form .settings-card label strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: var(--fg);
+}
+.theme-options-form .settings-card .tip {
+  margin: 0 0 12px;
+  font-size: .85rem;
+  color: var(--muted);
+}
+.theme-options-form input[type="text"],
+.theme-options-form input[type="number"],
+.theme-options-form input[type="url"],
+.theme-options-form select,
+.theme-options-form textarea {
+  width: 100%;
+  max-width: 520px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .92rem;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.theme-options-form input:focus,
+.theme-options-form select:focus,
+.theme-options-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.theme-options-form input[type="color"] {
+  width: 48px;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--bg);
+}
+.theme-options-form .code-textarea {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: .85rem;
+  line-height: 1.5;
+  tab-size: 2;
+}
+.theme-options-form .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .92rem;
+  cursor: pointer;
+}
+.theme-options-form .checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.theme-options-form .option-preview-img {
+  margin-top: 8px;
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.theme-options-form .option-default-hint {
+  margin-top: 8px;
+  font-size: .82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .theme-options-form .settings-card {
+    padding: 16px;
+  }
+  .theme-options-form input[type="text"],
+  .theme-options-form input[type="number"],
+  .theme-options-form input[type="url"],
+  .theme-options-form select,
+  .theme-options-form textarea {
+    max-width: 100%;
+  }
+}
