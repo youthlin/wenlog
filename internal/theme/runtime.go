@@ -7,6 +7,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/render"
+	"github.com/youthlin/blog/internal/store"
 )
 
 // RecoveryInfo 记录主题加载失败时的恢复信息。
@@ -31,7 +32,7 @@ func (m *Manager) BindTemplateFunctions() {
 		if t == nil {
 			return nil
 		}
-		config, _ := m.store.GetSetting(context.Background(), "widget_"+area)
+		config := m.renderSetting(ctx, "widget_"+area)
 		return ResolveWidgets(config, t, area)
 	})
 
@@ -40,18 +41,23 @@ func (m *Manager) BindTemplateFunctions() {
 		if t == nil {
 			return ""
 		}
-		key := OptionKey(t.Name, optionID)
-		val, _ := m.store.GetSetting(context.Background(), key)
-		if val != "" {
-			return val
-		}
-		for _, opt := range t.Options {
-			if opt.ID == optionID {
-				return opt.Default
-			}
-		}
-		return ""
+		return GetOptionByID(func(key string) (string, error) {
+			return m.renderSetting(ctx, key), nil
+		}, t.Name, t.Options, optionID)
 	})
+}
+
+func (m *Manager) renderSetting(ctx *render.RequestContext, key string) string {
+	if ctx != nil {
+		if loader, ok := ctx.ThemeLoader.(*store.DataLoader); ok && loader != nil {
+			return loader.GetSetting(key)
+		}
+	}
+	if m == nil || m.store == nil {
+		return ""
+	}
+	value, _ := m.store.GetSetting(context.Background(), key)
+	return value
 }
 
 func (m *Manager) renderTheme(ctx *render.RequestContext) *Theme {
@@ -71,8 +77,8 @@ func (m *Manager) renderTheme(ctx *render.RequestContext) *Theme {
 // name 为空时加载当前激活的主题。
 // 返回 nil 表示加载成功；返回 error 表示已回退到默认主题。
 func (m *Manager) LoadTheme(ctx context.Context, name string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.runtimeMu.Lock()
+	defer m.runtimeMu.Unlock()
 
 	if name == "" {
 		var err error
@@ -82,10 +88,12 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 		}
 	}
 
+	m.mu.RLock()
 	t := m.themes[name]
+	m.mu.RUnlock()
 	if t == nil {
 		err := errors.Errorf("主题[%s]未找到", name)
-		return m.fallbackToDefaultLocked(ctx, name, err)
+		return m.fallbackToDefault(ctx, name, err)
 	}
 
 	// 1. 加载模板
@@ -93,7 +101,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	if m.renderer != nil {
 		if err := m.renderer.LoadThemeTemplates(templatesDir); err != nil {
 			err = errors.Wrap(err, "加载主题模板失败")
-			return m.fallbackToDefaultLocked(ctx, name, err)
+			return m.fallbackToDefault(ctx, name, err)
 		}
 	}
 
@@ -103,13 +111,15 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")
-		return m.fallbackToDefaultLocked(ctx, name, err)
+		return m.fallbackToDefault(ctx, name, err)
 	}
 
 	// 3. 成功：更新状态
+	m.mu.Lock()
 	m.currentScript = script
 	m.currentAPI = api
 	m.recoveryInfo = nil
+	m.mu.Unlock()
 
 	// 注册 themeData 模板函数
 	if m.renderer != nil {
@@ -130,8 +140,8 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	return nil
 }
 
-// fallbackToDefaultLocked 回退到默认主题（调用方必须持有 m.mu 写锁）。
-func (m *Manager) fallbackToDefaultLocked(ctx context.Context, failedName string, err error) error {
+// fallbackToDefault 回退到默认主题。
+func (m *Manager) fallbackToDefault(ctx context.Context, failedName string, err error) error {
 	if m.log != nil {
 		m.log.Error("theme load failed, falling back to default",
 			"failed_theme", failedName,
@@ -139,20 +149,19 @@ func (m *Manager) fallbackToDefaultLocked(ctx context.Context, failedName string
 		)
 	}
 
-	// 记录恢复信息（供后台展示警告）
+	m.mu.Lock()
 	m.recoveryInfo = &RecoveryInfo{
 		FailedTheme: failedName,
 		Error:       err.Error(),
 	}
-
-	// 清空自定义 DataProvider
 	m.currentScript = nil
 	m.currentAPI = nil
+	m.mu.Unlock()
+
 	if m.renderer != nil {
 		m.renderer.SetThemeDataProvider(nil)
 	}
 
-	// 回退模板到默认主题
 	if m.renderer != nil {
 		if rerr := m.renderer.ResetToDefault(); rerr != nil && m.log != nil {
 			m.log.Error("reset to default theme failed", "error", rerr)

@@ -18,3 +18,13 @@ func GetOption(getSetting func(key string) (string, error), themeName string, op
 	}
 	return val
 }
+
+// GetOptionByID 从选项声明列表中查找指定 option 并读取其配置值。
+func GetOptionByID(getSetting func(key string) (string, error), themeName string, options []OptionDecl, optionID string) string {
+	for _, opt := range options {
+		if opt.ID == optionID {
+			return GetOption(getSetting, themeName, opt)
+		}
+	}
+	return ""
+}

@@ -30,6 +30,8 @@ type Manager struct {
 	themes    map[string]*Theme // name → Theme
 
 	// 运行时状态：模板渲染器、functions 脚本、恢复信息。
+	runtimeMu     sync.Mutex
+	themeOpMu     sync.Mutex
 	mu            sync.RWMutex
 	renderer      *render.Renderer
 	log           *slog.Logger
@@ -86,7 +88,7 @@ func (m *Manager) LoadTranslations() error {
 	if m == nil {
 		return nil
 	}
-	for _, t := range m.themes {
+	for _, t := range m.List() {
 		if err := t.LoadTranslations(); err != nil {
 			return err
 		}
@@ -96,6 +98,9 @@ func (m *Manager) LoadTranslations() error {
 
 // List 返回所有已安装的主题列表，按名称排序。
 func (m *Manager) List() []*Theme {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	names := make([]string, 0, len(m.themes))
 	for name := range m.themes {
 		names = append(names, name)
@@ -110,6 +115,8 @@ func (m *Manager) List() []*Theme {
 
 // Get 按名称获取主题，不存在返回 nil。
 func (m *Manager) Get(name string) *Theme {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.themes[name]
 }
 
@@ -119,6 +126,8 @@ func (m *Manager) Current(ctx context.Context) *Theme {
 	if err != nil || name == "" {
 		name = defaultThemeName
 	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	t := m.themes[name]
 	if t == nil {
 		t = m.themes[defaultThemeName]
@@ -130,7 +139,7 @@ func (m *Manager) Current(ctx context.Context) *Theme {
 // previewName 为空时等同于 Current()。
 func (m *Manager) CurrentWithPreview(ctx context.Context, previewName string) *Theme {
 	if previewName != "" {
-		if t := m.themes[previewName]; t != nil {
+		if t := m.Get(previewName); t != nil {
 			return t
 		}
 	}
@@ -139,7 +148,7 @@ func (m *Manager) CurrentWithPreview(ctx context.Context, previewName string) *T
 
 // Activate 激活指定主题并持久化。
 func (m *Manager) Activate(ctx context.Context, name string) error {
-	if _, ok := m.themes[name]; !ok {
+	if m.Get(name) == nil {
 		return errors.Errorf("theme %q not found", name)
 	}
 	return m.store.SetSetting(ctx, settingCurrentTheme, name)
@@ -148,6 +157,9 @@ func (m *Manager) Activate(ctx context.Context, name string) error {
 // Install 从已解压的目录安装主题。dir 是主题根目录（含 theme.yaml）。
 // 安装过程：校验 → 暂存复制 → 备份旧目录 → 原子替换。
 func (m *Manager) Install(dir string) (*Theme, error) {
+	m.themeOpMu.Lock()
+	defer m.themeOpMu.Unlock()
+
 	t, err := LoadTheme(dir)
 	if err != nil {
 		return nil, err
@@ -185,8 +197,11 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 		return nil, errors.New("theme must contain a templates/ directory")
 	}
 
-	targetDir := filepath.Join(m.themesDir, t.Name)
-	oldTheme := m.themes[t.Name]
+	themeName := t.Name
+	targetDir := filepath.Join(m.themesDir, themeName)
+	m.mu.RLock()
+	oldTheme := m.themes[themeName]
+	m.mu.RUnlock()
 	backupDir, err := backupExistingThemeDir(targetDir)
 	if err != nil {
 		return nil, err
@@ -206,40 +221,58 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 	t, err = LoadTheme(targetDir)
 	if err != nil {
 		if rbErr := rollbackThemeInstall(targetDir, backupDir); rbErr != nil {
-			delete(m.themes, t.Name)
+			m.mu.Lock()
+			delete(m.themes, themeName)
+			m.mu.Unlock()
 			return nil, errors.Wrapf(err, "load installed theme; rollback failed: %v", rbErr)
 		}
 		return nil, errors.Wrap(err, "load installed theme")
 	}
-	m.themes[t.Name] = t
 	if err := t.LoadTranslations(); err != nil {
 		if rbErr := rollbackThemeInstall(targetDir, backupDir); rbErr != nil {
-			delete(m.themes, t.Name)
+			m.mu.Lock()
+			delete(m.themes, themeName)
+			m.mu.Unlock()
 			return nil, errors.Wrapf(err, "load theme translations; rollback failed: %v", rbErr)
 		}
+		m.mu.Lock()
 		if oldTheme != nil {
-			m.themes[t.Name] = oldTheme
+			m.themes[themeName] = oldTheme
 		} else {
-			delete(m.themes, t.Name)
+			delete(m.themes, themeName)
 		}
+		m.mu.Unlock()
 		return nil, err
 	}
+	m.mu.Lock()
+	m.themes[themeName] = t
+	m.mu.Unlock()
 	return t, nil
 }
 
 // Delete 删除指定主题。如果删除的是当前激活主题，不会自动切换。
 func (m *Manager) Delete(name string) error {
+	m.themeOpMu.Lock()
+	defer m.themeOpMu.Unlock()
+
+	m.mu.RLock()
 	t, ok := m.themes[name]
+	m.mu.RUnlock()
 	if !ok {
 		return errors.Errorf("theme %q not found", name)
 	}
 	if name == defaultThemeName {
 		return errors.New("cannot delete the default theme")
 	}
+	m.mu.Lock()
+	delete(m.themes, name)
+	m.mu.Unlock()
 	if err := os.RemoveAll(t.Dir); err != nil {
+		m.mu.Lock()
+		m.themes[name] = t
+		m.mu.Unlock()
 		return errors.Wrap(err, "remove theme dir")
 	}
-	delete(m.themes, name)
 	return nil
 }
 

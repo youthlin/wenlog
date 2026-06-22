@@ -296,15 +296,6 @@ func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area str
 }
 
 func themeData(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
-	// 兼容旧主题：新主题请使用 {{ themeOption "option_id" }}。
-	if name == "option" {
-		if len(args) > 0 {
-			if id, ok := args[0].(string); ok {
-				return themeOption(runtime, ctx, id)
-			}
-		}
-		return ""
-	}
 	if runtime == nil {
 		return nil
 	}

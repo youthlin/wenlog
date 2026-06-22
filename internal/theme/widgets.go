@@ -2,8 +2,6 @@ package theme
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 )
@@ -74,9 +72,7 @@ func ParseWidgetConfig(userConfigJSON string) []WidgetConfigItem {
 
 // widgetTemplateExists 检查主题是否提供了指定组件的模板文件。
 func widgetTemplateExists(t *Theme, id string) bool {
-	path := filepath.Join(t.WidgetsDir(), id+".gohtml")
-	_, err := os.Stat(path)
-	return err == nil
+	return t != nil && t.WidgetTemplates[id]
 }
 
 // MissingWidgets 返回用户配置中存在但当前主题未声明的组件 ID 列表。

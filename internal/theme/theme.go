@@ -38,6 +38,8 @@ type Theme struct {
 	Widgets []WidgetDecl `yaml:"widgets" json:"widgets"`
 	// Options 是主题声明的全局可配置选项。
 	Options []OptionDecl `yaml:"options" json:"options"`
+	// WidgetTemplates 是主题 widgets/ 目录中实际存在的组件模板 ID 集合。
+	WidgetTemplates map[string]bool `yaml:"-" json:"-"`
 }
 
 // WidgetArea 描述一个可配置的组件区域。
@@ -90,7 +92,23 @@ func LoadTheme(dir string) (*Theme, error) {
 		return nil, errors.Errorf("主题名称不能含有特殊字符: %s", t.Name)
 	}
 	t.Dir = dir
+	t.WidgetTemplates = loadWidgetTemplates(t.WidgetsDir())
 	return &t, nil
+}
+
+func loadWidgetTemplates(dir string) map[string]bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	ids := make(map[string]bool)
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".gohtml" {
+			continue
+		}
+		ids[strings.TrimSuffix(entry.Name(), ".gohtml")] = true
+	}
+	return ids
 }
 
 // LoadTranslations 把主题 i18n 目录绑定到主题名称对应的文本域。

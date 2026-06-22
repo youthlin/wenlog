@@ -168,7 +168,6 @@ type DataProvider func(args map[string]any) any
 
 // API 是暴露给主题脚本的只读数据视图。
 // 主题加载时创建 API 并注册 DataProvider；模板渲染时临时绑定当前请求的 DataLoader。
-// TODO 放在 themeapi 包中
 type API struct {
 	loader       *store.DataLoader
 	providers    map[string]DataProvider
@@ -380,18 +379,9 @@ func (api *API) SetThemeOptions(opts []OptionDecl) {
 
 // GetOption 读取主题选项，未配置时回退到 theme.yaml 中的默认值。
 func (api *API) GetOption(themeName, optionID string) string {
-	key := OptionKey(themeName, optionID)
-	val := api.loader.GetSetting(key)
-	if val != "" {
-		return val
-	}
-	// 回退到 theme.yaml 默认值
-	for _, opt := range api.themeOptions {
-		if opt.ID == optionID {
-			return opt.Default
-		}
-	}
-	return ""
+	return GetOptionByID(func(key string) (string, error) {
+		return api.loader.GetSetting(key), nil
+	}, themeName, api.themeOptions, optionID)
 }
 
 // Settings 批量读取设置项。

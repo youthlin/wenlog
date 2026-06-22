@@ -26,12 +26,11 @@ type RequestContext struct {
 	ThemeLoader   any
 	Theme         any
 	WidgetOptions map[string]string
-	values        map[any]any
 }
 
 const (
 	// ThemeLoaderDataKey 是模板数据中保存当前请求 DataLoader 的内部 key。
-	// 它不供模板直接使用，仅用于 themeData provider 读取请求级数据。
+	// 它不供模板直接使用，仅用于主题模板函数读取请求级数据。
 	ThemeLoaderDataKey = "__theme_loader"
 	// ThemeDataKey 是模板数据中保存当前请求主题对象的内部 key。
 	// 它不供模板直接使用，仅用于模板函数复用请求级当前主题，避免重复查询 Setting。
@@ -43,7 +42,6 @@ func (w *widgetHTMLRender) Render(wr http.ResponseWriter) error {
 	ctx := &RequestContext{
 		ThemeLoader: dataValue(w.data, ThemeLoaderDataKey),
 		Theme:       dataValue(w.data, ThemeDataKey),
-		values:      make(map[any]any),
 	}
 	tpl, err := cloneTemplateForRequest(w.tmpl, ctx, w.runtime)
 	if err != nil {
@@ -73,25 +71,6 @@ func dataValue(data any, key string) any {
 // WriteContentType 实现 [ginrender.Render] 接口
 func (w *widgetHTMLRender) WriteContentType(rw http.ResponseWriter) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-}
-
-// Value 返回当前请求上下文中的私有缓存值。
-func (ctx *RequestContext) Value(key any) any {
-	if ctx == nil || ctx.values == nil {
-		return nil
-	}
-	return ctx.values[key]
-}
-
-// SetValue 设置当前请求上下文中的私有缓存值。
-func (ctx *RequestContext) SetValue(key, value any) {
-	if ctx == nil {
-		return
-	}
-	if ctx.values == nil {
-		ctx.values = make(map[any]any)
-	}
-	ctx.values[key] = value
 }
 
 func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtime *TemplateRuntime) (*template.Template, error) {
