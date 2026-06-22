@@ -72,19 +72,26 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 	username := strings.TrimSpace(c.PostForm("username"))
 	displayName := strings.TrimSpace(c.PostForm("display_name"))
 	email := strings.TrimSpace(c.PostForm("email"))
+	website := strings.TrimSpace(c.PostForm("website"))
 	if !canEditOwnUsername(u) {
 		username = u.Username
 	}
 	if username == "" || displayName == "" || email == "" {
-		h.profileError(c, u, tr, username, displayName, email)
+		h.profileError(c, u, tr)
 		return
 	}
 	addr, err := mail.ParseAddress(email)
 	if err != nil {
-		h.profileError(c, u, tr, username, displayName, email)
+		h.profileError(c, u, tr)
 		return
 	}
 	email = strings.TrimSpace(addr.Address)
+	if !validOptionalURL(website) {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("个人网址格式不正确。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
 	if canEditOwnUsername(u) {
 		exists, err := h.st.UserExistsByUsername(c, username, u.ID)
 		if err != nil {
@@ -99,17 +106,17 @@ func (h *Admin) SaveProfileSettings(c *gin.Context) {
 		}
 	}
 	if !sameEmail(email, u.Email) {
-		h.handleEmailChange(c, tr, u, username, displayName, email)
+		h.handleEmailChange(c, tr, u, username, displayName, email, website)
 		return
 	}
-	if err := h.st.UpdateUserProfile(c, u.ID, username, displayName, email); err != nil {
+	if err := h.st.UpdateUserProfile(c, u.ID, username, displayName, email, website); err != nil {
 		h.serverError(c, err)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, profileRedirectURL("profile-saved"))
 }
 
-func (h *Admin) profileError(c *gin.Context, u *model.User, tr *gettext.Translations, username, displayName, email string) {
+func (h *Admin) profileError(c *gin.Context, u *model.User, tr *gettext.Translations) {
 	data := h.profileData(c, u)
 	if canEditOwnUsername(u) {
 		data["Error"] = tr.T("用户名、显示名和邮件不能为空。")
@@ -119,7 +126,7 @@ func (h *Admin) profileError(c *gin.Context, u *model.User, tr *gettext.Translat
 	c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
 }
 
-func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *model.User, username, displayName, email string) {
+func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *model.User, username, displayName, email, website string) {
 	smtpCfg := smtpConfigFromStore(c, h.st)
 	if !smtpCfg.Configured() {
 		data := h.profileData(c, u)
@@ -166,11 +173,19 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 		c.HTML(http.StatusInternalServerError, "admin_profile.gohtml", data)
 		return
 	}
-	if err := h.st.UpdateUserProfile(c, u.ID, username, displayName, u.Email); err != nil {
+	if err := h.st.UpdateUserProfile(c, u.ID, username, displayName, u.Email, website); err != nil {
 		h.serverError(c, err)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, profileRedirectURL("email-verification-sent"))
+}
+
+func validOptionalURL(raw string) bool {
+	if raw == "" {
+		return true
+	}
+	u, err := url.Parse(raw)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 // VerifyProfileEmail 完成个人资料邮箱变更验证。

@@ -68,6 +68,7 @@ type UserView struct {
 	Username    string
 	DisplayName string
 	Email       string
+	Website     string
 	Role        string
 }
 
@@ -154,6 +155,7 @@ func toUserView(u *model.User) UserView {
 		Username:    u.Username,
 		DisplayName: u.DisplayName,
 		Email:       u.Email,
+		Website:     u.Website,
 		Role:        u.Role,
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/mail"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -157,7 +156,7 @@ func (h *Public) validateCommentInput(c *gin.Context, tr *gettext.Translations, 
 			req.Author = strings.TrimSpace(loggedInUser.Username)
 		}
 		req.Email = strings.TrimSpace(loggedInUser.Email)
-		req.URL = "" // TODO 在 User 模型上加上网址
+		req.URL = strings.TrimSpace(loggedInUser.Website)
 	}
 	if req.Author == "" || req.Content == "" {
 		h.commentResp(c, false, tr.T("昵称和内容不能为空。"), req.PostID)
@@ -178,8 +177,7 @@ func (h *Public) validateCommentInput(c *gin.Context, tr *gettext.Translations, 
 		}
 	}
 	if req.URL != "" {
-		u, err := url.Parse(req.URL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		if !validOptionalURL(req.URL) {
 			h.commentResp(c, false, tr.T("网站地址格式不正确。"), req.PostID)
 			return false
 		}

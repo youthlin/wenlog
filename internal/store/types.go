@@ -31,6 +31,7 @@ type ExportUser struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display_name"`
 	Email       string    `json:"email"`
+	Website     string    `json:"website,omitempty"`
 	Role        string    `json:"role"`
 	CreatedAt   time.Time `json:"created_at"`
 }

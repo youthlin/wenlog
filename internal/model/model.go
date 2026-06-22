@@ -38,6 +38,7 @@ type User struct {
 	PasswordHash     string `gorm:"size:255"`
 	DisplayName      string `gorm:"size:128"`
 	Email            string `gorm:"size:128;index"`
+	Website          string `gorm:"size:255"`
 	Role             string `gorm:"size:16;default:subscriber"`
 	SessionVersion   int64  `gorm:"default:0"`
 	ResetToken       string `gorm:"size:128;index"`

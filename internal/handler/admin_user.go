@@ -228,7 +228,12 @@ func (h *Admin) UpdateUser(c *gin.Context) {
 	if displayName == "" {
 		displayName = username
 	}
-	if err := h.st.UpdateUserProfile(c, id, username, displayName, email); err != nil {
+	u, err := h.st.GetUserByID(c, id)
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if err := h.st.UpdateUserProfile(c, id, username, displayName, email, u.Website); err != nil {
 		h.serverError(c, err)
 		return
 	}

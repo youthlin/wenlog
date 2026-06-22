@@ -47,7 +47,7 @@
             <h3 id="current-file">{{.t.T "选择文件"}}</h3>
             <div class="theme-editor-toolbar-actions">
               <button id="save-btn" class="btn btn-sm" onclick="saveFile()" disabled>{{.t.T "保存"}}</button>
-              <button id="delete-btn" class="link-danger" onclick="deleteFile()" disabled>{{.t.T "删除"}}</button>
+              <button id="delete-btn" class="btn-secondary btn-sm link-danger" onclick="deleteFile()" disabled>{{.t.T "删除"}}</button>
             </div>
           </div>
           <textarea id="file-editor" class="theme-editor-textarea"
@@ -63,6 +63,26 @@
 let currentTheme = '{{.EditTheme}}';
 let currentPath = '';
 let currentContent = '';
+
+function csrfToken() {
+  var meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute('content') : '';
+}
+
+function jsonHeaders() {
+  var headers = {'Content-Type': 'application/json'};
+  var token = csrfToken();
+  if (token) headers['X-CSRF-Token'] = token;
+  return headers;
+}
+
+function parseJSONResponse(resp) {
+  return resp.text().then(function(text) {
+    var data = text ? JSON.parse(text) : {};
+    if (!resp.ok && !data.error) data.error = resp.status + ' ' + resp.statusText;
+    return data;
+  });
+}
 
 function switchTheme(name) {
   window.location.href = '/admin/theme/files?theme=' + encodeURIComponent(name);
@@ -106,10 +126,10 @@ function saveFile() {
 
   fetch('/admin/theme/file', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: jsonHeaders(),
     body: JSON.stringify({theme: currentTheme, path: currentPath, content: content})
   })
-    .then(r => r.json())
+    .then(parseJSONResponse)
     .then(data => {
       if (data.error) {
         document.getElementById('editor-status').textContent = data.error;
@@ -133,10 +153,10 @@ function deleteFile() {
 
   fetch('/admin/theme/file/delete', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: jsonHeaders(),
     body: JSON.stringify({theme: currentTheme, path: currentPath})
   })
-    .then(r => r.json())
+    .then(parseJSONResponse)
     .then(data => {
       if (data.error) {
         alert(data.error);
@@ -148,8 +168,8 @@ function deleteFile() {
 
 function reloadTheme() {
   document.getElementById('editor-status').textContent = '{{.t.T "重载中..."}}';
-  fetch('/admin/theme/reload', {method: 'POST'})
-    .then(r => r.json())
+  fetch('/admin/theme/reload', {method: 'POST', headers: jsonHeaders()})
+    .then(parseJSONResponse)
     .then(data => {
       if (data.error) {
         document.getElementById('editor-status').textContent = data.error;
@@ -160,7 +180,7 @@ function reloadTheme() {
 }
 
 function clearRecovery() {
-  fetch('/admin/theme/recovery/clear', {method: 'POST'})
+  fetch('/admin/theme/recovery/clear', {method: 'POST', headers: jsonHeaders()})
     .then(() => location.reload());
 }
 
@@ -214,10 +234,10 @@ function createFile() {
   status.textContent = '{{.t.T "创建中..."}}';
   fetch('/admin/theme/file/create', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: jsonHeaders(),
     body: JSON.stringify({theme: currentTheme, path: path, content: ''})
   })
-    .then(function(r) { return r.json(); })
+    .then(parseJSONResponse)
     .then(function(data) {
       if (data.error) {
         status.textContent = data.error;

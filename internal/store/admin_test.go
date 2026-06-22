@@ -33,14 +33,14 @@ func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {
 	if exists {
 		t.Fatal("expected own username not to be treated as duplicate")
 	}
-	if err = st.UpdateUserProfile(context.Background(), 1, "newname", "新显示名", "new@example.com"); err != nil {
+	if err = st.UpdateUserProfile(context.Background(), 1, "newname", "新显示名", "new@example.com", "https://example.com/me"); err != nil {
 		t.Fatalf("update profile: %v", err)
 	}
 	u, err := st.GetUserByID(context.Background(), 1)
 	if err != nil {
 		t.Fatalf("load updated user: %v", err)
 	}
-	if u.Username != "newname" || u.DisplayName != "新显示名" || u.Email != "new@example.com" {
+	if u.Username != "newname" || u.DisplayName != "新显示名" || u.Email != "new@example.com" || u.Website != "https://example.com/me" {
 		t.Fatalf("unexpected updated user: %+v", u)
 	}
 }

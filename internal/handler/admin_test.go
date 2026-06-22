@@ -178,6 +178,25 @@ func TestCanEditOwnUsername(t *testing.T) {
 	}
 }
 
+func TestValidOptionalURL(t *testing.T) {
+	tests := []struct {
+		url  string
+		want bool
+	}{
+		{url: "", want: true},
+		{url: "https://example.com", want: true},
+		{url: "http://example.com/about", want: true},
+		{url: "example.com", want: false},
+		{url: "mailto:me@example.com", want: false},
+		{url: "https://", want: false},
+	}
+	for _, tt := range tests {
+		if got := validOptionalURL(tt.url); got != tt.want {
+			t.Fatalf("validOptionalURL(%q)=%v, want %v", tt.url, got, tt.want)
+		}
+	}
+}
+
 func TestRememberCommenter(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()

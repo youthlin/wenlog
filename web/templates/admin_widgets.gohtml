@@ -298,20 +298,21 @@
       var input = item.querySelector('input[type="hidden"]');
       if (input) input.name = 'widgets_' + areaKey;
       item.querySelectorAll('[name^="opts_"]').forEach(function(field) {
-        var parts = field.name.split('_');
-        if (parts.length >= 4) {
-          parts[2] = String(i);
-          field.name = parts.join('_');
-          if (field.id) {
-            var idParts = field.id.split('_');
-            if (idParts.length >= 4) {
-              idParts[2] = String(i);
-              field.id = idParts.join('_');
-            }
-          }
-        }
+        field.name = reindexOptionFieldName(field.name, areaKey, i);
+        if (field.id) field.id = reindexOptionFieldName(field.id, areaKey, i);
       });
     });
+  }
+
+  function reindexOptionFieldName(name, areaKey, index) {
+    var prefix = 'opts_' + areaKey + '_';
+    if (name.indexOf(prefix) !== 0) return name;
+    var rest = name.slice(prefix.length);
+    var sep = rest.indexOf('_');
+    if (sep < 0) return name;
+    var optID = rest.slice(sep + 1);
+    if (!optID) return name;
+    return prefix + index + '_' + optID;
   }
 
   // ---- 拖拽排序 ----

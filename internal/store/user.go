@@ -221,13 +221,13 @@ func (s *Store) CreateUser(ctx context.Context, username, displayName, email, pa
 	}
 	return errors.Wrapf(s.DB(ctx).Create(&u).Error, "create user, username=%s", username)
 }
-func (s *Store) UpdateUserProfile(ctx context.Context, id uint, username, displayName, email string) error {
+func (s *Store) UpdateUserProfile(ctx context.Context, id uint, username, displayName, email, website string) error {
 	return errors.Wrap(s.DB(ctx).Transaction(func(tx *gorm.DB) error {
 		var u model.User
 		if err := tx.Select("id", "email").First(&u, id).Error; err != nil {
 			return err
 		}
-		updates := map[string]any{"username": username, "display_name": displayName, "email": email}
+		updates := map[string]any{"username": username, "display_name": displayName, "email": email, "website": website}
 		if !strings.EqualFold(strings.TrimSpace(u.Email), strings.TrimSpace(email)) {
 			updates["session_version"] = gorm.Expr("session_version + 1")
 		}
@@ -316,6 +316,7 @@ func (s *Store) ExportUserData(ctx context.Context, userID uint) (*UserExportDat
 		Username:    u.Username,
 		DisplayName: u.DisplayName,
 		Email:       u.Email,
+		Website:     u.Website,
 		Role:        u.Role,
 		CreatedAt:   u.CreatedAt,
 	}

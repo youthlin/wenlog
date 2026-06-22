@@ -27,6 +27,8 @@
         <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
         <label>{{.t.T "邮件"}}<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
         <p class="form-hint">{{.t.T "修改邮箱后需要先通过新邮箱中的验证链接确认，确认前仍保留当前邮箱。"}}</p>
+        <label>{{.t.T "个人网址"}}<input type="url" name="website" value="{{if .CurrentUser}}{{.CurrentUser.Website}}{{end}}" placeholder="https://example.com"></label>
+        <p class="form-hint">{{.t.T "登录后发表评论时会自动使用这个网址。"}}</p>
         <p><button type="submit" class="btn">{{.t.T "保存个人资料"}}</button></p>
       </form>
     </section>
