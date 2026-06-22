@@ -4,7 +4,6 @@ package theme
 import (
 	"sort"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/youthlin/blog/internal/model"
@@ -169,9 +168,8 @@ type DataProvider func(args map[string]any) any
 
 // API 是暴露给主题脚本的只读数据视图。
 // 主题加载时创建 API 并注册 DataProvider；模板渲染时临时绑定当前请求的 DataLoader。
+// TODO 放在 themeapi 包中
 type API struct {
-	mu           sync.Mutex
-	providerBusy bool
 	loader       *store.DataLoader
 	providers    map[string]DataProvider
 	themeOptions []OptionDecl // 主题声明的选项（含默认值），用于 GetOption 回退
@@ -188,38 +186,6 @@ func NewAPI(loader *store.DataLoader) *API {
 // SetLoader 设置当前模板渲染请求的 DataLoader。
 func (api *API) SetLoader(loader *store.DataLoader) {
 	api.loader = loader
-}
-
-// CallProvider 以指定 loader 执行 DataProvider。
-// loader 绑定在 API 上是 yaegi 注入方式的限制，因此这里串行化 provider 调用，
-// 避免超时返回后仍在运行的 provider 与后续请求互相覆盖 loader。
-func (api *API) CallProvider(provider DataProvider, loader *store.DataLoader, args map[string]any) any {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-	api.loader = loader
-	defer func() { api.loader = nil }()
-	return safeCallProvider(provider, args)
-}
-
-// TryBeginProvider 尝试绑定 loader 并进入 provider 调用。
-// provider 执行可能超时返回；这里不等待已有 provider 结束，避免堆积 goroutine。
-func (api *API) TryBeginProvider(loader *store.DataLoader) bool {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-	if api.providerBusy {
-		return false
-	}
-	api.providerBusy = true
-	api.loader = loader
-	return true
-}
-
-// EndProvider 结束 provider 调用并清理请求级 loader。
-func (api *API) EndProvider() {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-	api.loader = nil
-	api.providerBusy = false
 }
 
 // RegisterData 注册一个命名数据提供者。由 functions.go 的 Register 函数调用。

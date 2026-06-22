@@ -139,24 +139,24 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 		TemplateName string
 		Options      map[string]string
 	}
-	SetThemeDataProvider(func(name string, args ...any) any {
+	r.SetThemeDataProvider(func(ctx *RequestContext, name string, args ...any) any {
 		switch name {
 		case "loader":
-			return CurrentThemeLoader()
+			return ctx.ThemeLoader
 		case "theme":
-			return CurrentTheme()
+			return ctx.Theme
 		default:
 			return nil
 		}
 	})
-	SetThemeWidgetsProvider(func(area string) any {
-		loader, _ := CurrentThemeLoader().(string)
-		theme, _ := CurrentTheme().(string)
+	r.SetThemeWidgetsProvider(func(ctx *RequestContext, area string) any {
+		loader, _ := ctx.ThemeLoader.(string)
+		theme, _ := ctx.Theme.(string)
 		return []widgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
 	})
 	t.Cleanup(func() {
-		SetThemeDataProvider(nil)
-		SetThemeWidgetsProvider(nil)
+		r.SetThemeDataProvider(nil)
+		r.SetThemeWidgetsProvider(nil)
 	})
 
 	var wg sync.WaitGroup

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/youthlin/blog/internal/render"
@@ -18,9 +19,12 @@ import (
 // FunctionsScript 表示一个已编译的 functions.go 脚本。
 type FunctionsScript struct {
 	sourcePath string
+	source     string
 	sourceHash string // 文件内容的简单 hash，用于检测变更
+	api        *API
 	providers  map[string]DataProvider
 	mu         sync.RWMutex
+	pool       sync.Pool
 }
 
 // CompileFunctions 编译主题目录下的 functions.go 或 functions.goyaegi 文件。
@@ -40,10 +44,13 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read functions script: %w", err)
+		return nil, errors.Wrapf(err, "读取主题函数文件失败: %s", path)
 	}
 
-	source := string(data)
+	return compileFunctionsSource(path, string(data), api, log)
+}
+
+func compileFunctionsSource(path, source string, api *API, log *slog.Logger) (*FunctionsScript, error) {
 	hash := hashString(source)
 
 	// 创建 yaegi 解释器，使用白名单限制可用包
@@ -56,38 +63,38 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 
 	// 只加载安全的符号表
 	if err := i.Use(stdlib.Symbols); err != nil {
-		return nil, fmt.Errorf("yaegi use stdlib: %w", err)
+		return nil, errors.Wrapf(err, "准备插件环境失败")
 	}
 
 	// 注入 ThemeAPI 类型和实例，让 functions.go 可以使用
 	if err := injectThemeAPI(i, api); err != nil {
-		return nil, fmt.Errorf("inject theme API: %w", err)
+		return nil, errors.Wrapf(err, "注入主题API失败")
 	}
 
 	// 编译执行 functions.go
 	if _, err := i.Eval(source); err != nil {
-		return nil, fmt.Errorf("yaegi eval functions.go: %w", err)
+		return nil, errors.Wrapf(err, "执行主题函数失败")
 	}
 
 	// 查找并调用 Register 函数（无参数，Api 已通过 i.Use 注入为全局变量）
 	registerFn, err := i.Eval("theme.Register")
 	if err != nil {
-		return nil, fmt.Errorf("functions.go must define Register(): %w", err)
+		return nil, errors.Wrapf(err, "执行主题函数[theme.Register]失败")
 	}
 
 	// i.Eval 返回的 registerFn 已经是 reflect.Value
 	if registerFn.Kind() != reflect.Func {
-		return nil, fmt.Errorf("Register is not a function, got %s", registerFn.Kind())
+		return nil, errors.Errorf("主题函数中Register必须是函数类型")
 	}
 
 	if registerFn.Type().NumIn() != 0 {
-		return nil, fmt.Errorf("Register must accept 0 arguments, got %d", registerFn.Type().NumIn())
+		return nil, errors.Errorf("主题函数中Register应当是无参函数")
 	}
 
 	registerFn.Call(nil)
 
 	if log != nil {
-		log.Info("functions.go compiled and registered",
+		log.Info("主题函数functions.go编译执行成功",
 			"path", path,
 			"providers", api.ProviderNames(),
 		)
@@ -95,7 +102,9 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 
 	return &FunctionsScript{
 		sourcePath: path,
+		source:     source,
 		sourceHash: hash,
+		api:        api,
 		providers:  api.providers,
 	}, nil
 }
@@ -103,84 +112,20 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 // injectThemeAPI 将 ThemeAPI 实例导出到 yaegi 解释器，使 functions.go 可以使用。
 // 使用 i.Use 导出 Go 值，yaegi 通过反射调用其方法。
 func injectThemeAPI(i *interp.Interpreter, api *API) error {
-	// 先声明 View 类型，让 yaegi 知道这些类型
-	typeDecl := `
-package theme
-
-import "time"
-
-type PostView struct {
-	ID           uint
-	Title        string
-	Slug         string
-	Excerpt      string
-	Content      string
-	AuthorID     uint
-	Status       string
-	PostType     string
-	Views        int64
-	MenuOrder    int
-	PublishedAt  time.Time
-	ModifiedAt   time.Time
-	CommentCount int64
-	Author       UserView
-	Categories   []CategoryView
-	Tags         []TagView
-}
-
-type CategoryView struct {
-	ID          uint
-	Name        string
-	Slug        string
-	Description string
-	ParentID    uint
-	PostCount   int64
-}
-
-type TagView struct {
-	ID        uint
-	Name      string
-	Slug      string
-	PostCount int64
-}
-
-type CommentView struct {
-	ID        uint
-	PostID    uint
-	ParentID  uint
-	Author    string
-	Content   string
-	Status    string
-	CreatedAt time.Time
-}
-
-type UserView struct {
-	ID          uint
-	Username    string
-	DisplayName string
-	Email       string
-	Role        string
-}
-
-type ArchiveMonthView struct {
-	Year  int
-	Month int
-	Count int64
-}
-`
-	if _, err := i.Eval(typeDecl); err != nil {
-		return fmt.Errorf("declare view types: %w", err)
-	}
-
-	// 使用 i.Use 导出 Go 的 *API 实例到 yaegi，避免类型不匹配
-	// 导出到 "themeapi" 包，脚本通过 import "themeapi" 引用
-	i.Use(interp.Exports{
+	// 使用 i.Use 导出 Go 的 API 实例和 View 类型到 yaegi，避免维护一份重复的结构体声明。
+	// 导出到 "themeapi" 包，脚本通过 import "themeapi" 引用。
+	return i.Use(interp.Exports{
 		"themeapi/themeapi": {
-			"Api": reflect.ValueOf(api),
+			"API":              reflect.ValueOf((*API)(nil)),
+			"Api":              reflect.ValueOf(api),
+			"PostView":         reflect.ValueOf((*PostView)(nil)),
+			"CategoryView":     reflect.ValueOf((*CategoryView)(nil)),
+			"TagView":          reflect.ValueOf((*TagView)(nil)),
+			"CommentView":      reflect.ValueOf((*CommentView)(nil)),
+			"UserView":         reflect.ValueOf((*UserView)(nil)),
+			"ArchiveMonthView": reflect.ValueOf((*ArchiveMonthView)(nil)),
 		},
 	})
-
-	return nil
 }
 
 // hashString 返回字符串的简单 hash（用于检测文件变更）。
@@ -196,36 +141,62 @@ func hashString(s string) string {
 
 // themeDataFunc 返回一个可在模板中调用的 themeData 函数。
 // 用法：{{themeData "provider_name" "key1" value1 "key2" value2}}
-func themeDataFunc(script *FunctionsScript, api *API) func(name string, args ...any) any {
-	return func(name string, args ...any) any {
+func themeDataFunc(script *FunctionsScript, api *API) func(ctx *render.RequestContext, name string, args ...any) any {
+	return func(ctx *render.RequestContext, name string, args ...any) any {
 		if script == nil || api == nil {
 			return nil
 		}
 		script.mu.RLock()
-		provider := script.providers[name]
+		_, exists := script.providers[name]
 		script.mu.RUnlock()
-		if provider == nil {
+		if !exists {
 			return nil
 		}
 
 		// 解析 key-value 参数对
 		parsed := parseKVArgs(args)
-		loader, _ := render.CurrentThemeLoader().(*store.DataLoader)
-		return callProviderWithTimeout(api, provider, loader, parsed)
+		var loader *store.DataLoader
+		if ctx != nil {
+			loader, _ = ctx.ThemeLoader.(*store.DataLoader)
+		}
+		return callProviderWithTimeout(script, api, loader, name, parsed)
 	}
 }
 
-func callProviderWithTimeout(api *API, provider DataProvider, loader *store.DataLoader, args map[string]any) any {
-	if !api.TryBeginProvider(loader) {
+func (script *FunctionsScript) acquireRunner(baseAPI *API, loader *store.DataLoader) (*FunctionsScript, error) {
+	if v := script.pool.Get(); v != nil {
+		runner, _ := v.(*FunctionsScript)
+		if runner != nil && runner.api != nil {
+			runner.api.SetLoader(loader)
+			return runner, nil
+		}
+	}
+	requestAPI := NewAPI(loader)
+	requestAPI.SetThemeOptions(baseAPI.themeOptions)
+	return compileFunctionsSource(script.sourcePath, script.source, requestAPI, nil)
+}
+
+func (script *FunctionsScript) releaseRunner(runner *FunctionsScript) {
+	if script == nil || runner == nil || runner.api == nil {
+		return
+	}
+	runner.api.SetLoader(nil)
+	script.pool.Put(runner)
+}
+
+func callProviderWithTimeout(script *FunctionsScript, baseAPI *API, loader *store.DataLoader, name string, args map[string]any) any {
+	runner, err := script.acquireRunner(baseAPI, loader)
+	if err != nil || runner == nil {
 		return nil
 	}
-	released := make(chan struct{})
+	provider := runner.providers[name]
+	if provider == nil {
+		script.releaseRunner(runner)
+		return nil
+	}
 	done := make(chan any, 1)
 	go func() {
-		defer func() {
-			api.EndProvider()
-			close(released)
-		}()
+		defer script.releaseRunner(runner)
 		done <- safeCallProvider(provider, args)
 	}()
 

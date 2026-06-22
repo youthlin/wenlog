@@ -37,13 +37,8 @@ type Admin struct {
 	themeManager *ThemeManager
 }
 
-type hotSwitcher interface {
-	Hot() bool
-	SetHot(bool)
-}
-
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, renderer *renderx.Renderer, assets hotSwitcher, tm *ThemeManager) *Admin {
+func NewAdmin(st *store.Store, cfg *config.Config, renderer *renderx.Renderer, assets *LocalFirstFileSystem, tm *ThemeManager) *Admin {
 	return &Admin{
 		st:           st,
 		cfg:          cfg,

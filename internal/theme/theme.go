@@ -77,20 +77,28 @@ func LoadTheme(dir string) (*Theme, error) {
 	path := filepath.Join(dir, "theme.yaml")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "read theme.yaml from %s", dir)
+		return nil, errors.Wrapf(err, "读取[%s]中的主题描述文件(theme.yaml)失败", dir)
 	}
 	var t Theme
 	if err := yaml.Unmarshal(data, &t); err != nil {
-		return nil, errors.Wrapf(err, "parse theme.yaml from %s", dir)
+		return nil, errors.Wrapf(err, "解析[%s]中的主题描述文件(theme.yaml)失败", dir)
 	}
 	if t.Name == "" {
-		return nil, errors.New("theme.yaml: name is required")
+		return nil, errors.New("主题描述文件(theme.yaml)中缺少主题名称")
 	}
 	if t.Name == "." || t.Name == ".." || strings.ContainsAny(t.Name, `/\`) {
-		return nil, errors.New("theme.yaml: name must not contain path separators")
+		return nil, errors.Errorf("主题名称不能含有特殊字符: %s", t.Name)
 	}
 	t.Dir = dir
 	return &t, nil
+}
+
+// LoadTranslations 把主题 i18n 目录绑定到主题名称对应的文本域。
+func (t *Theme) LoadTranslations() error {
+	if t == nil {
+		return nil
+	}
+	return i18n.BindDomain(t.Name, t.I18nDir())
 }
 
 // TemplatesDir 返回主题的模板目录路径。
@@ -145,12 +153,4 @@ func (t *Theme) ScreenshotURL() string {
 		return ""
 	}
 	return "/admin/theme/screenshot/" + url.PathEscape(t.Name) + "/" + url.PathEscape(name)
-}
-
-// LoadTranslations 把主题 i18n 目录绑定到主题名称对应的文本域。
-func (t *Theme) LoadTranslations() error {
-	if t == nil {
-		return nil
-	}
-	return i18n.BindDomain(t.Name, t.I18nDir())
 }

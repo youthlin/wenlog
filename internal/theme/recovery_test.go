@@ -22,7 +22,7 @@ func TestThemeFilePathRejectsTraversalAndPrefixSibling(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(themeDir, "theme.yaml"), []byte("name: default\n"), 0o644); err != nil {
 		t.Fatalf("write theme yaml: %v", err)
 	}
-	m, err := NewManager(root, testSettingStore{})
+	m, err := NewManager(root, testSettingStore{}, nil)
 	if err != nil {
 		t.Fatalf("new manager: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestManagerInstallReplacesThemeAtomically(t *testing.T) {
 	if err := writeTestTheme(filepath.Join(root, "themes", "custom"), "custom", "old"); err != nil {
 		t.Fatalf("write old theme: %v", err)
 	}
-	m, err := NewManager(filepath.Join(root, "themes"), testSettingStore{})
+	m, err := NewManager(filepath.Join(root, "themes"), testSettingStore{}, nil)
 	if err != nil {
 		t.Fatalf("new manager: %v", err)
 	}

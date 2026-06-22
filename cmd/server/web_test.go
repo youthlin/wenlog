@@ -9,6 +9,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
@@ -65,7 +66,7 @@ func TestLocalFirstFileSystemSwitchesToLocalDir(t *testing.T) {
 	fallback := http.FS(fstest.MapFS{
 		"style.css": &fstest.MapFile{Data: []byte("from-embed")},
 	})
-	fsys := &localFirstFileSystem{dir: localDir, fallback: fallback}
+	fsys := handler.NewLocalFirstFileSystem(localDir, fallback)
 
 	if got := readFileFromHTTPFS(t, fsys, "style.css"); got != "from-embed" {
 		t.Fatalf("expected fallback content, got %q", got)

@@ -4,20 +4,16 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 )
 
 // BuiltinWidgetIDs 内置组件 ID 列表。
-var BuiltinWidgetIDs = []string{"search", "recent_posts", "categories", "tag_cloud", "recent_comments", "custom_html", "user_info"}
+var BuiltinWidgetIDs = []string{"user_info", "search", "recent_posts", "recent_comments", "categories", "tag_cloud", "custom_html"}
 
 // IsBuiltinWidget 判断是否为内置组件。
 func IsBuiltinWidget(id string) bool {
-	for _, bid := range BuiltinWidgetIDs {
-		if bid == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(BuiltinWidgetIDs, id)
 }
 
 // WidgetInfo 渲染时使用的组件信息。
@@ -34,8 +30,7 @@ type WidgetConfigItem struct {
 }
 
 // ResolveWidgets 根据用户配置和主题声明，解析某个区域应渲染的组件列表。
-// userConfigJSON 是 Setting 表中存储的 JSON，支持两种格式：
-//   - 旧格式: `["search","recent_posts"]`
+// userConfigJSON 是 Setting 表中存储的 JSON, 格式:
 //   - 对象数组格式: `[{"id":"search"},{"id":"recent_posts","opts":{"count":"10"}}]`
 //
 // 为空则使用主题默认。
@@ -65,23 +60,13 @@ func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
 	return result
 }
 
-// ParseWidgetConfig 解析用户配置 JSON，兼容新旧两种格式。
+// ParseWidgetConfig 解析用户配置 JSON。
 func ParseWidgetConfig(userConfigJSON string) []WidgetConfigItem {
 	if userConfigJSON == "" {
 		return nil
 	}
-	// 先尝试对象数组格式: [{"id":"x","opts":{...}}]
 	var items []WidgetConfigItem
 	if err := json.Unmarshal([]byte(userConfigJSON), &items); err == nil {
-		return items
-	}
-	// 回退到旧格式: ["id1","id2"]
-	var ids []string
-	if err := json.Unmarshal([]byte(userConfigJSON), &ids); err == nil {
-		items = make([]WidgetConfigItem, len(ids))
-		for i, id := range ids {
-			items[i] = WidgetConfigItem{ID: id}
-		}
 		return items
 	}
 	return nil

@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/internal/render"
 )
 
 // settingStore 是 Manager 需要的设置存储接口。
@@ -30,7 +31,7 @@ type Manager struct {
 
 	// 运行时状态：模板渲染器、functions 脚本、恢复信息。
 	mu            sync.RWMutex
-	renderer      ThemeRenderer
+	renderer      *render.Renderer
 	log           *slog.Logger
 	currentScript *FunctionsScript
 	currentAPI    *API
@@ -38,11 +39,12 @@ type Manager struct {
 }
 
 // NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。
-func NewManager(themesDir string, store settingStore) (*Manager, error) {
+func NewManager(themesDir string, store settingStore, renderer *render.Renderer) (*Manager, error) {
 	m := &Manager{
 		themesDir: themesDir,
 		store:     store,
 		themes:    make(map[string]*Theme),
+		renderer:  renderer,
 		log:       slog.Default().With("component", "theme-manager"),
 	}
 	if err := m.scan(); err != nil {
@@ -58,7 +60,7 @@ func (m *Manager) scan() error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return errors.Wrap(err, "scan themes dir")
+		return errors.Wrap(err, "读取主题目录失败")
 	}
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -67,6 +69,10 @@ func (m *Manager) scan() error {
 		dir := filepath.Join(m.themesDir, entry.Name())
 		t, err := LoadTheme(dir)
 		if err != nil {
+			m.log.Warn("无效主题",
+				slog.String("dir", dir),
+				slog.Any("err", err),
+			)
 			continue // 跳过无效主题
 		}
 		m.themes[t.Name] = t

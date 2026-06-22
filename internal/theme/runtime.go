@@ -9,18 +9,61 @@ import (
 	"github.com/youthlin/blog/internal/render"
 )
 
-// ThemeRenderer 是 Manager 需要的模板渲染器接口。
-type ThemeRenderer interface {
-	LoadTheme(themeDir string) error
-	ResetToDefault() error
-	LoadPreviewTheme(themeDir, themeName string) error
-	ClearPreviewTheme()
-}
-
 // RecoveryInfo 记录主题加载失败时的恢复信息。
 type RecoveryInfo struct {
 	FailedTheme string
 	Error       string
+}
+
+// BindTemplateFunctions 把主题运行时能力绑定到模板函数。
+//
+// 主题模板中的函数调用统一走这条链路：
+//
+//	模板函数 → render.RequestContext → theme.Manager → store/主题声明。
+//
+// 这样 cmd/server 只负责组装依赖，不再了解 widget/option 的 Setting key 细节。
+func (m *Manager) BindTemplateFunctions() {
+	if m == nil || m.renderer == nil {
+		return
+	}
+	m.renderer.SetThemeWidgetsProvider(func(ctx *render.RequestContext, area string) any {
+		t := m.renderTheme(ctx)
+		if t == nil {
+			return nil
+		}
+		config, _ := m.store.GetSetting(context.Background(), "widget_"+area)
+		return ResolveWidgets(config, t, area)
+	})
+
+	m.renderer.SetOptionProvider(func(ctx *render.RequestContext, optionID string) string {
+		t := m.renderTheme(ctx)
+		if t == nil {
+			return ""
+		}
+		key := OptionKey(t.Name, optionID)
+		val, _ := m.store.GetSetting(context.Background(), key)
+		if val != "" {
+			return val
+		}
+		for _, opt := range t.Options {
+			if opt.ID == optionID {
+				return opt.Default
+			}
+		}
+		return ""
+	})
+}
+
+func (m *Manager) renderTheme(ctx *render.RequestContext) *Theme {
+	if ctx != nil {
+		if t, ok := ctx.Theme.(*Theme); ok && t != nil {
+			return t
+		}
+	}
+	if m == nil {
+		return nil
+	}
+	return m.Current(context.Background())
 }
 
 // LoadTheme 加载指定主题：模板 + functions.go。
@@ -41,14 +84,16 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 
 	t := m.themes[name]
 	if t == nil {
-		return m.fallbackToDefaultLocked(ctx, name, fmt.Errorf("theme %q not found", name))
+		err := errors.Errorf("主题[%s]未找到", name)
+		return m.fallbackToDefaultLocked(ctx, name, err)
 	}
 
 	// 1. 加载模板
 	templatesDir := t.TemplatesDir()
 	if m.renderer != nil {
-		if err := m.renderer.LoadTheme(templatesDir); err != nil {
-			return m.fallbackToDefaultLocked(ctx, name, errors.Wrap(err, "load theme templates"))
+		if err := m.renderer.LoadThemeTemplates(templatesDir); err != nil {
+			err = errors.Wrap(err, "加载主题模板失败")
+			return m.fallbackToDefaultLocked(ctx, name, err)
 		}
 	}
 
@@ -57,7 +102,8 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
-		return m.fallbackToDefaultLocked(ctx, name, errors.Wrap(err, "compile functions.go"))
+		err = errors.Wrap(err, "编译主题functions.go失败")
+		return m.fallbackToDefaultLocked(ctx, name, err)
 	}
 
 	// 3. 成功：更新状态
@@ -66,10 +112,12 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	m.recoveryInfo = nil
 
 	// 注册 themeData 模板函数
-	if script != nil {
-		render.SetThemeDataProvider(themeDataFunc(script, api))
-	} else {
-		render.SetThemeDataProvider(nil)
+	if m.renderer != nil {
+		if script != nil {
+			m.renderer.SetThemeDataProvider(themeDataFunc(script, api))
+		} else {
+			m.renderer.SetThemeDataProvider(nil)
+		}
 	}
 
 	if m.log != nil {
@@ -100,7 +148,9 @@ func (m *Manager) fallbackToDefaultLocked(ctx context.Context, failedName string
 	// 清空自定义 DataProvider
 	m.currentScript = nil
 	m.currentAPI = nil
-	render.SetThemeDataProvider(nil)
+	if m.renderer != nil {
+		m.renderer.SetThemeDataProvider(nil)
+	}
 
 	// 回退模板到默认主题
 	if m.renderer != nil {
@@ -136,13 +186,6 @@ func (m *Manager) CurrentScript() *FunctionsScript {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.currentScript
-}
-
-// SetRenderer 设置模板渲染器（由 cmd/server 初始化时调用）。
-func (m *Manager) SetRenderer(r ThemeRenderer) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.renderer = r
 }
 
 // SetLogger 设置日志记录器。

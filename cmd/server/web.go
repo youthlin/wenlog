@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -121,7 +120,6 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 	adm := handler.NewAdmin(st, cfg, tplRenderer, assetLocalFS, tm)
 	registerAdminRoutes(r, adm, auth, st)
 
-	registerThemeTemplateProviders(tm, st)
 	registerThemeAssetsRoute(r, tm)
 }
 
@@ -136,17 +134,14 @@ func cacheStatic(fsys http.FileSystem, maxAgeSeconds int) gin.HandlerFunc {
 	}
 }
 
-func assetFS() *localFirstFileSystem {
+func assetFS() *handler.LocalFirstFileSystem {
 	assetsFS, err := fs.Sub(web.Assets, "assets")
 	if err != nil {
 		panic(err)
 	}
-	fsys := &localFirstFileSystem{
-		dir:      "web/assets",
-		fallback: http.FS(assetsFS),
-	}
-	if _, err := os.Stat(fsys.dir); err == nil {
-		fsys.hot.Store(true)
+	fsys := handler.NewLocalFirstFileSystem("web/assets", http.FS(assetsFS))
+	if _, err := os.Stat(fsys.Dir); err == nil {
+		fsys.SetHot(true)
 	}
 	return fsys
 }
@@ -164,104 +159,21 @@ func templateRenderer() (*render.Renderer, error) {
 
 func initThemeManager(st *store.Store, tplRenderer *render.Renderer) (*theme.Manager, error) {
 	ensureThemesOnDisk()
-	tm, err := theme.NewManager("themes", st)
+	tm, err := theme.NewManager("themes", st, tplRenderer)
 	if err != nil {
 		return nil, err
 	}
-	tm.SetRenderer(tplRenderer)
+
 	// 设置默认主题 embed FS，供 ResetToDefault 时从 embed 加载。
 	if defaultThemeFS, err := fs.Sub(web.Themes, "themes/default/templates"); err == nil {
 		tplRenderer.SetDefaultThemeFS(defaultThemeFS)
 	}
+	tm.BindTemplateFunctions()
 	// 启动时加载当前激活主题（含 functions.go）。加载失败会记录恢复信息并回退默认主题。
 	if err := tm.LoadTheme(context.Background(), ""); err != nil {
 		slog.Error("加载当前主题失败", slog.Any("error", err))
 	}
 	return tm, nil
-}
-
-func registerThemeTemplateProviders(tm *theme.Manager, st *store.Store) {
-	render.SetThemeWidgetsProvider(func(area string) any {
-		t := currentRenderTheme(tm)
-		if t == nil {
-			return nil
-		}
-		config, _ := st.GetSetting(context.Background(), "widget_"+area)
-		return theme.ResolveWidgets(config, t, area)
-	})
-
-	render.SetOptionProvider(func(optionID string) string {
-		t := currentRenderTheme(tm)
-		if t == nil {
-			return ""
-		}
-		key := theme.OptionKey(t.Name, optionID)
-		val, _ := st.GetSetting(context.Background(), key)
-		if val == "" {
-			for _, opt := range t.Options {
-				if opt.ID == optionID {
-					return opt.Default
-				}
-			}
-		}
-		return val
-	})
-}
-
-func currentRenderTheme(tm *theme.Manager) *theme.Theme {
-	if t, ok := render.CurrentTheme().(*theme.Theme); ok && t != nil {
-		return t
-	}
-	return tm.Current(context.Background())
-}
-
-func registerThemeAssetsRoute(r *gin.Engine, tm *theme.Manager) {
-	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
-	// 管理员预览主题时优先使用预览主题的资源。
-	// 主题资源带版本号（?v=1.0.0），可长期缓存 1 年。
-	r.GET("/theme-assets/*filepath", func(c *gin.Context) {
-		current := tm.Current(c)
-		if previewName := middleware.GetPreviewTheme(c); previewName != "" {
-			if pt := tm.Get(previewName); pt != nil && pt.HasAssets() {
-				current = pt
-			}
-		}
-		if current == nil || !current.HasAssets() {
-			c.Status(http.StatusNotFound)
-			return
-		}
-		name := strings.TrimPrefix(filepath.Clean(c.Param("filepath")), string(filepath.Separator))
-		if name == "." || strings.HasPrefix(name, "..") {
-			c.Status(http.StatusNotFound)
-			return
-		}
-		c.Header("Cache-Control", "public, max-age=31536000")
-		c.File(filepath.Join(current.AssetsDir(), name))
-	})
-}
-
-type localFirstFileSystem struct {
-	dir      string
-	fallback http.FileSystem
-	hot      atomic.Bool
-}
-
-func (fsys *localFirstFileSystem) Open(name string) (http.File, error) {
-	if fsys != nil && fsys.hot.Load() {
-		return http.Dir(fsys.dir).Open(name)
-	}
-	return fsys.fallback.Open(name)
-}
-
-func (fsys *localFirstFileSystem) Hot() bool {
-	return fsys != nil && fsys.hot.Load()
-}
-
-func (fsys *localFirstFileSystem) SetHot(v bool) {
-	if fsys == nil {
-		return
-	}
-	fsys.hot.Store(v)
 }
 
 // ensureThemesOnDisk 确保所有内嵌主题在磁盘上存在。
@@ -300,4 +212,28 @@ func ensureThemesOnDisk() {
 			slog.Warn("释放内嵌主题失败", "theme", themeName, "error", err)
 		}
 	}
+}
+func registerThemeAssetsRoute(r *gin.Engine, tm *theme.Manager) {
+	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
+	// 管理员预览主题时优先使用预览主题的资源。
+	// 主题资源带版本号（?v=1.0.0），可长期缓存 1 年。
+	r.GET("/theme-assets/*filepath", func(c *gin.Context) {
+		current := tm.Current(c)
+		if previewName := middleware.GetPreviewTheme(c); previewName != "" {
+			if pt := tm.Get(previewName); pt != nil && pt.HasAssets() {
+				current = pt
+			}
+		}
+		if current == nil || !current.HasAssets() {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		name := strings.TrimPrefix(filepath.Clean(c.Param("filepath")), string(filepath.Separator))
+		if name == "." || strings.HasPrefix(name, "..") {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Header("Cache-Control", "public, max-age=31536000")
+		c.File(filepath.Join(current.AssetsDir(), name))
+	})
 }
