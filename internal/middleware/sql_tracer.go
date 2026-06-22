@@ -12,7 +12,7 @@ import (
 
 // SQLTracer 在请求前向 context 注入 SQLDetails 收集器，
 // 请求结束后将 SQL 执行详情输出到日志。
-func SQLTracer(log *slog.Logger) gin.HandlerFunc {
+func SQLTracer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		details := &store.SQLDetails{
 			TraceID: GetTraceID(c),
@@ -23,7 +23,7 @@ func SQLTracer(log *slog.Logger) gin.HandlerFunc {
 		})
 		c.Next()
 		if formatted := store.FormatSQLDetails(details); formatted != "" {
-			log.InfoContext(c, "sql details", slog.String("sql", formatted))
+			slog.InfoContext(c, "sql details", slog.String("sql", formatted))
 		}
 	}
 }

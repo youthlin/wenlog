@@ -51,8 +51,14 @@ type publicSettings struct {
 }
 
 // NewPublic 构造前台处理器。
-func NewPublic(st *store.Store, cfg *config.Config, log *slog.Logger, tm *theme.Manager, renderer *render.Renderer) *Public {
-	return &Public{st: st, cfg: cfg, log: log, themeManager: tm, renderer: renderer}
+func NewPublic(st *store.Store, cfg *config.Config, tm *theme.Manager, renderer *render.Renderer) *Public {
+	return &Public{
+		st:           st,
+		cfg:          cfg,
+		log:          slog.Default().With("component", "public-handler"),
+		themeManager: tm,
+		renderer:     renderer,
+	}
 }
 
 // renderHTML 渲染模板，管理员预览主题时使用预览模板，否则使用主模板。

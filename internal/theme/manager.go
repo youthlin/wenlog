@@ -43,6 +43,7 @@ func NewManager(themesDir string, store settingStore) (*Manager, error) {
 		themesDir: themesDir,
 		store:     store,
 		themes:    make(map[string]*Theme),
+		log:       slog.Default().With("component", "theme-manager"),
 	}
 	if err := m.scan(); err != nil {
 		return nil, err

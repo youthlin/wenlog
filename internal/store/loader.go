@@ -28,9 +28,9 @@ type DataLoader struct {
 	commentsByPost    map[uint][]uint // postID → commentIDs (approved only, 公开)
 	allCommentsByPost map[uint][]uint // postID → commentIDs (approved + pending, 含登录用户可见)
 	postsBySlug       map[string]*model.Post
-	postsByType    map[string][]*model.Post // "post" or "page"
-	menuPages      []*model.Post
-	archiveMonths  []ArchiveMonth
+	postsByType       map[string][]*model.Post // "post" or "page"
+	menuPages         []*model.Post
+	archiveMonths     []ArchiveMonth
 }
 
 // LoadAll 全量加载所有公开数据到内存。
@@ -40,7 +40,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 1. 全部已发布+定时文章+页面
 	var posts []model.Post
-	if err := s.db(ctx).Where("status IN ?", []string{model.StatusPublished, model.StatusScheduled}).
+	if err := s.DB(ctx).Where("status IN ?", []string{model.StatusPublished, model.StatusScheduled}).
 		Find(&posts).Error; err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 2. 全部已批准+待审评论（登录用户可见自己的待审评论）
 	var comments []model.Comment
-	if err := s.db(ctx).Where("status IN ?", []string{model.CommentApproved, model.CommentPending}).
+	if err := s.DB(ctx).Where("status IN ?", []string{model.CommentApproved, model.CommentPending}).
 		Find(&comments).Error; err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 3. 全部分类
 	var categories []model.Category
-	if err := s.db(ctx).Find(&categories).Error; err != nil {
+	if err := s.DB(ctx).Find(&categories).Error; err != nil {
 		return nil, err
 	}
 	l.Categories = make(map[uint]*model.Category, len(categories))
@@ -92,7 +92,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 4. 全部标签
 	var tags []model.Tag
-	if err := s.db(ctx).Find(&tags).Error; err != nil {
+	if err := s.DB(ctx).Find(&tags).Error; err != nil {
 		return nil, err
 	}
 	l.Tags = make(map[uint]*model.Tag, len(tags))
@@ -102,7 +102,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 5. 全部用户
 	var users []model.User
-	if err := s.db(ctx).Find(&users).Error; err != nil {
+	if err := s.DB(ctx).Find(&users).Error; err != nil {
 		return nil, err
 	}
 	l.Users = make(map[uint]*model.User, len(users))
@@ -112,7 +112,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 6. 全部设置
 	var settings []model.Setting
-	if err := s.db(ctx).Find(&settings).Error; err != nil {
+	if err := s.DB(ctx).Find(&settings).Error; err != nil {
 		return nil, err
 	}
 	l.Settings = make(map[string]string, len(settings))
@@ -126,7 +126,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 		CategoryID uint
 	}
 	var pcs []pc
-	if err := s.db(ctx).Table("post_categories").Find(&pcs).Error; err != nil {
+	if err := s.DB(ctx).Table("post_categories").Find(&pcs).Error; err != nil {
 		return nil, err
 	}
 	l.postCategories = make(map[uint][]uint)
@@ -140,7 +140,7 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 		TagID  uint
 	}
 	var pts []pt
-	if err := s.db(ctx).Table("post_tags").Find(&pts).Error; err != nil {
+	if err := s.DB(ctx).Table("post_tags").Find(&pts).Error; err != nil {
 		return nil, err
 	}
 	l.postTags = make(map[uint][]uint)

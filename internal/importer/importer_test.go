@@ -20,8 +20,9 @@ func newTestStore(t *testing.T) *store.Store {
 }
 
 func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
+	ctx := context.Background()
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(ctx)
 	if err := db.Create(&model.User{ID: 7, Username: "admin", DisplayName: "管理员", Email: "admin@example.com"}).Error; err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
@@ -140,7 +141,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 
 func TestImportReaderUsesGMTDatesWhenLocalDatesAreMissing(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	if err := db.Create(&model.User{ID: 7, Username: "admin", DisplayName: "管理员"}).Error; err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
@@ -203,7 +204,7 @@ func TestImportReaderUsesGMTDatesWhenLocalDatesAreMissing(t *testing.T) {
 
 func TestExportXMLRoundTrip(t *testing.T) {
 	src := newTestStore(t)
-	db := src.DB()
+	db := src.DB(context.Background())
 	if err := db.Create(&model.User{ID: 9, Username: "writer", DisplayName: "作者", Email: "writer@example.com"}).Error; err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
@@ -245,7 +246,7 @@ func TestExportXMLRoundTrip(t *testing.T) {
 	}
 
 	dst := newTestStore(t)
-	dstDB := dst.DB()
+	dstDB := dst.DB(context.Background())
 	if err := dstDB.Create(&model.User{ID: 77, Username: "target", DisplayName: "目标用户"}).Error; err != nil {
 		t.Fatalf("seed target user: %v", err)
 	}
@@ -288,7 +289,7 @@ func TestExportXMLRoundTrip(t *testing.T) {
 
 func TestExportXMLRoundTripMapsMultipleAuthorsAndCommentUsers(t *testing.T) {
 	src := newTestStore(t)
-	db := src.DB()
+	db := src.DB(context.Background())
 	users := []model.User{
 		{ID: 9, Username: "writer", DisplayName: "作者", Email: "writer@example.com"},
 		{ID: 10, Username: "editor", DisplayName: "编辑", Email: "editor@example.com"},
@@ -334,7 +335,7 @@ func TestExportXMLRoundTripMapsMultipleAuthorsAndCommentUsers(t *testing.T) {
 	}
 
 	dst := newTestStore(t)
-	dstDB := dst.DB()
+	dstDB := dst.DB(context.Background())
 	for _, u := range []model.User{
 		{ID: 77, Username: "target-writer", DisplayName: "目标作者"},
 		{ID: 88, Username: "target-editor", DisplayName: "目标编辑"},

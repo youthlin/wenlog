@@ -43,8 +43,15 @@ type hotSwitcher interface {
 }
 
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger, renderer *renderx.Renderer, assets hotSwitcher, tm *ThemeManager) *Admin {
-	return &Admin{st: st, cfg: cfg, log: log, renderer: renderer, assets: assets, themeManager: tm}
+func NewAdmin(st *store.Store, cfg *config.Config, renderer *renderx.Renderer, assets hotSwitcher, tm *ThemeManager) *Admin {
+	return &Admin{
+		st:           st,
+		cfg:          cfg,
+		log:          slog.Default().With("component", "admin-handler"),
+		renderer:     renderer,
+		assets:       assets,
+		themeManager: tm,
+	}
 }
 
 const adminPageSize = 20

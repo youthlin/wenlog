@@ -3,15 +3,16 @@ package store
 
 import (
 	"context"
+	"strings"
+
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/model"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func (s *Store) CategorySlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
 	var n int64
-	q := s.db(ctx).Model(&model.Category{}).Where("slug = ?", slug)
+	q := s.DB(ctx).Model(&model.Category{}).Where("slug = ?", slug)
 	if excludeID > 0 {
 		q = q.Where("id <> ?", excludeID)
 	}
@@ -20,11 +21,11 @@ func (s *Store) CategorySlugExists(ctx context.Context, slug string, excludeID u
 }
 func (s *Store) SaveCategory(ctx context.Context, cat *model.Category) error {
 	defer s.InvalidateCache()
-	return errors.Wrap(s.db(ctx).Save(cat).Error, "save category")
+	return errors.Wrap(s.DB(ctx).Save(cat).Error, "保存分类失败")
 }
 func (s *Store) DeleteCategory(ctx context.Context, id uint) error {
 	defer s.InvalidateCache()
-	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
+	return s.DB(ctx).Transaction(func(tx *gorm.DB) error {
 		var cat model.Category
 		if err := tx.First(&cat, id).Error; err != nil {
 			return errors.Wrap(err, "load category")
@@ -77,7 +78,7 @@ func (s *Store) DeleteCategory(ctx context.Context, id uint) error {
 	})
 }
 func (s *Store) AdminListCategories(ctx context.Context, keyword string, page, pageSize int) ([]model.Category, int64, error) {
-	q := s.db(ctx).Model(&model.Category{})
+	q := s.DB(ctx).Model(&model.Category{})
 	applyKeyword := func(db *gorm.DB) *gorm.DB {
 		if kw := strings.TrimSpace(keyword); kw != "" {
 			like := termQueryLike(kw)
@@ -91,7 +92,7 @@ func (s *Store) AdminListCategories(ctx context.Context, keyword string, page, p
 		return nil, 0, errors.Wrap(err, "count categories")
 	}
 	var categories []model.Category
-	listQ := applyKeyword(s.db(ctx).Model(&model.Category{}))
+	listQ := applyKeyword(s.DB(ctx).Model(&model.Category{}))
 	err := listQ.Select("categories.*, COUNT(DISTINCT posts.id) AS post_count").
 		Joins("LEFT JOIN post_categories pc_count ON pc_count.category_id = categories.id").
 		Joins("LEFT JOIN posts ON posts.id = pc_count.post_id AND posts.post_type = ?", model.PostTypePost).
@@ -101,6 +102,6 @@ func (s *Store) AdminListCategories(ctx context.Context, keyword string, page, p
 }
 func (s *Store) AllCategories(ctx context.Context) []model.Category {
 	var cs []model.Category
-	s.db(ctx).Order("name ASC").Find(&cs)
+	s.DB(ctx).Order("name ASC").Find(&cs)
 	return cs
 }

@@ -154,7 +154,7 @@ func (h *Admin) importXMLConfirm(c *gin.Context, data gin.H) {
 		}
 	}
 
-	stats, err := wpimport.ImportReader(h.st.DB(), bytes.NewReader(xmlBytes), wpimport.Options{
+	stats, err := wpimport.ImportReader(h.st.DB(c), bytes.NewReader(xmlBytes), wpimport.Options{
 		TargetUserID:  defaultUserID,
 		IncludeDrafts: true,
 		AuthorMapping: authorMapping,
@@ -264,7 +264,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 	if err != nil && h.log != nil {
 		h.log.Error("get site name for export", "error", err)
 	}
-	xmlData, _, err := wpimport.ExportXML(h.st.DB(), wpimport.ExportOptions{
+	xmlData, _, err := wpimport.ExportXML(h.st.DB(c), wpimport.ExportOptions{
 		Posts:     includePosts,
 		Pages:     includePages,
 		Comments:  includeComments,

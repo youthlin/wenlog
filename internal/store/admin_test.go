@@ -12,7 +12,7 @@ import (
 
 func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	if err := db.Create(&model.User{ID: 1, Username: "old", DisplayName: "旧名", Email: "old@example.com"}).Error; err != nil {
 		t.Fatalf("seed user1: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {
 	if exists {
 		t.Fatal("expected own username not to be treated as duplicate")
 	}
-	if err := st.UpdateUserProfile(context.Background(), 1, "newname", "新显示名", "new@example.com"); err != nil {
+	if err = st.UpdateUserProfile(context.Background(), 1, "newname", "新显示名", "new@example.com"); err != nil {
 		t.Fatalf("update profile: %v", err)
 	}
 	u, err := st.GetUserByID(context.Background(), 1)
@@ -47,7 +47,7 @@ func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {
 
 func TestLastAdminCannotBeDemotedOrDeleted(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	if err := db.Create(&model.User{ID: 1, Username: "admin", Role: model.RoleAdmin}).Error; err != nil {
 		t.Fatalf("seed admin: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestLastAdminCannotBeDemotedOrDeleted(t *testing.T) {
 
 func TestAdminCanBeDemotedOrDeletedWhenAnotherAdminExists(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	for _, u := range []model.User{
 		{ID: 1, Username: "admin1", Role: model.RoleAdmin},
 		{ID: 2, Username: "admin2", Role: model.RoleAdmin},
@@ -151,7 +151,7 @@ func TestPendingRegistrationReplacesDuplicateRequest(t *testing.T) {
 
 func TestPendingEmailChangeUpdatesUserAfterVerification(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	if err := db.Create(&model.User{ID: 1, Username: "user", DisplayName: "用户", Email: "old@example.com"}).Error; err != nil {
 		t.Fatalf("seed user: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestPendingEmailChangeReplacesDuplicateRequest(t *testing.T) {
 
 func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
 	posts := []model.Post{
 		{ID: 1, Title: "文章", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now.Add(3 * time.Hour)},
@@ -217,7 +217,7 @@ func TestAdminListPagesOrdersByMenuOrder(t *testing.T) {
 
 func TestDeleteCategoryMovesPostsToParent(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	parent := model.Category{ID: 1, Name: "Parent", Slug: "parent"}
 	child := model.Category{ID: 2, Name: "Child", Slug: "child", ParentID: parent.ID}
 	post := model.Post{ID: 10, Title: "Post", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()}
@@ -248,7 +248,7 @@ func TestDeleteCategoryMovesPostsToParent(t *testing.T) {
 
 func TestDeleteCategoryMovesPostsToUncategorizedWithoutParent(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	uncategorized := model.Category{ID: 1, Name: "未分类", Slug: "uncategorized"}
 	cat := model.Category{ID: 2, Name: "Go", Slug: "go"}
 	post := model.Post{ID: 10, Title: "Post", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()}
@@ -278,7 +278,7 @@ func TestDeleteCategoryMovesPostsToUncategorizedWithoutParent(t *testing.T) {
 
 func TestDeleteCategoryRejectsUncategorized(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	uncategorized := model.Category{ID: 1, Name: "未分类", Slug: "uncategorized"}
 	if err := db.Create(&uncategorized).Error; err != nil {
 		t.Fatalf("seed uncategorized: %v", err)
@@ -290,7 +290,7 @@ func TestDeleteCategoryRejectsUncategorized(t *testing.T) {
 
 func TestPageSlugExists(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	if err := db.Create(&model.Post{ID: 1, PostType: model.PostTypePage, Slug: "about", Status: model.StatusPublished}).Error; err != nil {
 		t.Fatalf("seed page: %v", err)
 	}
@@ -312,7 +312,7 @@ func TestPageSlugExists(t *testing.T) {
 
 func TestDeleteCommentSoftDeletesChildren(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	comments := []model.Comment{
 		{ID: 1, PostID: 1, ParentID: 0, Status: model.CommentApproved, Content: "parent"},
 		{ID: 2, PostID: 1, ParentID: 1, Status: model.CommentApproved, Content: "child"},

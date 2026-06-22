@@ -4,18 +4,19 @@ package store
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"gorm.io/gorm"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func (s *Store) PageSlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
 	var n int64
-	q := s.db(ctx).Model(&model.Post{}).Where("post_type = ? AND slug = ?", model.PostTypePage, slug)
+	q := s.DB(ctx).Model(&model.Post{}).Where("post_type = ? AND slug = ?", model.PostTypePage, slug)
 	if excludeID > 0 {
 		q = q.Where("id <> ?", excludeID)
 	}
@@ -24,7 +25,7 @@ func (s *Store) PageSlugExists(ctx context.Context, slug string, excludeID uint)
 }
 func (s *Store) PostSlugExists(ctx context.Context, slug string, excludeID uint) (bool, error) {
 	var n int64
-	q := s.db(ctx).Model(&model.Post{}).Where("post_type = ? AND slug = ?", model.PostTypePost, slug)
+	q := s.DB(ctx).Model(&model.Post{}).Where("post_type = ? AND slug = ?", model.PostTypePost, slug)
 	if excludeID > 0 {
 		q = q.Where("id <> ?", excludeID)
 	}
@@ -33,14 +34,14 @@ func (s *Store) PostSlugExists(ctx context.Context, slug string, excludeID uint)
 }
 func (s *Store) CountPosts(ctx context.Context) (int64, error) {
 	var total int64
-	err := s.db(ctx).Model(&model.Post{}).Count(&total).Error
+	err := s.DB(ctx).Model(&model.Post{}).Count(&total).Error
 	return total, errors.Wrap(err, "count posts")
 }
 func (s *Store) AdminListPosts(ctx context.Context, postType string, page, pageSize int, categoryID, tagID uint, keyword string) ([]model.Post, int64, error) {
 	return s.AdminListPostsForAuthor(ctx, postType, page, pageSize, categoryID, tagID, keyword, 0)
 }
 func (s *Store) AdminListPostsForAuthor(ctx context.Context, postType string, page, pageSize int, categoryID, tagID uint, keyword string, authorID uint) ([]model.Post, int64, error) {
-	q := s.db(ctx).Model(&model.Post{}).Where("post_type = ?", postType)
+	q := s.DB(ctx).Model(&model.Post{}).Where("post_type = ?", postType)
 	if authorID > 0 {
 		q = q.Where("author_id = ?", authorID)
 	}
@@ -59,7 +60,7 @@ func (s *Store) AdminListPostsForAuthor(ctx context.Context, postType string, pa
 		return nil, 0, errors.Wrap(err, "count")
 	}
 	var posts []model.Post
-	commentCount := s.db(ctx).Model(&model.Comment{}).
+	commentCount := s.DB(ctx).Model(&model.Comment{}).
 		Select("COUNT(1)").
 		Where("comments.post_id = posts.id")
 	err := q.Select("posts.*, (?) AS comment_count", commentCount).
@@ -70,7 +71,7 @@ func (s *Store) AdminListPostsForAuthor(ctx context.Context, postType string, pa
 }
 func (s *Store) AdminGetPost(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db(ctx).Preload("Categories").Preload("Tags").First(&p, id).Error
+	err := s.DB(ctx).Preload("Categories").Preload("Tags").First(&p, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (s *Store) AdminGetPost(ctx context.Context, id uint) (*model.Post, error) 
 }
 func (s *Store) NextPostID(ctx context.Context) (uint, error) {
 	var maxID uint
-	row := s.db(ctx).Model(&model.Post{}).Select("COALESCE(MAX(id),0)").Row()
+	row := s.DB(ctx).Model(&model.Post{}).Select("COALESCE(MAX(id),0)").Row()
 	if err := row.Scan(&maxID); err != nil {
 		return 0, errors.Wrap(err, "max post id")
 	}
@@ -86,23 +87,23 @@ func (s *Store) NextPostID(ctx context.Context) (uint, error) {
 }
 func (s *Store) SavePost(ctx context.Context, p *model.Post) error {
 	defer s.InvalidateCache()
-	return errors.Wrap(s.db(ctx).Save(p).Error, "save post")
+	return errors.Wrap(s.DB(ctx).Save(p).Error, "保存文章失败")
 }
 func (s *Store) SavePostWithTerms(ctx context.Context, p *model.Post, catIDs []uint, tagNames []string) error {
 	defer s.InvalidateCache()
-	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
+	return s.DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(p).Error; err != nil {
-			return errors.Wrap(err, "save post")
+			return errors.Wrap(err, "保存文章失败")
 		}
 		// 分类:按 ID 取。
 		var cats []model.Category
 		if len(catIDs) > 0 {
 			if err := tx.Where("id IN ?", catIDs).Find(&cats).Error; err != nil {
-				return errors.Wrap(err, "load categories")
+				return errors.Wrapf(err, "查询文章分类失败: %v", catIDs)
 			}
 		}
 		if err := tx.Model(p).Association("Categories").Replace(cats); err != nil {
-			return errors.Wrap(err, "replace categories")
+			return errors.Wrapf(err, "记录文章-分类关系失败: %v", catIDs)
 		}
 		// 标签:按 slug(唯一键)查找或新建。
 		var tags []model.Tag
@@ -112,23 +113,23 @@ func (s *Store) SavePostWithTerms(ctx context.Context, p *model.Post, catIDs []u
 			err := tx.Where("slug = ?", slug).First(&t).Error
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				t = model.Tag{Name: name, Slug: slug}
-				if err := tx.Create(&t).Error; err != nil {
-					return errors.Wrap(err, "create tag")
+				if err = tx.Create(&t).Error; err != nil {
+					return errors.Wrapf(err, "创建标签[%s]失败", name)
 				}
 			} else if err != nil {
-				return errors.Wrap(err, "find tag")
+				return errors.Wrapf(err, "查询标签[%s]失败", name)
 			}
 			tags = append(tags, t)
 		}
 		if err := tx.Model(p).Association("Tags").Replace(tags); err != nil {
-			return errors.Wrap(err, "replace tags")
+			return errors.Wrap(err, "记录文章-标签关系失败")
 		}
 		return nil
 	})
 }
 func (s *Store) DeletePost(ctx context.Context, id uint) error {
 	defer s.InvalidateCache()
-	return s.db(ctx).Transaction(func(tx *gorm.DB) error {
+	return s.DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("post_id = ?", id).Delete(&model.Comment{}).Error; err != nil {
 			return err
 		}
@@ -165,7 +166,7 @@ func (s *Store) AdminPostsByIDs(ctx context.Context, ids []uint) (map[uint]model
 		return result, nil
 	}
 	var posts []model.Post
-	err := s.db(ctx).Select("id", "title", "slug", "post_type", "published_at", "author_id").
+	err := s.DB(ctx).Select("id", "title", "slug", "post_type", "published_at", "author_id").
 		Preload("Categories").Preload("Author").
 		Where("id IN ?", uniq).Find(&posts).Error
 	if err != nil {
@@ -180,7 +181,7 @@ func (s *Store) ListPosts(ctx context.Context, page, pageSize int, categorySlug,
 	if page < 1 {
 		page = 1
 	}
-	q := s.db(ctx).Omit("CommentCount").Model(&model.Post{}).
+	q := s.DB(ctx).Omit("CommentCount").Model(&model.Post{}).
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished)
 
 	if categorySlug != "" {
@@ -217,7 +218,7 @@ func (s *Store) SearchPosts(ctx context.Context, keyword string, page, pageSize 
 		page = 1
 	}
 	like := "%" + keyword + "%"
-	q := s.db(ctx).Omit("CommentCount").Model(&model.Post{}).
+	q := s.DB(ctx).Omit("CommentCount").Model(&model.Post{}).
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Where("title LIKE ? OR content LIKE ?", like, like)
 
@@ -248,7 +249,7 @@ func (s *Store) ApprovedCommentCounts(ctx context.Context, postIDs []uint) map[u
 		N      int64
 	}
 	var rows []row
-	s.db(ctx).Model(&model.Comment{}).
+	s.DB(ctx).Model(&model.Comment{}).
 		Select("post_id, COUNT(*) AS n").
 		Where("post_id IN ? AND status = ?", postIDs, model.CommentApproved).
 		Group("post_id").Scan(&rows)
@@ -259,7 +260,7 @@ func (s *Store) ApprovedCommentCounts(ctx context.Context, postIDs []uint) map[u
 }
 func (s *Store) GetPostByID(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db(ctx).Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
+	err := s.DB(ctx).Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
 		Where("id = ? AND status = ?", id, model.StatusPublished).
 		First(&p).Error
 	if err != nil {
@@ -271,7 +272,7 @@ func (s *Store) ResolvePostByPath(ctx context.Context, path string, match *perma
 	if match == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
-	q := s.db(ctx).Omit("CommentCount").Model(&model.Post{}).
+	q := s.DB(ctx).Omit("CommentCount").Model(&model.Post{}).
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished)
 	if match.HasPostID {
 		q = q.Where("posts.id = ?", match.PostID)
@@ -322,7 +323,7 @@ func (s *Store) ResolvePostByPath(ctx context.Context, path string, match *perma
 }
 func (s *Store) GetPostAnyStatus(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db(ctx).Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
+	err := s.DB(ctx).Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
 		Where("id = ? AND post_type = ?", id, model.PostTypePost).
 		First(&p).Error
 	if err != nil {
@@ -332,7 +333,7 @@ func (s *Store) GetPostAnyStatus(ctx context.Context, id uint) (*model.Post, err
 }
 func (s *Store) PrevPost(ctx context.Context, t time.Time) *model.Post {
 	var p model.Post
-	err := s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
+	err := s.DB(ctx).Select("id", "title", "slug", "published_at", "author_id").
 		Where("post_type = ? AND status = ? AND published_at < ?",
 			model.PostTypePost, model.StatusPublished, t).
 		Order("published_at DESC").First(&p).Error
@@ -343,7 +344,7 @@ func (s *Store) PrevPost(ctx context.Context, t time.Time) *model.Post {
 }
 func (s *Store) NextPost(ctx context.Context, t time.Time) *model.Post {
 	var p model.Post
-	err := s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
+	err := s.DB(ctx).Select("id", "title", "slug", "published_at", "author_id").
 		Where("post_type = ? AND status = ? AND published_at > ?",
 			model.PostTypePost, model.StatusPublished, t).
 		Order("published_at ASC").First(&p).Error
@@ -354,7 +355,7 @@ func (s *Store) NextPost(ctx context.Context, t time.Time) *model.Post {
 }
 func (s *Store) GetPageBySlug(ctx context.Context, slug string) (*model.Post, error) {
 	var p model.Post
-	err := s.db(ctx).Omit("CommentCount").Preload("Author").Where("slug = ? AND post_type = ? AND status = ?",
+	err := s.DB(ctx).Omit("CommentCount").Preload("Author").Where("slug = ? AND post_type = ? AND status = ?",
 		slug, model.PostTypePage, model.StatusPublished).First(&p).Error
 	if err != nil {
 		return nil, err
@@ -362,12 +363,12 @@ func (s *Store) GetPageBySlug(ctx context.Context, slug string) (*model.Post, er
 	return &p, nil
 }
 func (s *Store) IncrementViews(ctx context.Context, id uint) error {
-	return s.db(ctx).Model(&model.Post{}).Where("id = ?", id).
+	return s.DB(ctx).Model(&model.Post{}).Where("id = ?", id).
 		UpdateColumn("views", gorm.Expr("views + 1")).Error
 }
 func (s *Store) AllPostsForArchive(ctx context.Context) ([]model.Post, error) {
 	var posts []model.Post
-	err := s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
+	err := s.DB(ctx).Select("id", "title", "slug", "published_at", "author_id").
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Order("published_at DESC").Find(&posts).Error
 	if err != nil {
@@ -377,7 +378,7 @@ func (s *Store) AllPostsForArchive(ctx context.Context) ([]model.Post, error) {
 }
 func (s *Store) MenuPages(ctx context.Context) ([]model.Post, error) {
 	var pages []model.Post
-	err := s.db(ctx).Where("post_type = ? AND status = ? AND menu_order > 0",
+	err := s.DB(ctx).Where("post_type = ? AND status = ? AND menu_order > 0",
 		model.PostTypePage, model.StatusPublished).
 		Order("menu_order ASC").Find(&pages).Error
 	if err != nil {
@@ -387,7 +388,7 @@ func (s *Store) MenuPages(ctx context.Context) ([]model.Post, error) {
 }
 func (s *Store) PostMeta(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.db(ctx).Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
+	err := s.DB(ctx).Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
 		Preload("Categories").Preload("Author").
 		Where("id = ?", id).First(&p).Error
 	if err != nil {
@@ -402,7 +403,7 @@ func (s *Store) PostMetas(ctx context.Context, ids []uint) (map[uint]*model.Post
 		return map[uint]*model.Post{}, nil
 	}
 	var posts []model.Post
-	err := s.db(ctx).Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
+	err := s.DB(ctx).Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
 		Preload("Categories").Preload("Author").
 		Where("id IN ?", ids).Find(&posts).Error
 	if err != nil {
@@ -416,15 +417,16 @@ func (s *Store) PostMetas(ctx context.Context, ids []uint) (map[uint]*model.Post
 }
 func (s *Store) RecentPosts(ctx context.Context, n int) []model.Post {
 	var ps []model.Post
-	s.db(ctx).Select("id", "title", "slug", "published_at", "author_id").
+	s.DB(ctx).Select("id", "title", "slug", "published_at", "author_id").
 		Preload("Categories").Preload("Author").
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Order("published_at DESC").Limit(n).Find(&ps)
 	return ps
 }
+
 // PublishScheduled 将已到发布时间的定时文章改为已发布状态，返回受影响行数。
 func (s *Store) PublishScheduled(ctx context.Context) (int64, error) {
-	result := s.db(ctx).Model(&model.Post{}).
+	result := s.DB(ctx).Model(&model.Post{}).
 		Where("status = ? AND published_at <= ?", model.StatusScheduled, time.Now()).
 		Update("status", model.StatusPublished)
 	if result.Error != nil {
@@ -442,7 +444,7 @@ func (s *Store) ArchiveMonths(ctx context.Context) []ArchiveMonth {
 		N  int64
 	}
 	var rows []row
-	s.db(ctx).Model(&model.Post{}).
+	s.DB(ctx).Model(&model.Post{}).
 		Select("strftime('%Y-%m', published_at) AS ym, COUNT(*) AS n").
 		Where("post_type = ? AND status = ?", model.PostTypePost, model.StatusPublished).
 		Group("ym").Order("ym DESC").Scan(&rows)

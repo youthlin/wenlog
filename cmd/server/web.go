@@ -24,14 +24,15 @@ import (
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/theme"
+	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/web"
 )
 
 // serve 启动 web 服务器
-func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
+func serve(cfg *config.Config, st *store.Store) error {
 	srv := &http.Server{
 		Addr:    cfg.Addr,
-		Handler: createWebHandler(cfg, log, st),
+		Handler: createWebHandler(cfg, st),
 	}
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -40,7 +41,7 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 	// 定时发布 goroutine：每分钟检查一次
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	go func() {
+	util.Go(func() {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 		for {
@@ -48,18 +49,17 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 			case <-ticker.C:
 				n, err := st.PublishScheduled(ctx)
 				if err != nil {
-					log.Error("publish scheduled", slog.Any("error", err))
+					slog.Error("检查定时发布文章失败", slog.Any("error", err))
 				} else if n > 0 {
-					log.Info("published scheduled posts", slog.Int64("count", n))
+					slog.Info("检查定时发布文章成功", slog.Int64("count", n))
 				}
 			case <-ctx.Done():
 				return
 			}
 		}
-	}()
-
+	})
 	// 自动备份 goroutine：每天凌晨 3 点执行
-	go func() {
+	util.Go(func() {
 		for {
 			now := time.Now()
 			next := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
@@ -67,7 +67,7 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 				next = next.Add(24 * time.Hour)
 			}
 			d := next.Sub(now)
-			log.Info("next auto backup", slog.Time("at", next), slog.Duration("in", d))
+			slog.Info("下次定时自动备份数据库", slog.Time("at", next), slog.Duration("in", d))
 			select {
 			case <-time.After(d):
 			case <-ctx.Done():
@@ -75,24 +75,25 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 			}
 			path, err := st.BackupDB()
 			if err != nil {
-				log.Error("auto backup", slog.Any("error", err))
+				slog.Error("备份数据库失败", slog.Any("error", err))
 			} else {
-				log.Info("auto backup done", slog.String("path", path))
+				slog.Info("备份数据库成功", slog.String("path", path))
 				_ = st.CleanOldBackups(10)
 			}
 		}
-	}()
+	})
 
-	go func() {
+	util.Go(func() {
 		<-quit
-		log.Info("shutting down")
+		slog.Info("系统正在退出...")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Error("shutdown", slog.Any("error", err))
+			slog.Error("系统退出成功", slog.Any("error", err))
 		}
-	}()
-	log.Info("server listening", slog.String("addr", cfg.Addr))
+	})
+
+	slog.Info("服务监听中...", slog.String("addr", cfg.Addr))
 	err := srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return err
@@ -101,19 +102,19 @@ func serve(cfg *config.Config, log *slog.Logger, st *store.Store) error {
 }
 
 // createWebHandler 创建并注册路由。
-func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gin.Engine {
+func createWebHandler(cfg *config.Config, st *store.Store) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.ContextWithFallback = true
 
 	// 中间件
 	r.Use(
-		middleware.Recover(log),
+		middleware.Recover(),
 		middleware.TraceID(),
-		middleware.Logger(log),
+		middleware.Logger(),
 		middleware.Metrics(),
-		middleware.SQLTracer(log),
-		middleware.Session(log, st)(),
+		middleware.SQLTracer(),
+		middleware.Session(st)(),
 		i18n.Middleware(),
 	)
 
@@ -122,7 +123,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	// 静态资源仍然直接读磁盘即时生效。缺失时统一回退到 embed。
 	tplRenderer, err := templateRenderer()
 	if err != nil {
-		log.Error("load templates", slog.Any("error", err))
+		slog.Error("加载模板失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	r.HTMLRender = tplRenderer
@@ -144,10 +145,9 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	ensureThemesOnDisk()
 	tm, err := theme.NewManager("themes", st)
 	if err != nil {
-		log.Error("init theme manager", slog.Any("error", err))
+		slog.Error("初始化主题管理器失败", slog.Any("error", err))
 		os.Exit(1)
 	}
-	tm.SetLogger(log)
 	tm.SetRenderer(tplRenderer)
 	// 设置默认主题 embed FS，供 ResetToDefault 时从 embed 加载
 	if defaultThemeFS, err := fs.Sub(web.Themes, "themes/default/templates"); err == nil {
@@ -155,23 +155,23 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 	}
 	// 启动时加载当前激活主题（含 functions.go）
 	if err := tm.LoadTheme(context.Background(), ""); err != nil {
-		log.Error("load current theme", slog.Any("error", err))
+		slog.Error("加载当前主题失败", slog.Any("error", err))
 	}
-	pub := handler.NewPublic(st, cfg, log, tm, tplRenderer)
+	pub := handler.NewPublic(st, cfg, tm, tplRenderer)
 	rateLimiter := middleware.NewMemoryRateLimiter()
 	registerPublicRoutes(r, pub, rateLimiter)
 
 	// 认证（独立于前台和后台）
-	auth := handler.NewAuth(st, log)
+	auth := handler.NewAuth(st)
 	registerAuthRoutes(r, auth, rateLimiter)
 
 	// 后台
-	adm := handler.NewAdmin(st, cfg, log, tplRenderer, assetLocalFS, tm)
+	adm := handler.NewAdmin(st, cfg, tplRenderer, assetLocalFS, tm)
 	registerAdminRoutes(r, adm, auth, st, rateLimiter)
 
 	// 注入 themeWidgets 模板函数实现
 	render.SetThemeWidgetsProvider(func(area string) any {
-		t := tm.Current(nil)
+		t := tm.Current(context.Background())
 		if t == nil {
 			return nil
 		}
@@ -181,7 +181,7 @@ func createWebHandler(cfg *config.Config, log *slog.Logger, st *store.Store) *gi
 
 	// 注入 option 模板函数实现（themeData "option" 调用）
 	render.SetOptionProvider(func(optionID string) string {
-		t := tm.Current(nil)
+		t := tm.Current(context.Background())
 		if t == nil {
 			return ""
 		}
@@ -278,7 +278,7 @@ func (fsys *localFirstFileSystem) SetHot(v bool) {
 func ensureThemesOnDisk() {
 	entries, err := fs.ReadDir(web.Themes, "themes")
 	if err != nil {
-		slog.Warn("read embedded themes", "error", err)
+		slog.Warn("读取内嵌主题失败", "error", err)
 		return
 	}
 	for _, entry := range entries {
@@ -306,7 +306,7 @@ func ensureThemesOnDisk() {
 			}
 			return os.WriteFile(target, data, 0o644)
 		}); err != nil {
-			slog.Warn("release theme from embed", "theme", themeName, "error", err)
+			slog.Warn("释放内嵌主题失败", "theme", themeName, "error", err)
 		}
 	}
 }

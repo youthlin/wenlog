@@ -29,8 +29,11 @@ type Auth struct {
 }
 
 // NewAuth 构造认证处理器。
-func NewAuth(st *store.Store, log *slog.Logger) *Auth {
-	return &Auth{st: st, log: log}
+func NewAuth(st *store.Store) *Auth {
+	return &Auth{
+		st:  st,
+		log: slog.Default().With("component", "auth-handler"),
+	}
 }
 
 // base 返回认证页面通用数据。

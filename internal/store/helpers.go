@@ -3,15 +3,16 @@ package store
 
 import (
 	"context"
+	"sort"
+	"strconv"
+	"strings"
+
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"github.com/youthlin/blog/internal/util"
 	"gorm.io/gorm"
-	"sort"
-	"strconv"
-	"strings"
 )
 
 var ErrLastAdmin = errors.New("at least one admin user is required")
@@ -57,7 +58,7 @@ func (s *Store) softDeleteComments(ctx context.Context, ids []uint) error {
 		return nil
 	}
 	return errors.Wrap(
-		s.db(ctx).Model(&model.Comment{}).
+		s.DB(ctx).Model(&model.Comment{}).
 			Where("id IN ?", allIDs).
 			Update("status", model.CommentDeleted).Error,
 		"soft delete comments",
@@ -82,7 +83,7 @@ func (s *Store) commentTreeIDs(ctx context.Context, ids []uint) ([]uint, error) 
 			break
 		}
 		var children []uint
-		if err := s.db(ctx).Model(&model.Comment{}).
+		if err := s.DB(ctx).Model(&model.Comment{}).
 			Where("parent_id IN ? OR reply_to_id IN ?", frontier, frontier).
 			Pluck("id", &children).
 			Error; err != nil {

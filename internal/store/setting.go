@@ -3,6 +3,7 @@ package store
 
 import (
 	"context"
+
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/model"
 	"gorm.io/gorm"
@@ -10,7 +11,7 @@ import (
 
 func (s *Store) GetSetting(ctx context.Context, key string) (string, error) {
 	var st model.Setting
-	err := s.db(ctx).First(&st, "key = ?", key).Error
+	err := s.DB(ctx).First(&st, "key = ?", key).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", nil
 	}
@@ -25,7 +26,7 @@ func (s *Store) GetSettings(ctx context.Context, keys ...string) (map[string]str
 		return out, nil
 	}
 	var items []model.Setting
-	if err := s.db(ctx).Where("key IN ?", keys).Find(&items).Error; err != nil {
+	if err := s.DB(ctx).Where("key IN ?", keys).Find(&items).Error; err != nil {
 		return nil, errors.Wrap(err, "list settings")
 	}
 	for _, key := range keys {
@@ -39,7 +40,7 @@ func (s *Store) GetSettings(ctx context.Context, keys ...string) (map[string]str
 func (s *Store) SetSetting(ctx context.Context, key, value string) error {
 	defer s.InvalidateCache()
 	st := &model.Setting{Key: key, Value: value}
-	return errors.Wrap(s.db(ctx).Save(st).Error, "save setting")
+	return errors.Wrap(s.DB(ctx).Save(st).Error, "save setting")
 }
 
 // SaveSetting 保存设置（SetSetting 的别名，语义更清晰）。
@@ -50,10 +51,10 @@ func (s *Store) SaveSetting(ctx context.Context, key, value string) error {
 // DeleteSetting 删除设置。
 func (s *Store) DeleteSetting(ctx context.Context, key string) error {
 	defer s.InvalidateCache()
-	return s.db(ctx).Where("key = ?", key).Delete(&model.Setting{}).Error
+	return s.DB(ctx).Where("key = ?", key).Delete(&model.Setting{}).Error
 }
 func (s *Store) DebugQuery(ctx context.Context, sql string) ([]map[string]any, error) {
-	rows, err := s.db(ctx).Raw(sql).Rows()
+	rows, err := s.DB(ctx).Raw(sql).Rows()
 	if err != nil {
 		return nil, errors.Wrap(err, "debug query")
 	}

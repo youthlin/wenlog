@@ -2,6 +2,7 @@
 package render
 
 import (
+	"slices"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -519,12 +520,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"renderWidgets":    renderWidgets,
 		"widgetOption":     widgetOption,
 		"widgetInConfig":   func(id string, config []string) bool {
-			for _, c := range config {
-				if c == id {
-					return true
-				}
-			}
-			return false
+			return slices.Contains(config, id)
 		},
 	}
 	tpl, err := template.New("").Funcs(funcs).ParseFS(fsys, pattern)

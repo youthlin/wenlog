@@ -28,18 +28,18 @@ type Store struct {
 func Open(dbPath string) (*Store, error) {
 	if dir := filepath.Dir(dbPath); dir != "" && dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return nil, errors.Wrap(err, "create db dir")
+			return nil, errors.Wrap(err, "创建数据库目录失败")
 		}
 	}
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "open sqlite")
+		return nil, errors.Wrap(err, "打开数据库文件失败")
 	}
 	// 注册 SQL 追踪插件，记录每次 SQL 执行的详情（可通过 ctx 注入 SQLDetails 收集）。
 	if err := db.Use(&GormSQLTracer{}); err != nil {
-		return nil, errors.Wrap(err, "register sql tracer")
+		return nil, errors.Wrap(err, "注册SQL语句追踪插件失败")
 	}
 	s := &Store{gormDB: db, dbPath: dbPath}
 	if err := s.migrate(); err != nil {
@@ -48,11 +48,8 @@ func Open(dbPath string) (*Store, error) {
 	return s, nil
 }
 
-// DB 返回底层 gorm 句柄(供后台导入等场景直接使用)。
-func (s *Store) DB() *gorm.DB { return s.gormDB }
-
-// db 返回带 context 的 gorm 句柄，确保 SQL 追踪插件能拿到 ctx。
-func (s *Store) db(ctx context.Context) *gorm.DB {
+// DB 返回带 context 的 gorm 句柄，确保 SQL 追踪插件能拿到 ctx。
+func (s *Store) DB(ctx context.Context) *gorm.DB {
 	return s.gormDB.WithContext(ctx)
 }
 
@@ -70,13 +67,7 @@ func (s *Store) migrate() error {
 		&model.PostRevision{},
 	)
 	if err != nil {
-		return errors.Wrap(err, "auto migrate")
-	}
-	// old_slugs 已废弃,迁移时清理历史表。
-	if s.gormDB.Migrator().HasTable("old_slugs") {
-		if err := s.gormDB.Migrator().DropTable("old_slugs"); err != nil {
-			return errors.Wrap(err, "drop old_slugs")
-		}
+		return errors.Wrap(err, "数据表自动迁移升级失败")
 	}
 	return nil
 }

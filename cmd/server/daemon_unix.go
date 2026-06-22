@@ -183,15 +183,15 @@ func healthBaseURL(cfg *config.Config) string {
 	return "http://" + net.JoinHostPort(host, port)
 }
 
-func writePidFile(cfg *config.Config, log *slog.Logger) func() {
+func writePidFile(cfg *config.Config) func() {
 	if *daemonChild {
 		if err := ensureRuntimeDir(cfg); err != nil {
-			log.Error("ensure runtime dir", slog.Any("error", err))
+			slog.Error("创建数据目录失败", slog.Any("error", err))
 			os.Exit(1)
 		}
 		pidFile := daemonPIDFile(cfg)
 		if err := os.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0o644); err != nil {
-			log.Error("write pid file", slog.Any("error", err), slog.String("file", pidFile))
+			slog.Error("写入pid文件失败", slog.Any("error", err), slog.String("file", pidFile))
 			os.Exit(1)
 		}
 		return func() {

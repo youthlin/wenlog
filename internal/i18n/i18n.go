@@ -52,6 +52,7 @@ func loadTranslations() error {
 	gettext.SetSourceCodeLocale("zh_CN")
 	// 不强制固定成中文, 让空值走系统默认语言匹配。
 	// 这样启动阶段插入的初始内容也能跟随服务器默认语言做翻译。
+	// $ LANG=zh_CN ./blog start
 	gettext.SetLocale("")
 	if hot.Load() {
 		if _, err := os.Stat("web/i18n"); err == nil {

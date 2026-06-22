@@ -8,11 +8,11 @@ import (
 )
 
 // Recover gin中间件, 捕获 panic,记录日志并返回 500。
-func Recover(log *slog.Logger) gin.HandlerFunc {
+func Recover() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.ErrorContext(c, "panic recovered",
+				slog.ErrorContext(c, "panic recovered",
 					slog.Any("error", r),
 					slog.String("stack", string(debug.Stack())),
 				)

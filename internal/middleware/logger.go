@@ -9,7 +9,7 @@ import (
 )
 
 // Logger gin 中间件 输出结构化访问日志。
-func Logger(log *slog.Logger) gin.HandlerFunc {
+func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ResetGinCtx(c, func(ctx context.Context) context.Context {
 			traceID := GetTraceID(ctx)
@@ -23,7 +23,7 @@ func Logger(log *slog.Logger) gin.HandlerFunc {
 		})
 		start := time.Now()
 		c.Next()
-		log.InfoContext(c, "http request done",
+		slog.InfoContext(c, "http request done",
 			slog.Int("status", c.Writer.Status()),
 			slog.Duration("latency", time.Since(start)),
 		)

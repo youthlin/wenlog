@@ -15,10 +15,10 @@ import (
 	"github.com/youthlin/blog/internal/util"
 )
 
-func Session(log *slog.Logger, st *store.Store) func() gin.HandlerFunc {
+func Session(st *store.Store) func() gin.HandlerFunc {
 	sessionStore, err := NewDynamicCookieStore(st)
 	if err != nil {
-		log.Error("init session store", slog.Any("error", err))
+		slog.Error("init session store", slog.Any("error", err))
 		os.Exit(1)
 	}
 	sessionStore.Options(sessions.Options{

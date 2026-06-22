@@ -1,12 +1,11 @@
 package handler
 
 import (
+	"context"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
@@ -32,9 +31,7 @@ func setupAuthHandlerTest(t *testing.T) (*gin.Engine, *Auth, *store.Store) {
 		t.Fatalf("open store: %v", err)
 	}
 
-	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
-
-	auth := NewAuth(st, log)
+	auth := NewAuth(st)
 
 	r := gin.New()
 	store := cookie.NewStore([]byte("test-auth-handler-secret-32b"))
@@ -66,7 +63,7 @@ func createTestUser(t *testing.T, st *store.Store, username, password, role stri
 		DisplayName:  username,
 		Role:         role,
 	}
-	if err := st.DB().Create(u).Error; err != nil {
+	if err := st.DB(context.Background()).Create(u).Error; err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 	return u

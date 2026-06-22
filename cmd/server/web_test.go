@@ -97,6 +97,7 @@ func readFileFromHTTPFS(t *testing.T, fsys http.FileSystem, name string) string 
 }
 
 func TestEnsureInitialContent(t *testing.T) {
+	ctx := context.Background()
 	st := newTestStore(t)
 	if err := i18n.Init(); err != nil {
 		t.Fatalf("init i18n: %v", err)
@@ -112,7 +113,7 @@ func TestEnsureInitialContent(t *testing.T) {
 		t.Fatalf("ensure initial content second run: %v", err)
 	}
 	var posts []model.Post
-	if err := st.DB().Order("id ASC").Find(&posts).Error; err != nil {
+	if err := st.DB(ctx).Order("id ASC").Find(&posts).Error; err != nil {
 		t.Fatalf("list posts: %v", err)
 	}
 	if len(posts) != 2 {
@@ -122,7 +123,7 @@ func TestEnsureInitialContent(t *testing.T) {
 		t.Fatalf("first post = %+v", posts[0])
 	}
 	var categories []model.Category
-	if err := st.DB().Order("id ASC").Find(&categories).Error; err != nil {
+	if err := st.DB(ctx).Order("id ASC").Find(&categories).Error; err != nil {
 		t.Fatalf("list categories: %v", err)
 	}
 	if len(categories) != 1 || categories[0].Name != "Uncategorized" || categories[0].Slug != "uncategorized" {
@@ -139,7 +140,7 @@ func TestEnsureInitialContent(t *testing.T) {
 		t.Fatalf("about page = %+v", posts[1])
 	}
 	var comments []model.Comment
-	if err := st.DB().Order("id ASC").Find(&comments).Error; err != nil {
+	if err := st.DB(ctx).Order("id ASC").Find(&comments).Error; err != nil {
 		t.Fatalf("list comments: %v", err)
 	}
 	if len(comments) != 1 {

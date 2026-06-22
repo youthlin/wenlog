@@ -16,6 +16,7 @@ func main() {
 	// 解析命令行参数
 	flag.Parse()
 	var cfg = config.Load()
+	setDefaultLogger(cfg.LogJSON)
 
 	// 是否后台运行
 	if runDaemon(cfg) {
@@ -23,16 +24,13 @@ func main() {
 	}
 
 	// 初始化
-	var (
-		log     = newLogger(cfg.LogJSON)
-		st, err = store.Open(cfg.DBPath)
-	)
+	st, err := store.Open(cfg.DBPath)
 	if err != nil {
-		log.Error("open store", slog.Any("error", err))
+		slog.Error("初始化数据库失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	if err = i18n.Init(); err != nil {
-		log.Error("init i18n", slog.Any("error", err))
+		slog.Error("加载i18n资源失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -42,25 +40,25 @@ func main() {
 	}
 	// 自动创建管理员
 	if err = ensureInitialAdmin(st); err != nil {
-		log.Error("ensure initial admin", slog.Any("error", err))
+		slog.Error("自动创建管理员账号失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	// 自动创建初始内容
 	if err = ensureInitialContent(st); err != nil {
-		log.Error("ensure initial content", slog.Any("error", err))
+		slog.Error("自动插入初始内容失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 
 	// 在监听前写入 pid 文件, 退出时删除
-	defer writePidFile(cfg, log)()
+	defer writePidFile(cfg)()
 	// 启动 web 服务器监听
-	if err := serve(cfg, log, st); err != nil {
-		log.Error("serve", slog.Any("error", err))
+	if err := serve(cfg, st); err != nil {
+		slog.Error("服务监听失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 }
 
-func newLogger(jsonOut bool) *slog.Logger {
+func setDefaultLogger(jsonOut bool) {
 	opts := &slog.HandlerOptions{
 		AddSource: true,
 		Level:     slog.LevelInfo,
@@ -72,5 +70,5 @@ func newLogger(jsonOut bool) *slog.Logger {
 		h = slog.NewTextHandler(os.Stdout, opts)
 	}
 	h = middleware.NewCtxLoggerHandler(h)
-	return slog.New(h)
+	slog.SetDefault(slog.New(h))
 }

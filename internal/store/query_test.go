@@ -21,7 +21,7 @@ func newTestStore(t *testing.T) *Store {
 
 func TestListPostsAndPagination(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	now := time.Now()
 	for i := 1; i <= 15; i++ {
 		p := model.Post{
@@ -56,7 +56,7 @@ func TestListPostsAndPagination(t *testing.T) {
 
 func TestListPostsMatchesURLEncodedCategorySlug(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	now := time.Now()
 	cat := model.Category{ID: 1, Name: "作品", Slug: "%e4%bd%9c%e5%93%81"}
 	post := model.Post{ID: 1391, Title: "吉大校园网客户端 Java 版", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now}
@@ -81,7 +81,7 @@ func TestListPostsMatchesURLEncodedCategorySlug(t *testing.T) {
 
 func TestApprovedCommentsOnly(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	db.Create(&model.Post{ID: 1, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()})
 	db.Create(&model.Comment{ID: 1, PostID: 1, Status: model.CommentApproved, Content: "a", CreatedAt: time.Now()})
 	db.Create(&model.Comment{ID: 2, PostID: 1, Status: model.CommentPending, Content: "b", CreatedAt: time.Now()})
@@ -97,7 +97,7 @@ func TestApprovedCommentsOnly(t *testing.T) {
 
 func TestVisibleCommentsIncludesOwnPendingOnly(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	uid := uint(7)
 	now := time.Now()
 	db.Create(&model.Post{ID: 1, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now})
@@ -129,7 +129,7 @@ func TestVisibleCommentsIncludesOwnPendingOnly(t *testing.T) {
 
 func TestResolveCommentReplyKeepsTwoLevelThread(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	now := time.Now()
 	db.Create(&model.Post{ID: 1, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now})
 	db.Create(&model.Comment{ID: 1, PostID: 1, ParentID: 0, Status: model.CommentApproved, Author: "parent", CreatedAt: now})
@@ -163,7 +163,7 @@ func TestResolveCommentReplyKeepsTwoLevelThread(t *testing.T) {
 
 func TestCommentsByIDs(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	db.Create(&model.Comment{ID: 1, PostID: 1, Author: "a"})
 	db.Create(&model.Comment{ID: 2, PostID: 1, Author: "b"})
 	db.Create(&model.Comment{ID: 3, PostID: 1, Author: "c"})
@@ -191,7 +191,7 @@ func TestCommentsByIDs(t *testing.T) {
 
 func TestNextPostID(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	db.Create(&model.Post{ID: 1890, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()})
 	id, err := st.NextPostID(context.Background())
 	if err != nil {
@@ -204,7 +204,7 @@ func TestNextPostID(t *testing.T) {
 
 func TestSearchPosts(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	now := time.Now()
 	db.Create(&model.Post{ID: 1, Title: "学习 Go 语言", Content: "hello", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now})
 	db.Create(&model.Post{ID: 2, Title: "随笔", Content: "今天写了 Golang 代码", PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: now})
@@ -223,7 +223,7 @@ func TestSearchPosts(t *testing.T) {
 
 func TestPrevNextPost(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	base := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	for i := 1; i <= 3; i++ {
 		db.Create(&model.Post{ID: uint(i), Title: "p", PostType: model.PostTypePost,
@@ -244,7 +244,7 @@ func TestPrevNextPost(t *testing.T) {
 
 func TestApprovedCommentCounts(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	db.Create(&model.Post{ID: 1, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()})
 	db.Create(&model.Post{ID: 2, PostType: model.PostTypePost, Status: model.StatusPublished, PublishedAt: time.Now()})
 	db.Create(&model.Comment{ID: 1, PostID: 1, Status: model.CommentApproved, CreatedAt: time.Now()})
@@ -262,7 +262,7 @@ func TestApprovedCommentCounts(t *testing.T) {
 
 func TestSayingComments(t *testing.T) {
 	st := newTestStore(t)
-	db := st.DB()
+	db := st.DB(context.Background())
 	sayingPostID := uint(789)
 	authorID := uint(1)
 	db.Create(&model.User{ID: authorID, Username: "youthlin", Email: "me@example.com"})
