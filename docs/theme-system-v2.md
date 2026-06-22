@@ -1,5 +1,7 @@
 # 主题系统 v2 设计方案
 
+> 历史设计稿：当前实现以 `AGENTS.md`、`docs/template-data-reference.md` 和 `docs/theme-system-optimization-plan.md` 为准。
+
 ## 1. 背景与目标
 
 ### 1.1 现状回顾

@@ -1,5 +1,7 @@
 # 主题系统 v3 设计方案
 
+> 历史设计稿：当前实现以 `AGENTS.md`、`docs/template-data-reference.md` 和 `docs/theme-system-optimization-plan.md` 为准。
+
 ## 1. 动机：v2 的痛点
 
 v2 开发一个主题需要同时维护三个地方：

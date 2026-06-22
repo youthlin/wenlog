@@ -122,7 +122,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_widgets.gohtml", data)
 }
 
-// SaveWidgets 保存组件配置（v6 格式）。
+// SaveWidgets 保存组件配置（对象数组格式，支持组件选项和重复组件）。
 func (h *Admin) SaveWidgets(c *gin.Context) {
 	tr := i18n.Get(c)
 	t := h.currentTheme(c)
@@ -141,7 +141,7 @@ func (h *Admin) SaveWidgets(c *gin.Context) {
 			continue
 		}
 
-		// 构建 v6 格式: [{"id":"x","opts":{...}}]
+		// 构建对象数组格式: [{"id":"x","opts":{...}}]
 		var items []theme.WidgetConfigItem
 		for i, id := range ids {
 			item := theme.WidgetConfigItem{ID: id, Opts: make(map[string]string)}

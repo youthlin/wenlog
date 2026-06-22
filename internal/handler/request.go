@@ -74,9 +74,9 @@ func syncPostPermalinkFromLoader(loader *store.DataLoader) string {
 		if v := loader.GetSetting(consts.SettingsTagPrefix); strings.TrimSpace(v) != "" {
 			tagPrefix = v
 		}
+		permalink.SetPostPattern(pattern)
+		permalink.SetTaxonomyPrefixes(categoryPrefix, tagPrefix)
 	}
-	permalink.SetPostPattern(pattern)
-	permalink.SetTaxonomyPrefixes(categoryPrefix, tagPrefix)
 	return permalink.CurrentPostPattern()
 }
 

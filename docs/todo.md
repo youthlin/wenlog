@@ -17,7 +17,7 @@
 
 ## 🟢 低优先级
 
-- [x] **静态资源缺缓存头** — 已实现：`/theme-assets/` 1年缓存（带版本号），`/assets/`、`/wp-content/`、`/uploads/` 1天缓存
+- [x] **静态资源缺缓存头** — 已实现：`/theme-assets/` 1年缓存（带版本号），`/assets/`、`/wp-content/` 1天缓存
 - [x] **图片无缩略图** — 已实现：上传时自动生成 150w/300w/768w 缩略图，文章渲染时自动添加 srcset+sizes+lazy loading
 - [x] **评论缺验证码** — 已有蜜罐+限频+邮箱校验，个人博客够用，不加验证码避免降低体验
 - [x] **缺 RSS 自动发现标签** — single 主题已有 `<link rel="alternate">`

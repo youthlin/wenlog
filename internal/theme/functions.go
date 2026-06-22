@@ -11,6 +11,8 @@ import (
 
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
+	"github.com/youthlin/blog/internal/render"
+	"github.com/youthlin/blog/internal/store"
 )
 
 // FunctionsScript 表示一个已编译的 functions.go 脚本。
@@ -46,10 +48,10 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 
 	// 创建 yaegi 解释器，使用白名单限制可用包
 	i := interp.New(interp.Options{
-		GoPath:  os.Getenv("GOPATH"),
-		Env:     os.Environ(),
-		Stdout:  nil,
-		Stderr:  nil,
+		GoPath: os.Getenv("GOPATH"),
+		Env:    os.Environ(),
+		Stdout: nil,
+		Stderr: nil,
 	})
 
 	// 只加载安全的符号表
@@ -194,9 +196,9 @@ func hashString(s string) string {
 
 // themeDataFunc 返回一个可在模板中调用的 themeData 函数。
 // 用法：{{themeData "provider_name" "key1" value1 "key2" value2}}
-func themeDataFunc(script *FunctionsScript) func(name string, args ...any) any {
+func themeDataFunc(script *FunctionsScript, api *API) func(name string, args ...any) any {
 	return func(name string, args ...any) any {
-		if script == nil {
+		if script == nil || api == nil {
 			return nil
 		}
 		script.mu.RLock()
@@ -208,26 +210,40 @@ func themeDataFunc(script *FunctionsScript) func(name string, args ...any) any {
 
 		// 解析 key-value 参数对
 		parsed := parseKVArgs(args)
-
-		// 执行 DataProvider，带超时保护
-		done := make(chan any, 1)
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					// provider panic 时返回 nil
-					done <- nil
-				}
-			}()
-			done <- provider(parsed)
-		}()
-
-		select {
-		case result := <-done:
-			return result
-		case <-time.After(time.Second):
-			return nil // 超时
-		}
+		loader, _ := render.CurrentThemeLoader().(*store.DataLoader)
+		return callProviderWithTimeout(api, provider, loader, parsed)
 	}
+}
+
+func callProviderWithTimeout(api *API, provider DataProvider, loader *store.DataLoader, args map[string]any) any {
+	if !api.TryBeginProvider(loader) {
+		return nil
+	}
+	released := make(chan struct{})
+	done := make(chan any, 1)
+	go func() {
+		defer func() {
+			api.EndProvider()
+			close(released)
+		}()
+		done <- safeCallProvider(provider, args)
+	}()
+
+	select {
+	case result := <-done:
+		return result
+	case <-time.After(time.Second):
+		return nil
+	}
+}
+
+func safeCallProvider(provider DataProvider, args map[string]any) (result any) {
+	defer func() {
+		if recover() != nil {
+			result = nil
+		}
+	}()
+	return provider(args)
 }
 
 // parseKVArgs 解析 key-value 参数对为 map[string]any。

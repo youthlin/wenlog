@@ -1,5 +1,7 @@
 # 主题系统 v6 设计方案：组件级选项 + 可重复组件
 
+> 历史设计稿：当前实现以 `AGENTS.md`、`docs/template-data-reference.md` 和 `docs/theme-system-optimization-plan.md` 为准。
+
 ## 1. 动机
 
 v5 实现了主题选项（Theme Options），但所有选项都是**全局的**——`recent_posts_count`、`saying_post_id` 等放在全局 options 里，与组件本身分离。这导致：

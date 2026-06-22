@@ -28,7 +28,7 @@ type Manager struct {
 	store     settingStore
 	themes    map[string]*Theme // name → Theme
 
-	// v2 新增字段
+	// 运行时状态：模板渲染器、functions 脚本、恢复信息。
 	mu            sync.RWMutex
 	renderer      ThemeRenderer
 	log           *slog.Logger
@@ -140,7 +140,7 @@ func (m *Manager) Activate(ctx context.Context, name string) error {
 }
 
 // Install 从已解压的目录安装主题。dir 是主题根目录（含 theme.yaml）。
-// 安装过程：校验 → 复制到 themesDir/{name}/。
+// 安装过程：校验 → 暂存复制 → 备份旧目录 → 原子替换。
 func (m *Manager) Install(dir string) (*Theme, error) {
 	t, err := LoadTheme(dir)
 	if err != nil {
@@ -150,18 +150,72 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 	if !t.HasTemplates() {
 		return nil, errors.New("theme must contain a templates/ directory")
 	}
-	// 复制到 themesDir
-	targetDir := filepath.Join(m.themesDir, t.Name)
-	if err := copyDir(dir, targetDir); err != nil {
-		return nil, errors.Wrap(err, "copy theme to themes dir")
+	if err := os.MkdirAll(m.themesDir, 0o755); err != nil {
+		return nil, errors.Wrap(err, "create themes dir")
 	}
-	// 重新加载（确保 Dir 指向正确位置）
-	t, err = LoadTheme(targetDir)
+
+	stagingDir, err := os.MkdirTemp(m.themesDir, ".install-"+t.Name+"-*")
+	if err != nil {
+		return nil, errors.Wrap(err, "create theme staging dir")
+	}
+	stagingInstalled := false
+	defer func() {
+		if !stagingInstalled {
+			_ = os.RemoveAll(stagingDir)
+		}
+	}()
+
+	if err := copyDir(dir, stagingDir); err != nil {
+		return nil, errors.Wrap(err, "copy theme to staging dir")
+	}
+	stagedTheme, err := LoadTheme(stagingDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "load staged theme")
+	}
+	if stagedTheme.Name != t.Name {
+		return nil, errors.Errorf("staged theme name changed from %q to %q", t.Name, stagedTheme.Name)
+	}
+	if !stagedTheme.HasTemplates() {
+		return nil, errors.New("theme must contain a templates/ directory")
+	}
+
+	targetDir := filepath.Join(m.themesDir, t.Name)
+	oldTheme := m.themes[t.Name]
+	backupDir, err := backupExistingThemeDir(targetDir)
 	if err != nil {
 		return nil, err
 	}
+	if backupDir != "" {
+		defer os.RemoveAll(backupDir)
+	}
+	if err := os.Rename(stagingDir, targetDir); err != nil {
+		if backupDir != "" {
+			_ = os.Rename(backupDir, targetDir)
+		}
+		return nil, errors.Wrap(err, "replace theme dir")
+	}
+	stagingInstalled = true
+
+	// 重新加载（确保 Dir 指向正确位置）
+	t, err = LoadTheme(targetDir)
+	if err != nil {
+		if rbErr := rollbackThemeInstall(targetDir, backupDir); rbErr != nil {
+			delete(m.themes, t.Name)
+			return nil, errors.Wrapf(err, "load installed theme; rollback failed: %v", rbErr)
+		}
+		return nil, errors.Wrap(err, "load installed theme")
+	}
 	m.themes[t.Name] = t
 	if err := t.LoadTranslations(); err != nil {
+		if rbErr := rollbackThemeInstall(targetDir, backupDir); rbErr != nil {
+			delete(m.themes, t.Name)
+			return nil, errors.Wrapf(err, "load theme translations; rollback failed: %v", rbErr)
+		}
+		if oldTheme != nil {
+			m.themes[t.Name] = oldTheme
+		} else {
+			delete(m.themes, t.Name)
+		}
 		return nil, err
 	}
 	return t, nil
@@ -188,10 +242,36 @@ func (m *Manager) ThemesDir() string {
 	return m.themesDir
 }
 
-// copyDir 递归复制目录。
+func backupExistingThemeDir(targetDir string) (string, error) {
+	if _, err := os.Stat(targetDir); err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", errors.Wrap(err, "stat existing theme dir")
+	}
+	backupDir, err := os.MkdirTemp(filepath.Dir(targetDir), ".backup-"+filepath.Base(targetDir)+"-*")
+	if err != nil {
+		return "", errors.Wrap(err, "create theme backup dir")
+	}
+	if err := os.Remove(backupDir); err != nil {
+		return "", errors.Wrap(err, "prepare theme backup dir")
+	}
+	if err := os.Rename(targetDir, backupDir); err != nil {
+		return "", errors.Wrap(err, "backup existing theme dir")
+	}
+	return backupDir, nil
+}
+
+func rollbackThemeInstall(targetDir, backupDir string) error {
+	_ = os.RemoveAll(targetDir)
+	if backupDir == "" {
+		return nil
+	}
+	return os.Rename(backupDir, targetDir)
+}
+
+// copyDir 递归复制目录到一个空目标目录。
 func copyDir(src, dst string) error {
-	// 先删除目标目录（如果存在）
-	_ = os.RemoveAll(dst)
 	if err := os.MkdirAll(dst, 0o755); err != nil {
 		return err
 	}
@@ -207,11 +287,18 @@ func copyDir(src, dst string) error {
 				return err
 			}
 		} else {
+			info, err := entry.Info()
+			if err != nil {
+				return err
+			}
+			if !info.Mode().IsRegular() {
+				return errors.Errorf("unsupported theme file type: %s", srcPath)
+			}
 			data, err := os.ReadFile(srcPath)
 			if err != nil {
 				return err
 			}
-			if err := os.WriteFile(dstPath, data, 0o644); err != nil {
+			if err := os.WriteFile(dstPath, data, info.Mode().Perm()); err != nil {
 				return err
 			}
 		}

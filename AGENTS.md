@@ -28,16 +28,31 @@
 - `internal/model`：GORM 模型与状态常量
 - `internal/permalink`：永久链接规则唯一来源
 - `internal/render`：模板函数、正文展示规则、代码高亮
+- `internal/theme`：主题元数据、激活/预览/恢复、组件和主题选项
 - `internal/wxr`：WordPress XML 解析与内容清洗
-- `web/templates`、`web/assets`：嵌入式模板与静态资源
+- `web/templates`、`web/assets`：后台/认证模板与全局静态资源
+- `web/themes`、`web/widgets`：内嵌前台主题与内置组件模板
 
 ### 请求与数据流
 
 - 服务启动时先加载环境变量配置，再打开 SQLite 并自动迁移。
-- Gin 中间件顺序为：panic 恢复、访问日志、Prometheus 指标。
-- 前台与后台共用同一个进程；后台挂在 `/admin/*` 下，除登录页外都要求已登录 session。
+- Gin 全局中间件顺序为：panic 恢复、Trace ID、访问日志、Prometheus 指标、SQL 追踪、Session、i18n。
+- 前台、认证与后台共用同一个进程；认证路由挂在 `/auth/*`，后台管理路由挂在 `/admin/*` 下，后台路由都要求已登录 session。
 - handler 层通常只做参数解析、权限判断、调用 store、拼装模板数据；查询细节基本都下沉到 `store`。
 - 开发时如果本地存在 `web/templates` 或 `web/assets`，服务会优先直接读取磁盘，便于修改模板/CSS/JS 后立即生效；否则回退到 `embed` 内容。
+- 前台展示由主题系统接管：启动时会确保内嵌主题释放到 `themes/`，当前主题由 Setting 表的 `current_theme` 决定；前台模板从 `themes/{name}/templates` 解析，主题资源从 `/theme-assets/*` 输出。
+
+### 主题系统当前模型
+
+- 内嵌主题源文件位于 `web/themes/{default,single}`；运行时会释放到磁盘 `themes/`，已存在的主题不会被覆盖。不要再把前台主题模板放回 `web/templates`。
+- 后台/认证模板仍在 `web/templates`；主题模板加载时会补齐后台/认证模板，但前台主题本身应自包含。
+- `internal/theme.Manager` 负责扫描 `themes/`、读取 `theme.yaml`、激活/删除/预览主题、加载主题模板、编译 `functions.go/functions.goyaegi`，并在加载失败时回退默认主题。
+- `internal/render.Renderer` 负责解析模板、模板函数、模板层级 fallback、预览模板缓存和组件渲染。页面类型到模板的 fallback 链在 `render.TemplateHierarchy` 中维护。
+- `theme.yaml` 当前不只是元数据，还声明 `widget_areas`、`widgets`、组件级 `options` 与主题全局 `options`。组件配置保存在 Setting 表的 `widget_<area>`，主题选项保存在 `option_<theme>_<option>`。
+- 前台请求通常先通过 `store.DataLoader` 全量预加载公开数据，再由 `Public.base()` 注入 `.RecentPosts`、`.Categories`、`.Tags`、`.ArchiveMonths`、`.RecentCommentItems`、`.Menu` 等通用模板数据。
+- 主题自定义数据通过 `functions.goyaegi` 注册 `themeData` provider；普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用 `themeData`。
+- 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `renderWidgets "area" .` 渲染区域，用 `widgetOption "key"` 读取当前组件实例选项。
+- 主题静态资源通过 `/theme-assets/...` 引用，当前/预览主题会自动解析到对应 `assets/` 目录。不要在主题模板里硬编码 `/web/themes/...`。
 
 ### 路由设计的关键点
 
@@ -88,7 +103,7 @@ go run ./cmd/server restart
 默认访问：
 
 - 前台：`http://localhost:8888/`
-- 后台：`http://localhost:8888/admin/login`
+- 后台登录：`http://localhost:8888/auth/login`
 - 导入：`http://localhost:8888/admin/import`
 - 指标：`http://localhost:8888/metrics`
 - 健康检查：`http://localhost:8888/healthz`
@@ -255,8 +270,8 @@ go build -o blog ./cmd/server
 
 ### 公开暴露的端点
 
-- `/metrics` 与 `/healthz` 是公开路由。
-- 若部署到公网，通常应由网关、反向代理或网络层做额外限制。
+- `/healthz` 是公开路由。
+- `/metrics` 通过 Basic Auth 保护，用户名固定为 `metrics`，密码可在后台设置页配置；公网部署仍建议结合网关、反向代理或网络层限制访问来源。
 
 ### CSRF 与后台操作
 

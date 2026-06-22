@@ -260,7 +260,11 @@ func (s *Store) ApprovedCommentCounts(ctx context.Context, postIDs []uint) map[u
 }
 func (s *Store) GetPostByID(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.DB(ctx).Omit("CommentCount").Preload("Categories").Preload("Tags").Preload("Author").
+	err := s.DB(ctx).
+		Omit("CommentCount").
+		Preload("Categories").
+		Preload("Tags").
+		Preload("Author").
 		Where("id = ? AND status = ?", id, model.StatusPublished).
 		First(&p).Error
 	if err != nil {
@@ -363,7 +367,9 @@ func (s *Store) GetPageBySlug(ctx context.Context, slug string) (*model.Post, er
 	return &p, nil
 }
 func (s *Store) IncrementViews(ctx context.Context, id uint) error {
-	return s.DB(ctx).Model(&model.Post{}).Where("id = ?", id).
+	return s.DB(ctx).
+		Model(&model.Post{}).
+		Where("id = ?", id).
 		UpdateColumn("views", gorm.Expr("views + 1")).Error
 }
 func (s *Store) AllPostsForArchive(ctx context.Context) ([]model.Post, error) {
@@ -386,11 +392,15 @@ func (s *Store) MenuPages(ctx context.Context) ([]model.Post, error) {
 	}
 	return pages, nil
 }
+
 func (s *Store) PostMeta(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
-	err := s.DB(ctx).Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
-		Preload("Categories").Preload("Author").
-		Where("id = ?", id).First(&p).Error
+	err := s.DB(ctx).
+		Select("id", "title", "published_at", "status", "post_type", "slug", "comment_status", "author_id").
+		Preload("Categories").
+		Preload("Author").
+		Where("id = ?", id).
+		First(&p).Error
 	if err != nil {
 		return nil, err
 	}

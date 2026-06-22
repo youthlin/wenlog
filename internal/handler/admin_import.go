@@ -168,6 +168,7 @@ func (h *Admin) importXMLConfirm(c *gin.Context, data gin.H) {
 		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
 		return
 	}
+	h.st.InvalidateCache()
 	data["Success"] = tr.T("导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。")
 	data["ImportStats"] = stats
 	data["ImportedFileName"] = fileName

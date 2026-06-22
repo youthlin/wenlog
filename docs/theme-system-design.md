@@ -1,5 +1,7 @@
 # 主题系统设计方案
 
+> 历史设计稿：当前实现以 `AGENTS.md`、`docs/template-data-reference.md` 和 `docs/theme-system-optimization-plan.md` 为准。
+
 ## 1. 诉求
 
 ### 1.1 核心需求

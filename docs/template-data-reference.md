@@ -20,7 +20,15 @@
 | `CSRFToken` | `string` | CSRF 令牌 |
 | `RegistrationOpen` | `bool` | 是否开放注册 |
 | `MailEnabled` | `bool` | 邮件服务是否已配置 |
-| `Widgets` | `[]interface{}` | widget 渲染结果（`template.HTML` 片段列表） |
+| `RecentPosts` | `[]model.Post` | 最近文章（当前代码注入 20 篇） |
+| `Categories` | `[]model.Category` | 全部分类 |
+| `Tags` | `[]model.Tag` | 全部标签 |
+| `ArchiveMonths` | `[]store.ArchiveMonth` | 归档月份统计 |
+| `RecentCommentItems` | `[]store.CommentWidgetItem` | 近期评论组件数据（当前代码注入 8 条） |
+| `CurrentTheme` | `*theme.Theme` | 当前/预览主题对象；可读取 `Name`、`Version`、`Description`、`Author` 等主题元数据 |
+| `ThemeVersion` | `string` | 当前主题版本，用于资源版本号等场景 |
+| `Keyword` | `string` | 当前搜索关键词；非搜索页通常为空字符串 |
+| `CurrentUserName` | `string` | 当前用户显示名；未登录为空字符串 |
 | `SQLDetails` | `*store.LazySQLDetails` | SQL 调试详情（仅管理员且开启时） |
 
 ### i18n 字段
@@ -52,7 +60,7 @@
 
 | 函数 | 签名 | 说明 |
 |---|---|---|
-| `postURL` | `func(*model.Post) string` | 文章或页面永久链接 |
+| `postURL` | `func(any) string` | 文章或页面永久链接；支持 `model.Post`、`*model.Post` 和 `theme.PostView` |
 | `categoryURL` | `func(string) string` | 分类归档链接 |
 | `tagURL` | `func(string) string` | 标签归档链接 |
 | `safeHTML` | `func(string) template.HTML` | 输出原始 HTML |
@@ -61,13 +69,22 @@
 | `detailHTML` | `func(*model.Post) template.HTML` | 详情页完整正文 |
 | `hasMore` | `func(string) bool` | 是否有 more 标记 |
 | `avatarURL` | `func(string, string) string` | 头像 URL（带默认头像） |
+| `defaultAvatarURL` | `func(string) string` | 根据默认头像类型生成兜底头像 URL |
 | `fmtDate` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
 | `fmtDateTime` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
+| `fmtDateTimeLocal` | `func(time.Time) string` | 格式化为 HTML datetime-local 可用值 `2006-01-02T15:04` |
 | `fmtFileSize` | `func(int64) string` | 格式化文件大小 |
 | `year` | `func(time.Time) int` | 提取年份 |
 | `add` | `func(int, int) int` | 加法 |
 | `sub` | `func(int, int) int` | 减法 |
 | `seq` | `func(int) []int` | 生成 `[1..n]` 整数切片 |
+| `toInt` | `func(string) int` | 字符串转整数，失败返回 0 |
+| `default` | `func(def, val any) any` | 当 val 为空值时返回 def |
+| `themeData` | `func(string, ...any) any` | 调用主题 `functions.go/functions.goyaegi` 注册的数据提供者；特殊用法 `themeData "option" "id"` 读取主题全局选项 |
+| `themeWidgets` | `func(string) any` | 返回某个组件区域的组件配置，通常由 `renderWidgets` 间接使用 |
+| `renderWidgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{renderWidgets "sidebar" .}}` |
+| `widgetOption` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
+| `widgetInConfig` | `func(string, []string) bool` | 判断组件 ID 是否在旧格式配置中，主要用于后台兼容 |
 
 ## 数据模型
 
@@ -260,85 +277,118 @@ type CommenterInfo struct {
 
 ## 主题配置（theme.yaml）
 
+当前主题配置以 v6 格式为准：`theme.yaml` 包含主题元数据、组件区域、可用组件、组件级选项与主题全局选项。早期 `pages.data/widgets` 配置已经废弃，前台通用数据由 Go 代码统一注入，页面模板由文件名和模板层级决定。
+
 ```yaml
-name: "主题名称"
+name: "my-theme"
 version: "1.0"
 description: "主题描述"
 author: "作者"
+author_uri: "https://example.com"
+theme_uri: "https://example.com/theme"
+license: "MIT"
+tags: ["响应式", "双栏"]
 
-pages:
-  index:       # 首页
-    data:      # 需要查询的数据字段
-      - RecentPosts
-      - RecentComments
-      - SayingComments
-      - ArchiveMonths
-      - Categories
-      - Tags
-    widgets:   # widget 列表
-      - user_info
-      - search
-      - saying
-      - recent_posts
-      - recent_comments
-      - archive_months
-      - categories
-      - tags
+widget_areas:
+  sidebar:
+    name: "侧边栏"
+    description: "文章页侧边栏区域"
 
-  post:        # 文章详情
-    data: [...]
-    widgets: [...]
+widgets:
+  - id: recent_posts
+    label: "近期文章"
+    area: sidebar
+    options:
+      - id: count
+        type: number
+        label: "显示数量"
+        default: "5"
+        min: 1
+        max: 20
 
-  page:        # 页面
-    data: [...]
-    widgets: [...]
+  - id: custom_html
+    label: "自定义 HTML"
+    area: sidebar
+    options:
+      - id: html
+        type: textarea
+        label: "HTML 内容"
+        default: ""
 
-  list:        # 列表页（搜索/分类/标签）
-    data: [...]
-    widgets: [...]
-
-  archive:     # 归档页
-    data: [...]
-    widgets: [...]
-
-  error:       # 错误页
-    data: []
-    widgets: []
+options:
+  - id: custom_css
+    type: css
+    label: "自定义 CSS"
+    description: "会注入到页面 <head> 中"
+    default: ""
 ```
 
-### 可用 data 字段
+### 主题目录结构
+
+```text
+themes/my-theme/
+├── theme.yaml
+├── functions.goyaegi       # 可选：注册 themeData provider
+├── templates/
+│   ├── index.gohtml        # 必需：首页和兜底模板
+│   ├── post.gohtml         # 可选
+│   ├── page.gohtml         # 可选
+│   ├── list.gohtml         # 可选
+│   ├── archive.gohtml      # 可选
+│   ├── search.gohtml       # 可选
+│   ├── error.gohtml        # 可选
+│   └── fragment_comments.gohtml # 可选：评论局部渲染
+├── widgets/
+│   └── recent_posts.gohtml # 可选：覆盖/新增 widget_recent_posts 模板
+├── assets/
+│   └── style.css           # 通过 /theme-assets/style.css 访问
+└── i18n/
+    └── en_US.po
+```
+
+### 可用 data 字段（无需在 theme.yaml 声明）
 
 | 字段 | 说明 | 对应模板变量 |
 |---|---|---|
 | `RecentPosts` | 近期文章 | `.RecentPosts` (`[]model.Post`) |
-| `RecentComments` | 近期评论 | `.RecentCommentItems` (`[]store.CommentWidgetItem`) |
-| `SayingComments` | 博主动态 | `.SayingCommentItems` + `.SayingPost` |
+| `RecentCommentItems` | 近期评论 | `.RecentCommentItems` (`[]store.CommentWidgetItem`) |
 | `ArchiveMonths` | 归档月份 | `.ArchiveMonths` (`[]store.ArchiveMonth`) |
 | `Categories` | 分类列表 | `.Categories` (`[]model.Category`) |
 | `Tags` | 标签列表 | `.Tags` (`[]model.Tag`) |
+| `Menu` | 导航页面 | `.Menu` (`[]model.Post`) |
 
-### 可用 widget
+### 内置 widget
 
-| Widget 名 | 说明 |
-|---|---|
-| `user_info` | 用户信息（登录/欢迎） |
-| `search` | 搜索框 |
-| `saying` | 博主动态 |
-| `recent_posts` | 近期文章 |
-| `recent_comments` | 近期评论 |
-| `archive_months` | 归档月份 |
-| `categories` | 分类目录 |
-| `tags` | 标签 |
+| Widget ID | 默认模板名 | 说明 |
+|---|---|---|
+| `search` | `widget_search` | 搜索框 |
+| `recent_posts` | `widget_recent_posts` | 近期文章 |
+| `categories` | `widget_categories` | 分类目录 |
+| `tag_cloud` | `widget_tag_cloud` | 标签云 |
+| `recent_comments` | `widget_recent_comments` | 近期评论 |
+| `custom_html` | `widget_custom_html` | 自定义 HTML |
+| `user_info` | `widget_user_info` | 用户信息 |
 
 ## 模板继承结构
 
-主题模板通过 Go `html/template` 的 `define`/`template` 机制工作。默认模板定义了以下命名模板：
+主题模板通过 Go `html/template` 的 `define`/`template` 机制工作。前台页面按页面类型走模板层级 fallback：
+
+| 页面类型 | 模板查找顺序 |
+|---|---|
+| 首页 | `index.gohtml` |
+| 文章页 | `post.gohtml` → `index.gohtml` |
+| 页面 | `page.gohtml` → `post.gohtml` → `index.gohtml` |
+| 搜索 | `search.gohtml` → `list.gohtml` → `index.gohtml` |
+| 分类/标签列表 | `list.gohtml` → `index.gohtml` |
+| 归档 | `archive.gohtml` → `list.gohtml` → `index.gohtml` |
+| 错误页 | `error.gohtml` |
+
+主题可按需定义以下命名模板：
 
 | 模板名 | 说明 |
 |---|---|
 | `header` | 页面头部（`<head>` + `<header>` + `<main>` 开始） |
-| `footer` | 页面尾部（`</main>` + widgets + 页脚 + `</body></html>`） |
-| `widgets` | widget 区域（遍历 `.Widgets`） |
+| `footer` | 页面尾部（`</main>` + 组件区域 + 页脚 + `</body></html>`） |
 | `pagination` | 分页导航 |
 | `comments` | 评论区域（含评论列表和评论表单） |
 | `fragment_<name>.gohtml` | 局部渲染片段（通过 `?fragment=<name>` 请求，如 `fragment_comments.gohtml`） |
@@ -346,7 +396,7 @@ pages:
 
 每个页面模板（如 `index.gohtml`）通过 `{{template "header" .}}` / `{{template "footer" .}}` 包裹内容。
 
-主题可以覆盖任意命名模板。主题未提供的模板自动回退到默认模板。
+主题应至少提供 `templates/index.gohtml`。前台主题之间不会互相 fallback；后台/认证基础模板会由渲染器补齐。
 
 ## 主题翻译文件
 
@@ -368,30 +418,72 @@ themes/my-theme/
 - 主题包上传时允许包含 `.po` / `.mo` 文件。
 - 默认主题 `default` 使用应用默认翻译资源。
 
-## Widget HTML 自定义
+## 组件 HTML 自定义
 
-内置 widget 的数据由 Go 代码提供，默认 HTML 位于模板中的 `widget_{name}` 命名模板。主题可以定义同名模板覆盖 HTML 结构；widget 模板会注入 `.t.T` 等 i18n 字段，可以像普通页面模板一样翻译文案。
+内置组件模板来自 `web/widgets/*.gohtml`，主题可以在 `widgets/{id}.gohtml` 中定义同名 `widget_{id}` 模板覆盖 HTML 结构。组件模板和普通页面模板共用同一份数据上下文，因此可以直接访问 `.RecentPosts`、`.Categories`、`.Tags`、`.RecentCommentItems`、`.t.T` 等字段/函数。
 
-| Widget 名 | 覆盖模板名 | 数据类型 |
+| Widget ID | 覆盖模板名 | 典型数据来源 |
 |---|---|---|
-| `user_info` | `widget_user_info` | `theme.UserInfoWidgetData` |
-| `search` | `widget_search` | `theme.SearchWidgetData` |
-| `saying` | `widget_saying` | `theme.SayingWidgetData` |
-| `recent_posts` | `widget_recent_posts` | `theme.RecentPostsWidgetData` |
-| `recent_comments` | `widget_recent_comments` | `theme.RecentCommentsWidgetData` |
-| `archive_months` | `widget_archive_months` | `theme.ArchiveMonthsWidgetData` |
-| `categories` | `widget_categories` | `theme.CategoriesWidgetData` |
-| `tags` | `widget_tags` | `theme.TagsWidgetData` |
+| `user_info` | `widget_user_info` | `.CurrentUser` / `.CurrentUserName` |
+| `search` | `widget_search` | `.Keyword` |
+| `recent_posts` | `widget_recent_posts` | `.RecentPosts` |
+| `recent_comments` | `widget_recent_comments` | `.RecentCommentItems` |
+| `categories` | `widget_categories` | `.Categories` |
+| `tag_cloud` | `widget_tag_cloud` | `.Tags` |
+| `custom_html` | `widget_custom_html` | `widgetOption "html"` |
 
 示例：
 
 ```gohtml
 {{define "widget_recent_posts"}}
+{{$n := widgetOption "count" | toInt | default 5}}
 <section class="widget widget-recent-posts">
   <h3>{{.t.T "最新文章"}}</h3>
   <ul>
-    {{range .Posts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+    {{range $i, $p := .RecentPosts}}{{if lt $i $n}}
+      <li><a href="{{postURL $p}}">{{$p.Title}}</a></li>
+    {{end}}{{end}}
   </ul>
 </section>
+{{end}}
+```
+
+页面模板中渲染区域：
+
+```gohtml
+<aside class="sidebar">
+  {{renderWidgets "sidebar" .}}
+</aside>
+```
+
+## 主题自定义数据（functions.goyaegi）
+
+当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与无参 `Register()` 函数，通过宿主注入的 `themeapi.Api` 注册 provider：
+
+```go
+package theme
+
+import (
+    "sort"
+    "themeapi"
+)
+
+func Register() {
+    themeapi.Api.RegisterData("popular_posts", func(args map[string]any) any {
+        posts := themeapi.Api.Posts()
+        sort.Slice(posts, func(i, j int) bool { return posts[i].Views > posts[j].Views })
+        if len(posts) > 5 {
+            posts = posts[:5]
+        }
+        return posts
+    })
+}
+```
+
+模板中调用：
+
+```gohtml
+{{range themeData "popular_posts"}}
+  <a href="{{postURL .}}">{{.Title}}</a>
 {{end}}
 ```

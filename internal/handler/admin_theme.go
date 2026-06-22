@@ -16,7 +16,13 @@ import (
 	"github.com/youthlin/blog/internal/middleware"
 )
 
-const maxThemeUploadSize = 5 << 20 // 5MB
+const (
+	maxThemeUploadSize     = 5 << 20  // 5MB
+	maxThemeExtractedSize  = 20 << 20 // 20MB
+	maxThemeExtractedFile  = 2 << 20  // 2MB
+	maxThemeExtractedFiles = 500
+	maxThemeExtractedName  = 255
+)
 
 // ThemesPage 渲染主题管理页面。
 func (h *Admin) ThemesPage(c *gin.Context) {
@@ -113,7 +119,7 @@ func (h *Admin) ThemeActivate(c *gin.Context) {
 		h.redirectThemeSettings(c, tr.T("激活主题失败: %s", err.Error()))
 		return
 	}
-	// v2: 使用 LoadTheme 加载模板 + functions.go（含恢复机制）
+	// 加载模板 + functions.go（含恢复机制）
 	if err := tm.LoadTheme(c, name); err != nil {
 		h.redirectThemeSettings(c, tr.T("主题已激活，但加载失败，已回退默认主题: %s", err.Error()))
 		return
@@ -224,23 +230,40 @@ func extractThemeZip(r io.ReaderAt, size int64, dest string) error {
 	if err != nil {
 		return err
 	}
+	var total int64
+	var files int
 	for _, f := range zr.File {
 		// 路径穿越防护
 		name := filepath.Clean(f.Name)
-		if strings.HasPrefix(name, ".."+string(filepath.Separator)) || strings.HasPrefix(name, "..") {
+		if !safeThemeZipPath(name) {
 			continue
+		}
+		if len(filepath.Base(name)) > maxThemeExtractedName {
+			return fmt.Errorf("theme file name too long: %s", name)
 		}
 		target := filepath.Join(dest, name)
 		// 确保目标路径在 dest 内
-		if !strings.HasPrefix(filepath.Clean(target), filepath.Clean(dest)+string(filepath.Separator)) {
+		if !pathWithinDir(dest, target) {
 			continue
 		}
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(target, 0o755)
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				return err
+			}
 			continue
 		}
+		files++
+		if files > maxThemeExtractedFiles {
+			return fmt.Errorf("theme package contains too many files")
+		}
+		headerSize := int64(f.UncompressedSize64)
+		if headerSize > maxThemeExtractedFile {
+			return fmt.Errorf("theme file %s is too large", name)
+		}
 		// 创建父目录
-		os.MkdirAll(filepath.Dir(target), 0o755)
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
 		// 只允许安全文件类型
 		if !isAllowedThemeFile(name) {
 			continue
@@ -254,14 +277,59 @@ func extractThemeZip(r io.ReaderAt, size int64, dest string) error {
 			rc.Close()
 			return err
 		}
-		_, err = io.Copy(out, rc)
+		written, err := copyThemeZipFile(out, rc)
 		rc.Close()
-		out.Close()
+		closeErr := out.Close()
 		if err != nil {
+			_ = os.Remove(target)
 			return err
+		}
+		if closeErr != nil {
+			_ = os.Remove(target)
+			return closeErr
+		}
+		total += written
+		if total > maxThemeExtractedSize {
+			_ = os.Remove(target)
+			return fmt.Errorf("theme package uncompressed size is too large")
 		}
 	}
 	return nil
+}
+
+func copyThemeZipFile(out io.Writer, rc io.Reader) (int64, error) {
+	lr := &io.LimitedReader{R: rc, N: maxThemeExtractedFile + 1}
+	written, err := io.Copy(out, lr)
+	if err != nil {
+		return written, err
+	}
+	if written > maxThemeExtractedFile {
+		return written, fmt.Errorf("theme file is too large")
+	}
+	return written, nil
+}
+
+func safeThemeZipPath(name string) bool {
+	if name == "." || name == ".." || filepath.IsAbs(name) {
+		return false
+	}
+	return !strings.HasPrefix(name, ".."+string(filepath.Separator))
+}
+
+func pathWithinDir(dir, target string) bool {
+	base, err := filepath.Abs(dir)
+	if err != nil {
+		return false
+	}
+	full, err := filepath.Abs(target)
+	if err != nil {
+		return false
+	}
+	rel, err := filepath.Rel(base, full)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel)
 }
 
 // isAllowedThemeFile 检查文件扩展名是否在主题文件白名单中。

@@ -15,14 +15,14 @@ import (
 //
 // 路由难点:文章永久链接 /{year}{id}.html 与页面 /{slug} 都在根路径下,
 // 用单一通配路由分发,在 handler 内按格式区分。
-func registerPublicRoutes(r *gin.Engine, pub *handler.Public, limiter middleware.RateLimiter) {
+func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	// 首页 + /?p=ID 旧链接重定向。
 	r.GET("/", func(c *gin.Context) {
-		if c.Query("p") != "" {
-			if pub.LegacyQueryRedirect(c) {
+		if pid := c.Query("p"); pid != "" {
+			if pub.PostIDRedirect(c, pid) {
 				return
 			}
-			pub.NotFoundOrLegacy(c)
+			pub.NotFound(c)
 			return
 		}
 		pub.Index(c)
@@ -68,7 +68,7 @@ func registerAuthRoutes(r *gin.Engine, auth *handler.Auth, limiter middleware.Ra
 }
 
 // registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。
-func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, st *store.Store, limiter middleware.RateLimiter) {
+func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, st *store.Store) {
 	// 所有角色可访问(仅需登录)。
 	g := r.Group("/admin")
 	g.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
@@ -161,7 +161,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.POST("/theme/preview/clear", adm.ThemePreviewClear)
 	adminGroup.GET("/theme/screenshot/:name/:file", adm.ThemeScreenshot)
 
-	// 主题文件编辑器 (v2)
+	// 主题文件编辑器
 	adminGroup.GET("/theme/files", adm.ThemeFilesPage)
 	adminGroup.GET("/theme/file", adm.ThemeFileRead)
 	adminGroup.POST("/theme/file", adm.ThemeFileSave)
@@ -181,7 +181,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.GET("/widgets", adm.WidgetsPage)
 	adminGroup.POST("/widgets", adm.SaveWidgets)
 
-	// 主题选项 (v5)
+	// 主题全局选项
 	adminGroup.GET("/theme-options", adm.ThemeOptionsPage)
 	adminGroup.POST("/theme-options", adm.SaveThemeOptions)
 }

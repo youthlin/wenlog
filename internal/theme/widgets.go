@@ -24,19 +24,20 @@ func IsBuiltinWidget(id string) bool {
 type WidgetInfo struct {
 	ID           string            // 组件 ID
 	TemplateName string            // 模板 define 名称，如 "widget_search"
-	Options      map[string]string // v6: 组件选项
+	Options      map[string]string // 组件选项
 }
 
-// WidgetConfigItem 是 v6 配置格式中的一个条目。
+// WidgetConfigItem 是组件配置对象数组中的一个条目。
 type WidgetConfigItem struct {
-	ID  string            `json:"id"`
+	ID   string            `json:"id"`
 	Opts map[string]string `json:"opts,omitempty"`
 }
 
 // ResolveWidgets 根据用户配置和主题声明，解析某个区域应渲染的组件列表。
 // userConfigJSON 是 Setting 表中存储的 JSON，支持两种格式：
-//   - v4/v5 旧格式: `["search","recent_posts"]`
-//   - v6 新格式: `[{"id":"search"},{"id":"recent_posts","opts":{"count":"10"}}]`
+//   - 旧格式: `["search","recent_posts"]`
+//   - 对象数组格式: `[{"id":"search"},{"id":"recent_posts","opts":{"count":"10"}}]`
+//
 // 为空则使用主题默认。
 func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
 	items := ParseWidgetConfig(userConfigJSON)
@@ -69,12 +70,12 @@ func ParseWidgetConfig(userConfigJSON string) []WidgetConfigItem {
 	if userConfigJSON == "" {
 		return nil
 	}
-	// 先尝试 v6 新格式: [{"id":"x","opts":{...}}]
+	// 先尝试对象数组格式: [{"id":"x","opts":{...}}]
 	var items []WidgetConfigItem
 	if err := json.Unmarshal([]byte(userConfigJSON), &items); err == nil {
 		return items
 	}
-	// 回退到 v4/v5 旧格式: ["id1","id2"]
+	// 回退到旧格式: ["id1","id2"]
 	var ids []string
 	if err := json.Unmarshal([]byte(userConfigJSON), &ids); err == nil {
 		items = make([]WidgetConfigItem, len(ids))

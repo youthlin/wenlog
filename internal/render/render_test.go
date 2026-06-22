@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"io"
 	"io/fs"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/youthlin/blog/web"
@@ -124,6 +126,60 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 	}
 }
 
+func TestThemeRenderStateIsRequestScoped(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{themeData "loader"}}/{{themeData "theme"}}|{{renderWidgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}{{widgetOption "name"}}{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+
+	type widgetInfo struct {
+		TemplateName string
+		Options      map[string]string
+	}
+	SetThemeDataProvider(func(name string, args ...any) any {
+		switch name {
+		case "loader":
+			return CurrentThemeLoader()
+		case "theme":
+			return CurrentTheme()
+		default:
+			return nil
+		}
+	})
+	SetThemeWidgetsProvider(func(area string) any {
+		loader, _ := CurrentThemeLoader().(string)
+		theme, _ := CurrentTheme().(string)
+		return []widgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
+	})
+	t.Cleanup(func() {
+		SetThemeDataProvider(nil)
+		SetThemeWidgetsProvider(nil)
+	})
+
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		want := string(rune('A' + i%26))
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			rr := httptest.NewRecorder()
+			data := map[string]any{ThemeLoaderDataKey: want, ThemeDataKey: want}
+			if err := r.Instance("page", data).Render(rr); err != nil {
+				t.Errorf("render template: %v", err)
+				return
+			}
+			wantOutput := want + "/" + want + "|" + want + "/" + want
+			if got := rr.Body.String(); got != wantOutput {
+				t.Errorf("render state leaked: got %q, want %q", got, wantOutput)
+			}
+		}()
+	}
+	wg.Wait()
+}
+
 type testTranslator struct{}
 
 func (testTranslator) T(message string, args ...any) string { return message }
@@ -137,4 +193,11 @@ func execTemplate(t *testing.T, tpl interface {
 		t.Fatalf("execute template %q: %v", name, err)
 	}
 	return b.String()
+}
+
+func writeTemplateFile(t *testing.T, dir, name, content string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+		t.Fatalf("write template %s: %v", name, err)
+	}
 }

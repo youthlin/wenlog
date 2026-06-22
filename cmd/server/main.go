@@ -51,6 +51,8 @@ func main() {
 
 	// 在监听前写入 pid 文件, 退出时删除
 	defer writePidFile(cfg)()
+	// 启动定时任务
+	defer startCronJob(st)()
 	// 启动 web 服务器监听
 	if err := serve(cfg, st); err != nil {
 		slog.Error("服务监听失败", slog.Any("error", err))

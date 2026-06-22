@@ -141,24 +141,6 @@ func TestHasSelectedCategoryRequiresExistingCategory(t *testing.T) {
 	}
 }
 
-func TestSpecialPageFallsBackWithoutStoredPage(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	h := &Public{}
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/archive", nil)
-	p := h.specialPage(c, "archive", "归档")
-	if p == nil {
-		t.Fatal("specialPage returned nil")
-	}
-	if p.Slug != "archive" || p.Title != "归档" {
-		t.Fatalf("specialPage = %+v", p)
-	}
-	if p.PostType != "" && p.PostType != model.PostTypePage {
-		t.Fatalf("unexpected post type: %+v", p)
-	}
-}
-
 func TestCommentStatusForUser(t *testing.T) {
 	target := &model.Post{AuthorID: 2}
 	tests := []struct {

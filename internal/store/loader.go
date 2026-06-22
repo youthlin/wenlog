@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
 	"gorm.io/gorm"
@@ -33,6 +34,33 @@ type DataLoader struct {
 	archiveMonths     []ArchiveMonth
 }
 
+// LoadAllCached 返回缓存的 DataLoader，缓存未命中时自动重建。
+// 这是前台 handler 的首选方法——首次请求加载后，后续请求直接复用。
+func (s *Store) LoadAllCached(ctx context.Context) (*DataLoader, error) {
+	s.cacheMu.RLock()
+	c := s.cache
+	s.cacheMu.RUnlock()
+	if c != nil {
+		cacheHits.Inc()
+		return c, nil
+	}
+
+	s.cacheMu.Lock()
+	defer s.cacheMu.Unlock()
+	// double-check
+	if s.cache != nil {
+		cacheHits.Inc()
+		return s.cache, nil
+	}
+	cacheMisses.Inc()
+	l, err := s.LoadAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	s.cache = l
+	return l, nil
+}
+
 // LoadAll 全量加载所有公开数据到内存。
 // 共 8 条 SQL：posts, comments, categories, tags, users, settings, post_categories, post_tags。
 func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
@@ -40,9 +68,10 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 1. 全部已发布+定时文章+页面
 	var posts []model.Post
-	if err := s.DB(ctx).Where("status IN ?", []string{model.StatusPublished, model.StatusScheduled}).
+	if err := s.DB(ctx).
+		Where("status IN ?", []string{model.StatusPublished, model.StatusScheduled}).
 		Find(&posts).Error; err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "查询文章失败")
 	}
 	l.Posts = make(map[uint]*model.Post, len(posts))
 	l.postsBySlug = make(map[string]*model.Post)
@@ -64,7 +93,8 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 
 	// 2. 全部已批准+待审评论（登录用户可见自己的待审评论）
 	var comments []model.Comment
-	if err := s.DB(ctx).Where("status IN ?", []string{model.CommentApproved, model.CommentPending}).
+	if err := s.DB(ctx).
+		Where("status IN ?", []string{model.CommentApproved, model.CommentPending}).
 		Find(&comments).Error; err != nil {
 		return nil, err
 	}
@@ -155,6 +185,50 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 	return l, nil
 }
 
+func (l *DataLoader) buildMenuPages() {
+	var pages []*model.Post
+	for _, p := range l.Posts {
+		if p.PostType == model.PostTypePage && p.MenuOrder > 0 {
+			pages = append(pages, p)
+		}
+	}
+	sort.Slice(pages, func(i, j int) bool { return pages[i].MenuOrder < pages[j].MenuOrder })
+	l.menuPages = pages
+}
+
+func (l *DataLoader) buildArchiveMonths() {
+	type ym struct {
+		Year  int
+		Month int
+	}
+	counts := map[ym]int64{}
+	for _, p := range l.Posts {
+		if p.PostType != model.PostTypePost {
+			continue
+		}
+		key := ym{Year: p.PublishedAt.Year(), Month: int(p.PublishedAt.Month())}
+		counts[key]++
+	}
+	result := make([]ArchiveMonth, 0, len(counts))
+	for k, v := range counts {
+		result = append(result, ArchiveMonth{Year: k.Year, Month: k.Month, Count: v})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Year != result[j].Year {
+			return result[i].Year > result[j].Year
+		}
+		return result[i].Month > result[j].Month
+	})
+	l.archiveMonths = result
+}
+
+// InvalidateCache 使缓存失效。写操作（发布/编辑/删除文章、审核评论、修改设置等）后调用。
+func (s *Store) InvalidateCache() {
+	s.cacheMu.Lock()
+	s.cache = nil
+	s.cacheMu.Unlock()
+}
+
 // FillPost 填充文章的关联数据（Author, Categories, Tags, CommentCount）。
 func (l *DataLoader) FillPost(p *model.Post) {
 	if l == nil || p == nil {
@@ -166,6 +240,20 @@ func (l *DataLoader) FillPost(p *model.Post) {
 	p.Categories = l.categoriesForPost(p.ID)
 	p.Tags = l.tagsForPost(p.ID)
 	p.CommentCount = int64(len(l.commentsByPost[p.ID]))
+}
+
+func clonePost(p *model.Post) *model.Post {
+	if p == nil {
+		return nil
+	}
+	cp := *p
+	if p.Categories != nil {
+		cp.Categories = append([]model.Category(nil), p.Categories...)
+	}
+	if p.Tags != nil {
+		cp.Tags = append([]model.Tag(nil), p.Tags...)
+	}
+	return &cp
 }
 
 // FillPosts 批量填充。
@@ -235,29 +323,20 @@ func (l *DataLoader) MenuPages() []model.Post {
 	return result
 }
 
-func (l *DataLoader) buildMenuPages() {
-	var pages []*model.Post
-	for _, p := range l.Posts {
-		if p.PostType == model.PostTypePage && p.MenuOrder > 0 {
-			pages = append(pages, p)
-		}
-	}
-	sort.Slice(pages, func(i, j int) bool { return pages[i].MenuOrder < pages[j].MenuOrder })
-	l.menuPages = pages
-}
-
 // RecentPosts 返回最近 n 篇文章（按发布时间倒序）。
 func (l *DataLoader) RecentPosts(n int) []model.Post {
 	posts := l.postsByType[model.PostTypePost]
-	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].PublishedAt.After(posts[j].PublishedAt)
+	sorted := make([]*model.Post, len(posts))
+	copy(sorted, posts)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].PublishedAt.After(sorted[j].PublishedAt)
 	})
-	if n > len(posts) {
-		n = len(posts)
+	if n > len(sorted) {
+		n = len(sorted)
 	}
 	result := make([]model.Post, n)
 	for i := 0; i < n; i++ {
-		result[i] = *posts[i]
+		result[i] = *sorted[i]
 		l.FillPost(&result[i])
 	}
 	return result
@@ -265,7 +344,7 @@ func (l *DataLoader) RecentPosts(n int) []model.Post {
 
 // RecentComments 返回最近 n 条已批准评论（按创建时间倒序）。
 func (l *DataLoader) RecentComments(n int) []model.Comment {
-	all := l.allCommentsSorted()
+	all := l.approvedCommentsSorted()
 	if n > len(all) {
 		n = len(all)
 	}
@@ -276,9 +355,12 @@ func (l *DataLoader) RecentComments(n int) []model.Comment {
 	return result
 }
 
-func (l *DataLoader) allCommentsSorted() []*model.Comment {
+func (l *DataLoader) approvedCommentsSorted() []*model.Comment {
 	result := make([]*model.Comment, 0, len(l.Comments))
 	for _, c := range l.Comments {
+		if c.Status != model.CommentApproved {
+			continue
+		}
 		result = append(result, c)
 	}
 	sort.Slice(result, func(i, j int) bool {
@@ -337,35 +419,9 @@ func (l *DataLoader) ArchiveMonths() []ArchiveMonth {
 	return l.archiveMonths
 }
 
-func (l *DataLoader) buildArchiveMonths() {
-	type ym struct {
-		Year  int
-		Month int
-	}
-	counts := map[ym]int64{}
-	for _, p := range l.Posts {
-		if p.PostType != model.PostTypePost {
-			continue
-		}
-		key := ym{Year: p.PublishedAt.Year(), Month: int(p.PublishedAt.Month())}
-		counts[key]++
-	}
-	result := make([]ArchiveMonth, 0, len(counts))
-	for k, v := range counts {
-		result = append(result, ArchiveMonth{Year: k.Year, Month: k.Month, Count: v})
-	}
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Year != result[j].Year {
-			return result[i].Year > result[j].Year
-		}
-		return result[i].Month > result[j].Month
-	})
-	l.archiveMonths = result
-}
-
 // GetPageBySlug 按 slug 查找已发布页面。
 func (l *DataLoader) GetPageBySlug(slug string) *model.Post {
-	return l.postsBySlug[slug]
+	return clonePost(l.postsBySlug[slug])
 }
 
 // PostsByType 返回指定类型的文章列表（"post" 或 "page"）。
@@ -390,16 +446,12 @@ func (l *DataLoader) CommentIDsByPost(postID uint) []uint {
 
 // GetPostByID 按 ID 查找已发布文章。
 func (l *DataLoader) GetPostByID(id uint) *model.Post {
-	p := l.Posts[id]
-	if p == nil || p.PostType != model.PostTypePost {
-		return nil
-	}
-	return p
+	return clonePost(l.Posts[id])
 }
 
 // PostMeta 返回文章元数据（不含 Content）。
 func (l *DataLoader) PostMeta(id uint) *model.Post {
-	return l.Posts[id]
+	return clonePost(l.Posts[id])
 }
 
 // PostMetas 批量返回文章元数据。
@@ -407,7 +459,7 @@ func (l *DataLoader) PostMetas(ids []uint) map[uint]*model.Post {
 	result := make(map[uint]*model.Post, len(ids))
 	for _, id := range ids {
 		if p := l.Posts[id]; p != nil {
-			result[id] = p
+			result[id] = clonePost(p)
 		}
 	}
 	return result
@@ -420,7 +472,7 @@ func (l *DataLoader) PrevPost(t time.Time) *model.Post {
 	for _, p := range posts {
 		if p.PublishedAt.Before(t) {
 			if prev == nil || p.PublishedAt.After(prev.PublishedAt) {
-				prev = p
+				prev = clonePost(p)
 			}
 		}
 	}
@@ -434,7 +486,7 @@ func (l *DataLoader) NextPost(t time.Time) *model.Post {
 	for _, p := range posts {
 		if p.PublishedAt.After(t) {
 			if next == nil || p.PublishedAt.Before(next.PublishedAt) {
-				next = p
+				next = clonePost(p)
 			}
 		}
 	}
@@ -568,10 +620,7 @@ func (l *DataLoader) SearchPosts(keyword string, page, pageSize int) *ListPostsR
 	}
 
 	start := (page - 1) * pageSize
-	end := start + pageSize
-	if end > len(matched) {
-		end = len(matched)
-	}
+	end := min(start+pageSize, len(matched))
 
 	result := make([]model.Post, 0, end-start)
 	for i := start; i < end; i++ {
@@ -737,56 +786,22 @@ func (l *DataLoader) ResolvePostByPath(path string, match *permalink.PostPathMat
 	// 有 postID 时直接查内存
 	if match.HasPostID {
 		p := l.Posts[match.PostID]
-		if p == nil || p.PostType != model.PostTypePost || p.Status != model.StatusPublished {
+		if p == nil || p.Status != model.StatusPublished {
 			return nil, gorm.ErrRecordNotFound
 		}
 		if permalink.Post(p) == path {
-			return p, nil
+			return clonePost(p), nil
 		}
 		return nil, gorm.ErrRecordNotFound
 	}
 	// 无 postID 时遍历所有已发布文章匹配路径
 	for _, p := range l.Posts {
-		if p.PostType != model.PostTypePost || p.Status != model.StatusPublished {
+		if p.Status != model.StatusPublished {
 			continue
 		}
 		if permalink.Post(p) == path {
-			return p, nil
+			return clonePost(p), nil
 		}
 	}
 	return nil, gorm.ErrRecordNotFound
-}
-
-// LoadAllCached 返回缓存的 DataLoader，缓存未命中时自动重建。
-// 这是前台 handler 的首选方法——首次请求加载后，后续请求直接复用。
-func (s *Store) LoadAllCached(ctx context.Context) (*DataLoader, error) {
-	s.cacheMu.RLock()
-	c := s.cache
-	s.cacheMu.RUnlock()
-	if c != nil {
-		cacheHits.Inc()
-		return c, nil
-	}
-
-	s.cacheMu.Lock()
-	defer s.cacheMu.Unlock()
-	// double-check
-	if s.cache != nil {
-		cacheHits.Inc()
-		return s.cache, nil
-	}
-	cacheMisses.Inc()
-	l, err := s.LoadAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-	s.cache = l
-	return l, nil
-}
-
-// InvalidateCache 使缓存失效。写操作（发布/编辑/删除文章、审核评论、修改设置等）后调用。
-func (s *Store) InvalidateCache() {
-	s.cacheMu.Lock()
-	s.cache = nil
-	s.cacheMu.Unlock()
 }

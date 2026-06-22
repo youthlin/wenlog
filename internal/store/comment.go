@@ -46,9 +46,13 @@ func (s *Store) UpdateCommentFields(ctx context.Context, id uint, fields map[str
 	if len(fields) == 0 {
 		return nil
 	}
-	return errors.Wrap(
+	if err := errors.Wrap(
 		s.DB(ctx).Model(&model.Comment{}).Where("id = ?", id).Updates(fields).Error,
-		"update comment fields")
+		"update comment fields"); err != nil {
+		return err
+	}
+	s.InvalidateCache()
+	return nil
 }
 func (s *Store) BatchSetCommentStatus(ctx context.Context, ids []uint, status string) error {
 	defer s.InvalidateCache()
@@ -361,12 +365,15 @@ func (s *Store) VisibleCommentPageForViewerID(ctx context.Context, commentID uin
 		Count(&newer).Error
 	return int(newer)/pageSize + 1
 }
+
 func (s *Store) ResolveCommentReply(ctx context.Context, postID uint, replyToID uint, currentUserID uint, pendingCommentIDs []uint) (uint, uint, error) {
 	if replyToID == 0 {
 		return 0, 0, nil
 	}
 	var target model.Comment
-	if err := s.DB(ctx).Select("id", "post_id", "parent_id", "status", "user_id").First(&target, replyToID).Error; err != nil {
+	if err := s.DB(ctx).
+		Select("id", "post_id", "parent_id", "status", "user_id").
+		First(&target, replyToID).Error; err != nil {
 		return 0, 0, errors.Wrap(err, "get reply target")
 	}
 	if target.PostID != postID || (target.Status != model.CommentApproved && !commentVisibleToViewer(target, currentUserID, pendingCommentIDs)) {

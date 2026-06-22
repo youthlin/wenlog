@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -14,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"context"
 	"github.com/youthlin/blog/internal/email"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
@@ -93,7 +93,7 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		IP:            ip,
 		Content:       req.Content,
 		Status:        commentStatusForUser(loggedInUser, target),
-		NotifyOnReply: req.Notify != "" && h.mailEnabled(),
+		NotifyOnReply: req.Notify != "" && h.mailEnabled(c),
 		CreatedAt:     time.Now(),
 	}
 	if loggedInUser != nil {
@@ -120,6 +120,20 @@ func (h *Public) SubmitComment(c *gin.Context) {
 	h.commentResp(c, true, msg, req.PostID, gin.H{"comment_page": commentPage})
 }
 
+func (h *Public) commentUser(c *gin.Context) *model.User {
+	s := sessions.Default(c)
+	v := s.Get(middleware.SessionUserKey)
+	uid, ok := v.(uint)
+	if !ok || uid == 0 {
+		return nil
+	}
+	u, err := h.st.GetUserByID(c, uid)
+	if err != nil {
+		return nil
+	}
+	return u
+}
+
 // validateCommentInput 校验评论输入:蜜罐、CSRF、必填项、格式。
 func (h *Public) validateCommentInput(c *gin.Context, tr *gettext.Translations, req *commentReq, loggedInUser *model.User) bool {
 	// 1. 蜜罐:website 字段被填说明是机器人。
@@ -143,7 +157,7 @@ func (h *Public) validateCommentInput(c *gin.Context, tr *gettext.Translations, 
 			req.Author = strings.TrimSpace(loggedInUser.Username)
 		}
 		req.Email = strings.TrimSpace(loggedInUser.Email)
-		req.URL = ""
+		req.URL = "" // TODO 在 User 模型上加上网址
 	}
 	if req.Author == "" || req.Content == "" {
 		h.commentResp(c, false, tr.T("昵称和内容不能为空。"), req.PostID)
@@ -197,7 +211,7 @@ func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations,
 	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
 	cnt, err := h.st.RecentCommentCountByIP(c, ip, since)
 	if err != nil {
-		h.log.Error("rate limit check failed", "error", err, "ip", ip)
+		h.log.Error("评论限频", "error", err, "ip", ip)
 		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
 		return false
 	}
@@ -368,18 +382,4 @@ func postRedirectURL(p *model.Post) string {
 		return permalink.Page(p) + "#comments"
 	}
 	return permalink.Post(p) + "#comments"
-}
-
-func (h *Public) commentUser(c *gin.Context) *model.User {
-	s := sessions.Default(c)
-	v := s.Get(middleware.SessionUserKey)
-	uid, ok := v.(uint)
-	if !ok || uid == 0 {
-		return nil
-	}
-	u, err := h.st.GetUserByID(c, uid)
-	if err != nil {
-		return nil
-	}
-	return u
 }

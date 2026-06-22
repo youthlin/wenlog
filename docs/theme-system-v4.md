@@ -1,5 +1,7 @@
 # 主题系统 v4 设计方案：可自定义侧边栏小组件
 
+> 历史设计稿：当前实现以 `AGENTS.md`、`docs/template-data-reference.md` 和 `docs/theme-system-optimization-plan.md` 为准。
+
 ## 1. 动机
 
 v3 中侧边栏是纯模板——主题作者在 `sidebar.gohtml` 里直接写 HTML + 模板标签。这很灵活，但**用户无法自定义**：主题提供了 5 个小组件，用户不能只显示其中 3 个，也不能调整顺序。

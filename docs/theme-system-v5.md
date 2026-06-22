@@ -1,5 +1,7 @@
 # 主题系统 v5 设计方案：主题选项（Theme Options）
 
+> 历史设计稿：当前实现以 `AGENTS.md`、`docs/template-data-reference.md` 和 `docs/theme-system-optimization-plan.md` 为准。
+
 ## 1. 动机
 
 v4 实现了组件开关/排序，但组件**不能带参数**。用户无法配置：
@@ -92,7 +94,7 @@ Setting 表，每个选项一条记录：
 
 ```
 Key:   option_default_homepage_bg
-Value: /uploads/2024/bg.jpg
+Value: /wp-content/uploads/2026/06/bg.jpg
 
 Key:   option_default_recent_posts_count
 Value: 5
