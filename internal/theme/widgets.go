@@ -33,6 +33,10 @@ type WidgetConfigItem struct {
 //
 // 为空则使用主题默认。
 func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
+	available := widgetsInArea(t, area)
+	if len(available) == 0 {
+		return nil
+	}
 	items := ParseWidgetConfig(userConfigJSON)
 	if len(items) == 0 {
 		// 使用主题默认：该区域声明的全部组件，按 yaml 声明顺序
@@ -45,6 +49,9 @@ func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
 
 	var result []WidgetInfo
 	for _, item := range items {
+		if !available[item.ID] {
+			continue
+		}
 		tmplName := "widget_" + item.ID
 		if !widgetTemplateExists(t, item.ID) && !IsBuiltinWidget(item.ID) {
 			continue
@@ -56,6 +63,19 @@ func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
 		})
 	}
 	return result
+}
+
+func widgetsInArea(t *Theme, area string) map[string]bool {
+	if t == nil {
+		return nil
+	}
+	available := make(map[string]bool)
+	for _, w := range t.Widgets {
+		if w.Area == area {
+			available[w.ID] = true
+		}
+	}
+	return available
 }
 
 // ParseWidgetConfig 解析用户配置 JSON。

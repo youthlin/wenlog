@@ -1264,7 +1264,7 @@ body.admin.nav-open { overflow: hidden; }
 /* ============================================================
    18.1 主题文件编辑器 (Theme File Editor)
    ============================================================ */
-.theme-editor-layout { display: flex; gap: 1rem; align-items: flex-start; }
+.theme-editor-layout { display: flex; width: 100%; gap: 1rem; align-items: flex-start; }
 .theme-editor-sidebar { width: 250px; flex-shrink: 0; }
 .theme-editor-sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
 .theme-editor-sidebar-header h3 { margin: 0; }
@@ -1622,8 +1622,10 @@ body.admin.nav-open { overflow: hidden; }
   .md-editor .md-preview { min-height: 360px; }
 
   /* 主题编辑器 — 手机: 上下堆叠，文件树可折叠 */
-  .theme-editor-layout { flex-direction: column; }
-  .theme-editor-sidebar { width: 100%; }
+  .theme-editor-layout { flex-direction: column; align-items: stretch; }
+  .theme-editor-sidebar,
+  .theme-editor-main,
+  .theme-editor-textarea { width: 100%; min-width: 0; }
   .theme-editor-toggle { display: inline-flex; align-items: center; justify-content: center; }
   .theme-editor-file-tree { max-height: none; }
   .theme-editor-file-tree.collapsed { display: none; }

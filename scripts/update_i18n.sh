@@ -6,13 +6,13 @@ set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# 两个翻译域：
-#   web/i18n/            — Go 代码 + admin/auth 模板（应用级翻译）
-#   web/themes/default/i18n/ — 前台模板（默认主题翻译，domain="default"）
+# 翻译域：
+#   web/i18n/                 — Go 代码 + admin/auth 模板（应用级翻译）
+#   web/themes/{theme}/i18n/  — 各前台主题模板翻译（domain=主题名）
 APP_I18N_DIR="${APP_I18N_DIR:-$ROOT_DIR/web/i18n}"
 ADMIN_TEMPLATE_DIR="${ADMIN_TEMPLATE_DIR:-$ROOT_DIR/web/templates}"
-THEME_I18N_DIR="${THEME_I18N_DIR:-$ROOT_DIR/web/themes/default/i18n}"
-THEME_TEMPLATE_DIR="${THEME_TEMPLATE_DIR:-$ROOT_DIR/web/themes/default/templates}"
+THEME_ROOT_DIR="${THEME_ROOT_DIR:-$ROOT_DIR/web/themes}"
+WIDGET_TEMPLATE_DIR="${WIDGET_TEMPLATE_DIR:-$ROOT_DIR/web/widgets}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -33,16 +33,14 @@ require_cmd git
 require_cmd xtemplate
 
 mkdir -p "$APP_I18N_DIR"
-mkdir -p "$THEME_I18N_DIR"
+mkdir -p "$THEME_ROOT_DIR"
 
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/blog-i18n.XXXXXX")"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 GO_POT="$TMP_DIR/go.pot"
 ADMIN_TEMPLATE_POT="$TMP_DIR/admin_templates.pot"
-THEME_TEMPLATE_POT="$TMP_DIR/theme_templates.pot"
 APP_MERGED_POT="$APP_I18N_DIR/messages.pot"
-THEME_MERGED_POT="$THEME_I18N_DIR/messages.pot"
 XTEMPLATE_ERR="$TMP_DIR/xtemplate.stderr"
 
 # 同时纳入已跟踪与未跟踪(但未被 .gitignore 忽略)的 Go 文件，
@@ -159,29 +157,59 @@ for line in pot.read_text(encoding='utf-8').splitlines():
 print(f'已更新 {pot}，共抽取 {count} 条消息。')
 PY
 
-# --- 5. 抽取前台模板翻译 → 默认主题域 ---
-xtemplate \
-  -i "$THEME_TEMPLATE_DIR/*.gohtml" \
-  -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
-  -o "$THEME_TEMPLATE_POT" \
-  2>"$XTEMPLATE_ERR"
+# --- 5. 抽取各前台主题模板翻译 → 主题域 ---
+shopt -s nullglob
+for theme_dir in "$THEME_ROOT_DIR"/*; do
+  [ -d "$theme_dir/templates" ] || continue
+  theme_name="$(basename "$theme_dir")"
+  theme_i18n_dir="$theme_dir/i18n"
+  theme_template_pot="$TMP_DIR/theme_${theme_name}_templates.pot"
+  theme_widget_pot="$TMP_DIR/theme_${theme_name}_widgets.pot"
+  theme_merged_pot="$theme_i18n_dir/messages.pot"
+  mkdir -p "$theme_i18n_dir"
 
-if [ -s "$XTEMPLATE_ERR" ]; then
-  cat "$XTEMPLATE_ERR" >&2
-  exit 1
-fi
+  xtemplate \
+    -i "$theme_dir/templates/*.gohtml" \
+    -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
+    -o "$theme_template_pot" \
+    2>"$XTEMPLATE_ERR"
 
-fix_charset "$THEME_TEMPLATE_POT"
+  if [ -s "$XTEMPLATE_ERR" ]; then
+    cat "$XTEMPLATE_ERR" >&2
+    exit 1
+  fi
+  fix_charset "$theme_template_pot"
 
-msguniq \
-  --use-first \
-  --sort-by-file \
-  --output-file="$THEME_MERGED_POT" \
-  "$THEME_TEMPLATE_POT"
+  pot_inputs=("$theme_template_pot")
+  if grep -q '^widget_areas:' "$theme_dir/theme.yaml" && compgen -G "$WIDGET_TEMPLATE_DIR/*.gohtml" >/dev/null; then
+    xtemplate \
+      -i "$WIDGET_TEMPLATE_DIR/*.gohtml" \
+      -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
+      -o "$theme_widget_pot" \
+      2>"$XTEMPLATE_ERR"
+    if [ -s "$XTEMPLATE_ERR" ]; then
+      cat "$XTEMPLATE_ERR" >&2
+      exit 1
+    fi
+    fix_charset "$theme_widget_pot"
+    pot_inputs+=("$theme_widget_pot")
+  fi
 
-update_po_files "$THEME_I18N_DIR" "$THEME_MERGED_POT"
+  msgcat \
+    --use-first \
+    --sort-output \
+    --output-file="$TMP_DIR/theme_${theme_name}_all.pot" \
+    "${pot_inputs[@]}"
 
-python3 - "$THEME_MERGED_POT" <<'PY'
+  msguniq \
+    --use-first \
+    --sort-by-file \
+    --output-file="$theme_merged_pot" \
+    "$TMP_DIR/theme_${theme_name}_all.pot"
+
+  update_po_files "$theme_i18n_dir" "$theme_merged_pot"
+
+  python3 - "$theme_merged_pot" <<'PY'
 from pathlib import Path
 import sys
 pot = Path(sys.argv[1])
@@ -191,3 +219,4 @@ for line in pot.read_text(encoding='utf-8').splitlines():
         count += 1
 print(f'已更新 {pot}，共抽取 {count} 条消息。')
 PY
+done
