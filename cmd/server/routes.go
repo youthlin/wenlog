@@ -84,6 +84,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	profileGroup.GET("/profile/email/verify", adm.VerifyProfileEmail)
 	profileGroup.POST("/profile/password", adm.SavePasswordSettings)
 	profileGroup.GET("/my-comments", adm.ListComments)
+	profileGroup.POST("/my-comments/:id/edit", adm.EditMyComment)
 	profileGroup.POST("/my-comments/:id/delete", adm.DeleteMyComment)
 	profileGroup.GET("/export-data", adm.ExportDataPage)
 	profileGroup.POST("/export-data", adm.ExportData)
@@ -157,6 +158,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.POST("/theme/upload", adm.ThemeUpload)
 	adminGroup.POST("/theme/activate", adm.ThemeActivate)
 	adminGroup.POST("/theme/delete", adm.ThemeDelete)
+	adminGroup.GET("/theme/download", adm.ThemeDownload)
 	adminGroup.POST("/theme/preview", adm.ThemePreview)
 	adminGroup.POST("/theme/preview/clear", adm.ThemePreviewClear)
 	adminGroup.GET("/theme/screenshot/:name/:file", adm.ThemeScreenshot)
@@ -173,6 +175,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	// 数据库备份
 	adminGroup.GET("/backup", adm.BackupPage)
 	adminGroup.POST("/backup", adm.BackupNow)
+	adminGroup.POST("/backup/settings", adm.SaveBackupSettings)
 	adminGroup.POST("/backup/email", adm.BackupEmail)
 	adminGroup.POST("/backup/restore", adm.BackupRestore)
 	adminGroup.POST("/backup/delete", adm.BackupDelete)

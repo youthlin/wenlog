@@ -22,6 +22,7 @@
       <p class="tip">{{.t.T "当前主题"}}: <strong>{{.CurrentTheme.Name}}</strong> {{if .CurrentTheme.Version}}v{{.CurrentTheme.Version}}{{end}} — {{.CurrentTheme.Description}}</p>
       {{end}}
       {{if .Themes}}
+      {{$currentName := ""}}{{if .CurrentTheme}}{{$currentName = .CurrentTheme.Name}}{{end}}
       <div class="table-scroll">
         <table class="data-table themes-table">
           <thead>
@@ -45,8 +46,7 @@
               {{end}}
             </td>
             <td data-label="{{$.t.T "主题名"}}">
-              <strong>{{.Name}}</strong>{{if eq .Name $.CurrentTheme.Name}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
-              {{if .ThemeURI}}<br><a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{$.t.T "主页"}}</a>{{end}}
+              {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}}{{if eq .Name $currentName}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
             </td>
             <td data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
             <td data-label="{{$.t.T "描述"}}">
@@ -54,22 +54,20 @@
               {{if .Tags}}<br><span class="theme-tags">{{range .Tags}}<span class="theme-tag">{{.}}</span>{{end}}</span>{{end}}
             </td>
             <td data-label="{{$.t.T "作者"}}">
-              {{.Author}}
-              {{if .AuthorURI}}<br><a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{$.t.T "作者主页"}}</a>{{end}}
+              {{if .AuthorURI}}<a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{.Author}}</a>{{else}}{{.Author}}{{end}}
               {{if .License}}<br><span class="theme-license">{{.License}}</span>{{end}}
             </td>
-            <td class="actions" data-label="{{$.t.T "操作"}}">
-              {{if eq .Name $.CurrentTheme.Name}}
-              <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm">{{$.t.T "编辑文件"}}</a>
-              {{end}}
-              {{if ne .Name $.CurrentTheme.Name}}
+            <td class="actions theme-actions-cell" data-label="{{$.t.T "操作"}}">
+              <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "编辑"}}</a>
+              <a href="/admin/theme/download?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
+              {{if ne .Name $currentName}}
               <form class="inline" method="post" action="/admin/theme/activate">
                 {{template "csrf_field" $}}
                 <input type="hidden" name="theme_name" value="{{.Name}}">
                 <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
               </form>
               {{end}}
-              {{if ne .Name $.CurrentTheme.Name}}
+              {{if ne .Name $currentName}}
               <form class="inline" method="post" action="/admin/theme/preview">
                 {{template "csrf_field" $}}
                 <input type="hidden" name="theme_name" value="{{.Name}}">
@@ -80,7 +78,7 @@
               <form class="inline" method="post" action="/admin/theme/delete" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
                 {{template "csrf_field" $}}
                 <input type="hidden" name="theme_name" value="{{.Name}}">
-                <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+                <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "删除"}}</button>
               </form>
               {{end}}
             </td>

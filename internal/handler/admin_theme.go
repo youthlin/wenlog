@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -124,6 +125,8 @@ func (h *Admin) ThemeActivate(c *gin.Context) {
 		h.redirectThemeSettings(c, tr.T("主题已激活，但加载失败，已回退默认主题: %s", err.Error()))
 		return
 	}
+	middleware.ClearPreviewTheme(c)
+	tm.ClearPreviewTheme()
 	h.redirectThemeSettings(c, tr.T("已激活主题「%s」", name))
 }
 
@@ -156,9 +159,95 @@ func (h *Admin) ThemeDelete(c *gin.Context) {
 	h.redirectThemeSettings(c, tr.T("主题「%s」已删除", name))
 }
 
+// ThemeDownload 下载指定主题为 zip 包。
+func (h *Admin) ThemeDownload(c *gin.Context) {
+	tr := i18n.Get(c)
+	name := strings.TrimSpace(c.Query("theme"))
+	if name == "" {
+		h.redirectThemeSettings(c, tr.T("未指定主题名称"))
+		return
+	}
+	tm := h.themeManager
+	if tm == nil {
+		h.redirectThemeSettings(c, tr.T("主题管理器未初始化"))
+		return
+	}
+	t := tm.Get(name)
+	if t == nil {
+		h.redirectThemeSettings(c, tr.T("主题「%s」不存在", name))
+		return
+	}
+	tmp, err := os.CreateTemp("", "theme-download-*.zip")
+	if err != nil {
+		h.redirectThemeSettings(c, tr.T("创建主题下载文件失败"))
+		return
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+	if err := writeThemeZip(tmp, t.Name, t.Dir); err != nil {
+		_ = tmp.Close()
+		h.redirectThemeSettings(c, tr.T("打包主题失败: %s", err.Error()))
+		return
+	}
+	if err := tmp.Close(); err != nil {
+		h.redirectThemeSettings(c, tr.T("写入主题下载文件失败: %s", err.Error()))
+		return
+	}
+	c.FileAttachment(tmpName, t.Name+".zip")
+
+}
+
 func (h *Admin) redirectThemeSettings(c *gin.Context, msg string) {
 	u := "/admin/themes?message=" + url.QueryEscape(msg)
 	c.Redirect(http.StatusSeeOther, u)
+}
+
+func writeThemeZip(w io.Writer, rootName, dir string) error {
+	zw := zip.NewWriter(w)
+	defer zw.Close()
+	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		header.Name = filepath.ToSlash(filepath.Join(rootName, rel))
+		if d.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+		writer, err := zw.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		_, copyErr := io.Copy(writer, file)
+		closeErr := file.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		return closeErr
+	})
 }
 
 // ThemePreview 设置管理员主题预览（写入 session，不持久化到 DB）。

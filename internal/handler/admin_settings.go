@@ -91,6 +91,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsSMTPFrom,
 		consts.SettingsSiteURL,
 		consts.SettingsMetricsAuthPassword,
+		consts.SettingsShowSQLDetails,
 	)
 	if err != nil && h.log != nil {
 		h.log.Error("get settings for settings page", "error", err)

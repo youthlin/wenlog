@@ -45,6 +45,12 @@ const (
 	SettingsSiteURL = "site_url"
 	// 是否在 HTML 响应中输出 SQL 执行详情(仅管理员登录时)
 	SettingsShowSQLDetails = "show_sql_details"
+	// 自动备份设置
+	SettingsAutoBackupEnabled     = "auto_backup_enabled"
+	SettingsAutoBackupTime        = "auto_backup_time"
+	SettingsAutoBackupKeep        = "auto_backup_keep"
+	SettingsAutoBackupTimeDefault = "03:00"
+	SettingsAutoBackupKeepDefault = 10
 )
 
 // 安全相关常量。
@@ -54,7 +60,7 @@ const (
 	TokenLengthMetrics      = 24 // Metrics 密码随机串长度
 	PasswordMinLen          = 8  // 密码最小长度
 	MetricsPasswordMinLen   = 12 // Metrics Basic Auth 密码最小长度
-	TimingAttackDelay       = 50  // 防时序攻击延迟(毫秒)
+	TimingAttackDelay       = 50 // 防时序攻击延迟(毫秒)
 )
 
 // 超时相关常量。

@@ -28,24 +28,17 @@
   </section>
 
   <section class="card settings-card">
-    <h3>{{.t.T "从备份恢复"}}</h3>
-    <p class="warn-banner">{{.t.T "警告：恢复操作会覆盖当前数据库。系统会在恢复前自动创建紧急备份。"}}</p>
-    {{if .Backups}}
-    <form class="edit-form" method="post" action="/admin/backup/restore" onsubmit="return confirm('{{.t.T "确定要从该备份恢复吗？当前数据将被覆盖。"}}')">
+    <h3>{{.t.T "自动备份设置"}}</h3>
+    <p class="tip">{{.t.T "系统会按这里的时间每天自动创建数据库备份。默认每天 03:00 执行，保留最近 10 个备份。"}}</p>
+    <form class="edit-form" method="post" action="/admin/backup/settings">
       {{template "csrf_field" .}}
-      <label>{{.t.T "选择备份文件"}}
-        <select name="filename" required>
-          <option value="">{{.t.T "请选择备份文件"}}</option>
-          {{range .Backups}}
-          <option value="{{.Name}}">{{.Name}} ({{.Size | fmtFileSize}})</option>
-          {{end}}
-        </select>
-      </label>
-      <p><button type="submit" class="btn-danger">{{.t.T "恢复"}}</button></p>
+      <label class="checkbox-label"><input type="checkbox" name="auto_backup_enabled" {{if .AutoBackupEnabled}}checked{{end}}> {{.t.T "启用自动备份"}}</label>
+      <div class="form-row">
+        <label>{{.t.T "执行时间"}}<input type="time" name="auto_backup_time" value="{{.AutoBackupTime}}" required></label>
+        <label>{{.t.T "保留数量"}}<input type="number" min="1" name="auto_backup_keep" value="{{.AutoBackupKeep}}" required></label>
+      </div>
+      <p><button type="submit" class="btn">{{.t.T "保存自动备份设置"}}</button></p>
     </form>
-    {{else}}
-    <p class="tip">{{.t.T "暂无备份文件"}}</p>
-    {{end}}
   </section>
 </div>
 
@@ -68,7 +61,12 @@
         <td data-label="{{$.t.T "文件名"}}">{{.Name}}</td>
         <td data-label="{{$.t.T "大小"}}">{{.Size | fmtFileSize}}</td>
         <td data-label="{{$.t.T "时间"}}">{{.ModTime.Format "2006-01-02 15:04:05"}}</td>
-        <td class="actions" data-label="{{$.t.T "操作"}}">
+        <td class="actions backup-actions-cell" data-label="{{$.t.T "操作"}}">
+          <form class="inline" method="post" action="/admin/backup/restore" onsubmit="return confirm('{{$.t.T "确定要从该备份恢复吗？当前数据将被覆盖。"}}')">
+            {{template "csrf_field" $}}
+            <input type="hidden" name="filename" value="{{.Name}}">
+            <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "恢复"}}</button>
+          </form>
           <form class="inline" method="post" action="/admin/backup/delete" onsubmit="return confirm('{{$.t.T "确定要删除此备份吗？"}}')">
             {{template "csrf_field" $}}
             <input type="hidden" name="filename" value="{{.Name}}">

@@ -10,6 +10,8 @@
       data-load-files-failed="{{.t.T "加载文件失败"}}"
       data-preview-label="{{.t.T "预览"}}"
       data-continue-editing-label="{{.t.T "继续编辑"}}"
+      data-expand-label="{{.t.T "展开"}}"
+      data-collapse-label="{{.t.T "收起"}}"
       data-nav-open-label="{{.t.T "打开菜单"}}"
       data-nav-close-label="{{.t.T "收起菜单"}}">
 <head>
@@ -80,10 +82,16 @@
             <div class="nav-group-links">
               <a class="admin-nav-link{{if eq .CurrentAdminNav "themes"}} is-active{{end}}" href="/admin/themes">
                 <span>{{.t.T "主题"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-files"}} is-active{{end}}" href="/admin/theme/files">
+                <span>{{.t.T "编辑"}}</span></a>
+              {{if .AdminThemeSupportsWidgets}}
               <a class="admin-nav-link{{if eq .CurrentAdminNav "widgets"}} is-active{{end}}" href="/admin/widgets">
                 <span>{{.t.T "组件"}}</span></a>
+              {{end}}
+              {{if .AdminThemeSupportsOptions}}
               <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-options"}} is-active{{end}}" href="/admin/theme-options">
                 <span>{{.t.T "选项"}}</span></a>
+              {{end}}
             </div>
           </div>
           <div class="nav-group">

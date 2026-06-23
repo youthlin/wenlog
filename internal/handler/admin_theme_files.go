@@ -23,7 +23,7 @@ func (h *Admin) ThemeFilesPage(c *gin.Context) {
 		}
 	}
 	data := h.base(c, tr.T("编辑主题文件"))
-	data["CurrentAdminNav"] = "themes"
+	data["CurrentAdminNav"] = "theme-files"
 	data["EditTheme"] = name
 	if h.themeManager != nil {
 		data["Themes"] = h.themeManager.List()

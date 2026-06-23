@@ -410,7 +410,8 @@ body.admin.nav-open { overflow: hidden; }
 
 /* 7.1 按钮 */
 .btn,
-.btn-secondary {
+.btn-secondary,
+.btn-danger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -426,6 +427,7 @@ body.admin.nav-open { overflow: hidden; }
 }
 .btn { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
 .btn-secondary { background: var(--card); color: var(--fg); border: 1px solid var(--border); }
+.btn-danger { background: var(--danger); color: #fff; border: 1px solid var(--danger); }
 .btn-sm { min-height: 32px; padding: 4px 10px; font-size: 13px; }
 
 /* 7.2 页面标题栏 */
@@ -610,6 +612,27 @@ body.admin.nav-open { overflow: hidden; }
 .comment-post-line { margin-bottom: 8px; color: var(--muted); font-size: 13px; }
 .comment-post-line a { color: var(--accent); }
 .comment-body { line-height: 1.75; }
+.comment-body-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.comment-body-clamp.is-expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+.comment-body-toggle {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
 .comment-cell .c-edit textarea { min-height: 128px; }
 .comment-cell .c-edit-btn,
 .comment-author-cell .c-edit-btn { margin-top: 10px; }
@@ -637,6 +660,7 @@ body.admin.nav-open { overflow: hidden; }
 .user-actions-cell .inline button.link-danger { border-color: var(--danger-mix-border); background: var(--danger-mix-bg); }
 .user-action-link + .inline { margin-left: 6px; }
 .user-actions-cell .inline + .inline { margin-left: 6px; }
+.user-role-select { min-width: 130px; }
 
 /* ============================================================
    13. 文章列表页 (Posts Table)
@@ -1258,10 +1282,48 @@ body.admin.nav-open { overflow: hidden; }
 .theme-screenshot-cell { width: 120px; text-align: center; vertical-align: middle; }
 .theme-screenshot-thumb { max-width: 100px; max-height: 75px; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto; }
 .theme-no-screenshot { color: var(--text-muted); font-size: 1.5rem; }
-.theme-meta-link { font-size: 0.8rem; color: var(--link); }
+.theme-title-link,
+.theme-meta-link { color: var(--link); }
+.theme-title-link { text-decoration: none; }
+.theme-title-link:hover,
+.theme-meta-link:hover { text-decoration: underline; }
+.theme-meta-link { font-size: 0.9rem; }
 .theme-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .theme-tag { display: inline-block; padding: 1px 6px; font-size: 0.75rem; background: var(--highlight-bg, #e8f0fe); border-radius: 3px; color: var(--fg); }
 .theme-license { font-size: 0.8rem; color: var(--text-muted); }
+.theme-actions-cell { min-width: 120px; }
+.theme-actions-cell .theme-action-link { text-decoration: none; }
+.theme-actions-cell .inline,
+.theme-actions-cell .theme-action-link { display: block; }
+.theme-actions-cell .inline + .inline,
+.theme-actions-cell .theme-action-link + .theme-action-link,
+.theme-actions-cell .theme-action-link + .inline,
+.theme-actions-cell .inline + .theme-action-link { margin-top: 8px; }
+.theme-actions-cell .theme-action-link,
+.theme-actions-cell .inline button { width: 100%; box-sizing: border-box; }
+.theme-actions-cell .inline button.link-danger {
+  border-color: var(--danger-mix-border);
+  background: var(--danger-mix-bg);
+}
+.theme-actions-cell .theme-action-link:hover,
+.theme-actions-cell .inline button:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+  text-decoration: none;
+}
+.theme-actions-cell .inline button.link-danger:hover { background: var(--danger-mix-hover-bg); }
+
+.backup-actions-cell .inline { display: inline-block; }
+.backup-actions-cell .inline + .inline { margin-left: 6px; }
+.backup-actions-cell .inline button.link-danger {
+  border-color: var(--danger-mix-border);
+  background: var(--danger-mix-bg);
+}
+.backup-actions-cell .inline button:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+.backup-actions-cell .inline button.link-danger:hover { background: var(--danger-mix-hover-bg); }
 /* ============================================================
    18.1 主题文件编辑器 (Theme File Editor)
    ============================================================ */

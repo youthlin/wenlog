@@ -122,32 +122,72 @@ func (h *Admin) EditComment(c *gin.Context) {
 		c.String(http.StatusForbidden, "Forbidden")
 		return
 	}
+	fields, ok := parseCommentEditFields(c, "/admin/comments")
+	if !ok {
+		return
+	}
+	if err := h.st.UpdateCommentFields(c, id, fields); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	safeRedirect(c, "/admin/comments")
+}
+
+// EditMyComment 修改当前登录用户自己的评论。
+func (h *Admin) EditMyComment(c *gin.Context) {
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	comment, err := h.st.GetCommentByID(c, id)
+	if err != nil || comment == nil || comment.UserID == nil || *comment.UserID != u.ID {
+		c.String(http.StatusForbidden, "Forbidden")
+		return
+	}
+	fields, ok := parseCommentEditFields(c, "/admin/my-comments")
+	if !ok {
+		return
+	}
+	if err := h.st.UpdateCommentFields(c, id, fields); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	safeRedirect(c, "/admin/my-comments")
+}
+
+func parseCommentEditFields(c *gin.Context, fallback string) (map[string]any, bool) {
 	fields := map[string]any{}
 	if _, ok := c.GetPostForm("content"); ok {
 		content := strings.TrimSpace(c.PostForm("content"))
 		if content == "" {
-			safeRedirect(c, "/admin/comments")
-			return
+			safeRedirect(c, fallback)
+			return nil, false
 		}
 		fields["content"] = content
 	}
 	if _, ok := c.GetPostForm("author"); ok {
 		author := strings.TrimSpace(c.PostForm("author"))
 		if author == "" {
-			safeRedirect(c, "/admin/comments")
-			return
+			safeRedirect(c, fallback)
+			return nil, false
 		}
 		fields["author"] = author
 	}
 	if _, ok := c.GetPostForm("email"); ok {
 		email := strings.TrimSpace(c.PostForm("email"))
 		if email == "" {
-			safeRedirect(c, "/admin/comments")
-			return
+			safeRedirect(c, fallback)
+			return nil, false
 		}
 		if _, err := mail.ParseAddress(email); err != nil {
-			safeRedirect(c, "/admin/comments")
-			return
+			safeRedirect(c, fallback)
+			return nil, false
 		}
 		fields["email"] = email
 	}
@@ -158,21 +198,17 @@ func (h *Admin) EditComment(c *gin.Context) {
 		}
 		if urlValue != "" {
 			if _, err := url.ParseRequestURI(urlValue); err != nil {
-				safeRedirect(c, "/admin/comments")
-				return
+				safeRedirect(c, fallback)
+				return nil, false
 			}
 		}
 		fields["url"] = urlValue
 	}
 	if len(fields) == 0 {
-		safeRedirect(c, "/admin/comments")
-		return
+		safeRedirect(c, fallback)
+		return nil, false
 	}
-	if err := h.st.UpdateCommentFields(c, id, fields); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	safeRedirect(c, "/admin/comments")
+	return fields, true
 }
 
 // BatchComments 批量操作评论(approve/pending/spam/delete)。

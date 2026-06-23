@@ -85,6 +85,12 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"RoleAuthor":           model.RoleAuthor,
 		"RoleSubscriber":       model.RoleSubscriber,
 	}
+	if h.themeManager != nil {
+		if currentTheme := h.themeManager.Current(c); currentTheme != nil {
+			data["AdminThemeSupportsWidgets"] = len(currentTheme.WidgetAreas) > 0
+			data["AdminThemeSupportsOptions"] = len(currentTheme.Options) > 0
+		}
+	}
 	if c != nil {
 		currentUser := h.currentUser(c)
 		data["User"] = currentUser
@@ -193,7 +199,7 @@ func adminNavKey(c *gin.Context) string {
 		return "settings"
 	case "/admin/profile", "/admin/profile/password":
 		return "profile"
-	case "/admin/my-comments", "/admin/my-comments/:id/delete":
+	case "/admin/my-comments", "/admin/my-comments/:id/edit", "/admin/my-comments/:id/delete":
 		return "profile-comments"
 	case "/admin/export-data":
 		return "profile-export"
@@ -207,8 +213,10 @@ func adminNavKey(c *gin.Context) string {
 		return "import"
 	case "/admin/users", "/admin/user/:id/role", "/admin/user/:id/delete":
 		return "users"
-	case "/admin/themes", "/admin/theme/upload", "/admin/theme/activate", "/admin/theme/delete":
+	case "/admin/themes", "/admin/theme/upload", "/admin/theme/activate", "/admin/theme/delete", "/admin/theme/download", "/admin/theme/preview", "/admin/theme/preview/clear", "/admin/theme/screenshot/:name/:file":
 		return "themes"
+	case "/admin/theme/files", "/admin/theme/file", "/admin/theme/file/create", "/admin/theme/file/delete", "/admin/theme/recovery/clear", "/admin/theme/reload":
+		return "theme-files"
 	default:
 		return ""
 	}

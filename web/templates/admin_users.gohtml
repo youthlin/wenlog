@@ -20,7 +20,7 @@
       <td class="user-role-cell" data-label="{{$.t.T "角色"}}">
         <form class="inline" method="post" action="/admin/user/{{.ID}}/role">
           {{template "csrf_field" $}}
-          <select name="role" onchange="this.form.submit()" {{if and (eq .ID $.CurrentUserID) (eq .Role $.RoleAdmin)}}disabled{{end}}>
+          <select class="widget-add-select user-role-select" name="role" onchange="this.form.submit()" {{if and (eq .ID $.CurrentUserID) (eq .Role $.RoleAdmin)}}disabled{{end}}>
             <option value="admin" {{if eq .Role "admin"}}selected{{end}}>{{$.t.T "管理员"}}</option>
             <option value="author" {{if eq .Role "author"}}selected{{end}}>{{$.t.T "协作者"}}</option>
             <option value="subscriber" {{if eq .Role "subscriber"}}selected{{end}}>{{$.t.T "订阅者"}}</option>

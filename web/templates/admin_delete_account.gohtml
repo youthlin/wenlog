@@ -11,7 +11,7 @@
     <form class="edit-form" method="post" action="/admin/delete-account">
       {{template "csrf_field" .}}
       <label>{{.t.T "请输入 DELETE 确认"}}<input type="text" name="confirm" required></label>
-      <p><button type="submit" class="btn link-danger">{{.t.T "确认删除"}}</button></p>
+      <p><button type="submit" class="btn-danger">{{.t.T "确认删除"}}</button></p>
     </form>
   </section>
 </div>

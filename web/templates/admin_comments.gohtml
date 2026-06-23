@@ -29,7 +29,7 @@
 	    {{$postLink := index $.CommentPostLinks $postID}}
 	    <tr class="comments-row">
       {{if not $.Mine}}<td class="comment-check-cell" data-label="{{$.t.T "选择"}}"><input type="checkbox" name="ids" value="{{.ID}}" form="batch-form" class="row-check"></td>{{end}}
-	      <td class="{{if not $.Mine}}editable-cell {{end}}comment-author-cell" data-label="{{$.t.T "作者"}}">
+	      <td class="editable-cell comment-author-cell" data-label="{{$.t.T "作者"}}">
 	        <div class="c-display">
 	          <div class="comment-author-panel">
 	            <div class="comment-author-head">
@@ -45,8 +45,7 @@
 	            </div>
 	          </div>
 	        </div>
-	        {{if not $.Mine}}
-	        <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
+	        <form class="c-edit" method="post" action="{{if $.Mine}}/admin/my-comments/{{.ID}}/edit{{else}}/admin/comments/edit/{{.ID}}{{end}}" hidden>
 	          {{template "csrf_field" $}}
 	          <label>{{$.t.T "作者"}}<input type="text" name="author" value="{{.Author}}" required></label>
 	          <label>{{$.t.T "邮箱"}}<input type="email" name="email" value="{{.Email}}" required></label>
@@ -58,22 +57,17 @@
 	          </div>
 	        </form>
 	        <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
-	        {{end}}
 	      </td>
-	      <td class="{{if not $.Mine}}editable-cell {{end}}comment-cell" data-label="{{$.t.T "内容"}}">
+	      <td class="editable-cell comment-cell" data-label="{{$.t.T "内容"}}">
 	        <div class="c-display">
 	          <time class="comment-date-time" datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time>
 	          <div class="comment-post-line">
-	            {{if $postLink}}
-	            <a href="{{$postLink}}" target="_blank" rel="noreferrer">{{$.t.T "发表在《%s》：" $postTitle}}</a>
-	            {{else}}
-	            {{$.t.T "发表在《%s》：" $postTitle}}
-	            {{end}}
+	            {{$.t.T "发表在"}}{{if $postLink}}<a href="{{$postLink}}" target="_blank" rel="noreferrer">《{{$postTitle}}》</a>{{else}}《{{$postTitle}}》{{end}}：
 	          </div>
-	          <div class="comment-body">{{.Content}}</div>
+	          <div class="comment-body comment-body-clamp" data-comment-body>{{.Content}}</div>
+	          <button type="button" class="comment-body-toggle" data-comment-toggle hidden>{{$.t.T "展开"}}</button>
 	        </div>
-	        {{if not $.Mine}}
-	        <form class="c-edit" method="post" action="/admin/comments/edit/{{.ID}}" hidden>
+	        <form class="c-edit" method="post" action="{{if $.Mine}}/admin/my-comments/{{.ID}}/edit{{else}}/admin/comments/edit/{{.ID}}{{end}}" hidden>
 	          {{template "csrf_field" $}}
 	          <textarea name="content" rows="3">{{.Content}}</textarea>
 	          <div class="c-edit-actions">
@@ -82,7 +76,6 @@
 	          </div>
 	        </form>
 	        <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
-	        {{end}}
 	      </td>
 	      <td class="actions comment-actions-cell" data-label="{{$.t.T "操作"}}">
 	        {{if $.Mine}}
@@ -117,6 +110,6 @@
   {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
 {{end}}
-{{if not .Mine}}<script src="/assets/admin.js"></script>{{end}}
+<script src="/assets/admin.js"></script>
 {{template "admin_footer" .}}
 {{end}}

@@ -4,11 +4,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/i18n"
 )
 
@@ -26,6 +28,7 @@ func (h *Admin) BackupPage(c *gin.Context) {
 	}
 	data["Backups"] = backups
 	data["DBPath"] = h.st.DBPath()
+	h.injectBackupSettings(c, data)
 
 	c.HTML(http.StatusOK, "admin_backup.gohtml", data)
 }
@@ -90,6 +93,30 @@ func (h *Admin) BackupEmail(c *gin.Context) {
 	h.backupSuccess(c, tr.T("备份已发送到 %s", emailTo))
 }
 
+// SaveBackupSettings 保存自动备份设置。
+func (h *Admin) SaveBackupSettings(c *gin.Context) {
+	tr := i18n.Get(c)
+	enabled := c.PostForm("auto_backup_enabled") == "on"
+	backupTime := strings.TrimSpace(c.PostForm("auto_backup_time"))
+	if !validBackupTime(backupTime) {
+		h.backupError(c, tr.T("自动备份时间不合法"))
+		return
+	}
+	keep := positiveIntSetting(c.PostForm("auto_backup_keep"), consts.SettingsAutoBackupKeepDefault)
+	settings := map[string]string{
+		consts.SettingsAutoBackupEnabled: strconv.FormatBool(enabled),
+		consts.SettingsAutoBackupTime:    backupTime,
+		consts.SettingsAutoBackupKeep:    strconv.Itoa(keep),
+	}
+	for key, value := range settings {
+		if err := h.st.SetSetting(c, key, value); err != nil {
+			h.serverError(c, err)
+			return
+		}
+	}
+	h.backupSuccess(c, tr.T("自动备份设置已保存"))
+}
+
 // BackupRestore 从备份文件恢复数据库。
 func (h *Admin) BackupRestore(c *gin.Context) {
 	tr := i18n.Get(c)
@@ -145,6 +172,7 @@ func (h *Admin) backupError(c *gin.Context, msg string) {
 	data["DBPath"] = h.st.DBPath()
 	backups, _ := h.st.ListBackups()
 	data["Backups"] = backups
+	h.injectBackupSettings(c, data)
 	c.HTML(http.StatusOK, "admin_backup.gohtml", data)
 }
 
@@ -156,6 +184,38 @@ func (h *Admin) backupSuccess(c *gin.Context, msg string) {
 	data["DBPath"] = h.st.DBPath()
 	backups, _ := h.st.ListBackups()
 	data["Backups"] = backups
+	h.injectBackupSettings(c, data)
 	c.HTML(http.StatusOK, "admin_backup.gohtml", data)
 }
 
+func (h *Admin) injectBackupSettings(c *gin.Context, data gin.H) {
+	settings, err := h.st.GetSettings(c, consts.SettingsAutoBackupEnabled, consts.SettingsAutoBackupTime, consts.SettingsAutoBackupKeep)
+	if err != nil && h.log != nil {
+		h.log.Error("get backup settings", "error", err)
+	}
+	enabled := true
+	if strings.EqualFold(settings[consts.SettingsAutoBackupEnabled], "false") {
+		enabled = false
+	}
+	backupTime := strings.TrimSpace(settings[consts.SettingsAutoBackupTime])
+	if !validBackupTime(backupTime) {
+		backupTime = consts.SettingsAutoBackupTimeDefault
+	}
+	keep := positiveIntSetting(settings[consts.SettingsAutoBackupKeep], consts.SettingsAutoBackupKeepDefault)
+	data["AutoBackupEnabled"] = enabled
+	data["AutoBackupTime"] = backupTime
+	data["AutoBackupKeep"] = keep
+}
+
+func validBackupTime(value string) bool {
+	parts := strings.Split(strings.TrimSpace(value), ":")
+	if len(parts) != 2 {
+		return false
+	}
+	hour, err := strconv.Atoi(parts[0])
+	if err != nil || hour < 0 || hour > 23 {
+		return false
+	}
+	minute, err := strconv.Atoi(parts[1])
+	return err == nil && minute >= 0 && minute <= 59
+}

@@ -62,7 +62,6 @@
           <div class="post-meta-list">
             <div class="post-inline-meta">
               <span class="post-inline-meta-item">#{{.ID}}</span>
-              {{if eq $.PostType "page"}}<span class="post-inline-meta-item">{{$.t.T "顺序"}} {{.MenuOrder}}</span>{{end}}
               <time class="post-inline-meta-item" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
             </div>
           </div>

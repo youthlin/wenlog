@@ -6,6 +6,8 @@
   var MSG_IMAGE_INSERTED = root.imageInserted || "Image inserted";
   var MSG_EXISTING_IMAGE_INSERTED = root.existingImageInserted || "Existing image inserted";
   var MSG_LOAD_FILES_FAILED = root.loadFilesFailed || "Failed to load files";
+  var MSG_EXPAND = root.expandLabel || "展开";
+  var MSG_COLLAPSE = root.collapseLabel || "收起";
 
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -389,6 +391,20 @@
       text.hidden = false;
       form.hidden = true;
       btn.hidden = false;
+    });
+  });
+
+  document.querySelectorAll("[data-comment-body]").forEach(function (body) {
+    var toggle = body.parentElement ? body.parentElement.querySelector("[data-comment-toggle]") : null;
+    if (!toggle) return;
+    requestAnimationFrame(function () {
+      if (body.scrollHeight <= body.clientHeight + 1) return;
+      toggle.hidden = false;
+      toggle.textContent = MSG_EXPAND;
+    });
+    toggle.addEventListener("click", function () {
+      var expanded = body.classList.toggle("is-expanded");
+      toggle.textContent = expanded ? MSG_COLLAPSE : MSG_EXPAND;
     });
   });
 
