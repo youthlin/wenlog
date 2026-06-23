@@ -13,7 +13,7 @@
 </p>
 {{end}}
 
-<div class="settings-main">
+<div class="settings-main themes-main">
   <div class="settings-stack">
     <section class="card settings-card">
       <h3>{{.t.T "主题管理"}}</h3>
@@ -45,21 +45,19 @@
               <span class="theme-no-screenshot">—</span>
               {{end}}
             </td>
-            <td data-label="{{$.t.T "主题名"}}">
+            <td class="theme-name-cell" data-label="{{$.t.T "主题名"}}">
               {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}}{{if eq .Name $currentName}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
             </td>
-            <td data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
-            <td data-label="{{$.t.T "描述"}}">
+            <td class="theme-version-cell" data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
+            <td class="theme-description-cell" data-label="{{$.t.T "描述"}}">
               {{.Description}}
               {{if .Tags}}<br><span class="theme-tags">{{range .Tags}}<span class="theme-tag">{{.}}</span>{{end}}</span>{{end}}
             </td>
-            <td data-label="{{$.t.T "作者"}}">
+            <td class="theme-author-cell" data-label="{{$.t.T "作者"}}">
               {{if .AuthorURI}}<a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{.Author}}</a>{{else}}{{.Author}}{{end}}
               {{if .License}}<br><span class="theme-license">{{.License}}</span>{{end}}
             </td>
             <td class="actions theme-actions-cell" data-label="{{$.t.T "操作"}}">
-              <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "编辑"}}</a>
-              <a href="/admin/theme/download?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
               {{if ne .Name $currentName}}
               <form class="inline" method="post" action="/admin/theme/activate">
                 {{template "csrf_field" $}}
@@ -74,6 +72,8 @@
                 <button type="submit" class="btn-secondary btn-sm">{{$.t.T "预览"}}</button>
               </form>
               {{end}}
+              <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "编辑"}}</a>
+              <a href="/admin/theme/download?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
               {{if ne .Name "default"}}
               <form class="inline" method="post" action="/admin/theme/delete" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
                 {{template "csrf_field" $}}

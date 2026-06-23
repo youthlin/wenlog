@@ -16,6 +16,20 @@
   </section>
 
   <section class="card settings-card">
+    <h3>{{.t.T "自动备份设置"}}</h3>
+    <p class="tip">{{.t.T "系统会按这里的时间每天自动创建数据库备份。默认每天 03:00 执行，保留最近 10 个备份。"}}</p>
+    <form class="edit-form" method="post" action="/admin/backup/settings">
+      {{template "csrf_field" .}}
+      <label class="inline-checkbox backup-enable-checkbox"><input type="checkbox" name="auto_backup_enabled" {{if .AutoBackupEnabled}}checked{{end}}> {{.t.T "启用自动备份"}}</label>
+      <div class="form-row">
+        <label>{{.t.T "执行时间"}}<input type="time" name="auto_backup_time" value="{{.AutoBackupTime}}" required></label>
+        <label>{{.t.T "保留数量"}}<input type="number" min="1" name="auto_backup_keep" value="{{.AutoBackupKeep}}" required></label>
+      </div>
+      <p><button type="submit" class="btn">{{.t.T "保存自动备份设置"}}</button></p>
+    </form>
+  </section>
+
+  <section class="card settings-card">
     <h3>{{.t.T "邮件备份"}}</h3>
     <p class="tip">{{.t.T "创建备份并通过邮件发送到指定邮箱。"}}</p>
     <form class="edit-form" method="post" action="/admin/backup/email">
@@ -24,20 +38,6 @@
         <input type="email" name="email_to" required placeholder="user@example.com">
       </label>
       <p><button type="submit" class="btn">{{.t.T "备份并发送邮件"}}</button></p>
-    </form>
-  </section>
-
-  <section class="card settings-card">
-    <h3>{{.t.T "自动备份设置"}}</h3>
-    <p class="tip">{{.t.T "系统会按这里的时间每天自动创建数据库备份。默认每天 03:00 执行，保留最近 10 个备份。"}}</p>
-    <form class="edit-form" method="post" action="/admin/backup/settings">
-      {{template "csrf_field" .}}
-      <label class="checkbox-label"><input type="checkbox" name="auto_backup_enabled" {{if .AutoBackupEnabled}}checked{{end}}> {{.t.T "启用自动备份"}}</label>
-      <div class="form-row">
-        <label>{{.t.T "执行时间"}}<input type="time" name="auto_backup_time" value="{{.AutoBackupTime}}" required></label>
-        <label>{{.t.T "保留数量"}}<input type="number" min="1" name="auto_backup_keep" value="{{.AutoBackupKeep}}" required></label>
-      </div>
-      <p><button type="submit" class="btn">{{.t.T "保存自动备份设置"}}</button></p>
     </form>
   </section>
 </div>
@@ -65,7 +65,7 @@
           <form class="inline" method="post" action="/admin/backup/restore" onsubmit="return confirm('{{$.t.T "确定要从该备份恢复吗？当前数据将被覆盖。"}}')">
             {{template "csrf_field" $}}
             <input type="hidden" name="filename" value="{{.Name}}">
-            <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "恢复"}}</button>
+            <button type="submit" class="btn-secondary btn-sm">{{$.t.T "恢复"}}</button>
           </form>
           <form class="inline" method="post" action="/admin/backup/delete" onsubmit="return confirm('{{$.t.T "确定要删除此备份吗？"}}')">
             {{template "csrf_field" $}}

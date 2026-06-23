@@ -1275,6 +1275,7 @@ body.admin.nav-open { overflow: hidden; }
    18. 设置页 (Settings)
    ============================================================ */
 .settings-main { width: min(100%, 960px); }
+.themes-main { width: 100%; }
 .settings-stack { display: grid; gap: 18px; }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
 .settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
@@ -1291,16 +1292,17 @@ body.admin.nav-open { overflow: hidden; }
 .theme-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .theme-tag { display: inline-block; padding: 1px 6px; font-size: 0.75rem; background: var(--highlight-bg, #e8f0fe); border-radius: 3px; color: var(--fg); }
 .theme-license { font-size: 0.8rem; color: var(--text-muted); }
-.theme-actions-cell { min-width: 120px; }
+.themes-table { min-width: 1120px; }
+.themes-table .theme-description-cell { min-width: 320px; }
+.theme-name-cell { min-width: 160px; }
+.theme-version-cell { width: 88px; }
+.theme-author-cell { min-width: 150px; }
+.theme-actions-cell { min-width: 300px; }
 .theme-actions-cell .theme-action-link { text-decoration: none; }
 .theme-actions-cell .inline,
-.theme-actions-cell .theme-action-link { display: block; }
-.theme-actions-cell .inline + .inline,
-.theme-actions-cell .theme-action-link + .theme-action-link,
-.theme-actions-cell .theme-action-link + .inline,
-.theme-actions-cell .inline + .theme-action-link { margin-top: 8px; }
+.theme-actions-cell .theme-action-link { display: inline-flex; align-items: center; justify-content: center; margin: 0 6px 6px 0; vertical-align: top; }
 .theme-actions-cell .theme-action-link,
-.theme-actions-cell .inline button { width: 100%; box-sizing: border-box; }
+.theme-actions-cell .inline button { box-sizing: border-box; min-width: 52px; }
 .theme-actions-cell .inline button.link-danger {
   border-color: var(--danger-mix-border);
   background: var(--danger-mix-bg);
@@ -1324,6 +1326,7 @@ body.admin.nav-open { overflow: hidden; }
   background: color-mix(in srgb, var(--accent) 10%, var(--card));
 }
 .backup-actions-cell .inline button.link-danger:hover { background: var(--danger-mix-hover-bg); }
+.backup-enable-checkbox { margin: 0 0 14px; }
 /* ============================================================
    18.1 主题文件编辑器 (Theme File Editor)
    ============================================================ */
@@ -1452,6 +1455,8 @@ body.admin.nav-open { overflow: hidden; }
   .table-scroll .comments-table { min-width: 860px; }
   .table-scroll .posts-table { min-width: 700px; }
   .table-scroll .uploads-table { min-width: 760px; }
+  .table-scroll .themes-table { min-width: 1120px; }
+  .table-scroll .backup-table { min-width: 720px; }
 }
 
 @media (max-width: 760px) {
@@ -1461,6 +1466,7 @@ body.admin.nav-open { overflow: hidden; }
   .table-scroll:has(.terms-table) { overflow: visible; }
   .table-scroll:has(.uploads-table) { overflow: visible; }
   .table-scroll:has(.themes-table) { overflow: visible; }
+  .table-scroll:has(.backup-table) { overflow: visible; }
   .comments-table,
   .comments-table thead,
   .comments-table tbody,
@@ -1605,8 +1611,27 @@ body.admin.nav-open { overflow: hidden; }
   .themes-table tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--surface-shadow); overflow: hidden; }
   .themes-table tbody tr td { border-bottom: 0; padding: 12px 14px; }
   .themes-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
-  .themes-table .actions { display: grid !important; gap: 8px; }
-  .themes-table .actions .inline + .inline { margin-top: 0; }
+  .themes-table .actions { display: flex !important; flex-wrap: wrap; gap: 8px; }
+  .themes-table .actions .inline,
+  .themes-table .actions .theme-action-link { flex: 1 1 calc(50% - 8px); margin: 0; }
+  .themes-table .actions .inline button,
+  .themes-table .actions .theme-action-link { width: 100%; }
+
+  .backup-table,
+  .backup-table thead,
+  .backup-table tbody,
+  .backup-table tr,
+  .backup-table th,
+  .backup-table td { display: block; width: 100%; }
+  .backup-table { min-width: 0 !important; background: transparent; border-spacing: 0; }
+  .backup-table thead { display: none; }
+  .backup-table tbody { display: grid; gap: 14px; }
+  .backup-table tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--surface-shadow); overflow: hidden; }
+  .backup-table tbody tr td { border-bottom: 0; padding: 12px 14px; }
+  .backup-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .backup-table .actions { display: flex !important; flex-wrap: wrap; gap: 8px; }
+  .backup-table .actions .inline { flex: 1 1 calc(50% - 8px); margin: 0; }
+  .backup-table .actions .inline button { width: 100%; }
 
   /* 主题编辑器 — 平板: 文件树变窄 */
   .theme-editor-sidebar { width: 200px; }
