@@ -1,0 +1,37 @@
+{{define "index.gohtml"}}
+{{template "header" .}}
+<section class="hero wide-shell" aria-labelledby="home-title">
+  <p class="hero-kicker">{{.th.T "宽屏杂志"}}</p>
+  <h1 id="home-title">{{.SiteName}}</h1>
+  {{if .Description}}<p class="hero-description">{{.Description}}</p>{{end}}
+</section>
+<div class="magazine-list">
+  {{range .List.Posts}}
+  <article class="post-summary">
+    <div class="post-summary-inner wide-shell">
+      <div class="issue-mark" aria-hidden="true">No. {{.ID}}</div>
+      <div class="post-summary-copy">
+        <div class="post-meta">
+          <time>{{fmtDate .PublishedAt}}</time>
+          {{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+          {{if eq .CommentStatus "closed"}}<span class="comment-count">{{$.th.T "评论已关闭"}}</span>
+          {{else if eq .CommentCount 0}}<a class="comment-count" href="{{postURL .}}#comments">{{$.th.T "暂无评论"}}</a>
+          {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</a>{{end}}
+          {{if and $.CurrentUserID (eq $.CurrentUserID .AuthorID)}}<a class="edit-link" href="/admin/post/{{.ID}}">{{$.th.T "编辑"}}</a>{{end}}
+        </div>
+        <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
+        <div class="post-content">{{postExcerptHTML .}}</div>
+        <div class="post-actions">
+          <a class="read-more" href="{{postURL .}}{{if hasMore .Content}}#more-{{.ID}}{{end}}">{{$.th.T "阅读全文"}}</a>
+          <span class="views">{{$.th.N1_64 "%d 次阅读" .Views .Views}}</span>
+        </div>
+      </div>
+    </div>
+  </article>
+  {{else}}
+  <p class="empty wide-shell">{{.th.T "没有找到匹配的文章。"}}</p>
+  {{end}}
+</div>
+{{template "pagination" .}}
+{{template "footer" .}}
+{{end}}

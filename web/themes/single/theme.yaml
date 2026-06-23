@@ -13,48 +13,6 @@ widget_areas:
     name: "页脚"
     description: "页面底部区域"
 
-widgets:
-  - id: user_info
-    label: "用户信息"
-    area: footer
-
-  - id: search
-    label: "搜索"
-    area: footer
-
-  - id: recent_posts
-    label: "近期文章"
-    area: footer
-    options:
-      - id: count
-        type: number
-        label: "显示数量"
-        default: "5"
-        min: 1
-        max: 20
-
-  - id: recent_comments
-    label: "近期评论"
-    area: footer
-
-  - id: categories
-    label: "分类目录"
-    area: footer
-
-  - id: tag_cloud
-    label: "标签云"
-    area: footer
-
-  - id: custom_html
-    label: "自定义 HTML"
-    area: footer
-    options:
-      - id: html
-        type: textarea
-        label: "HTML 内容"
-        description: "任意 HTML 代码，会原样输出到页面中"
-        default: ""
-
 options:
   - id: footer_text
     type: text

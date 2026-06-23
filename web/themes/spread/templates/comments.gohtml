@@ -1,8 +1,11 @@
 {{define "comments"}}
-<section class="comments" id="comments">
-  <h3>{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
-  <div id="comments-box">
-    {{template "fragment_comments.gohtml" .}}
+<section class="comments wide-shell" id="comments">
+  <div class="comments-inner">
+    <p class="section-kicker">{{.th.T "读者回声"}}</p>
+    <h2>{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h2>
+    <div id="comments-box">
+      {{template "fragment_comments.gohtml" .}}
+    </div>
   </div>
 </section>
 <script src="/assets/comment.js"></script>
@@ -14,8 +17,12 @@
     {{if eq .ParentID 0}}
     <li class="comment{{if eq .Status "pending"}} comment-pending{{end}}" id="comment-{{.ID}}">
       <div class="comment-head">
-        <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="40" height="40">
-        <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
+        <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="44" height="44">
+        <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a>
+        <span class="comment-author">{{.Author}}</span>
+        {{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}
+        {{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}
+        <time>{{fmtDateTime .CreatedAt}}</time>
         {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.th.T "评论审核中,当前仅自己可见"}}</span>{{end}}
       </div>
       <div class="comment-body">{{.Content}}</div>
@@ -27,7 +34,11 @@
         <li class="comment{{if eq .Status "pending"}} comment-pending{{end}}" id="comment-{{.ID}}">
           <div class="comment-head">
             <img class="avatar" src="{{avatarURL .Email $.DefaultAvatar}}" alt="" width="40" height="40">
-            <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
+            <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a>
+            <span class="comment-author">{{.Author}}</span>
+            {{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}
+            {{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}
+            <time>{{fmtDateTime .CreatedAt}}</time>
             {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.th.T "评论审核中,当前仅自己可见"}}</span>{{end}}
           </div>
           <div class="comment-body">{{if .ReplyToAuthor}}<a class="comment-reply-to" href="#comment-{{.ReplyToID}}">{{$.th.T "回复 @%s" .ReplyToAuthor}}</a>{{end}}{{.Content}}</div>
@@ -68,7 +79,7 @@
       <p><label class="sr-only" for="comment-url">{{.th.T "网站"}}</label><input id="comment-url" type="url" name="url" value="{{.RememberedCommenter.URL}}" placeholder="{{.th.T "网站(可选)"}}" autocomplete="url"></p>
     {{end}}
     <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
-    <p><label class="sr-only" for="comment-content">{{.th.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="5" placeholder="{{.th.T "说点什么吧…… *"}}" required></textarea></p>
+    <p><label class="sr-only" for="comment-content">{{.th.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="6" placeholder="{{.th.T "说点什么吧…… *"}}" required></textarea></p>
     {{if .MailEnabled}}<p><label><input type="checkbox" name="notify"> {{.th.T "有回复时邮件通知我"}}</label></p>{{end}}
     <p class="comment-form-actions"><button type="submit">{{.th.T "提交评论"}}</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>{{.th.T "取消回复"}}</button></p>
     <p class="comment-tip">{{.th.T "评论提交后需经审核才会显示。"}}</p>

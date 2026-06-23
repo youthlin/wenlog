@@ -37,9 +37,9 @@
       <div class="widget-config-item" data-widget-id="{{$w.ID}}" data-index="{{$w.Index}}">
         <input type="hidden" name="widgets_{{$areaKey}}" value="{{$w.ID}}">
 
-        <div class="widget-config-header" tabindex="0" role="button" aria-expanded="{{if $w.Decl.Options}}false{{else}}false{{end}}">
+        <div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
-          <span class="widget-config-name">{{$w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
+          <span class="widget-config-name">{{if $w.Decl.Options}}<span class="widget-options-caret" aria-hidden="true">▸</span>{{end}}{{$w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
           <div class="widget-config-actions">
             <button type="button" class="btn-icon widget-move-up" title="{{$.t.T "上移"}}" aria-label="{{$.t.T "上移"}}">↑</button>
             <button type="button" class="btn-icon widget-move-down" title="{{$.t.T "下移"}}" aria-label="{{$.t.T "下移"}}">↓</button>
@@ -163,7 +163,7 @@
     var html = '<input type="hidden" name="widgets_' + areaKey + '" value="' + widgetId + '">';
     html += '<div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">';
     html += '<span class="widget-config-handle" aria-label="' + t('拖拽排序') + '">⠿</span>';
-    html += '<span class="widget-config-name">' + escapeHTML(label) + ' <span class="widget-source-badge widget-source-' + source + '">' + sourceLabel + '</span></span>';
+    html += '<span class="widget-config-name">' + (hasOpts ? '<span class="widget-options-caret" aria-hidden="true">▸</span>' : '') + escapeHTML(label) + ' <span class="widget-source-badge widget-source-' + source + '">' + sourceLabel + '</span></span>';
     html += '<div class="widget-config-actions">';
     html += '<button type="button" class="btn-icon widget-move-up" title="' + t('上移') + '" aria-label="' + t('上移') + '">↑</button>';
     html += '<button type="button" class="btn-icon widget-move-down" title="' + t('下移') + '" aria-label="' + t('下移') + '">↓</button>';
@@ -279,7 +279,7 @@
         if (e.target.closest('.widget-config-actions') || e.target.closest('.widget-config-handle')) return;
         var expanded = header.getAttribute('aria-expanded') === 'true';
         header.setAttribute('aria-expanded', String(!expanded));
-        body.hidden = !expanded;
+        body.hidden = expanded;
       });
       header.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {

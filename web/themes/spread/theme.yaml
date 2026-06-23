@@ -1,0 +1,27 @@
+# Spread — 宽屏杂志主题
+name: "spread"
+version: "1.0"
+description: "宽屏满幅色块、杂志目录式列表和大胆触摸交互的主题"
+author: "youthlin"
+author_uri: "https://github.com/youthlin"
+theme_uri: "https://github.com/youthlin/blog"
+license: "MIT"
+tags: ["宽屏", "杂志", "满幅", "响应式"]
+
+widget_areas:
+  footer:
+    name: "页脚组件区"
+    description: "显示在页脚的内置小组件区域"
+
+options:
+  - id: custom_css
+    type: css
+    label: "自定义 CSS"
+    description: "会注入到页面 <head> 中"
+    default: ""
+
+  - id: footer_text
+    type: text
+    label: "页脚文字"
+    description: "显示在页面底部"
+    default: "Published with Blog"

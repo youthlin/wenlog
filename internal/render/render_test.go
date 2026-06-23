@@ -104,7 +104,8 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 	}
 
 	data := map[string]any{
-		"t": testTranslator{},
+		"t":  testTranslator{},
+		"th": testTranslator{},
 		"Pager": map[string]any{
 			"Page":    2,
 			"Pages":   3,

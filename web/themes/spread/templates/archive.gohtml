@@ -1,0 +1,25 @@
+{{define "archive.gohtml"}}
+{{template "header" .}}
+<article class="post-detail archive-page">
+  <header class="post-hero wide-shell">
+    <div class="issue-mark" aria-hidden="true">Archive</div>
+    <div class="post-hero-copy">
+      <h1 class="post-title">{{.Post.Title}}</h1>
+      {{if .Post.Content}}<div class="post-content archive-intro">{{safeHTML .Post.Content}}</div>{{end}}
+    </div>
+  </header>
+  <div class="archive-groups wide-shell">
+    {{range .Groups}}
+    <section class="archive-year-group">
+      <h2 class="archive-year" id="{{.Year}}">{{.Year}}</h2>
+      <ul class="archive-list">
+        {{range .Posts}}
+        <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{.Title}}</a></li>
+        {{end}}
+      </ul>
+    </section>
+    {{end}}
+  </div>
+</article>
+{{template "footer" .}}
+{{end}}

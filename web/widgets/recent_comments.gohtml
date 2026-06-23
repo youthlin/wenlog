@@ -1,19 +1,21 @@
 {{define "widget_recent_comments"}}
+{{$title := widgetOption "title" | default (.t.T "近期评论")}}
+{{$n := widgetOption "count" | toInt | default 5}}
 <section class="widget widget-recent-comments">
-  <h3>{{.t.T "近期评论"}}</h3>
+  <h3>{{$title}}</h3>
   <ul>
-    {{range .RecentCommentItems}}
+    {{range $i, $item := .RecentCommentItems}}{{if lt $i $n}}
     <li>
       <div class="widget-comment-line">
-        <img class="avatar" src="{{avatarURL .Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
-        <a href="{{.CommentURL}}">{{.Snippet}}</a>
+        <img class="avatar" src="{{avatarURL $item.Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
+        <a href="{{$item.CommentURL}}">{{$item.Snippet}}</a>
       </div>
       <div class="widget-comment-meta">
-        {{if .AuthorURL}}<a href="{{.AuthorURL}}" target="_blank" rel="nofollow noopener">{{.Comment.Author}}</a>{{else}}{{.Comment.Author}}{{end}}
-        {{$.t.T "发表在"}} <a href="{{.CommentURL}}">{{.Post.Title}}</a>
+        {{if $item.AuthorURL}}<a href="{{$item.AuthorURL}}" target="_blank" rel="nofollow noopener">{{$item.Comment.Author}}</a>{{else}}{{$item.Comment.Author}}{{end}}
+        {{$.t.T "发表在"}} <a href="{{$item.CommentURL}}">{{$item.Post.Title}}</a>
       </div>
     </li>
-    {{end}}
+    {{end}}{{end}}
   </ul>
 </section>
 {{end}}

@@ -1,6 +1,7 @@
 {{define "widget_search"}}
+{{$title := widgetOption "title" | default (.t.T "搜索")}}
 <section class="widget widget-search">
-  <h3>{{.t.T "搜索"}}</h3>
+  <h3>{{$title}}</h3>
   <form method="get" action="/search">
     <input type="search" name="q" placeholder="{{.t.T "输入关键词…"}}" value="{{.Keyword}}">
     <button type="submit">{{.t.T "搜索"}}</button>

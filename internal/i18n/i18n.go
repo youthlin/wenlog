@@ -127,8 +127,8 @@ func Middleware() gin.HandlerFunc {
 	}
 }
 
-// Inject 向模板数据里注入翻译能力与语言切换链接。
-// 模板层统一使用 .t.T / .t.N 等写法, 以便 xtemplate 直接抽取翻译文本。
+// Inject 向模板数据里注入应用默认域翻译能力与语言切换链接。
+// 模板层统一使用 .t.T / .t.N 等链式写法, 以便 xtemplate 直接抽取翻译文本。
 func Inject(c *gin.Context, data gin.H) gin.H {
 	if data == nil {
 		data = gin.H{}
@@ -149,16 +149,6 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 		used = "zh_CN"
 	}
 	data["t"] = translator
-	data["T"] = translator.T
-	data["N"] = translator.N
-	data["N1"] = translator.N1
-	data["N64"] = translator.N64
-	data["N1_64"] = translator.N1_64
-	data["X"] = translator.X
-	data["XN"] = translator.XN
-	data["XN1"] = translator.XN1
-	data["XN64"] = translator.XN64
-	data["XN1_64"] = translator.XN1_64
 	data["usedLocale"] = used
 	data["htmlLang"] = htmlLang(used)
 	data["langURL"] = switchURLs
@@ -166,7 +156,7 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 }
 
 // InjectDomain 向模板数据注入指定文本域的翻译能力。
-// 主题模板使用独立 domain 时，可继续在模板里写 .t.T / .t.N 等调用。
+// .t 始终保留应用域翻译器；主题模板如需使用主题语言包，应明确使用 .th。
 func InjectDomain(c *gin.Context, data gin.H, domain string) gin.H {
 	data = Inject(c, data)
 	domain = strings.TrimSpace(domain)
@@ -174,17 +164,7 @@ func InjectDomain(c *gin.Context, data gin.H, domain string) gin.H {
 		return data
 	}
 	translator := Get(c).D(domain)
-	data["t"] = translator
-	data["T"] = translator.T
-	data["N"] = translator.N
-	data["N1"] = translator.N1
-	data["N64"] = translator.N64
-	data["N1_64"] = translator.N1_64
-	data["X"] = translator.X
-	data["XN"] = translator.XN
-	data["XN1"] = translator.XN1
-	data["XN64"] = translator.XN64
-	data["XN1_64"] = translator.XN1_64
+	data["th"] = translator
 	return data
 }
 

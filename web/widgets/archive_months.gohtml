@@ -1,6 +1,7 @@
 {{define "widget_archive_months"}}
+{{$title := widgetOption "title" | default (.t.T "归档")}}
 <section class="widget widget-archive">
-  <h3>{{.t.T "归档"}}</h3>
+  <h3>{{$title}}</h3>
   <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入月份筛选…"}}" data-search-empty="{{.t.T "没有匹配的月份"}}">
     <option value="">{{.t.T "选择月份…"}}</option>
     {{range .ArchiveMonths}}

@@ -1,9 +1,10 @@
 {{define "widget_saying"}}
+{{$title := widgetOption "title" | default (.th.T "博主动态")}}
 {{$postID := widgetOption "post_id" | toInt}}
 {{$saying := themeData "saying" "n" 5 "post_id" $postID}}
 {{if $saying}}
 <section class="widget widget-saying">
-  <h3>{{.t.T "博主动态"}}</h3>
+  <h3>{{$title}}</h3>
   {{if $saying}}
   <div class="widget-saying-author">
     <img class="avatar" src="{{avatarURL (index $saying 0).AuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">

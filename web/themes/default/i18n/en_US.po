@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-23 08:21:19+0800\n"
+"POT-Creation-Date: 2026-06-23 15:25:28+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -249,79 +249,10 @@ msgstr "No matching posts found."
 msgid "草稿预览"
 msgstr "Draft preview"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/categories.gohtml:3
-msgid "分类目录"
-msgstr "Categories"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/popular_posts.gohtml:2
+msgid "最热文章"
+msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/categories.gohtml:4
-msgid "没有匹配的分类"
-msgstr "No matching categories"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/categories.gohtml:4
-msgid "输入分类名筛选…"
-msgstr "Type a category to filter…"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/categories.gohtml:5
-msgid "选择分类…"
-msgstr "Choose a category…"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/recent_comments.gohtml:3
-msgid "近期评论"
-msgstr "Recent comments"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/recent_comments.gohtml:13
-msgid "发表在"
-msgstr "on"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/recent_posts.gohtml:4
-msgid "近期文章"
-msgstr "Recent posts"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/search.gohtml:3
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/search.gohtml:6
-msgid "搜索"
-msgstr "Search"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/search.gohtml:5
-msgid "输入关键词…"
-msgstr "Enter keywords…"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/tag_cloud.gohtml:3
-msgid "标签"
-msgstr "Tags"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/tag_cloud.gohtml:4
-msgid "没有匹配的标签"
-msgstr "No matching tags"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/tag_cloud.gohtml:4
-msgid "输入标签名筛选…"
-msgstr "Type a tag to filter…"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/tag_cloud.gohtml:5
-msgid "选择标签…"
-msgstr "Choose a tag…"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/user_info.gohtml:4
-msgid "%s, 你好"
-msgstr "Hello, %s"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/user_info.gohtml:6
-msgid "控制台"
-msgstr "Dashboard"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/user_info.gohtml:9
-msgid "退出"
-msgstr "Log out"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/user_info.gohtml:13
-msgid "欢迎"
-msgstr "Welcome"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/user_info.gohtml:15
-msgid "登录"
-msgstr "Log in"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/widgets/user_info.gohtml:16
-msgid "注册"
-msgstr "Register"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/saying.gohtml:2
+msgid "博主动态"
+msgstr ""

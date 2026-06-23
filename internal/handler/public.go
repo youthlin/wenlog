@@ -47,6 +47,7 @@ type publicSettings struct {
 	FeedSize         int
 	DefaultAvatar    string
 	RegistrationOpen bool
+	MailEnabled      bool
 	ShowSQLDetails   bool
 }
 
@@ -437,7 +438,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		"DefaultAvatar":    s.DefaultAvatar,
 		"CSRFToken":        csrfToken,
 		"RegistrationOpen": s.RegistrationOpen,
-		"MailEnabled":      h.mailEnabled(c),
+		"MailEnabled":      s.MailEnabled,
 	}
 	if loader != nil {
 		data[render.ThemeLoaderDataKey] = loader
@@ -475,6 +476,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		data[render.ThemeDataKey] = currentTheme
 	}
 	data["CurrentTheme"] = currentTheme
+	data["ThemeName"] = themeName
 	data["ThemeVersion"] = themeVersion
 
 	// 补充模板需要的字段
@@ -545,6 +547,11 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 		consts.SettingsFeedSize,
 		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
+		consts.SettingsSMTPHost,
+		consts.SettingsSMTPPort,
+		consts.SettingsSMTPUser,
+		consts.SettingsSMTPPassword,
+		consts.SettingsSMTPFrom,
 		consts.SettingsShowSQLDetails,
 	)
 	if err != nil && h.log != nil {
@@ -561,6 +568,11 @@ func (h *Public) loadSettingsFromLoader(loader *store.DataLoader) publicSettings
 		consts.SettingsFeedSize,
 		consts.SettingsDefaultAvatar,
 		consts.SettingsRegistrationOpen,
+		consts.SettingsSMTPHost,
+		consts.SettingsSMTPPort,
+		consts.SettingsSMTPUser,
+		consts.SettingsSMTPPassword,
+		consts.SettingsSMTPFrom,
 		consts.SettingsShowSQLDetails,
 	)
 	return h.buildSettings(settings)
@@ -578,6 +590,7 @@ func (h *Public) buildSettings(settings map[string]string) publicSettings {
 		FeedSize:         positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize),
 		DefaultAvatar:    util.NormalizeDefaultAvatar(settings[consts.SettingsDefaultAvatar]),
 		RegistrationOpen: settings[consts.SettingsRegistrationOpen] == "true",
+		MailEnabled:      smtpConfigFromSettings(settings).Configured(),
 		ShowSQLDetails:   settings[consts.SettingsShowSQLDetails] == "true",
 	}
 }

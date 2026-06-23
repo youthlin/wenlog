@@ -14,18 +14,15 @@ widget_areas:
     description: "文章页侧边栏区域"
 
 widgets:
-  - id: user_info
-    label: "用户信息"
-    area: sidebar
-
-  - id: search
-    label: "搜索"
-    area: sidebar
-
   - id: saying
     label: "博主动态"
     area: sidebar
     options:
+      - id: title
+        type: text
+        label: "标题"
+        default: "博主动态"
+
       - id: post_id
         type: number
         label: "文章 ID"
@@ -33,53 +30,21 @@ widgets:
         default: "456"
         min: 1
 
-  - id: recent_posts
-    label: "近期文章"
-    area: sidebar
-    options:
-      - id: count
-        type: number
-        label: "显示数量"
-        default: "5"
-        min: 1
-        max: 20
-
   - id: popular_posts
     label: "热门文章"
     area: sidebar
     options:
+      - id: title
+        type: text
+        label: "标题"
+        default: "最热文章"
+
       - id: count
         type: number
         label: "显示数量"
         default: "5"
         min: 1
         max: 20
-
-  - id: recent_comments
-    label: "近期评论"
-    area: sidebar
-
-  - id: archive_months
-    label: "归档"
-    area: sidebar
-
-  - id: categories
-    label: "分类目录"
-    area: sidebar
-
-  - id: tag_cloud
-    label: "标签云"
-    area: sidebar
-
-  - id: custom_html
-    label: "自定义 HTML"
-    area: sidebar
-    options:
-      - id: html
-        type: textarea
-        label: "HTML 内容"
-        description: "任意 HTML 代码，会原样输出到页面中"
-        default: ""
 
 options:
   - id: custom_css

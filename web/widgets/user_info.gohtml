@@ -1,7 +1,8 @@
 {{define "widget_user_info"}}
+{{$title := widgetOption "title"}}
 <section class="widget widget-user">
   {{if .CurrentUserID}}
-  <h3>{{.t.T "%s, 你好" .CurrentUserName}}</h3>
+  <h3>{{if $title}}{{$title}}{{else}}{{.t.T "%s, 你好" .CurrentUserName}}{{end}}</h3>
   <div class="widget-user-actions">
     <a href="/admin">{{.t.T "控制台"}}</a>
     <form method="post" action="/auth/logout">
@@ -10,7 +11,7 @@
     </form>
   </div>
   {{else}}
-  <h3>{{.t.T "欢迎"}}</h3>
+  <h3>{{if $title}}{{$title}}{{else}}{{.t.T "欢迎"}}{{end}}</h3>
   <div class="widget-user-actions">
     <a href="/auth/login">{{.t.T "登录"}}</a>
     {{if .RegistrationOpen}}<a href="/auth/register">{{.t.T "注册"}}</a>{{end}}

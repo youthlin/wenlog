@@ -38,9 +38,12 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		return
 	}
 
+	widgetDecls := theme.WidgetDeclsWithBuiltins(t)
+	widgetDecls = translateBuiltinWidgetDecls(widgetDecls, tr)
+
 	// 构建 widgetDecl 查找表
 	declByID := make(map[string]theme.WidgetDecl)
-	for _, w := range t.Widgets {
+	for _, w := range widgetDecls {
 		declByID[w.ID] = w
 	}
 
@@ -52,7 +55,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		Source string // "builtin" 或 "theme"
 	}
 	var availableWidgets []availWidget
-	for _, w := range t.Widgets {
+	for _, w := range widgetDecls {
 		label := w.Label
 		if label == "" {
 			label = w.ID
@@ -112,7 +115,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 	}
 
 	// 构建完整组件声明 JSON（含 Options），供 JS 动态构建选项表单
-	widgetDeclsJSON, _ := json.Marshal(t.Widgets)
+	widgetDeclsJSON, _ := json.Marshal(widgetDecls)
 
 	data := h.base(c, tr.T("组件管理"))
 	data["AvailableWidgets"] = availableWidgets
@@ -170,6 +173,27 @@ func (h *Admin) SaveWidgets(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/widgets?notice="+tr.T("组件配置已保存"))
+}
+
+func translateBuiltinWidgetDecls(decls []theme.WidgetDecl, tr interface{ T(string, ...any) string }) []theme.WidgetDecl {
+	if tr == nil {
+		return decls
+	}
+	for i := range decls {
+		if !theme.IsBuiltinWidget(decls[i].ID) {
+			continue
+		}
+		decls[i].Label = tr.T(decls[i].Label)
+		for j := range decls[i].Options {
+			decls[i].Options[j].Label = tr.T(decls[i].Options[j].Label)
+			decls[i].Options[j].Description = tr.T(decls[i].Options[j].Description)
+			decls[i].Options[j].Default = tr.T(decls[i].Options[j].Default)
+			for k := range decls[i].Options[j].Options {
+				decls[i].Options[j].Options[k].Label = tr.T(decls[i].Options[j].Options[k].Label)
+			}
+		}
+	}
+	return decls
 }
 
 func (h *Admin) getWidgetConfig(c *gin.Context, area string) string {

@@ -7,8 +7,8 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # 翻译域：
-#   web/i18n/                 — Go 代码 + admin/auth 模板（应用级翻译）
-#   web/themes/{theme}/i18n/  — 各前台主题模板翻译（domain=主题名）
+#   web/i18n/                 — Go 代码 + admin/auth 模板 + 内置组件模板（应用级翻译）
+#   web/themes/{theme}/i18n/  — 各前台主题模板 + 主题自定义组件模板翻译（domain=主题名）
 APP_I18N_DIR="${APP_I18N_DIR:-$ROOT_DIR/web/i18n}"
 ADMIN_TEMPLATE_DIR="${ADMIN_TEMPLATE_DIR:-$ROOT_DIR/web/templates}"
 THEME_ROOT_DIR="${THEME_ROOT_DIR:-$ROOT_DIR/web/themes}"
@@ -40,6 +40,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 GO_POT="$TMP_DIR/go.pot"
 ADMIN_TEMPLATE_POT="$TMP_DIR/admin_templates.pot"
+BUILTIN_WIDGET_POT="$TMP_DIR/builtin_widgets.pot"
 APP_MERGED_POT="$APP_I18N_DIR/messages.pot"
 XTEMPLATE_ERR="$TMP_DIR/xtemplate.stderr"
 
@@ -111,12 +112,30 @@ PY
 
 fix_charset "$ADMIN_TEMPLATE_POT"
 
-# --- 3. 合并 Go + admin/auth 模板 → web/i18n/messages.pot ---
+# --- 3. 抽取内置组件模板翻译 → 应用域 ---
+if compgen -G "$WIDGET_TEMPLATE_DIR/*.gohtml" >/dev/null; then
+  xtemplate \
+    -i "$WIDGET_TEMPLATE_DIR/*.gohtml" \
+    -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
+    -o "$BUILTIN_WIDGET_POT" \
+    2>"$XTEMPLATE_ERR"
+
+  if [ -s "$XTEMPLATE_ERR" ]; then
+    cat "$XTEMPLATE_ERR" >&2
+    exit 1
+  fi
+  fix_charset "$BUILTIN_WIDGET_POT"
+else
+  printf '没有找到内置组件模板。\n' >&2
+  exit 1
+fi
+
+# --- 4. 合并 Go + admin/auth 模板 + 内置组件模板 → web/i18n/messages.pot ---
 msgcat \
   --use-first \
   --sort-output \
   --output-file="$TMP_DIR/app_all.pot" \
-  "$GO_POT" "$ADMIN_TEMPLATE_POT"
+  "$GO_POT" "$ADMIN_TEMPLATE_POT" "$BUILTIN_WIDGET_POT"
 
 msguniq \
   --use-first \
@@ -124,7 +143,7 @@ msguniq \
   --output-file="$APP_MERGED_POT" \
   "$TMP_DIR/app_all.pot"
 
-# --- 4. 更新 web/i18n/*.po ---
+# --- 5. 更新 web/i18n/*.po ---
 update_po_files() {
   local i18n_dir="$1"
   local merged_pot="$2"
@@ -157,7 +176,7 @@ for line in pot.read_text(encoding='utf-8').splitlines():
 print(f'已更新 {pot}，共抽取 {count} 条消息。')
 PY
 
-# --- 5. 抽取各前台主题模板翻译 → 主题域 ---
+# --- 6. 抽取各前台主题模板翻译 → 主题域 ---
 shopt -s nullglob
 for theme_dir in "$THEME_ROOT_DIR"/*; do
   [ -d "$theme_dir/templates" ] || continue
@@ -181,9 +200,9 @@ for theme_dir in "$THEME_ROOT_DIR"/*; do
   fix_charset "$theme_template_pot"
 
   pot_inputs=("$theme_template_pot")
-  if grep -q '^widget_areas:' "$theme_dir/theme.yaml" && compgen -G "$WIDGET_TEMPLATE_DIR/*.gohtml" >/dev/null; then
+  if compgen -G "$theme_dir/widgets/*.gohtml" >/dev/null; then
     xtemplate \
-      -i "$WIDGET_TEMPLATE_DIR/*.gohtml" \
+      -i "$theme_dir/widgets/*.gohtml" \
       -k 'T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2' \
       -o "$theme_widget_pot" \
       2>"$XTEMPLATE_ERR"

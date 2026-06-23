@@ -1,0 +1,10 @@
+{{define "error.gohtml"}}
+{{template "header" .}}
+<div class="error-page wide-shell">
+  <p class="hero-kicker">{{.th.T "页面异常"}}</p>
+  <h1>{{.Code}}</h1>
+  <p>{{.Message}}</p>
+  <p><a class="read-more" href="/">{{.th.T "返回首页"}}</a></p>
+</div>
+{{template "footer" .}}
+{{end}}

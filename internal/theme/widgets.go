@@ -4,14 +4,71 @@ import (
 	"encoding/json"
 	"slices"
 	"sort"
+
+	gettext "github.com/youthlin/t"
 )
 
 // BuiltinWidgetIDs 内置组件 ID 列表。
-var BuiltinWidgetIDs = []string{"user_info", "search", "recent_posts", "recent_comments", "categories", "tag_cloud", "custom_html"}
+var BuiltinWidgetIDs = []string{"user_info", "search", "recent_posts", "recent_comments", "categories", "tag_cloud", "archive_months", "custom_html"}
+
+// BuiltinWidgetDecls 内置组件声明。主题只需要声明组件区域即可使用这些组件；
+// 若主题在 theme.yaml 中声明了同 ID 组件，则以主题声明为准。
+var BuiltinWidgetDecls = []WidgetDecl{
+	{ID: "user_info", Label: gettext.Mark.T("用户信息"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Description: gettext.Mark.T("留空时根据登录状态显示欢迎语")},
+	}},
+	{ID: "search", Label: gettext.Mark.T("搜索"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Default: gettext.Mark.T("搜索")},
+	}},
+	{ID: "recent_posts", Label: gettext.Mark.T("近期文章"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Default: gettext.Mark.T("近期文章")},
+		{ID: "count", Type: "number", Label: gettext.Mark.T("显示数量"), Default: "5", Min: floatPtr(1), Max: floatPtr(20)},
+	}},
+	{ID: "recent_comments", Label: gettext.Mark.T("近期评论"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Default: gettext.Mark.T("近期评论")},
+		{ID: "count", Type: "number", Label: gettext.Mark.T("显示数量"), Default: "5", Min: floatPtr(1), Max: floatPtr(20)},
+	}},
+	{ID: "categories", Label: gettext.Mark.T("分类目录"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Default: gettext.Mark.T("分类目录")},
+	}},
+	{ID: "tag_cloud", Label: gettext.Mark.T("标签云"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Default: gettext.Mark.T("标签")},
+	}},
+	{ID: "archive_months", Label: gettext.Mark.T("归档"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题"), Default: gettext.Mark.T("归档")},
+	}},
+	{ID: "custom_html", Label: gettext.Mark.T("自定义 HTML"), Options: []OptionDecl{
+		{ID: "title", Type: "text", Label: gettext.Mark.T("标题")},
+		{ID: "html", Type: "textarea", Label: gettext.Mark.T("HTML 内容"), Description: gettext.Mark.T("任意 HTML 代码，会原样输出到页面中")},
+	}},
+}
 
 // IsBuiltinWidget 判断是否为内置组件。
 func IsBuiltinWidget(id string) bool {
 	return slices.Contains(BuiltinWidgetIDs, id)
+}
+
+// WidgetDeclsWithBuiltins 返回主题组件声明与内置组件声明的合并结果。
+func WidgetDeclsWithBuiltins(t *Theme) []WidgetDecl {
+	seen := make(map[string]bool)
+	var decls []WidgetDecl
+	if t != nil {
+		for _, w := range t.Widgets {
+			if w.ID == "" || seen[w.ID] {
+				continue
+			}
+			decls = append(decls, w)
+			seen[w.ID] = true
+		}
+	}
+	for _, w := range BuiltinWidgetDecls {
+		if seen[w.ID] {
+			continue
+		}
+		decls = append(decls, w)
+		seen[w.ID] = true
+	}
+	return decls
 }
 
 // WidgetInfo 渲染时使用的组件信息。
@@ -75,6 +132,11 @@ func widgetsInArea(t *Theme, area string) map[string]bool {
 			available[w.ID] = true
 		}
 	}
+	if _, ok := t.WidgetAreas[area]; ok || area == "" {
+		for _, id := range BuiltinWidgetIDs {
+			available[id] = true
+		}
+	}
 	return available
 }
 
@@ -105,6 +167,11 @@ func MissingWidgets(userConfigJSON string, t *Theme) []string {
 	for _, w := range t.Widgets {
 		available[w.ID] = true
 	}
+	if len(t.WidgetAreas) > 0 {
+		for _, id := range BuiltinWidgetIDs {
+			available[id] = true
+		}
+	}
 	var missing []string
 	seen := make(map[string]bool)
 	for _, item := range items {
@@ -115,4 +182,8 @@ func MissingWidgets(userConfigJSON string, t *Theme) []string {
 	}
 	sort.Strings(missing)
 	return missing
+}
+
+func floatPtr(v float64) *float64 {
+	return &v
 }

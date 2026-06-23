@@ -17,6 +17,7 @@
   --warning-border: rgba(255,193,7,.3);
   --badge-bg: #c0392b;
   --badge-fg: #fff;
+  --highlight-bg: color-mix(in srgb, var(--accent, #1a7f8e) 12%, var(--card, #ffffff));
   --surface-shadow: 0 10px 24px rgba(15, 23, 42, .05);
   --surface-shadow-hover: 0 14px 30px rgba(15, 23, 42, .09);
   --surface-shadow-lg: 0 18px 42px rgba(15, 23, 42, .12);
@@ -1835,6 +1836,15 @@ body.admin.nav-open { overflow: hidden; }
   padding: 2px 8px;
   border-radius: 5px;
   white-space: nowrap;
+}
+.widget-options-caret {
+  color: var(--accent);
+  font-size: .82rem;
+  line-height: 1;
+  transition: transform .15s;
+}
+.widget-config-header[aria-expanded="true"] .widget-options-caret {
+  transform: rotate(90deg);
 }
 /* 组件来源徽章 */
 .widget-source-badge {

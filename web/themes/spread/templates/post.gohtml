@@ -1,0 +1,38 @@
+{{define "post.gohtml"}}
+{{template "header" .}}
+<article class="post-detail">
+  <header class="post-hero wide-shell">
+    <div class="issue-mark" aria-hidden="true">No. {{.Post.ID}}</div>
+    <div class="post-hero-copy">
+      <div class="post-meta">
+        <a class="post-date-link" href="{{postURL .Post}}"><time datetime="{{fmtDateTime .Post.PublishedAt}}">{{fmtDate .Post.PublishedAt}}</time></a>
+        {{if .Post.Author.DisplayName}}<span class="author">{{.Post.Author.DisplayName}}</span>{{end}}
+        {{range .Post.Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+        <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
+        {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
+      </div>
+      <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">{{.th.T "草稿预览"}}</span>{{end}}</h1>
+    </div>
+  </header>
+  <div class="article-layout wide-shell">
+    <aside class="toc-card" data-toc aria-label="{{.th.T "文章目录"}}">
+      <p class="toc-title">{{.th.T "文章目录"}}</p>
+      <nav class="toc-list" data-toc-list></nav>
+    </aside>
+    <div class="article-body">
+      <div class="post-content">{{detailHTML .Post}}</div>
+      {{if .Post.Tags}}
+      <div class="post-tags">
+        {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
+      </div>
+      {{end}}
+    </div>
+  </div>
+</article>
+<nav class="post-nav wide-shell">
+  <span class="prev">{{if .PrevPost}}<a href="{{postURL .PrevPost}}">← {{.PrevPost.Title}}</a>{{end}}</span>
+  <span class="next">{{if .NextPost}}<a href="{{postURL .NextPost}}">{{.NextPost.Title}} →</a>{{end}}</span>
+</nav>
+{{template "comments" .}}
+{{template "footer" .}}
+{{end}}

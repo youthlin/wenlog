@@ -1,22 +1,22 @@
 {{define "header"}}<!DOCTYPE html>
 <html lang="{{.htmlLang}}" data-theme="dark"
-      data-comment-success="{{.t.T "评论已提交,等待审核后显示。"}}"
-      data-comment-fail="{{.t.T "提交失败,请稍后重试。"}}"
-      data-comment-network="{{.t.T "网络错误,请稍后重试。"}}"
-      data-nav-open-label="{{.t.T "打开菜单"}}"
-      data-nav-close-label="{{.t.T "收起菜单"}}">
+      data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
+      data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
+      data-comment-network="{{.th.T "网络错误,请稍后重试。"}}"
+      data-nav-open-label="{{.th.T "打开菜单"}}"
+      data-nav-close-label="{{.th.T "收起菜单"}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
-<link rel="stylesheet" href="/theme-assets/style.css?v={{.ThemeVersion}}">
+<link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 {{$customCSS := themeOption "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body>
-<a class="skip-link" href="#main-content">{{.t.T "跳到主要内容"}}</a>
+<a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
 <header class="site-header">
   <div class="container header-inner">
     <a class="site-title" href="/">{{if .SiteLogo}}<img class="site-logo" src="{{.SiteLogo}}" alt="{{.SiteName}}">{{else}}{{.SiteName}}{{end}}</a>
@@ -24,31 +24,31 @@
       <div class="site-nav-links">
         {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
       </div>
-      <div class="site-nav-utility" aria-label="{{.t.T "界面设置"}}">
+      <div class="site-nav-utility" aria-label="{{.th.T "界面设置"}}">
         <label class="lang-select-wrap">
-          <span class="sr-only">{{.t.T "语言"}}</span>
-          <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
-            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.t.T "中文"}}</option>
-            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.t.T "English"}}</option>
+          <span class="sr-only">{{.th.T "语言"}}</span>
+          <select class="lang-select" aria-label="{{.th.T "语言"}}" onchange="if(this.value)location=this.value">
+            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.th.T "中文"}}</option>
+            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.th.T "English"}}</option>
           </select>
         </label>
         <label class="theme-select-wrap">
-          <span class="sr-only">{{.t.T "切换主题"}}</span>
-          <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
-            <option value="dark">{{.t.T "暗黑"}}</option>
-            <option value="light">{{.t.T "明亮"}}</option>
-            <option value="red-plum">{{.t.T "红梅"}}</option>
-            <option value="bamboo">{{.t.T "绿竹"}}</option>
-            <option value="lotus">{{.t.T "藕粉"}}</option>
-            <option value="orange">{{.t.T "橙黄"}}</option>
-            <option value="azure">{{.t.T "蔚蓝"}}</option>
-            <option value="purple">{{.t.T "韵紫"}}</option>
+          <span class="sr-only">{{.th.T "切换主题"}}</span>
+          <select class="theme-select" data-theme-select aria-label="{{.th.T "切换主题"}}">
+            <option value="dark">{{.th.T "暗黑"}}</option>
+            <option value="light">{{.th.T "明亮"}}</option>
+            <option value="red-plum">{{.th.T "红梅"}}</option>
+            <option value="bamboo">{{.th.T "绿竹"}}</option>
+            <option value="lotus">{{.th.T "藕粉"}}</option>
+            <option value="orange">{{.th.T "橙黄"}}</option>
+            <option value="azure">{{.th.T "蔚蓝"}}</option>
+            <option value="purple">{{.th.T "韵紫"}}</option>
           </select>
         </label>
       </div>
     </nav>
     <div class="header-actions">
-      <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
+      <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.th.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
     </div>
   </div>
 </header>
