@@ -181,6 +181,26 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	wg.Wait()
 }
 
+func TestBuiltinWidgetFilesDoNotShadowPageTemplates(t *testing.T) {
+	tplFS, err := fs.Sub(web.Themes, "themes/default/templates")
+	if err != nil {
+		t.Fatalf("sub default theme templates fs: %v", err)
+	}
+	r, err := New(tplFS)
+	if err != nil {
+		t.Fatalf("new renderer: %v", err)
+	}
+	if err := r.loadThemeTemplatesFS(tplFS); err != nil {
+		t.Fatalf("load theme templates: %v", err)
+	}
+	if got := r.ResolveTemplate("search"); got != "list.gohtml" {
+		t.Fatalf("ResolveTemplate(search)=%q, want list.gohtml fallback", got)
+	}
+	if !r.HasTemplate("widget_search") {
+		t.Fatal("builtin search widget should still be available")
+	}
+}
+
 type testTranslator struct{}
 
 func (testTranslator) T(message string, args ...any) string { return message }

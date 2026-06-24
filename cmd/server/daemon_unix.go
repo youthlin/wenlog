@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -26,6 +27,9 @@ const (
 	stop    = "stop"
 	restart = "restart"
 	run     = "run"
+
+	// daemonEnvToken 是启动子进程时注入的环境变量，用于在 /proc 中识别本服务进程。
+	daemonEnvToken = "BLOG_DAEMON=1"
 )
 
 func runDaemon(cfg *config.Config) bool {
@@ -91,7 +95,7 @@ func startDaemon(cfg *config.Config) error {
 	defer devNull.Close()
 	cmd := exec.Command(exe, "-daemon-child")
 	cmd.Dir = mustGetwd()
-	cmd.Env = os.Environ()
+	cmd.Env = append(os.Environ(), daemonEnvToken)
 	cmd.Stdin = devNull
 	cmd.Stdout = logf
 	cmd.Stderr = logf
@@ -139,7 +143,7 @@ func readRunningPID(pidFile string) (pid int, running bool, err error) {
 		_ = os.Remove(pidFile)
 		return 0, false, nil
 	}
-	if !processExists(pid) {
+	if !processExists(pid) || !processLooksLikeSelf(pid) {
 		_ = os.Remove(pidFile)
 		return pid, false, nil
 	}
@@ -251,4 +255,15 @@ func processExists(pid int) bool {
 	}
 	err := syscall.Kill(pid, 0)
 	return err == nil || err == syscall.EPERM
+}
+
+func processLooksLikeSelf(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+	data, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "environ"))
+	if err != nil {
+		return false
+	}
+	return bytes.Contains(data, []byte(daemonEnvToken))
 }

@@ -63,6 +63,12 @@ func (r *Renderer) fallbackWidgets(themeTpl *template.Template, widgetsFS fs.FS)
 		return
 	}
 	for _, t := range widgetsTpl.Templates() {
+		// ParseFS 会为每个文件额外生成一个以文件名命名的模板。
+		// 组件文件统一命名为 widget_<id>.gohtml，因此这里只补充真正的组件定义，
+		// 避免文件名模板遮蔽前台页面的 fallback 链。
+		if !strings.HasPrefix(t.Name(), "widget_") {
+			continue
+		}
 		if themeTpl.Lookup(t.Name()) == nil {
 			_, _ = themeTpl.AddParseTree(t.Name(), t.Tree)
 		}
