@@ -29,7 +29,6 @@
           <tr>
             <th>{{.t.T "截图"}}</th>
             <th>{{.t.T "主题名"}}</th>
-            <th>{{.t.T "版本"}}</th>
             <th>{{.t.T "描述"}}</th>
             <th>{{.t.T "作者"}}</th>
             <th>{{.t.T "操作"}}</th>
@@ -46,9 +45,8 @@
               {{end}}
             </td>
             <td class="theme-name-cell" data-label="{{$.t.T "主题名"}}">
-              {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}}{{if eq .Name $currentName}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
+              {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}} <span class="theme-version">v{{.Version}}</span>{{if eq .Name $currentName}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
             </td>
-            <td class="theme-version-cell" data-label="{{$.t.T "版本"}}">v{{.Version}}</td>
             <td class="theme-description-cell" data-label="{{$.t.T "描述"}}">
               {{.Description}}
               {{if .Tags}}<br><span class="theme-tags">{{range .Tags}}<span class="theme-tag">{{.}}</span>{{end}}</span>{{end}}
