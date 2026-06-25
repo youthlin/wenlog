@@ -1,0 +1,42 @@
+{{define "header"}}<!DOCTYPE html>
+<html lang="{{.htmlLang}}" data-theme="light"
+      data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
+      data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
+      data-comment-network="{{.th.T "网络错误,请稍后重试。"}}"
+      data-nav-open-label="{{.th.T "打开菜单"}}"
+      data-nav-close-label="{{.th.T "收起菜单"}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
+<link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
+{{$customCSS := themeOption "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
+<link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+<script>(function(){try{var themes=['light','dark'];var t=localStorage.getItem('theme');var theme=themes.indexOf(t)>=0?t:'light';document.documentElement.setAttribute('data-theme',theme);document.body&&document.body.setAttribute('data-theme',theme);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="site-title" href="/">{{if .SiteLogo}}<img class="site-logo" src="{{.SiteLogo}}" alt="{{.SiteName}}">{{else}}{{.SiteName}}{{end}}</a>
+    <nav id="site-nav-menu" class="site-nav" data-nav-panel>
+      <div class="site-nav-links">
+        {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
+      </div>
+    </nav>
+    <div class="header-actions">
+      <label class="theme-toggle-wrap">
+        <span class="sr-only">{{.th.T "切换主题"}}</span>
+        <select class="theme-select" data-theme-select aria-label="{{.th.T "切换主题"}}">
+          <option value="light">{{.th.T "明亮"}}</option>
+          <option value="dark">{{.th.T "暗黑"}}</option>
+        </select>
+      </label>
+      <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.th.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</header>
+<div class="container layout">
+<main class="main-col" id="main-content">
+{{end}}

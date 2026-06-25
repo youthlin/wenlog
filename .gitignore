@@ -19,6 +19,9 @@ tmp*
 # WordPress 导出原始数据
 WordPress.*.xml
 
+/docs/browser*
+
+
 # 系统/编辑器
 .DS_Store
 *.swp

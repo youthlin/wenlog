@@ -1,0 +1,20 @@
+{{define "pagination"}}
+{{with .Pager}}
+{{if gt .Pages 1}}
+<nav class="pagination">
+  <div class="nav-links">
+    {{if gt .Page 1}}<a class="prev page-numbers" href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}">{{$.th.T "上一页"}}</a>{{end}}
+    {{$current := .Page}}{{$total := .Pages}}{{$base := .BaseURL}}{{$sep := .Sep}}
+    {{range $i := seq $total}}
+      {{if or (eq $i 1) (eq $i $total) (and (ge $i (sub $current 2)) (le $i (add $current 2)))}}
+        {{if eq $i $current}}<span class="page-numbers current">{{$i}}</span>{{else}}<a class="page-numbers" href="{{$base}}{{if gt $i 1}}{{$sep}}page={{$i}}{{end}}">{{$i}}</a>{{end}}
+      {{else if or (eq $i (sub $current 3)) (eq $i (add $current 3))}}
+        <span class="page-numbers dots">&hellip;</span>
+      {{end}}
+    {{end}}
+    {{if lt .Page .Pages}}<a class="next page-numbers" href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}">{{$.th.T "下一页"}}</a>{{end}}
+  </div>
+</nav>
+{{end}}
+{{end}}
+{{end}}

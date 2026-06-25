@@ -1,0 +1,18 @@
+{{define "archive.gohtml"}}
+{{template "header" .}}
+<article class="page-detail">
+  <h1 class="post-title">{{.Post.Title}}</h1>
+  {{if .Post.Content}}<div class="post-content">{{safeHTML .Post.Content}}</div>{{end}}
+  <div class="archive-groups">
+    {{range .Groups}}
+    <h3 class="archive-year" id="{{.Year}}">{{.Year}}</h3>
+    <ul class="archive-list">
+      {{range .Posts}}
+      <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{.Title}}</a></li>
+      {{end}}
+    </ul>
+    {{end}}
+  </div>
+</article>
+{{template "footer" .}}
+{{end}}

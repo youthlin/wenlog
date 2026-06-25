@@ -1,0 +1,30 @@
+{{define "footer"}}
+</main>
+</div>
+<div class="scroll-tools">
+  <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.th.T "回顶部"}}">↑</button>
+  <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.th.T "到底部"}}">↓</button>
+</div>
+<footer class="site-footer">
+  <div class="footer-widgets">
+      {{renderWidgets "footer" .}}
+  </div>
+  <div class="container">
+    <p>{{themeOption "footer_text" | default "Powered by Blog"}}</p>
+  </div>
+</footer>
+{{if .SQLDetails}}
+{{if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{end}}
+{{end}}
+<script src="/theme-assets/theme.js?theme={{.ThemeName}}&v={{.ThemeVersion}}"></script>
+<script src="/assets/scroll.js"></script>
+</body>
+</html>
+{{end}}

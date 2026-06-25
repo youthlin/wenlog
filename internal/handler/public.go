@@ -387,6 +387,8 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 	s := h.loadSettingsFromLoader(loader)
 	data := h.base(c, p.Title, p.Excerpt, s, loader)
 	data["Post"] = p
+	data["PrevPost"] = loader.PrevPost(p.PublishedAt)
+	data["NextPost"] = loader.NextPost(p.PublishedAt)
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
@@ -450,7 +452,6 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		data["Categories"] = loader.AllCategories()
 		data["Tags"] = loader.AllTags()
 		data["ArchiveMonths"] = loader.ArchiveMonths()
-
 		recentComments := loader.RecentComments(8)
 		data["RecentCommentItems"] = loader.CommentWidgetItems(recentComments)
 	} else {
