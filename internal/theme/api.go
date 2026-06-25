@@ -5,7 +5,7 @@ import (
 	root "github.com/youthlin/blog/themeapi"
 )
 
-type DataProvider = root.Func
+type ThemeFunc = root.Func
 type PostView = root.PostView
 type CategoryView = root.CategoryView
 type TagView = root.TagView

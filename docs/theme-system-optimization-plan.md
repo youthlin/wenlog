@@ -137,7 +137,7 @@
 
 #### 问题
 
-`tm.Current(context.Background())` 在 widgets provider、option provider、theme assets 路由中都会读取 Setting 表：`cmd/server/web.go:173`、`cmd/server/web.go:183`、`cmd/server/web.go:205`。前台 `base()` 已经尽量从 DataLoader 读取当前主题名，但主题函数调用链仍绕回 DB。
+`tm.Current(context.Background())` 在 widgets 读取函数、option 读取函数、theme assets 路由中都会读取 Setting 表：`cmd/server/web.go:173`、`cmd/server/web.go:183`、`cmd/server/web.go:205`。前台 `base()` 已经尽量从 DataLoader 读取当前主题名，但主题函数调用链仍绕回 DB。
 
 #### 建议
 

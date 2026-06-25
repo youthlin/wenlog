@@ -175,6 +175,6 @@ Value: body { font-size: 16px; }
 3. `internal/handler/admin_theme_options.go` — 新建后台 handler
 4. `web/templates/admin_theme_options.gohtml` — 新建后台模板
 5. `cmd/server/routes.go` — 注册路由
-6. `cmd/server/web.go` — 注入 option provider 到 themeOption
+6. `cmd/server/web.go` — 注入 themeOption 的选项读取函数
 7. `web/themes/default/theme.yaml` — 添加示例 options
 8. 后台导航添加入口

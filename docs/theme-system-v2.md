@@ -226,14 +226,14 @@ func Register(api *API) {
 ```go
 func themeInvoke(name string, args ...any) any {
     // 1. 查找注册的主题函数
-    provider := registeredProviders[name]
-    if provider == nil {
+    themeFunc := registeredFuncs[name]
+    if themeFunc == nil {
         return nil
     }
     // 2. 解析 key-value 参数对
     parsed := parseKVArgs(args)
     // 3. 执行
-    return provider(parsed)
+    return themeFunc(parsed)
 }
 ```
 

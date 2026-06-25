@@ -23,7 +23,7 @@ type FunctionsScript struct {
 	source     string
 	sourceHash string // 文件内容的简单 hash，用于检测变更
 	api        *API
-	funcs      map[string]DataProvider
+	funcs      map[string]ThemeFunc
 	mu         sync.RWMutex
 	pool       sync.Pool
 }
@@ -110,12 +110,12 @@ func compileFunctionsSource(path, source string, api *API, log *slog.Logger) (*F
 	}, nil
 }
 
-func snapshotFuncs(api *API) map[string]DataProvider {
+func snapshotFuncs(api *API) map[string]ThemeFunc {
 	if api == nil || api.API == nil {
 		return nil
 	}
 	names := api.FuncNames()
-	result := make(map[string]DataProvider, len(names))
+	result := make(map[string]ThemeFunc, len(names))
 	for _, name := range names {
 		result[name] = api.GetFunc(name)
 	}
@@ -176,7 +176,7 @@ func themeInvokeFunc(script *FunctionsScript, api *API) func(ctx *render.Request
 		if ctx != nil {
 			loader, _ = ctx.ThemeLoader.(*store.DataLoader)
 		}
-		return callProviderWithTimeout(script, api, loader, name, parsed)
+		return callThemeFuncWithTimeout(script, api, loader, name, parsed)
 	}
 }
 
@@ -201,20 +201,20 @@ func (script *FunctionsScript) releaseRunner(runner *FunctionsScript) {
 	script.pool.Put(runner)
 }
 
-func callProviderWithTimeout(script *FunctionsScript, baseAPI *API, loader *store.DataLoader, name string, args map[string]any) any {
+func callThemeFuncWithTimeout(script *FunctionsScript, baseAPI *API, loader *store.DataLoader, name string, args map[string]any) any {
 	runner, err := script.acquireRunner(baseAPI, loader)
 	if err != nil || runner == nil {
 		return nil
 	}
-	provider := runner.funcs[name]
-	if provider == nil {
+	themeFunc := runner.funcs[name]
+	if themeFunc == nil {
 		script.releaseRunner(runner)
 		return nil
 	}
 	done := make(chan any, 1)
 	go func() {
 		defer script.releaseRunner(runner)
-		done <- safeCallProvider(provider, args)
+		done <- safeCallThemeFunc(themeFunc, args)
 	}()
 
 	select {
@@ -225,13 +225,13 @@ func callProviderWithTimeout(script *FunctionsScript, baseAPI *API, loader *stor
 	}
 }
 
-func safeCallProvider(provider DataProvider, args map[string]any) (result any) {
+func safeCallThemeFunc(themeFunc ThemeFunc, args map[string]any) (result any) {
 	defer func() {
 		if recover() != nil {
 			result = nil
 		}
 	}()
-	return provider(args)
+	return themeFunc(args)
 }
 
 // parseKVArgs 解析 key-value 参数对为 map[string]any。
