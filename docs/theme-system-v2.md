@@ -56,7 +56,7 @@ v1 主题系统已实现：
          ▼
 ┌──────────────────────────────────────────────────────────────┐
 │  Handler                                                      │
-│  ├── 模板中调用 {{themeData "popular_posts" "n" 5}}          │
+│  ├── 模板中调用 {{themeInvoke "popular_posts" "n" 5}}        │
 │  ├── 查找已注册的 "popular_posts" 数据提供者                  │
 │  ├── 传入 ThemeAPI（DataLoader 只读视图）                     │
 │  ├── 执行 functions.go 中的函数，返回数据                     │
@@ -132,7 +132,7 @@ import (
 
 func Register(api *API) {
     // 注册"热门文章"数据提供者
-    api.RegisterData("popular_posts", func(args map[string]any) any {
+    api.RegisterFunc("popular_posts", func(args map[string]any) any {
         n := 5
         if v, ok := args["n"]; ok {
             if nv, ok := v.(int); ok && nv > 0 {
@@ -155,7 +155,7 @@ func Register(api *API) {
     })
 
     // 注册"标签云"数据提供者
-    api.RegisterData("tag_cloud", func(args map[string]any) any {
+    api.RegisterFunc("tag_cloud", func(args map[string]any) any {
         tags := api.Tags()
         type TagCloudItem struct {
             Name  string
@@ -168,7 +168,7 @@ func Register(api *API) {
     })
 
     // 注册"相关文章"数据提供者
-    api.RegisterData("related_posts", func(args map[string]any) any {
+    api.RegisterFunc("related_posts", func(args map[string]any) any {
         currentPostID := args["post_id"].(uint)
         n := 5
         if v, ok := args["n"]; ok {
@@ -192,40 +192,40 @@ func Register(api *API) {
   3. 查找 Register 函数
   4. 创建 *theme.API 实例（持有 DataLoader 引用）
   5. 调用 Register(api)
-  6. api 内部将注册的函数存入 map[string]DataProvider
+  6. api 内部将注册的函数存入 map[string]ThemeFunc
   7. 编译失败 → 日志记录 + 回退默认主题
 
 请求时：
-  1. 模板调用 {{themeData "popular_posts" "n" 5}}
-  2. themeData 函数查找已注册的 "popular_posts"
+  1. 模板调用 {{themeInvoke "popular_posts" "n" 5}}
+  2. themeInvoke 函数查找已注册的 "popular_posts"
   3. 解析参数为 map[string]any{"n": 5}
-  4. 调用 DataProvider(args)
+  4. 调用 ThemeFunc(args)
   5. 返回数据注入模板上下文
   6. 执行出错 → 返回 nil（优雅降级，不中断页面渲染）
 ```
 
 ### 4.4 模板函数
 
-新增模板函数 `themeData`：
+新增模板函数 `themeInvoke`：
 
 ```go
 // 模板中调用
-{{themeData "provider_name" "key1" value1 "key2" value2}}
+{{themeInvoke "func_name" "key1" value1 "key2" value2}}
 
 // 示例
-{{range themeData "popular_posts" "n" 10}}
+{{range themeInvoke "popular_posts" "n" 10}}
     <li><a href="{{postURL .}}">{{.Title}}</a> ({{.Views}} 阅读)</li>
 {{end}}
 
-{{range themeData "related_posts" "post_id" .Post.ID "n" 5}}
+{{range themeInvoke "related_posts" "post_id" .Post.ID "n" 5}}
     ...
 {{end}}
 ```
 
 实现：
 ```go
-func themeData(name string, args ...any) any {
-    // 1. 查找注册的 DataProvider
+func themeInvoke(name string, args ...any) any {
+    // 1. 查找注册的主题函数
     provider := registeredProviders[name]
     if provider == nil {
         return nil
@@ -252,18 +252,18 @@ func themeData(name string, args ...any) any {
 
 // API 是暴露给主题脚本的只读数据视图。
 // 每个请求共享同一个 API 实例（持有 DataLoader 引用），
-// 但 DataProvider 函数每次请求都会重新执行。
+// 但主题函数每次请求都会重新执行。
 type API struct {
     loader *store.DataLoader
-    providers map[string]DataProvider
+    funcs map[string]ThemeFunc
 }
 
-// DataProvider 是 functions.go 中注册的数据提供函数。
-type DataProvider func(args map[string]any) any
+// ThemeFunc 是 functions.go 中注册的主题函数。
+type ThemeFunc func(args map[string]any) any
 
-// RegisterData 注册一个命名数据提供者。
-func (api *API) RegisterData(name string, fn DataProvider) {
-    api.providers[name] = fn
+// RegisterFunc 注册一个命名主题函数。
+func (api *API) RegisterFunc(name string, fn ThemeFunc) {
+    api.funcs[name] = fn
 }
 ```
 
@@ -460,7 +460,7 @@ fallbackToDefault():
   1. 日志记录错误详情（含堆栈）
   2. 设置 currentTheme = "default"
   3. renderer.ResetToDefault()
-  4. 清空自定义 DataProvider 注册表
+  4. 清空自定义主题函数注册表
   5. 在后台显示警告横幅："主题 xxx 加载失败，已自动切换为默认主题。错误：..."
 ```
 
@@ -486,7 +486,7 @@ fallbackToDefault():
 | 文件 | 说明 |
 |------|------|
 | `internal/theme/api.go` | ThemeAPI 定义：API 结构体、View 类型、数据访问方法 |
-| `internal/theme/functions.go` | functions.go 编译与执行：yaegi 集成、Register 调用、DataProvider 管理 |
+| `internal/theme/functions.go` | functions.go 编译与执行：yaegi 集成、Register 调用、主题函数管理 |
 | `internal/theme/recovery.go` | 恢复机制：fallbackToDefault、错误记录、后台通知 |
 | `internal/handler/admin_theme_files.go` | 文件编辑器 handler：列出/读取/保存/删除主题文件 |
 
@@ -495,9 +495,9 @@ fallbackToDefault():
 | 文件 | 改动 |
 |------|------|
 | `internal/theme/manager.go` | `LoadTheme` 方法整合模板加载 + functions.go 编译 + 恢复逻辑 |
-| `internal/render/render.go` | 新增 `themeData` 模板函数注册 |
+| `internal/render/render.go` | 新增 `themeInvoke` 模板函数注册 |
 | `internal/handler/admin_theme.go` | 增加文件编辑器路由注册 |
-| `internal/handler/public.go` | `base()` 注入 ThemeAPI 到模板数据；`renderWidgets` 支持自定义 DataProvider |
+| `internal/handler/public.go` | `base()` 注入 ThemeAPI 到模板数据；`renderWidgets` 支持自定义主题函数 |
 | `cmd/server/routes.go` | 注册文件编辑器路由 |
 | `cmd/server/web.go` | 初始化时注入 DataLoader 到 ThemeAPI |
 | `web/templates/admin_themes.gohtml` | 增加文件编辑器 UI |
@@ -508,13 +508,13 @@ fallbackToDefault():
 1. **ThemeAPI 定义**（`internal/theme/api.go`）
    - View 类型定义
    - API 结构体 + 数据访问方法
-   - DataProvider 类型 + RegisterData
+   - 主题函数类型 + RegisterFunc
 
 2. **functions.go 编译与执行**（`internal/theme/functions.go`）
    - yaegi 解释器初始化
    - 编译 functions.go 源码
    - 调用 Register(api)
-   - 模板函数 `themeData` 注册
+   - 模板函数 `themeInvoke` 注册
 
 3. **恢复机制**（`internal/theme/recovery.go`）
    - `LoadTheme` 方法（整合加载 + 恢复）
@@ -525,8 +525,8 @@ fallbackToDefault():
    - 整合模板加载 + functions.go 编译 + 恢复
 
 5. **Renderer 扩展**（`internal/render/render.go`）
-   - 注册 `themeData` 模板函数
-   - 模板函数查找 DataProvider 并执行
+   - 注册 `themeInvoke` 模板函数
+   - 模板函数查找主题函数并执行
 
 6. **文件编辑器**（`internal/handler/admin_theme_files.go`）
    - 列出文件树
@@ -556,13 +556,13 @@ fallbackToDefault():
 - **functions.go 只能通过后台编辑器修改**（需管理员权限），不上传
 - **yaegi 沙箱**：限制可导入的包（白名单：`fmt`、`sort`、`strings`、`time`、`math` 等安全包）
 - **禁止的包**：`os`、`os/exec`、`net`、`net/http`、`runtime`、`syscall`、`reflect`、`unsafe` 等
-- **执行超时**：DataProvider 执行设置 1 秒超时，防止死循环
+- **执行超时**：主题函数执行设置 1 秒超时，防止死循环
 
 ### 8.3 兼容性
 
 - **现有主题不受影响**：没有 `functions.go` 的主题行为与 v1 完全一致
-- **内置 Widget 保留**：8 个内置 Widget 继续可用，与自定义 DataProvider 共存
-- **模板向后兼容**：`themeData` 是新模板函数，旧模板不使用则无影响
+- **内置 Widget 保留**：8 个内置 Widget 继续可用，与自定义主题函数共存
+- **模板向后兼容**：`themeInvoke` 是主题模板调用函数，旧模板不使用则无影响
 
 ---
 
@@ -614,7 +614,7 @@ pages:
 <section class="widget popular-posts">
   <h3>{{.t.T "热门文章"}}</h3>
   <ol>
-    {{range themeData "popular_posts" "n" 10}}
+    {{range themeInvoke "popular_posts" "n" 10}}
       <li>
         <a href="{{postURL .}}">{{.Title}}</a>
         <span class="views">({{.Views}} 阅读)</span>
@@ -625,4 +625,4 @@ pages:
 {{end}}
 ```
 
-注意：自定义 widget 的模板名约定为 `widget_{name}`（与内置 widget 一致），但数据不是通过 `Widget.Data()` 获取，而是通过模板中的 `{{themeData "name"}}` 直接调用。
+注意：自定义 widget 的模板名约定为 `widget_{name}`（与内置 widget 一致），但数据不是通过 `Widget.Data()` 获取，而是通过模板中的 `{{themeInvoke "name"}}` 直接调用。

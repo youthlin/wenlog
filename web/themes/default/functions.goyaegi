@@ -9,7 +9,7 @@ import (
 // 常用数据（RecentPosts、Categories、Tags 等）已全局可用，无需在此注册。
 func Register() {
 	// popular_posts: 热门文章（按浏览量排序）
-	themeapi.Api.RegisterData("popular_posts", func(args map[string]any) any {
+	themeapi.Api.RegisterFunc("popular_posts", func(args map[string]any) any {
 		n := getInt(args, "n", 5)
 		posts := themeapi.Api.Posts()
 		sort.Slice(posts, func(i, j int) bool {
@@ -22,7 +22,7 @@ func Register() {
 	})
 
 	// saying: 博主动态（从参数读取 post_id，由 widgetOption 传入）
-	themeapi.Api.RegisterData("saying", func(args map[string]any) any {
+	themeapi.Api.RegisterFunc("saying", func(args map[string]any) any {
 		postID := getInt(args, "post_id", 0)
 		if postID <= 0 {
 			return nil

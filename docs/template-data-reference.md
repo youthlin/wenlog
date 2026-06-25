@@ -80,7 +80,8 @@
 | `seq` | `func(int) []int` | 生成 `[1..n]` 整数切片 |
 | `toInt` | `func(string) int` | 字符串转整数，失败返回 0 |
 | `default` | `func(def, val any) any` | 当 val 为空值时返回 def |
-| `themeData` | `func(string, ...any) any` | 调用主题 `functions.go/functions.goyaegi` 注册的数据提供者；特殊用法 `themeData "option" "id"` 读取主题全局选项 |
+| `themeInvoke` | `func(string, ...any) any` | 调用主题 `functions.go/functions.goyaegi` 里通过 `themeapi.Api.RegisterFunc(...)` 注册的主题函数 |
+| `themeOption` | `func(string) string` | 读取主题全局选项 |
 | `themeWidgets` | `func(string) any` | 返回某个组件区域的组件配置，通常由 `renderWidgets` 间接使用 |
 | `renderWidgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{renderWidgets "sidebar" .}}` |
 | `widgetOption` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
@@ -328,7 +329,7 @@ options:
 ```text
 themes/my-theme/
 ├── theme.yaml
-├── functions.goyaegi       # 可选：注册 themeData provider
+├── functions.goyaegi       # 可选：注册主题函数（themeInvoke）
 ├── templates/
 │   ├── index.gohtml        # 必需：首页和兜底模板
 │   ├── post.gohtml         # 可选
@@ -458,7 +459,7 @@ themes/my-theme/
 
 ## 主题自定义数据（functions.goyaegi）
 
-当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与无参 `Register()` 函数，通过宿主注入的 `themeapi.Api` 注册 provider：
+当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与无参 `Register()` 函数，通过宿主真实 `themeapi` 包中的 `themeapi.Api` 注册主题函数：
 
 ```go
 package theme
@@ -469,7 +470,7 @@ import (
 )
 
 func Register() {
-    themeapi.Api.RegisterData("popular_posts", func(args map[string]any) any {
+    themeapi.Api.RegisterFunc("popular_posts", func(args map[string]any) any {
         posts := themeapi.Api.Posts()
         sort.Slice(posts, func(i, j int) bool { return posts[i].Views > posts[j].Views })
         if len(posts) > 5 {
@@ -483,7 +484,7 @@ func Register() {
 模板中调用：
 
 ```gohtml
-{{range themeData "popular_posts"}}
+{{range themeInvoke "popular_posts"}}
   <a href="{{postURL .}}">{{.Title}}</a>
 {{end}}
 ```

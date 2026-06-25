@@ -32,7 +32,7 @@ theme.yaml 声明组件+选项 → 后台添加/排序/配置 → Setting 表存
 | 组件名称 | 显示 ID | 显示 Label（中文） |
 | 组件重复 | 不支持 | 支持 |
 | 存储格式 | `["id1","id2"]` | `[{"id":"id1","opts":{...}}]` |
-| 模板读取 | `themeData "option" "key"` | `widgetOption "key"` |
+| 模板读取 | `themeOption "key"` | `widgetOption "key"` |
 | 后台配置 | 组件页 + 选项页分离 | 组件页一站式 |
 | 全局选项 | 所有选项 | 仅 custom_css、footer_text 等 |
 
@@ -187,7 +187,7 @@ widgets:
 ```gohtml
 {{define "widget_saying"}}
 {{$postID := widgetOption "post_id" | default "456" | toInt}}
-{{$saying := themeData "saying" "n" 5 "post_id" $postID}}
+{{$saying := themeInvoke "saying" "n" 5 "post_id" $postID}}
 {{if $saying}}
 <section class="widget widget-saying">
   ...
@@ -196,7 +196,7 @@ widgets:
 {{end}}
 ```
 
-`saying` DataProvider 改为接受 `post_id` 参数而非从全局 option 读取。
+`saying` 主题函数改为接受 `post_id` 参数而非从全局 option 读取。
 
 ### 实现方式
 
@@ -267,8 +267,8 @@ func widgetOption(key string) string {
 - `render.go`: 加 `widgetOption` + `SetCurrentWidgetOptions`
 - `renderWidgets` 渲染每个组件前设置当前选项
 
-### Step 3: 更新组件模板和 DataProvider
-- `recent_posts.gohtml`: `themeData "option"` → `widgetOption "count"`
+### Step 3: 更新组件模板和主题函数
+- `recent_posts.gohtml`: `themeOption` → `widgetOption "count"`
 - `saying.gohtml` + `functions.goyaegi`: 改用 `widgetOption "post_id"` 传参
 
 ### Step 4: 重新设计后台页面

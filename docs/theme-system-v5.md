@@ -10,17 +10,17 @@ v4 实现了组件开关/排序，但组件**不能带参数**。用户无法配
 - 最近文章显示几条
 - 纯 HTML 组件（直接输入 HTML 代码）
 
-v5 目标：**主题声明可配置项，用户在后台填写，模板通过 `themeData` 读取**。
+v5 目标：**主题声明可配置项，用户在后台填写，模板通过 `themeOption` 读取**。
 
 ## 2. 核心设计
 
 ```
-theme.yaml 声明 options → 后台表单填写 → Setting 表存 JSON → 模板通过 themeData 读取
+theme.yaml 声明 options → 后台表单填写 → Setting 表存 JSON → 模板通过 themeOption 读取
 ```
 
 - **主题声明**：`theme.yaml` 中新增 `options` 字段，每个选项有 id、type、label、default 等
 - **存储**：Setting 表，key 格式 `option_<theme>_<id>`，value 为用户填写的字符串
-- **模板访问**：`{{themeData "option" "homepage_bg"}}` 或 `{{themeData "option" "recent_posts_count" | default 5}}`
+- **模板访问**：`{{themeOption "homepage_bg"}}` 或 `{{themeOption "recent_posts_count" | default 5}}`
 - **切换主题**：旧主题的 option 配置保留不删，切回时自动恢复
 - **组件复用**：组件模板也可以读 option，比如 `recent_posts` 组件读 `option_<theme>_recent_posts_count`
 
@@ -109,26 +109,26 @@ Value: body { font-size: 16px; }
 
 ## 5. 模板访问
 
-通过已有的 `themeData` 函数：
+通过已有的 `themeOption` 函数：
 
 ```gohtml
 <!-- 读取选项，未配置时用 default -->
-{{$count := themeData "option" "recent_posts_count" | default 5}}
+{{$count := themeOption "recent_posts_count" | default 5}}
 
 <!-- 首页背景图 -->
-{{$bg := themeData "option" "homepage_bg"}}
+{{$bg := themeOption "homepage_bg"}}
 {{if $bg}}<style>body { background-image: url({{$bg}}); }</style>{{end}}
 
 <!-- 自定义 CSS 注入 -->
-{{$css := themeData "option" "custom_css"}}
+{{$css := themeOption "custom_css"}}
 {{if $css}}<style>{{$css | safeHTML}}</style>{{end}}
 
 <!-- 页脚 HTML -->
-{{$html := themeData "option" "footer_html"}}
+{{$html := themeOption "footer_html"}}
 {{if $html}}{{$html | safeHTML}}{{end}}
 ```
 
-`themeData "option" "<id>"` 逻辑：
+`themeOption "<id>"` 逻辑：
 1. 从 Setting 表读 `option_<current_theme>_<id>`
 2. 若为空，返回 `theme.yaml` 中该 option 的 `default` 值
 3. 若 default 也为空，返回空字符串
@@ -152,7 +152,7 @@ Value: body { font-size: 16px; }
 ```gohtml
 <!-- web/widgets/recent_posts.gohtml -->
 {{define "widget_recent_posts"}}
-{{$n := themeData "option" "recent_posts_count" | default 5}}
+{{$n := themeOption "recent_posts_count" | default 5}}
 <section class="widget widget-recent-posts">
   <h3>{{.t.T "最新文章"}}</h3>
   <ul>
@@ -175,6 +175,6 @@ Value: body { font-size: 16px; }
 3. `internal/handler/admin_theme_options.go` — 新建后台 handler
 4. `web/templates/admin_theme_options.gohtml` — 新建后台模板
 5. `cmd/server/routes.go` — 注册路由
-6. `cmd/server/web.go` — 注入 option provider 到 themeData
+6. `cmd/server/web.go` — 注入 option provider 到 themeOption
 7. `web/themes/default/theme.yaml` — 添加示例 options
 8. 后台导航添加入口

@@ -6,13 +6,13 @@
 
 ## 1. 当前结论
 
-主题系统已经从早期“前台模板内置在 `web/templates`”演进为：启动时释放/扫描 `themes/`，由 `theme.Manager` 管理元数据、激活主题、主题模板、`functions.goyaegi`、组件区域、组件配置和主题选项。前台每个请求通过 `store.DataLoader` 全量缓存公开数据，再把常用数据注入模板，同时把 loader 放入当前模板渲染状态，供 `themeData` 调用。
+主题系统已经从早期“前台模板内置在 `web/templates`”演进为：启动时释放/扫描 `themes/`，由 `theme.Manager` 管理元数据、激活主题、主题模板、`functions.goyaegi`、组件区域、组件配置和主题选项。前台每个请求通过 `store.DataLoader` 全量缓存公开数据，再把常用数据注入模板，同时把 loader 放入当前模板渲染状态，供 `themeInvoke` 调用。
 
 主要可优化点不是“功能缺失”，而是**责任边界和并发模型不够清晰**：
 
 1. `internal/render` 的当前模板、当前组件选项、当前 loader 已在模板执行期串行化，避免并发请求相互覆盖。
-2. `theme.API` 不再由 `Public.base()` 提前写入共享 loader，而是在 `themeData` 调用期间按当前渲染请求临时绑定 loader。
-3. 主题初始化、模板 provider 注入、运行时资源路由已从 `createWebHandler` 拆成独立辅助函数。
+2. `themeapi.API` 不再由 `Public.base()` 提前写入共享 loader，而是在 `themeInvoke` 调用期间按当前渲染请求临时绑定 loader。
+3. 主题初始化、模板函数注入、运行时资源路由已从 `createWebHandler` 拆成独立辅助函数。
 4. `docs/template-data-reference.md` 已更新为当前主题配置与模板数据参考。
 5. 主要历史版本注释已改为当前能力描述。
 
@@ -36,15 +36,15 @@
 
 - 前台首页、搜索、动态路由、文章页、页面、分类、标签等入口都会调用 `st.LoadAllCached(c)`，并在内存中查询公开数据：`internal/handler/public.go:269`、`internal/handler/public.go:313`、`internal/handler/public.go:337`、`internal/handler/public.go:620`。
 - `DataLoader` 一次加载 posts、comments、categories、tags、users、settings、post_categories、post_tags 等数据，并预构建索引：`internal/store/loader.go:15`、`internal/store/loader.go:36`。
-- `Public.base()` 注入通用模板数据，并在有 loader 时把 loader 放入模板数据的内部 key，供渲染期 `themeData` 使用：`internal/handler/public.go:70`、`internal/handler/public.go:73`。
+- `Public.base()` 注入通用模板数据，并在有 loader 时把 loader 放入模板数据的内部 key，供渲染期 `themeInvoke` 使用：`internal/handler/public.go:70`、`internal/handler/public.go:73`。
 - 通用数据包括站点信息、菜单、当前用户、CSRF、近期文章、分类、标签、归档月份、近期评论、主题版本等：`internal/handler/public.go:100`、`internal/handler/public.go:115`、`internal/handler/public.go:132`。
 
 ### 2.4 ThemeAPI 与 functions.goyaegi
 
 - `theme.API` 是给 `functions.goyaegi` 使用的只读视图层，暴露 `PostView`、`CategoryView`、`TagView`、`CommentView`、`UserView` 等结构，避免直接暴露 GORM model：`internal/theme/api.go:14`、`internal/theme/api.go:169`。
 - `CompileFunctions` 优先读取 `functions.go`，其次读取 `functions.goyaegi`，用 yaegi 编译执行，并要求脚本定义 `Register()`：`internal/theme/functions.go:24`、`internal/theme/functions.go:65`、`internal/theme/functions.go:70`。
-- 默认主题的 `functions.goyaegi` 注册了 `popular_posts` 和 `saying` 两个 provider：`web/themes/default/functions.goyaegi:8`。
-- 模板通过 `themeData` 访问 provider，例如热门文章组件调用 `themeData "popular_posts"`：`web/themes/default/widgets/popular_posts.gohtml:1`。
+- 默认主题的 `functions.goyaegi` 注册了 `popular_posts` 和 `saying` 两个主题函数：`web/themes/default/functions.goyaegi:8`。
+- 模板通过 `themeInvoke` 调用主题函数，例如热门文章组件调用 `themeInvoke "popular_posts"`：`web/themes/default/widgets/popular_posts.gohtml:1`。
 
 ### 2.5 组件与主题选项
 
@@ -52,7 +52,7 @@
 - 组件配置存在 Setting 表，key 为 `widget_<area>`；v6 新格式为 `[{"id":"...","opts":{...}}]`，`ResolveWidgets` 仍兼容 v4/v5 的字符串数组：`internal/theme/widgets.go:36`、`internal/theme/widgets.go:67`。
 - 后台组件管理页按当前主题声明构建“可用组件”和“区域面板”，保存时写入 v6 JSON：`internal/handler/admin_widgets.go:32`、`internal/handler/admin_widgets.go:125`。
 - 组件渲染通过 `renderWidgets` 遍历当前区域的 `WidgetInfo`，执行 `widget_<id>` 命名模板；组件选项通过 `widgetOption` 读取：`internal/render/render.go:371`、`internal/render/render.go:363`。
-- 主题全局选项使用 `option_<theme>_<option>` 作为 Setting key，并通过 `themeData "option" "custom_css"` 或后台主题选项页读取：`internal/theme/options.go:5`、`internal/render/render.go:316`、`internal/handler/admin_theme_options.go:12`。
+- 主题全局选项使用 `option_<theme>_<option>` 作为 Setting key，并通过 `themeOption "custom_css"` 或后台主题选项页读取：`internal/theme/options.go:5`、`internal/render/render.go:316`、`internal/handler/admin_theme_options.go:12`。
 
 ### 2.6 后台主题管理
 
@@ -76,7 +76,7 @@
 
 1. **让主题运行时状态显式化**：减少 `render` 包级全局变量，改为请求级或 Renderer 实例级状态。
 2. **让 ThemeAPI 请求隔离**：每个请求使用独立的 API/loader 视图，避免并发请求相互覆盖。
-3. **让启动流程可读**：把主题初始化、provider 注入、资源路由拆成独立函数。
+3. **让启动流程可读**：把主题初始化、主题函数注入、资源路由拆成独立函数。
 4. **让文档只有一个“当前事实入口”**：保留历史设计稿，但明确当前以 AGENTS + template-data-reference + 本文/后续实施文档为准。
 5. **降低历史版本噪音**：把代码注释中的 v2/v3/v5/v6 历史标签改为当前语义描述。
 
@@ -86,29 +86,29 @@
 
 #### 问题
 
-历史问题：`theme.Manager.SetLoaderForRequest(loader)` 会修改 `m.currentAPI.loader`，而 `currentAPI` 是当前主题共享实例。并发请求同时渲染模板时，后一个请求可能覆盖前一个请求的 loader，导致 `themeData` provider 读到错误请求的数据。
+历史问题：`theme.Manager.SetLoaderForRequest(loader)` 会修改 `m.currentAPI.loader`，而 `currentAPI` 是当前主题共享实例。并发请求同时渲染模板时，后一个请求可能覆盖前一个请求的 loader，导致 `themeInvoke` 调用读到错误请求的数据。
 
-同时，`render` 包有多个全局变量：`themeDataProvider`、`optionProvider`、`themeWidgetsProvider`、`currentTemplate`、`currentWidgetOptions`：`internal/render/render.go:300`、`internal/render/render.go:308`、`internal/render/render.go:332`、`internal/render/render.go:347`、`internal/render/render.go:355`。其中 `currentWidgetOptions` 在 `renderWidgets` 循环中被设置/清空，跨请求并发时也可能互相污染。
+同时，`render` 包有多个全局变量：`themeInvokeProvider`、`optionProvider`、`themeWidgetsProvider`、`currentTemplate`、`currentWidgetOptions`：`internal/render/render.go:300`、`internal/render/render.go:308`、`internal/render/render.go:332`、`internal/render/render.go:347`、`internal/render/render.go:355`。其中 `currentWidgetOptions` 在 `renderWidgets` 循环中被设置/清空，跨请求并发时也可能互相污染。
 
 #### 建议
 
-1. 将 `theme.API` 拆为：
-   - `ThemeRuntime`：编译后的 provider 注册表，不持有 loader。
-   - `RequestAPI`：每次渲染绑定一个 loader，provider 执行时从请求上下文取数据。
-2. 将 `themeData`、`themeWidgets`、`option`、`widgetOption` 做成 Renderer 实例级或模板执行上下文级函数，避免包级可变状态。
+1. 将 `themeapi.API` 拆为：
+   - `ThemeRuntime`：编译后的主题函数注册表，不持有 loader。
+   - `RequestAPI`：每次渲染绑定一个 loader，主题函数执行时从请求上下文取数据。
+2. 将 `themeInvoke`、`themeWidgets`、`themeOption`、`widgetOption` 做成 Renderer 实例级或模板执行上下文级函数，避免包级可变状态。
 3. `renderWidgets` 不再依赖 `currentTemplate/currentWidgetOptions` 全局变量，改为自定义 render 实例持有模板和当前组件选项，或把组件数据包装进执行上下文。
 
 #### 验收
 
-- 增加并发渲染测试：两个请求使用不同 DataLoader/不同组件配置时，`themeData` 与 `widgetOption` 不串数据。
+- 增加并发渲染测试：两个请求使用不同 DataLoader/不同组件配置时，`themeInvoke` 与 `widgetOption` 不串数据。
 - `go test ./...` 通过。
 
 #### 实施状态
 
 - 已移除 `Public.base()` 对 `Manager.SetLoaderForRequest` 的依赖，改为把 loader 写入模板数据内部 key。
 - 模板执行期用 `renderStateMu` 串行化 `currentTemplate`、`currentWidgetOptions`、`currentThemeLoader`，避免跨请求覆盖。
-- `themeDataFunc` 在调用 provider 前从当前渲染状态取请求级 loader，通过 `API.CallProvider` 串行化临时绑定，调用结束后清空。
-- 已恢复 `themeDataFunc` 的 1 秒超时控制；超时返回后 provider goroutine 如仍在执行，会继续持有 API 锁，避免与后续请求串 loader。
+- `themeInvokeFunc` 在调用主题函数前从当前渲染状态取请求级 loader，通过 `API` 串行化临时绑定，调用结束后清空。
+- 已恢复 `themeInvokeFunc` 的 1 秒超时控制；超时返回后函数 goroutine 如仍在执行，会继续持有 API 锁，避免与后续请求串 loader。
 - 已新增 `TestThemeRenderStateIsRequestScoped` 并发测试。
 - 已通过 `go test ./...`。
 
@@ -116,7 +116,7 @@
 
 #### 问题
 
-`createWebHandler` 同时负责中间件、模板、静态资源、主题释放、Manager 初始化、provider 注入和 `/theme-assets` 路由，主题相关代码分散在 `cmd/server/web.go:143` 到 `cmd/server/web.go:222`。
+`createWebHandler` 同时负责中间件、模板、静态资源、主题释放、Manager 初始化、主题函数注入和 `/theme-assets` 路由，主题相关代码分散在 `cmd/server/web.go:143` 到 `cmd/server/web.go:222`。
 
 #### 建议
 
@@ -137,11 +137,11 @@
 
 #### 问题
 
-`tm.Current(context.Background())` 在 widgets provider、option provider、theme assets 路由中都会读取 Setting 表：`cmd/server/web.go:173`、`cmd/server/web.go:183`、`cmd/server/web.go:205`。前台 `base()` 已经尽量从 DataLoader 读取当前主题名，但 provider 仍绕回 DB。
+`tm.Current(context.Background())` 在 widgets provider、option provider、theme assets 路由中都会读取 Setting 表：`cmd/server/web.go:173`、`cmd/server/web.go:183`、`cmd/server/web.go:205`。前台 `base()` 已经尽量从 DataLoader 读取当前主题名，但主题函数调用链仍绕回 DB。
 
 #### 建议
 
-- 请求链路中统一解析 `ActiveTheme`，放入渲染上下文，provider/asset/template 共享。
+- 请求链路中统一解析 `ActiveTheme`，放入渲染上下文，主题函数/asset/template 共享。
 - 对非请求场景（后台主题页）保留 `tm.Current(ctx)`。
 - 如不立刻做 P0，可先在 `Public.base()` 注入 `CurrentTheme` / `ThemeVersion`，并在 `themeWidgetsProvider` 支持从当前请求上下文读取主题。
 
@@ -255,6 +255,6 @@
 ## 7. 后续实现时的测试建议
 
 - `go test ./...` 作为最低线。
-- 新增 `internal/render` 或 `internal/theme` 并发测试，覆盖并发 `themeData` / `renderWidgets`。
+- 新增 `internal/render` 或 `internal/theme` 并发测试，覆盖并发 `themeInvoke` / `renderWidgets`。
 - 浏览器手验：默认主题、single 主题、主题预览、组件保存、主题选项保存、主题文件保存后重载。
 - 如果改 `/theme-assets`：验证正常主题资源、预览主题资源、非法路径、无 assets 主题的 404。

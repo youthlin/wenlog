@@ -8,13 +8,13 @@ v2 开发一个主题需要同时维护三个地方：
 
 | 步骤 | 文件 | 作用 |
 |------|------|------|
-| 1 | `functions.goyaegi` | 注册 DataProvider（数据获取逻辑） |
+| 1 | `functions.goyaegi` | 注册主题函数（自定义数据/变换逻辑） |
 | 2 | `theme.yaml` | 声明 `widgets:` 列表（排序） |
 | 3 | `base.gohtml` | 定义 `{{define "widget_xxx"}}` 模板 |
 
 其中第 2 步和第 3 步是重复声明——模板已经叫 `widget_popular_posts` 了，yaml 里再写一遍 `popular_posts` 只是告诉系统渲染顺序。
 
-**核心问题**：引入了"Widget"这个自定义概念，主题开发者需要学习 DataProvider、widget 注册、yaml 声明三套机制。
+**核心问题**：引入了"Widget"这个自定义概念，主题开发者需要学习主题函数、widget 注册、yaml 声明三套机制。
 
 ## 2. 借鉴 WordPress 的哲学
 
@@ -32,7 +32,7 @@ WordPress 主题开发的核心原则：
 2. **常用数据全局可用** — 模板里直接用 `.RecentPosts`、`.Categories`、`.Tags` 等
 3. **模板文件名决定页面** — `index.gohtml`、`post.gohtml`、`page.gohtml`，自动 fallback
 4. **`theme.yaml` 退化为纯元数据** — 只有 name、version、author、description
-5. **`functions.goyaegi` 只写真正自定义的逻辑** — 简单查询不需要它，同时作为 `themeData` 用法演示
+5. **`functions.goyaegi` 只写真正自定义的逻辑** — 简单查询不需要它，同时作为 `themeInvoke` 用法演示
 6. **最小主题只需两个文件** — `theme.yaml` + `templates/index.gohtml`
 
 ## 4. 主题目录结构
@@ -125,7 +125,7 @@ themes/my-theme/
 .DefaultAvatar     string
 ```
 
-> **注意**：`.PopularPosts` 不是全局数据，而是通过 `functions.goyaegi` 注册的 `themeData` provider 提供，作为自定义 DataProvider 的用法演示。模板中通过 `{{themeData "popular_posts" "n" 5}}` 调用。
+> **注意**：`.PopularPosts` 不是全局数据，而是通过 `functions.goyaegi` 注册的主题函数提供，作为自定义主题逻辑的用法演示。模板中通过 `{{themeInvoke "popular_posts" "n" 5}}` 调用。
 
 ## 7. 模板约定
 
@@ -190,7 +190,7 @@ author: "youthlin"
   </section>
   <section>
     <h3>最热文章</h3>
-    <ul>{{range themeData "popular_posts" "n" 5}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}</ul>
+    <ul>{{range themeInvoke "popular_posts" "n" 5}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}</ul>
   </section>
   <section>
     <h3>分类</h3>
@@ -200,13 +200,13 @@ author: "youthlin"
 {{end}}
 ```
 
-注意：侧边栏就是普通模板，直接写 HTML + 模板标签，不需要注册 DataProvider、不需要 yaml 声明、不需要 widget 概念。
+注意：侧边栏就是普通模板，直接写 HTML + 模板标签，不需要注册主题函数、不需要 yaml 声明、不需要 widget 概念。
 
 ## 8. functions.goyaegi 的角色变化
 
 v2 中 `functions.goyaegi` 承担了大量"内置数据提供者"的注册（recent_posts、categories、tags 等），这些在 v3 中由系统直接注入模板数据，不再需要脚本注册。
 
-v3 中 `functions.goyaegi` **只用于真正自定义的数据变换**。默认主题保留 `popular_posts` provider 作为 `themeData` 用法演示：
+v3 中 `functions.goyaegi` **只用于真正自定义的数据变换**。默认主题保留 `popular_posts` 主题函数作为 `themeInvoke` 用法演示：
 
 ```go
 package theme
@@ -216,13 +216,13 @@ import (
     "themeapi"
 )
 
-// Register 注册主题的自定义数据提供者。
+// Register 注册主题的自定义主题函数。
 // 常用数据（RecentPosts、Categories、Tags 等）已全局可用，无需在此注册。
-// 这里演示如何通过 themeapi.Api 实现自定义数据逻辑。
-// themeapi.Api 由宿主通过 i.Use 注入为全局变量。
+// 这里演示如何通过 themeapi.Api 实现自定义主题逻辑。
+// themeapi.Api 来自宿主真实的 themeapi 包，并由宿主注入为全局变量。
 func Register() {
-    // popular_posts: 热门文章（按浏览量排序）—— 演示自定义 DataProvider 用法
-    themeapi.Api.RegisterData("popular_posts", func(args map[string]any) any {
+    // popular_posts: 热门文章（按浏览量排序）—— 演示自定义主题函数用法
+    themeapi.Api.RegisterFunc("popular_posts", func(args map[string]any) any {
         n := getInt(args, "n", 5)
         posts := themeapi.Api.Posts()
         sort.Slice(posts, func(i, j int) bool {
@@ -250,10 +250,10 @@ func getInt(args map[string]any, key string, def int) int {
 }
 ```
 
-模板中通过 `themeData` 函数调用：
+模板中通过 `themeInvoke` 函数调用：
 
 ```gohtml
-{{$popular := themeData "popular_posts" "n" 5}}
+{{$popular := themeInvoke "popular_posts" "n" 5}}
 {{range $popular}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
 ```
 
@@ -263,7 +263,7 @@ func getInt(args map[string]any, key string, def int) int {
 |------|----|----|
 | 最小主题文件数 | 3（theme.yaml + base.gohtml + functions.goyaegi） | 2（theme.yaml + index.gohtml） |
 | 加一个侧边栏模块 | 改 3 个文件 | 在 sidebar.gohtml 写几行 HTML |
-| 需要学习的概念 | Widget、DataProvider、yaml widgets 列表 | 模板标签（和 WordPress 一样） |
+| 需要学习的概念 | Widget、主题函数、yaml widgets 列表 | 模板标签（和 WordPress 一样） |
 | 数据声明 | yaml 里声明 `data:` 和 `widgets:` | 不需要，全局可用 |
 | 模板文件名 | `base.gohtml`（所有页面共用） | `index.gohtml`、`post.gohtml` 等（按页面类型） |
 | 模板 fallback | 无 | 自动 fallback 链 |
@@ -280,9 +280,9 @@ func getInt(args map[string]any, key string, def int) int {
 | `internal/store/loader.go` | `PopularPosts()` 已移除（改为 functions.goyaegi 实现） |
 | `internal/theme/widget.go` | **已删除** |
 | `web/themes/default/templates/base.gohtml` | 移除所有 widget define；footer 改为 `{{template "sidebar" .}}` |
-| `web/themes/default/templates/sidebar.gohtml` | **新建** — 直接使用全局数据 + `themeData` 调用 |
+| `web/themes/default/templates/sidebar.gohtml` | **新建** — 直接使用全局数据 + `themeInvoke` 调用 |
 | `web/themes/default/theme.yaml` | 简化为纯元数据（name/version/description/author） |
-| `web/themes/default/functions.goyaegi` | 保留 `popular_posts` provider 作为 `themeData` 用法演示 |
+| `web/themes/default/functions.goyaegi` | 保留 `popular_posts` 主题函数作为 `themeInvoke` 用法演示 |
 | `themes/single/theme.yaml` | 简化为纯元数据，移除 `pages:` 配置 |
 | `themes/single/templates/base.gohtml` | **已删除** — 合并到 index.gohtml |
 | `themes/single/templates/index.gohtml` | **新建** — 单文件最小主题：内联 header/footer/pagination/comments，用数据特征区分页面类型 |
@@ -314,5 +314,5 @@ func getInt(args map[string]any, key string, def int) int {
 
 ### 10.5 说明
 
-- `themeData` 模板函数保留，自定义 DataProvider 继续可用
+- `themeInvoke` 模板函数保留，自定义主题函数继续可用
 - 项目处于本地 dev 阶段，无向后兼容负担

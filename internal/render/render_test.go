@@ -129,7 +129,7 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 
 func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	dir := t.TempDir()
-	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{themeData "loader"}}/{{themeData "theme"}}|{{renderWidgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{themeInvoke "loader"}}/{{themeInvoke "theme"}}|{{renderWidgets "sidebar" .}}{{end}}`)
 	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}{{widgetOption "name"}}{{end}}`)
 	r, err := NewHot(dir)
 	if err != nil {
@@ -140,7 +140,7 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 		TemplateName string
 		Options      map[string]string
 	}
-	r.SetThemeDataProvider(func(ctx *RequestContext, name string, args ...any) any {
+	r.SetThemeInvokeProvider(func(ctx *RequestContext, name string, args ...any) any {
 		switch name {
 		case "loader":
 			return ctx.ThemeLoader
@@ -156,7 +156,7 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 		return []widgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
 	})
 	t.Cleanup(func() {
-		r.SetThemeDataProvider(nil)
+		r.SetThemeInvokeProvider(nil)
 		r.SetThemeWidgetsProvider(nil)
 	})
 

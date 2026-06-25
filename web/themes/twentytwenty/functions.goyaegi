@@ -33,7 +33,7 @@ var smileyNames = []string{
 
 // Register 注册主题自定义数据。
 func Register() {
-		themeapi.Api.RegisterData("smilies", func(args map[string]any) any {
+		themeapi.Api.RegisterFunc("smilies", func(args map[string]any) any {
 			items := make([]map[string]string, 0, len(smileyNames))
 			for _, name := range smileyNames {
 				items = append(items, map[string]string{
@@ -45,7 +45,7 @@ func Register() {
 			return items
 	})
 
-	themeapi.Api.RegisterData("render_comment", func(args map[string]any) any {
+	themeapi.Api.RegisterFunc("render_comment", func(args map[string]any) any {
 		content, _ := args["content"].(string)
 		return renderComment(content)
 	})

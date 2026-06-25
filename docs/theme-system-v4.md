@@ -83,14 +83,14 @@ widgets:
 
 需提供：
 - `widgets/popular_posts.gohtml` — 模板
-- 可选 `functions.goyaegi` 中注册 `themeData` provider 提供数据
+- 可选 `functions.goyaegi` 中注册主题函数提供数据
 
-模板中通过 `themeData` 获取自定义数据：
+模板中通过 `themeInvoke` 获取自定义数据：
 ```gohtml
 {{define "widget_popular_posts"}}
 <section>
   <h3>热门文章</h3>
-  <ul>{{range themeData "popular_posts" "n" 5}}<li>...</li>{{end}}</ul>
+  <ul>{{range themeInvoke "popular_posts" "n" 5}}<li>...</li>{{end}}</ul>
 </section>
 {{end}}
 ```

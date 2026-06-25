@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
+	root "github.com/youthlin/blog/themeapi"
 )
 
 // FunctionsScript 表示一个已编译的 functions.go 脚本。
@@ -22,7 +23,7 @@ type FunctionsScript struct {
 	source     string
 	sourceHash string // 文件内容的简单 hash，用于检测变更
 	api        *API
-	providers  map[string]DataProvider
+	funcs      map[string]DataProvider
 	mu         sync.RWMutex
 	pool       sync.Pool
 }
@@ -96,7 +97,7 @@ func compileFunctionsSource(path, source string, api *API, log *slog.Logger) (*F
 	if log != nil {
 		log.Info("主题函数functions.go编译执行成功",
 			"path", path,
-			"providers", api.ProviderNames(),
+			"funcs", api.FuncNames(),
 		)
 	}
 
@@ -105,25 +106,41 @@ func compileFunctionsSource(path, source string, api *API, log *slog.Logger) (*F
 		source:     source,
 		sourceHash: hash,
 		api:        api,
-		providers:  api.providers,
+		funcs:      snapshotFuncs(api),
 	}, nil
+}
+
+func snapshotFuncs(api *API) map[string]DataProvider {
+	if api == nil || api.API == nil {
+		return nil
+	}
+	names := api.FuncNames()
+	result := make(map[string]DataProvider, len(names))
+	for _, name := range names {
+		result[name] = api.GetFunc(name)
+	}
+	return result
 }
 
 // injectThemeAPI 将 ThemeAPI 实例导出到 yaegi 解释器，使 functions.go 可以使用。
 // 使用 i.Use 导出 Go 值，yaegi 通过反射调用其方法。
 func injectThemeAPI(i *interp.Interpreter, api *API) error {
+	if api != nil {
+		root.Api = api.API
+	}
 	// 使用 i.Use 导出 Go 的 API 实例和 View 类型到 yaegi，避免维护一份重复的结构体声明。
 	// 导出到 "themeapi" 包，脚本通过 import "themeapi" 引用。
 	return i.Use(interp.Exports{
 		"themeapi/themeapi": {
-			"API":              reflect.ValueOf((*API)(nil)),
-			"Api":              reflect.ValueOf(api),
-			"PostView":         reflect.ValueOf((*PostView)(nil)),
-			"CategoryView":     reflect.ValueOf((*CategoryView)(nil)),
-			"TagView":          reflect.ValueOf((*TagView)(nil)),
-			"CommentView":      reflect.ValueOf((*CommentView)(nil)),
-			"UserView":         reflect.ValueOf((*UserView)(nil)),
-			"ArchiveMonthView": reflect.ValueOf((*ArchiveMonthView)(nil)),
+			"API":              reflect.ValueOf((*root.API)(nil)),
+			"Api":              reflect.ValueOf(root.Api),
+			"PostView":         reflect.ValueOf((*root.PostView)(nil)),
+			"CategoryView":     reflect.ValueOf((*root.CategoryView)(nil)),
+			"TagView":          reflect.ValueOf((*root.TagView)(nil)),
+			"CommentView":      reflect.ValueOf((*root.CommentView)(nil)),
+			"UserView":         reflect.ValueOf((*root.UserView)(nil)),
+			"ArchiveMonthView": reflect.ValueOf((*root.ArchiveMonthView)(nil)),
+			"SayingItem":       reflect.ValueOf((*root.SayingItem)(nil)),
 		},
 	})
 }
@@ -137,17 +154,17 @@ func hashString(s string) string {
 	return fmt.Sprintf("%x", h)
 }
 
-// --- 模板函数 themeData ---
+// --- 模板函数 themeInvoke ---
 
-// themeDataFunc 返回一个可在模板中调用的 themeData 函数。
-// 用法：{{themeData "provider_name" "key1" value1 "key2" value2}}
-func themeDataFunc(script *FunctionsScript, api *API) func(ctx *render.RequestContext, name string, args ...any) any {
+// themeInvokeFunc 返回一个可在模板中调用的 themeInvoke 函数。
+// 用法：{{themeInvoke "func_name" "key1" value1 "key2" value2}}
+func themeInvokeFunc(script *FunctionsScript, api *API) func(ctx *render.RequestContext, name string, args ...any) any {
 	return func(ctx *render.RequestContext, name string, args ...any) any {
 		if script == nil || api == nil {
 			return nil
 		}
 		script.mu.RLock()
-		_, exists := script.providers[name]
+		_, exists := script.funcs[name]
 		script.mu.RUnlock()
 		if !exists {
 			return nil
@@ -189,7 +206,7 @@ func callProviderWithTimeout(script *FunctionsScript, baseAPI *API, loader *stor
 	if err != nil || runner == nil {
 		return nil
 	}
-	provider := runner.providers[name]
+	provider := runner.funcs[name]
 	if provider == nil {
 		script.releaseRunner(runner)
 		return nil

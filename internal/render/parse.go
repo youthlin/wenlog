@@ -57,7 +57,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		},
 		// 主题函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
 		// 这里提供占位函数，仅用于模板解析阶段识别函数名。
-		"themeData":     func(name string, args ...any) any { return nil },
+		"themeInvoke":   func(name string, args ...any) any { return nil },
 		"themeOption":   func(optionID string) string { return "" },
 		"themeWidgets":  func(area string) any { return nil },
 		"renderWidgets": func(area string, data any) template.HTML { return "" },

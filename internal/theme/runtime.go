@@ -121,12 +121,12 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	m.recoveryInfo = nil
 	m.mu.Unlock()
 
-	// 注册 themeData 模板函数
+	// 注册 themeInvoke 模板函数
 	if m.renderer != nil {
 		if script != nil {
-			m.renderer.SetThemeDataProvider(themeDataFunc(script, api))
+			m.renderer.SetThemeInvokeProvider(themeInvokeFunc(script, api))
 		} else {
-			m.renderer.SetThemeDataProvider(nil)
+			m.renderer.SetThemeInvokeProvider(nil)
 		}
 	}
 
@@ -159,7 +159,7 @@ func (m *Manager) fallbackToDefault(ctx context.Context, failedName string, err 
 	m.mu.Unlock()
 
 	if m.renderer != nil {
-		m.renderer.SetThemeDataProvider(nil)
+		m.renderer.SetThemeInvokeProvider(nil)
 	}
 
 	if m.renderer != nil {

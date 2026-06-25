@@ -261,7 +261,7 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 // 它归属于 Renderer 实例，避免不同渲染器之间通过包级全局变量串联。
 type TemplateRuntime struct {
 	optionProvider       atomic.Value // stores optionProviderHolder
-	themeDataProvider    atomic.Value // stores themeDataProviderHolder
+	themeInvokeProvider  atomic.Value // stores themeInvokeProviderHolder
 	themeWidgetsProvider atomic.Value // stores themeWidgetsProviderHolder
 }
 
@@ -269,7 +269,7 @@ type optionProviderHolder struct {
 	fn func(ctx *RequestContext, optionID string) string
 }
 
-type themeDataProviderHolder struct {
+type themeInvokeProviderHolder struct {
 	fn func(ctx *RequestContext, name string, args ...any) any
 }
 
@@ -285,12 +285,12 @@ func (r *Renderer) SetOptionProvider(fn func(ctx *RequestContext, optionID strin
 	r.themeRuntime.optionProvider.Store(optionProviderHolder{fn: fn})
 }
 
-// SetThemeDataProvider 设置 themeData 模板函数的实现（由 theme.Manager 注入）。
-func (r *Renderer) SetThemeDataProvider(fn func(ctx *RequestContext, name string, args ...any) any) {
+// SetThemeInvokeProvider 设置 themeInvoke 模板函数的实现（由 theme.Manager 注入）。
+func (r *Renderer) SetThemeInvokeProvider(fn func(ctx *RequestContext, name string, args ...any) any) {
 	if r == nil {
 		return
 	}
-	r.themeRuntime.themeDataProvider.Store(themeDataProviderHolder{fn: fn})
+	r.themeRuntime.themeInvokeProvider.Store(themeInvokeProviderHolder{fn: fn})
 }
 
 // SetThemeWidgetsProvider 设置 themeWidgets 模板函数的实现。
@@ -301,11 +301,11 @@ func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area str
 	r.themeRuntime.themeWidgetsProvider.Store(themeWidgetsProviderHolder{fn: fn})
 }
 
-func themeData(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
+func themeInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
 	if runtime == nil {
 		return nil
 	}
-	provider, _ := runtime.themeDataProvider.Load().(themeDataProviderHolder)
+	provider, _ := runtime.themeInvokeProvider.Load().(themeInvokeProviderHolder)
 	if provider.fn == nil {
 		return nil
 	}

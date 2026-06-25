@@ -82,7 +82,7 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		return nil, err
 	}
 	cloned.Funcs(template.FuncMap{
-		"themeData":     func(name string, args ...any) any { return themeData(runtime, ctx, name, args...) },
+		"themeInvoke":   func(name string, args ...any) any { return themeInvoke(runtime, ctx, name, args...) },
 		"themeOption":   func(optionID string) string { return themeOption(runtime, ctx, optionID) },
 		"themeWidgets":  func(area string) any { return themeWidgets(runtime, ctx, area) },
 		"renderWidgets": func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
