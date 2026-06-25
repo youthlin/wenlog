@@ -28,9 +28,8 @@
           <thead>
           <tr>
             <th>{{.t.T "截图"}}</th>
-            <th>{{.t.T "主题名"}}</th>
+            <th>{{.t.T "主题/作者"}}</th>
             <th>{{.t.T "描述"}}</th>
-            <th>{{.t.T "作者"}}</th>
             <th>{{.t.T "操作"}}</th>
           </tr>
           </thead>
@@ -44,41 +43,49 @@
               <span class="theme-no-screenshot">—</span>
               {{end}}
             </td>
-            <td class="theme-name-cell" data-label="{{$.t.T "主题名"}}">
-              {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}} <span class="theme-version">v{{.Version}}</span>{{if eq .Name $currentName}} <span class="badge">{{$.t.T "当前"}}</span>{{end}}
+            <td class="theme-name-cell" data-label="{{$.t.T "主题/作者"}}">
+              {{if eq .Name $currentName}}<span class="badge">{{$.t.T "当前"}}</span><br>{{end}}
+              <span data-label="{{$.t.T "主题名"}}">
+              {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}}
+              </span>
+              <span class="theme-version" data-label="{{$.t.T "版本"}}">v{{.Version}}</span><br>
+              <span data-label="{{$.t.T "主题作者"}}">
+              {{if .AuthorURI}}<a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{.Author}}</a>{{else}}{{.Author}}{{end}}
+              </span>
+              {{if .License}}(<span class="theme-license"  data-label="{{$.t.T "授权协议"}}">{{.License}}</span>){{end}}
             </td>
             <td class="theme-description-cell" data-label="{{$.t.T "描述"}}">
               {{.Description}}
               {{if .Tags}}<br><span class="theme-tags">{{range .Tags}}<span class="theme-tag">{{.}}</span>{{end}}</span>{{end}}
             </td>
-            <td class="theme-author-cell" data-label="{{$.t.T "作者"}}">
-              {{if .AuthorURI}}<a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{.Author}}</a>{{else}}{{.Author}}{{end}}
-              {{if .License}}<br><span class="theme-license">{{.License}}</span>{{end}}
-            </td>
             <td class="actions theme-actions-cell" data-label="{{$.t.T "操作"}}">
-              {{if ne .Name $currentName}}
-              <form class="inline" method="post" action="/admin/theme/activate">
-                {{template "csrf_field" $}}
-                <input type="hidden" name="theme_name" value="{{.Name}}">
-                <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
-              </form>
-              {{end}}
-              {{if ne .Name $currentName}}
-              <form class="inline" method="post" action="/admin/theme/preview">
-                {{template "csrf_field" $}}
-                <input type="hidden" name="theme_name" value="{{.Name}}">
-                <button type="submit" class="btn-secondary btn-sm">{{$.t.T "预览"}}</button>
-              </form>
-              {{end}}
-              <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "编辑"}}</a>
-              <a href="/admin/theme/download?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
-              {{if ne .Name "default"}}
-              <form class="inline" method="post" action="/admin/theme/delete" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
-                {{template "csrf_field" $}}
-                <input type="hidden" name="theme_name" value="{{.Name}}">
-                <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "删除"}}</button>
-              </form>
-              {{end}}
+              <div class="theme-actions-row">
+                {{if ne .Name $currentName}}
+                <form class="inline" method="post" action="/admin/theme/activate">
+                  {{template "csrf_field" $}}
+                  <input type="hidden" name="theme_name" value="{{.Name}}">
+                  <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
+                </form>
+                {{end}}
+                {{if ne .Name $currentName}}
+                <form class="inline" method="post" action="/admin/theme/preview">
+                  {{template "csrf_field" $}}
+                  <input type="hidden" name="theme_name" value="{{.Name}}">
+                  <button type="submit" class="btn-secondary btn-sm">{{$.t.T "预览"}}</button>
+                </form>
+                {{end}}
+              </div>
+              <div class="theme-actions-row">
+                <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "编辑"}}</a>
+                <a href="/admin/theme/download?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
+                {{if ne .Name "default"}}
+                <form class="inline" method="post" action="/admin/theme/delete" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
+                  {{template "csrf_field" $}}
+                  <input type="hidden" name="theme_name" value="{{.Name}}">
+                  <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "删除"}}</button>
+                </form>
+                {{end}}
+              </div>
             </td>
           </tr>
           {{end}}

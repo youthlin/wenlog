@@ -100,6 +100,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	contentGroup.GET("/post/:id", adm.EditPostForm)
 	contentGroup.POST("/post", adm.SavePost)
 	contentGroup.POST("/post/:id/delete", adm.DeletePost)
+	contentGroup.POST("/post/:id/menu-order", adm.UpdateMenuOrder)
 	contentGroup.POST("/preview", adm.Preview)
 	contentGroup.GET("/comments", adm.ListComments)
 	contentGroup.POST("/comment/:id/:action", adm.ModerateComment)

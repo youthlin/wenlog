@@ -434,6 +434,44 @@ func (s *Store) RecentPosts(ctx context.Context, n int) []model.Post {
 	return ps
 }
 
+// UpdateMenuOrder 更新页面的 menu_order 字段。
+func (s *Store) UpdateMenuOrder(ctx context.Context, id uint, order int) error {
+	result := s.DB(ctx).Model(&model.Post{}).Where("id = ? AND post_type = ?", id, model.PostTypePage).
+		Update("menu_order", order)
+	if result.Error != nil {
+		return errors.Wrap(result.Error, "update menu_order")
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("page not found")
+	}
+	s.InvalidateCache()
+	return nil
+}
+
+// SwapMenuOrder 交换两个页面的 menu_order 值（用于上移/下移）。
+func (s *Store) SwapMenuOrder(ctx context.Context, id1, id2 uint) error {
+	var p1, p2 model.Post
+	err := s.DB(ctx).Select("id", "menu_order").
+		Where("id = ? AND post_type = ?", id1, model.PostTypePage).First(&p1).Error
+	if err != nil {
+		return errors.Wrap(err, "find page1")
+	}
+	err = s.DB(ctx).Select("id", "menu_order").
+		Where("id = ? AND post_type = ?", id2, model.PostTypePage).First(&p2).Error
+	if err != nil {
+		return errors.Wrap(err, "find page2")
+	}
+	// 交换
+	if err := s.DB(ctx).Model(&model.Post{}).Where("id = ?", p1.ID).Update("menu_order", p2.MenuOrder).Error; err != nil {
+		return errors.Wrap(err, "swap menu_order 1")
+	}
+	if err := s.DB(ctx).Model(&model.Post{}).Where("id = ?", p2.ID).Update("menu_order", p1.MenuOrder).Error; err != nil {
+		return errors.Wrap(err, "swap menu_order 2")
+	}
+	s.InvalidateCache()
+	return nil
+}
+
 // PublishScheduled 将已到发布时间的定时文章改为已发布状态，返回受影响行数。
 func (s *Store) PublishScheduled(ctx context.Context) (int64, error) {
 	result := s.DB(ctx).Model(&model.Post{}).

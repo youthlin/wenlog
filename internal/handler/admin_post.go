@@ -264,6 +264,67 @@ func (h *Admin) SavePost(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/admin/posts?type="+p.PostType)
 }
 
+// UpdateMenuOrder 行内编辑页面排序：支持直接设值或上移/下移。
+func (h *Admin) UpdateMenuOrder(c *gin.Context) {
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "msg": "invalid id"})
+		return
+	}
+	action := c.PostForm("action") // "set" | "up" | "down"
+	switch action {
+	case "up", "down":
+		// 找到相邻页面并交换 menu_order
+		pt := c.DefaultQuery("type", model.PostTypePage)
+		page := atoiDefault(c.Query("page"), 1)
+		keyword := strings.TrimSpace(c.Query("q"))
+		posts, _, err := h.st.AdminListPosts(c, pt, page, adminPageSize, 0, 0, keyword)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "msg": "list failed"})
+			return
+		}
+		// 找到当前页面在列表中的位置
+		idx := -1
+		for i, p := range posts {
+			if p.ID == id {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 {
+			c.JSON(http.StatusNotFound, gin.H{"ok": false, "msg": "page not in list"})
+			return
+		}
+		var targetID uint
+		if action == "up" && idx > 0 {
+			targetID = posts[idx-1].ID
+		} else if action == "down" && idx < len(posts)-1 {
+			targetID = posts[idx+1].ID
+		}
+		if targetID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "msg": "cannot move"})
+			return
+		}
+		if err := h.st.SwapMenuOrder(c, id, targetID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "msg": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	default: // "set"
+		orderStr := c.PostForm("order")
+		order, err := strconv.Atoi(orderStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "msg": "invalid order"})
+			return
+		}
+		if err := h.st.UpdateMenuOrder(c, id, order); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "msg": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	}
+}
+
 var errPostNotFound = errors.New("post not found")
 var errPostForbidden = errors.New("post forbidden")
 

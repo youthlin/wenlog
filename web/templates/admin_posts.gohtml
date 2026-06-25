@@ -32,17 +32,16 @@
   <table class="data-table posts-table">
     <thead>
     <tr>
-      <th class="post-id-head">ID</th>
       <th class="post-title-head">{{.t.T "标题"}}</th>
-      {{if eq .PostType "page"}}
-      <th class="post-menu-order-head">{{.t.T "顺序"}}</th>
-      {{end}}
       <th class="post-published-head">{{.t.T "发布时间"}}</th>
       {{if ne .PostType "page"}}
       <th class="post-category-head">{{.t.T "分类目录"}}</th>
       <th class="post-tags-head">{{.t.T "标签"}}</th>
       {{end}}
       <th class="post-stats-head">{{printf "%s / %s" (.t.T "评论") (.t.T "浏览")}}</th>
+      {{if eq .PostType "page"}}
+      <th class="post-menu-order-head">{{.t.T "顺序"}}</th>
+      {{end}}
       <th class="post-actions-head">{{.t.T "操作"}}</th>
     </tr>
     </thead>
@@ -50,26 +49,22 @@
     {{range .Posts}}
     <tr>
       {{$viewURL := postURL .}}
-      <td class="post-id-cell" data-label="ID"><span class="post-id-badge">#{{.ID}}</span></td>
       <td class="post-title-cell" data-label="{{$.t.T "标题"}}">
         <div class="post-title-panel">
           <div class="post-title-main">
             <a href="{{$viewURL}}" target="_blank" rel="noreferrer">{{if .Title}}{{.Title}}{{else}}{{$.t.T "（无标题）"}}{{end}}</a>
+            <span class="post-id-badge">#{{.ID}}</span>
             {{if ne .Status "published"}}
             <span class="post-status-badge is-draft">{{if eq .Status "draft"}}{{$.t.T "草稿"}}{{else if eq .Status "scheduled"}}{{$.t.T "定时"}}{{else}}{{.Status}}{{end}}</span>
             {{end}}
           </div>
           <div class="post-meta-list">
             <div class="post-inline-meta">
-              <span class="post-inline-meta-item">#{{.ID}}</span>
               <time class="post-inline-meta-item" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
             </div>
           </div>
         </div>
       </td>
-      {{if eq $.PostType "page"}}
-      <td class="post-menu-order-cell" data-label="{{$.t.T "顺序"}}"><span class="post-menu-order-badge">{{.MenuOrder}}</span></td>
-      {{end}}
       <td class="post-published-cell" data-label="{{$.t.T "发布时间"}}">
         <time class="post-published-time" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
       </td>
@@ -109,6 +104,15 @@
           </span>
         </div>
       </td>
+      {{if eq $.PostType "page"}}
+      <td class="post-menu-order-cell" data-label="{{$.t.T "顺序"}}">
+        <div class="menu-order-controls">
+          <button type="button" class="menu-order-btn menu-order-up" data-id="{{.ID}}" data-action="up" title="{{$.t.T "上移"}}">▲</button>
+          <input type="number" class="menu-order-input" data-id="{{.ID}}" value="{{.MenuOrder}}" min="0" title="{{$.t.T "回车保存"}}">
+          <button type="button" class="menu-order-btn menu-order-down" data-id="{{.ID}}" data-action="down" title="{{$.t.T "下移"}}">▼</button>
+        </div>
+      </td>
+      {{end}}
       <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
         <a class="post-action-link" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
         <form class="inline" method="post" action="/admin/post/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除?"}}')">
@@ -118,7 +122,7 @@
       </td>
     </tr>
     {{else}}
-    <tr><td colspan="{{if eq .PostType "page"}}6{{else}}7{{end}}">{{.t.T "暂无内容"}}</td></tr>
+    <tr><td colspan="{{if eq .PostType "page"}}6{{else}}6{{end}}">{{.t.T "暂无内容"}}</td></tr>
     {{end}}
     </tbody>
   </table>
@@ -130,6 +134,47 @@
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
   {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
+{{end}}
+{{if eq .PostType "page"}}
+<script>
+(function(){
+  var csrf = '{{.CSRFToken}}';
+  var url = location.pathname + location.search;
+  document.querySelectorAll('.menu-order-input').forEach(function(input){
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var id = this.dataset.id;
+        var order = this.value;
+        var fd = new FormData();
+        fd.append('_csrf', csrf);
+        fd.append('action', 'set');
+        fd.append('order', order);
+        fetch('/admin/post/' + id + '/menu-order', {method:'POST',body:fd})
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if(!d.ok){ alert(d.msg); } })
+          .catch(function(e){ alert(e.message); });
+      }
+    });
+  });
+  document.querySelectorAll('.menu-order-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = this.dataset.id;
+      var action = this.dataset.action;
+      var fd = new FormData();
+      fd.append('_csrf', csrf);
+      fd.append('action', action);
+      fetch('/admin/post/' + id + '/menu-order?' + new URLSearchParams(location.search).toString(), {method:'POST',body:fd})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.ok){ location.reload(); }
+          else { alert(d.msg); }
+        })
+        .catch(function(e){ alert(e.message); });
+    });
+  });
+})();
+</script>
 {{end}}
 {{- template "admin_footer" . -}}
 {{end}}
