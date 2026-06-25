@@ -854,6 +854,7 @@ img { max-width: 100%; height: auto; }
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
 }
 .widget-recent-comments .avatar {
   flex-shrink: 0;
@@ -871,8 +872,17 @@ img { max-width: 100%; height: auto; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.widget-comment-meta { color: var(--muted); font-size: 12px; text-align: left; }
-.widget-comment-meta a { color: var(--muted); }
+.widget-comment-meta {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.widget-comment-meta a {
+  color: var(--muted);
+  word-break: break-word;
+}
 @media (max-width: 640px) {
   .widget-comment-meta { line-height: 1.6; }
 }
