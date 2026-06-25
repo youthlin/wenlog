@@ -49,6 +49,38 @@
     el.className = "comment-msg " + (ok ? "ok" : "err");
   }
 
+  function insertTextAtCursor(textarea, text) {
+    if (!textarea) return;
+    var start = textarea.selectionStart;
+    var end = textarea.selectionEnd;
+    var value = textarea.value || "";
+    if (typeof start !== "number" || typeof end !== "number") {
+      textarea.value = value + text;
+      return;
+    }
+    textarea.value = value.slice(0, start) + text + value.slice(end);
+    var next = start + text.length;
+    textarea.setSelectionRange(next, next);
+  }
+
+  function bindSmilies() {
+    var f = getForm();
+    if (!f) return;
+    var textarea = f.querySelector("textarea[name=content]");
+    if (!textarea) return;
+    f.querySelectorAll("[data-smiley-code]").forEach(function (btn) {
+      if (btn.dataset.boundSmiley === "1") return;
+      btn.dataset.boundSmiley = "1";
+      btn.addEventListener("click", function () {
+        var code = btn.getAttribute("data-smiley-code") || "";
+        if (!code) return;
+        textarea.focus({ preventScroll: true });
+        insertTextAtCursor(textarea, code);
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    });
+  }
+
   function bindReplyButtons() {
     var f = getForm();
     if (!f) return;
@@ -95,6 +127,7 @@
   function bindForm() {
     var f = getForm();
     if (!f || f.dataset.bound === "1") return;
+    bindSmilies();
     f.dataset.bound = "1";
     f.addEventListener("submit", function (e) {
       e.preventDefault();

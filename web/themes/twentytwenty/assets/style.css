@@ -595,6 +595,12 @@ img { max-width: 100%; height: auto; }
 
 /* 评论正文 */
 .comment-body { margin-top: 6px; white-space: pre-wrap; word-break: break-word; font-size: 16px; line-height: 1.6; }
+.comment-smiley {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  vertical-align: text-bottom;
+}
 .comment-reply-to { color: var(--accent); font-size: 14px; margin-right: 6px; font-weight: 500; }
 .comment-reply { background: none; border: 0; color: var(--accent); cursor: pointer; font-size: 14px; padding: 2px 0; font-weight: 500; font-family: inherit; }
 .comment-reply:hover { color: var(--accent-hover); }
@@ -627,6 +633,49 @@ img { max-width: 100%; height: auto; }
 }
 .comment-form input[name="notify"] { width: auto; }
 .comment-form .hp { position: absolute; left: -9999px; }
+.comment-smilies {
+  margin: -4px 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--card) 97%, var(--accent));
+}
+.comment-smilies-label {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.comment-smilies-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.comment-smiley-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.comment-smiley-btn:hover,
+.comment-smiley-btn:focus-visible {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--input-bg) 84%, var(--accent));
+  transform: translateY(-1px);
+  outline: none;
+}
+.comment-smiley-btn img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
 .comment-form button {
   background: var(--btn-bg);
   color: var(--btn-fg);
@@ -738,53 +787,21 @@ img { max-width: 100%; height: auto; }
 .searchable-select-trigger,
 .searchable-select-input {
   width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--input-border);
+  padding: 7px 9px;
+  border: 1px solid var(--border);
   border-radius: 5px;
-  background: var(--input-bg);
+  background: var(--bg);
   color: var(--fg);
   font: inherit;
 }
-.searchable-select-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  cursor: pointer;
-  text-align: left;
-}
+.searchable-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; text-align: left; }
 .searchable-select-trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .searchable-select-trigger-icon { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
-.searchable-select-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 20;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  box-shadow: var(--surface-shadow);
-}
+.searchable-select-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: var(--surface-shadow); }
 .searchable-select-input { margin-bottom: 8px; }
 .searchable-select-list { display: grid; gap: 4px; max-height: 240px; overflow: auto; }
-.searchable-select-option {
-  width: 100%;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--fg);
-  text-align: left;
-  padding: 8px 10px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 14px;
-}
-.searchable-select-option:hover,
-.searchable-select-option.is-active {
-  background: color-mix(in srgb, var(--accent) 12%, var(--card));
-}
+.searchable-select-option { width: 100%; border: 0; border-radius: 6px; background: transparent; color: var(--fg); text-align: left; padding: 8px 10px; cursor: pointer; }
+.searchable-select-option:hover, .searchable-select-option.is-active { background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
 .searchable-select-empty { padding: 8px 10px 4px; color: var(--muted); font-size: 13px; }
 
 /* 18.3 用户小组件（登录/登出/注册） */
