@@ -2,10 +2,39 @@
   var navToggle = document.querySelector('[data-nav-toggle]');
   var navPanel = document.querySelector('[data-nav-panel]');
   if (navToggle && navPanel) {
-    navToggle.addEventListener('click', function () {
-      var open = navPanel.classList.toggle('is-open');
+    function setNavOpen(open) {
+      navPanel.classList.toggle('is-open', open);
+      document.body.classList.toggle('nav-is-open', open);
       navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       navToggle.setAttribute('aria-label', open ? document.documentElement.dataset.navCloseLabel : document.documentElement.dataset.navOpenLabel);
+      navToggle.textContent = open ? '×' : '☰';
+    }
+
+    navToggle.addEventListener('click', function (event) {
+      event.stopPropagation();
+      setNavOpen(!navPanel.classList.contains('is-open'));
+    });
+
+    navPanel.addEventListener('click', function (event) {
+      event.stopPropagation();
+    });
+
+    document.addEventListener('click', function () {
+      if (navPanel.classList.contains('is-open')) {
+        setNavOpen(false);
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && navPanel.classList.contains('is-open')) {
+        setNavOpen(false);
+      }
+    });
+
+    navPanel.addEventListener('click', function (event) {
+      if (event.target.closest('a')) {
+        setNavOpen(false);
+      }
     });
   }
 
