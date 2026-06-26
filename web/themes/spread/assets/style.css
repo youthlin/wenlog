@@ -1113,9 +1113,11 @@ body {
 .post-hero {
   padding: clamp(62px, 9vw, 120px) 0 clamp(40px, 6vw, 72px);
 }
-.article-layout {
-  grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
-  gap: clamp(28px, 5vw, 78px);
+@media (min-width: 901px) {
+  .article-layout {
+    grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
+    gap: clamp(28px, 5vw, 78px);
+  }
 }
 .toc-card,
 .article-body,

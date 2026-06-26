@@ -10,34 +10,16 @@
 @font-face {
   font-family: 'Inter';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-Regular.woff2) format('woff2'),
-       url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-Regular.woff) format('woff');
+  src: url("fonts/inter/Inter-upright-var.woff2") format("woff2");
 }
 @font-face {
   font-family: 'Inter';
   font-style: italic;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-Italic.woff2) format('woff2'),
-       url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-Italic.woff) format('woff');
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-SemiBold.woff2) format('woff2'),
-       url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-SemiBold.woff) format('woff');
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-Bold.woff2) format('woff2'),
-       url(https://youthlin.com/wp-content/themes/twentytwenty/assets/fonts/inter/Inter-Bold.woff) format('woff');
+  src: url("fonts/inter/Inter-italic-var.woff2") format("woff2");
 }
 
 /* ============================================================
