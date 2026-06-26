@@ -16,8 +16,8 @@
   <section class="card settings-card widget-area-panel" data-area="{{$areaKey}}">
     <div class="widget-area-title-row">
       <div>
-        <h3>{{.Area.Name}}</h3>
-        {{if .Area.Description}}<p class="tip">{{.Area.Description}}</p>{{end}}
+        <h3>{{$.th.T .Area.Name}}</h3>
+        {{if .Area.Description}}<p class="tip">{{$.th.T .Area.Description}}</p>{{end}}
       </div>
       <div class="widget-area-add-row">
         <select class="widget-add-select" data-area="{{$areaKey}}">
@@ -39,7 +39,7 @@
 
         <div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
-          <span class="widget-config-name">{{if $w.Decl.Options}}<span class="widget-options-caret" aria-hidden="true">▸</span>{{end}}{{$w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
+          <span class="widget-config-name">{{if $w.Decl.Options}}<span class="widget-options-caret" aria-hidden="true">▸</span>{{end}}{{$.th.T $w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
           <div class="widget-config-actions">
             <button type="button" class="btn-icon widget-move-up" title="{{$.t.T "上移"}}" aria-label="{{$.t.T "上移"}}">↑</button>
             <button type="button" class="btn-icon widget-move-down" title="{{$.t.T "下移"}}" aria-label="{{$.t.T "下移"}}">↓</button>
@@ -52,8 +52,8 @@
           {{range $w.Decl.Options}}
           {{$opt := .}}
           <div class="widget-option-field">
-            <label for="opts_{{$areaKey}}_{{$w.Index}}_{{$opt.ID}}"><strong>{{$opt.Label}}</strong></label>
-            {{if $opt.Description}}<p class="tip">{{$opt.Description}}</p>{{end}}
+            <label for="opts_{{$areaKey}}_{{$w.Index}}_{{$opt.ID}}"><strong>{{$.th.T $opt.Label}}</strong></label>
+            {{if $opt.Description}}<p class="tip">{{$.th.T $opt.Description}}</p>{{end}}
 
             {{if eq $opt.Type "text"}}
             <input type="text" id="opts_{{$areaKey}}_{{$w.Index}}_{{$opt.ID}}" name="opts_{{$areaKey}}_{{$w.Index}}_{{$opt.ID}}" value="{{index $w.Opts $opt.ID}}">
@@ -68,7 +68,7 @@
             {{else if eq $opt.Type "select"}}
             <select id="opts_{{$areaKey}}_{{$w.Index}}_{{$opt.ID}}" name="opts_{{$areaKey}}_{{$w.Index}}_{{$opt.ID}}">
               {{range $opt.Options}}
-              <option value="{{.Value}}" {{if eq .Value (index $w.Opts $opt.ID)}}selected{{end}}>{{.Label}}</option>
+              <option value="{{.Value}}" {{if eq .Value (index $w.Opts $opt.ID)}}selected{{end}}>{{$.th.T .Label}}</option>
               {{end}}
             </select>
 

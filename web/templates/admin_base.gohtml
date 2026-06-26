@@ -82,8 +82,6 @@
             <div class="nav-group-links">
               <a class="admin-nav-link{{if eq .CurrentAdminNav "themes"}} is-active{{end}}" href="/admin/themes">
                 <span>{{.t.T "主题"}}</span></a>
-              <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-files"}} is-active{{end}}" href="/admin/theme/files">
-                <span>{{.t.T "编辑"}}</span></a>
               {{if .AdminThemeSupportsWidgets}}
               <a class="admin-nav-link{{if eq .CurrentAdminNav "widgets"}} is-active{{end}}" href="/admin/widgets">
                 <span>{{.t.T "组件"}}</span></a>
@@ -92,6 +90,8 @@
               <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-options"}} is-active{{end}}" href="/admin/theme-options">
                 <span>{{.t.T "选项"}}</span></a>
               {{end}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-files"}} is-active{{end}}" href="/admin/theme/files">
+                <span>{{.t.T "编辑"}}</span></a>
             </div>
           </div>
           <div class="nav-group">

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog spread theme\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 08:30:51+0800\n"
+"POT-Creation-Date: 2026-06-26 15:17:37+0800\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -249,3 +249,49 @@ msgstr "Draft preview"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/post.gohtml:19
 msgid "文章目录"
 msgstr "Article contents"
+
+#: theme.yaml:description
+msgid "宽屏满幅色块、杂志目录式列表和大胆触摸交互的主题"
+msgstr ""
+"A theme with full-width color blocks, magazine-style directory listing, and "
+"bold touch interactions"
+
+#: theme.yaml:options[0].description
+msgid "会注入到页面 <head> 中"
+msgstr "Injected into the page <head>"
+
+#: theme.yaml:options[0].label
+msgid "自定义 CSS"
+msgstr "Custom CSS"
+
+#: theme.yaml:options[1].description
+msgid "显示在页面底部"
+msgstr "Displayed at the bottom of the page"
+
+#: theme.yaml:options[1].label
+msgid "页脚文字"
+msgstr "Footer text"
+
+#: theme.yaml:tags[0]
+msgid "宽屏"
+msgstr "Widescreen"
+
+#: theme.yaml:tags[1]
+msgid "杂志"
+msgstr "Magazine"
+
+#: theme.yaml:tags[2]
+msgid "满幅"
+msgstr "Full-width"
+
+#: theme.yaml:tags[3]
+msgid "响应式"
+msgstr "Responsive"
+
+#: theme.yaml:widget_areas.footer.description
+msgid "显示在页脚的内置小组件区域"
+msgstr "Built-in widget area displayed in the footer"
+
+#: theme.yaml:widget_areas.footer.name
+msgid "页脚组件区"
+msgstr "Footer Widget Area"

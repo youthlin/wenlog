@@ -214,6 +214,15 @@ for theme_dir in "$THEME_ROOT_DIR"/*; do
     pot_inputs+=("$theme_widget_pot")
   fi
 
+  # --- 6a. 从 theme.yaml 提取可翻译字符串 ---
+  theme_yaml_pot="$TMP_DIR/theme_${theme_name}_yaml.pot"
+  if [ -f "$theme_dir/theme.yaml" ]; then
+    python3 "$ROOT_DIR/scripts/extract_theme_yaml.py" "$theme_dir/theme.yaml" "$theme_yaml_pot"
+    if [ -s "$theme_yaml_pot" ]; then
+      pot_inputs+=("$theme_yaml_pot")
+    fi
+  fi
+
   msgcat \
     --use-first \
     --sort-output \

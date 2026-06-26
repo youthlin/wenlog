@@ -42,6 +42,7 @@ func (h *Admin) ThemeOptionsPage(c *gin.Context) {
 	}
 
 	data := h.base(c, tr.T("主题选项"))
+	data["th"] = i18n.Get(c).D(t.ThemeDomain())
 	data["CurrentAdminNav"] = "theme-options"
 	data["ThemeName"] = t.Name
 	data["Options"] = opts

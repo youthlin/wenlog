@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-23 15:25:28+0800\n"
+"POT-Creation-Date: 2026-06-26 15:17:37+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -256,3 +256,65 @@ msgstr "Popular posts"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/saying.gohtml:2
 msgid "博主动态"
 msgstr "Author updates"
+
+#: theme.yaml:description
+msgid "默认主题，内容+边栏双栏设计，带多种颜色外观"
+msgstr ""
+"Default theme with content + sidebar two-column layout and multiple color "
+"schemes"
+
+#: theme.yaml:options[0].description
+msgid "会注入到页面 <head> 中"
+msgstr "Injected into the page <head>"
+
+#: theme.yaml:options[0].label
+msgid "自定义 CSS"
+msgstr "Custom CSS"
+
+#: theme.yaml:options[1].description
+msgid "显示在页面底部"
+msgstr "Displayed at the bottom of the page"
+
+#: theme.yaml:options[1].label
+msgid "页脚文字"
+msgstr "Footer text"
+
+#: theme.yaml:tags[0]
+msgid "双栏"
+msgstr "Two-column"
+
+#: theme.yaml:tags[1]
+msgid "响应式"
+msgstr "Responsive"
+
+#: theme.yaml:tags[2]
+msgid "多配色"
+msgstr "Multi-color"
+
+#: theme.yaml:widget_areas.sidebar.description
+msgid "文章页侧边栏区域"
+msgstr "Post page sidebar area"
+
+#: theme.yaml:widget_areas.sidebar.name
+msgid "侧边栏"
+msgstr "Sidebar"
+
+#: theme.yaml:widgets[0].options[0].label
+msgid "标题"
+msgstr "Title"
+
+#: theme.yaml:widgets[0].options[1].description
+msgid "用于读取博主评论的文章/页面 ID"
+msgstr "Post/Page ID for fetching author comments"
+
+#: theme.yaml:widgets[0].options[1].label
+msgid "文章 ID"
+msgstr "Post ID"
+
+#: theme.yaml:widgets[1].label
+msgid "热门文章"
+msgstr "Popular Posts"
+
+#: theme.yaml:widgets[1].options[1].label
+msgid "显示数量"
+msgstr "Display count"

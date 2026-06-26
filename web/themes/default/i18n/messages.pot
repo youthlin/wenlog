@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 08:31:37+0800\n"
+"POT-Creation-Date: 2026-06-26 17:14:20+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgstr ""
 "X-Xtemplate-Keywords: T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;"
 "XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2\n"
 "X-Xtemplate-Functions: \n"
-"X-Xtemplate-Output: /tmp/blog-i18n.e00IBY/theme_default_templates.pot\n"
+"X-Xtemplate-Output: /tmp/blog-i18n.IVW5LG/theme_default_templates.pot\n"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/templates/comments.gohtml:3
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/templates/index.gohtml:15
@@ -276,4 +276,64 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/saying.gohtml:2
 msgid "博主动态"
+msgstr ""
+
+#: theme.yaml:description
+msgid "默认主题，内容+边栏双栏设计，带多种颜色外观"
+msgstr ""
+
+#: theme.yaml:options[0].description
+msgid "会注入到页面 <head> 中"
+msgstr ""
+
+#: theme.yaml:options[0].label
+msgid "自定义 CSS"
+msgstr ""
+
+#: theme.yaml:options[1].description
+msgid "显示在页面底部"
+msgstr ""
+
+#: theme.yaml:options[1].label
+msgid "页脚文字"
+msgstr ""
+
+#: theme.yaml:tags[0]
+msgid "双栏"
+msgstr ""
+
+#: theme.yaml:tags[1]
+msgid "响应式"
+msgstr ""
+
+#: theme.yaml:tags[2]
+msgid "多配色"
+msgstr ""
+
+#: theme.yaml:widget_areas.sidebar.description
+msgid "文章页侧边栏区域"
+msgstr ""
+
+#: theme.yaml:widget_areas.sidebar.name
+msgid "侧边栏"
+msgstr ""
+
+#: theme.yaml:widgets[0].options[0].label
+msgid "标题"
+msgstr ""
+
+#: theme.yaml:widgets[0].options[1].description
+msgid "用于读取博主评论的文章/页面 ID"
+msgstr ""
+
+#: theme.yaml:widgets[0].options[1].label
+msgid "文章 ID"
+msgstr ""
+
+#: theme.yaml:widgets[1].label
+msgid "热门文章"
+msgstr ""
+
+#: theme.yaml:widgets[1].options[1].label
+msgid "显示数量"
 msgstr ""

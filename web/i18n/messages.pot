@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 08:31+0800\n"
+"POT-Creation-Date: 2026-06-26 17:14+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -269,7 +269,15 @@ msgstr ""
 msgid "主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:86
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:87
+msgid "组件"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:91
+msgid "选项"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:94
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:59
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:78
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:132
@@ -278,14 +286,6 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:79
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:33
 msgid "编辑"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:89
-msgid "组件"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:93
-msgid "选项"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:98
@@ -2826,115 +2826,115 @@ msgstr ""
 msgid "标签 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin_theme.go:31
+#: internal/handler/admin_theme.go:32
 msgid "外观"
 msgstr ""
 
-#: internal/handler/admin_theme.go:52 internal/handler/admin_upload.go:36
+#: internal/handler/admin_theme.go:92 internal/handler/admin_upload.go:36
 msgid "未选择文件"
 msgstr ""
 
-#: internal/handler/admin_theme.go:56
+#: internal/handler/admin_theme.go:96
 msgid "主题包不能超过 5MB"
 msgstr ""
 
-#: internal/handler/admin_theme.go:60
+#: internal/handler/admin_theme.go:100
 msgid "仅支持 .zip 格式的主题包"
 msgstr ""
 
-#: internal/handler/admin_theme.go:66 internal/handler/admin_upload.go:45
+#: internal/handler/admin_theme.go:106 internal/handler/admin_upload.go:45
 msgid "打开上传文件失败"
 msgstr ""
 
-#: internal/handler/admin_theme.go:74
+#: internal/handler/admin_theme.go:114
 msgid "创建临时目录失败"
-msgstr ""
-
-#: internal/handler/admin_theme.go:80
-#, c-format
-msgid "解压主题包失败: %s"
-msgstr ""
-
-#: internal/handler/admin_theme.go:87
-msgid "主题包中未找到 theme.yaml"
-msgstr ""
-
-#: internal/handler/admin_theme.go:94 internal/handler/admin_theme.go:116
-#: internal/handler/admin_theme.go:143 internal/handler/admin_theme.go:172
-#: internal/handler/admin_theme.go:263
-msgid "主题管理器未初始化"
-msgstr ""
-
-#: internal/handler/admin_theme.go:99
-#, c-format
-msgid "安装主题失败: %s"
-msgstr ""
-
-#: internal/handler/admin_theme.go:103
-#, c-format
-msgid "主题「%s」安装成功"
-msgstr ""
-
-#: internal/handler/admin_theme.go:111 internal/handler/admin_theme.go:138
-#: internal/handler/admin_theme.go:167 internal/handler/admin_theme.go:258
-msgid "未指定主题名称"
 msgstr ""
 
 #: internal/handler/admin_theme.go:120
 #, c-format
+msgid "解压主题包失败: %s"
+msgstr ""
+
+#: internal/handler/admin_theme.go:127
+msgid "主题包中未找到 theme.yaml"
+msgstr ""
+
+#: internal/handler/admin_theme.go:134 internal/handler/admin_theme.go:156
+#: internal/handler/admin_theme.go:183 internal/handler/admin_theme.go:212
+#: internal/handler/admin_theme.go:303
+msgid "主题管理器未初始化"
+msgstr ""
+
+#: internal/handler/admin_theme.go:139
+#, c-format
+msgid "安装主题失败: %s"
+msgstr ""
+
+#: internal/handler/admin_theme.go:143
+#, c-format
+msgid "主题「%s」安装成功"
+msgstr ""
+
+#: internal/handler/admin_theme.go:151 internal/handler/admin_theme.go:178
+#: internal/handler/admin_theme.go:207 internal/handler/admin_theme.go:298
+msgid "未指定主题名称"
+msgstr ""
+
+#: internal/handler/admin_theme.go:160
+#, c-format
 msgid "激活主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:125
+#: internal/handler/admin_theme.go:165
 #, c-format
 msgid "主题已激活，但加载失败，已回退默认主题: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:130
+#: internal/handler/admin_theme.go:170
 #, c-format
 msgid "已激活主题「%s」"
 msgstr ""
 
-#: internal/handler/admin_theme.go:151
+#: internal/handler/admin_theme.go:191
 #, c-format
 msgid "删除主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:159
+#: internal/handler/admin_theme.go:199
 #, c-format
 msgid "主题「%s」已删除"
 msgstr ""
 
-#: internal/handler/admin_theme.go:177 internal/handler/admin_theme.go:267
+#: internal/handler/admin_theme.go:217 internal/handler/admin_theme.go:307
 #, c-format
 msgid "主题「%s」不存在"
 msgstr ""
 
-#: internal/handler/admin_theme.go:182
+#: internal/handler/admin_theme.go:222
 msgid "创建主题下载文件失败"
 msgstr ""
 
-#: internal/handler/admin_theme.go:189
+#: internal/handler/admin_theme.go:229
 #, c-format
 msgid "打包主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:193
+#: internal/handler/admin_theme.go:233
 #, c-format
 msgid "写入主题下载文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:272
+#: internal/handler/admin_theme.go:312
 #, c-format
 msgid "加载预览主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:276
+#: internal/handler/admin_theme.go:316
 #, c-format
 msgid "正在预览主题「%s」，前台已生效。"
 msgstr ""
 
-#: internal/handler/admin_theme.go:286
+#: internal/handler/admin_theme.go:326
 msgid "已退出主题预览"
 msgstr ""
 
@@ -2978,7 +2978,7 @@ msgstr ""
 msgid "主题选项"
 msgstr ""
 
-#: internal/handler/admin_theme_options.go:74
+#: internal/handler/admin_theme_options.go:75
 msgid "主题选项已保存"
 msgstr ""
 
@@ -3058,7 +3058,7 @@ msgstr ""
 msgid "组件管理"
 msgstr ""
 
-#: internal/handler/admin_widgets.go:175
+#: internal/handler/admin_widgets.go:176
 msgid "组件配置已保存"
 msgstr ""
 
@@ -3287,19 +3287,19 @@ msgstr ""
 msgid "标签：%s"
 msgstr ""
 
-#: internal/handler/public.go:628
+#: internal/handler/public.go:632
 msgid "页面不存在"
 msgstr ""
 
-#: internal/handler/public.go:630
+#: internal/handler/public.go:634
 msgid "你访问的页面不存在或已被删除。"
 msgstr ""
 
-#: internal/handler/public.go:640
+#: internal/handler/public.go:644
 msgid "出错了"
 msgstr ""
 
-#: internal/handler/public.go:642
+#: internal/handler/public.go:646
 msgid "服务器内部错误，请稍后重试。"
 msgstr ""
 

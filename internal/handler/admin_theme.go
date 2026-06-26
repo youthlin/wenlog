@@ -15,6 +15,8 @@ import (
 
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
+	"github.com/youthlin/blog/internal/theme"
+	gettext "github.com/youthlin/t"
 )
 
 const (
@@ -31,17 +33,62 @@ func (h *Admin) ThemesPage(c *gin.Context) {
 	data := h.base(c, tr.T("外观"))
 	data["CurrentAdminNav"] = "themes"
 	if h.themeManager != nil {
-		data["Themes"] = h.themeManager.List()
-		data["CurrentTheme"] = h.themeManager.Current(c)
+		data["Themes"] = translateThemeList(tr, h.themeManager.List())
+		data["CurrentTheme"] = toThemeView(tr, h.themeManager.Current(c))
 		// 预览主题信息
 		if previewName := middleware.GetPreviewTheme(c); previewName != "" {
-			data["PreviewTheme"] = h.themeManager.Get(previewName)
+			data["PreviewTheme"] = toThemeView(tr, h.themeManager.Get(previewName))
 		}
 	}
 	if msg := c.Query("message"); msg != "" {
 		data["Notice"] = msg
 	}
 	c.HTML(http.StatusOK, "admin_themes.gohtml", data)
+}
+
+// themeView 是主题列表页的展示模型，包含翻译后的字段。
+type themeView struct {
+	*theme.Theme
+	Description string   // 已翻译
+	Tags        []string // 已翻译
+}
+
+func translateThemeList(tr *gettext.Translations, themes []*theme.Theme) []*themeView {
+	result := make([]*themeView, 0, len(themes))
+	for _, t := range themes {
+		if t == nil {
+			continue
+		}
+		result = append(result, toThemeView(tr, t))
+	}
+	return result
+}
+
+func toThemeView(tr *gettext.Translations, t *theme.Theme) *themeView {
+	if t == nil {
+		return nil
+	}
+	th := tr.D(t.ThemeDomain())
+	desc := t.Description
+	if desc != "" {
+		if translated := th.T(desc); translated != "" {
+			desc = translated
+		}
+	}
+	tags := make([]string, len(t.Tags))
+	for i, tag := range t.Tags {
+		tags[i] = tag
+		if tag != "" {
+			if translated := th.T(tag); translated != "" {
+				tags[i] = translated
+			}
+		}
+	}
+	return &themeView{
+		Theme:       t,
+		Description: desc,
+		Tags:        tags,
+	}
 }
 
 // ThemeUpload 处理主题 zip 上传。

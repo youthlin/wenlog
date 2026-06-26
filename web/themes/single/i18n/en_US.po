@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-23 15:25:28+0800\n"
+"POT-Creation-Date: 2026-06-26 15:17:37+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -192,3 +192,35 @@ msgstr "Read more →"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:256
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
+
+#: theme.yaml:description
+msgid "极简暗黑单栏主题，纯暗色外观"
+msgstr "Minimalist dark single-column theme with pure dark appearance"
+
+#: theme.yaml:options[0].description
+msgid "显示在页面底部"
+msgstr "Displayed at the bottom of the page"
+
+#: theme.yaml:options[0].label
+msgid "页脚文字"
+msgstr "Footer text"
+
+#: theme.yaml:tags[0]
+msgid "单栏"
+msgstr "Single-column"
+
+#: theme.yaml:tags[1]
+msgid "暗色"
+msgstr "Dark"
+
+#: theme.yaml:tags[2]
+msgid "极简"
+msgstr "Minimalist"
+
+#: theme.yaml:widget_areas.footer.description
+msgid "页面底部区域"
+msgstr "Page footer area"
+
+#: theme.yaml:widget_areas.footer.name
+msgid "页脚"
+msgstr "Footer"

@@ -118,6 +118,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 	widgetDeclsJSON, _ := json.Marshal(widgetDecls)
 
 	data := h.base(c, tr.T("组件管理"))
+	data["th"] = i18n.Get(c).D(t.ThemeDomain())
 	data["AvailableWidgets"] = availableWidgets
 	data["Areas"] = areas
 	data["WidgetDeclsJSON"] = template.JS(widgetDeclsJSON)
@@ -183,13 +184,21 @@ func translateBuiltinWidgetDecls(decls []theme.WidgetDecl, tr interface{ T(strin
 		if !theme.IsBuiltinWidget(decls[i].ID) {
 			continue
 		}
-		decls[i].Label = tr.T(decls[i].Label)
+		if decls[i].Label != "" {
+			decls[i].Label = tr.T(decls[i].Label)
+		}
 		for j := range decls[i].Options {
-			decls[i].Options[j].Label = tr.T(decls[i].Options[j].Label)
-			decls[i].Options[j].Description = tr.T(decls[i].Options[j].Description)
-			decls[i].Options[j].Default = tr.T(decls[i].Options[j].Default)
+			if decls[i].Options[j].Label != "" {
+				decls[i].Options[j].Label = tr.T(decls[i].Options[j].Label)
+			}
+			if decls[i].Options[j].Description != "" {
+				decls[i].Options[j].Description = tr.T(decls[i].Options[j].Description)
+			}
+			// Default 是选项默认值，不翻译
 			for k := range decls[i].Options[j].Options {
-				decls[i].Options[j].Options[k].Label = tr.T(decls[i].Options[j].Options[k].Label)
+				if decls[i].Options[j].Options[k].Label != "" {
+					decls[i].Options[j].Options[k].Label = tr.T(decls[i].Options[j].Options[k].Label)
+				}
 			}
 		}
 	}

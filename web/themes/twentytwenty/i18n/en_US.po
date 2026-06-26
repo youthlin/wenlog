@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 08:31:38+0800\n"
+"POT-Creation-Date: 2026-06-26 15:17:38+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -211,3 +211,49 @@ msgstr "No matching posts found."
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:4
 msgid "草稿预览"
 msgstr "Draft preview"
+
+#: theme.yaml:description
+msgid "Twenty Twenty 风格，居中单栏布局，暖米色背景，Inter 字体，支持暗色模式"
+msgstr ""
+"Twenty Twenty style, centered single-column layout, warm beige background, "
+"Inter font, with dark mode support"
+
+#: theme.yaml:options[0].description
+msgid "会注入到页面 <head> 中"
+msgstr "Injected into the page <head>"
+
+#: theme.yaml:options[0].label
+msgid "自定义 CSS"
+msgstr "Custom CSS"
+
+#: theme.yaml:options[1].description
+msgid "显示在页面底部"
+msgstr "Displayed at the bottom of the page"
+
+#: theme.yaml:options[1].label
+msgid "页脚文字"
+msgstr "Footer text"
+
+#: theme.yaml:tags[0]
+msgid "单栏"
+msgstr "Single-column"
+
+#: theme.yaml:tags[1]
+msgid "响应式"
+msgstr "Responsive"
+
+#: theme.yaml:tags[2]
+msgid "暗色模式"
+msgstr "Dark mode"
+
+#: theme.yaml:tags[3]
+msgid "TwentyTwenty"
+msgstr "TwentyTwenty"
+
+#: theme.yaml:widget_areas.footer.description
+msgid "页面底部区域"
+msgstr "Page footer area"
+
+#: theme.yaml:widget_areas.footer.name
+msgid "页脚组件"
+msgstr "Footer Widgets"

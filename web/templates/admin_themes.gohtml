@@ -17,7 +17,6 @@
   <div class="settings-stack">
     <section class="card settings-card">
       <h3>{{.t.T "主题管理"}}</h3>
-      <p class="tip">{{.t.T "上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目录。"}}</p>
       {{if .CurrentTheme}}
       <p class="tip">{{.t.T "当前主题"}}: <strong>{{.CurrentTheme.Name}}</strong> {{if .CurrentTheme.Version}}v{{.CurrentTheme.Version}}{{end}} — {{.CurrentTheme.Description}}</p>
       {{end}}
@@ -98,6 +97,7 @@
       <form class="edit-form" method="post" action="/admin/theme/upload" enctype="multipart/form-data">
         {{template "csrf_field" .}}
         <label>{{.t.T "上传主题包 (.zip)"}}<input type="file" name="theme_zip" accept=".zip" required></label>
+        <p class="tip">{{.t.T "上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目录。"}}</p>
         <p><button type="submit" class="btn">{{.t.T "上传并安装"}}</button></p>
       </form>
     </section>

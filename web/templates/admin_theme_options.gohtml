@@ -13,8 +13,8 @@
   {{template "csrf_field" .}}
   {{range .Options}}
   <section class="card settings-card">
-    <label for="option_{{.ID}}"><strong>{{.Label}}</strong></label>
-    {{if .Description}}<p class="tip">{{.Description}}</p>{{end}}
+    <label for="option_{{.ID}}"><strong>{{$.th.T .Label}}</strong></label>
+    {{if .Description}}<p class="tip">{{$.th.T .Description}}</p>{{end}}
 
     {{if eq .Type "text"}}
     <input type="text" id="option_{{.ID}}" name="option_{{.ID}}" value="{{.Value}}">
@@ -42,7 +42,7 @@
     {{else if eq .Type "select"}}
     <select id="option_{{.ID}}" name="option_{{.ID}}">
       {{range .Options}}
-      <option value="{{.Value}}" {{if eq .Value $.Value}}selected{{end}}>{{.Label}}</option>
+      <option value="{{.Value}}" {{if eq .Value $.Value}}selected{{end}}>{{$.th.T .Label}}</option>
       {{end}}
     </select>
 
