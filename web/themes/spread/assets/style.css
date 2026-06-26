@@ -283,6 +283,16 @@ body.nav-is-open::before {
   background: var(--ink);
   color: var(--paper);
 }
+.post-meta .post-date-link {
+  min-height: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.post-meta .post-date-link:hover {
+  background: transparent;
+  color: var(--accent);
+}
 .post-title {
   margin: 0;
   color: var(--ink);
@@ -870,8 +880,9 @@ body.nav-is-open::before {
   line-height: 1;
 }
 
-.archive-groups { display: grid; gap: 20px; padding-bottom: 72px; }
+.archive-groups { display: grid; gap: 20px; min-width: 0; padding-bottom: 72px; }
 .archive-year-group {
+  min-width: 0;
   border: 2px solid var(--ink);
   border-radius: var(--radius);
   padding: clamp(22px, 4vw, 42px);
@@ -879,7 +890,8 @@ body.nav-is-open::before {
 }
 .archive-year { margin: 0 0 16px; font-family: var(--serif); font-size: clamp(34px, 5vw, 64px); }
 .archive-list { list-style: none; padding: 0; margin: 0; }
-.archive-list li { display: flex; gap: 18px; padding: 12px 0; border-top: 1px solid var(--line); }
+.archive-list li { display: flex; gap: 18px; min-width: 0; padding: 12px 0; border-top: 1px solid var(--line); }
+.archive-list a { min-width: 0; overflow-wrap: anywhere; }
 .error-page { padding: clamp(60px, 10vw, 140px) 0; }
 .empty { padding: 50px 0; font-weight: 900; }
 .sql-details-footer { padding: 16px; background: #111; color: #eee; }
@@ -976,6 +988,11 @@ body.nav-is-open::before {
   .post-nav { grid-template-columns: 1fr; }
   .footer-widgets { grid-template-columns: 1fr; }
   .footer-widgets .widget-search form { flex-direction: column; }
+  .archive-year-group { padding: 20px; }
+  .archive-list li {
+    display: grid;
+    gap: 6px;
+  }
   .comment-children { margin-left: 10px; }
   .scroll-tools { right: 12px; bottom: 12px; }
 }

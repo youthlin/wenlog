@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 17:14+0800\n"
+"POT-Creation-Date: 2026-06-26 23:09+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -107,8 +107,8 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:48
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:94
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:106
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:33
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:60
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
@@ -136,7 +136,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:110
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_files.gohtml:50
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:84
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:31
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:39
 msgid "删除"
@@ -164,7 +164,7 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:11
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:14
 msgid "预览"
@@ -283,7 +283,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:132
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:50
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:117
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:79
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:78
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:33
 msgid "编辑"
 msgstr ""
@@ -1621,8 +1621,8 @@ msgid "无"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:80
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:32
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:56
 msgid "描述"
 msgstr ""
 
@@ -1782,64 +1782,64 @@ msgstr ""
 msgid "主题管理"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:20
-msgid ""
-"上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目"
-"录。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:21
 msgid "当前主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:38
 msgid "截图"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:31
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:45
 msgid "主题/作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:46
 msgid "当前"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:47
 msgid "主题名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:50
 msgid "版本"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:51
 msgid "主题作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:55
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:54
 msgid "授权协议"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:67
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:66
 msgid "激活"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:80
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:79
 msgid "下载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:81
 msgid "确定要删除主题「%s」吗？此操作不可撤销。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:96
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:95
 msgid "暂无已安装的主题。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:100
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:99
 msgid "上传主题包 (.zip)"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:100
+msgid ""
+"上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目"
+"录。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:101
@@ -2826,115 +2826,115 @@ msgstr ""
 msgid "标签 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin_theme.go:32
+#: internal/handler/admin_theme.go:33
 msgid "外观"
 msgstr ""
 
-#: internal/handler/admin_theme.go:92 internal/handler/admin_upload.go:36
+#: internal/handler/admin_theme.go:99 internal/handler/admin_upload.go:36
 msgid "未选择文件"
 msgstr ""
 
-#: internal/handler/admin_theme.go:96
+#: internal/handler/admin_theme.go:103
 msgid "主题包不能超过 5MB"
 msgstr ""
 
-#: internal/handler/admin_theme.go:100
+#: internal/handler/admin_theme.go:107
 msgid "仅支持 .zip 格式的主题包"
 msgstr ""
 
-#: internal/handler/admin_theme.go:106 internal/handler/admin_upload.go:45
+#: internal/handler/admin_theme.go:113 internal/handler/admin_upload.go:45
 msgid "打开上传文件失败"
 msgstr ""
 
-#: internal/handler/admin_theme.go:114
+#: internal/handler/admin_theme.go:121
 msgid "创建临时目录失败"
 msgstr ""
 
-#: internal/handler/admin_theme.go:120
+#: internal/handler/admin_theme.go:127
 #, c-format
 msgid "解压主题包失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:127
+#: internal/handler/admin_theme.go:134
 msgid "主题包中未找到 theme.yaml"
 msgstr ""
 
-#: internal/handler/admin_theme.go:134 internal/handler/admin_theme.go:156
-#: internal/handler/admin_theme.go:183 internal/handler/admin_theme.go:212
-#: internal/handler/admin_theme.go:303
+#: internal/handler/admin_theme.go:141 internal/handler/admin_theme.go:163
+#: internal/handler/admin_theme.go:190 internal/handler/admin_theme.go:219
+#: internal/handler/admin_theme.go:310
 msgid "主题管理器未初始化"
 msgstr ""
 
-#: internal/handler/admin_theme.go:139
+#: internal/handler/admin_theme.go:146
 #, c-format
 msgid "安装主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:143
+#: internal/handler/admin_theme.go:150
 #, c-format
 msgid "主题「%s」安装成功"
 msgstr ""
 
-#: internal/handler/admin_theme.go:151 internal/handler/admin_theme.go:178
-#: internal/handler/admin_theme.go:207 internal/handler/admin_theme.go:298
+#: internal/handler/admin_theme.go:158 internal/handler/admin_theme.go:185
+#: internal/handler/admin_theme.go:214 internal/handler/admin_theme.go:305
 msgid "未指定主题名称"
 msgstr ""
 
-#: internal/handler/admin_theme.go:160
+#: internal/handler/admin_theme.go:167
 #, c-format
 msgid "激活主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:165
+#: internal/handler/admin_theme.go:172
 #, c-format
 msgid "主题已激活，但加载失败，已回退默认主题: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:170
+#: internal/handler/admin_theme.go:177
 #, c-format
 msgid "已激活主题「%s」"
 msgstr ""
 
-#: internal/handler/admin_theme.go:191
+#: internal/handler/admin_theme.go:198
 #, c-format
 msgid "删除主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:199
+#: internal/handler/admin_theme.go:206
 #, c-format
 msgid "主题「%s」已删除"
 msgstr ""
 
-#: internal/handler/admin_theme.go:217 internal/handler/admin_theme.go:307
+#: internal/handler/admin_theme.go:224 internal/handler/admin_theme.go:314
 #, c-format
 msgid "主题「%s」不存在"
 msgstr ""
 
-#: internal/handler/admin_theme.go:222
+#: internal/handler/admin_theme.go:229
 msgid "创建主题下载文件失败"
 msgstr ""
 
-#: internal/handler/admin_theme.go:229
+#: internal/handler/admin_theme.go:236
 #, c-format
 msgid "打包主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:233
+#: internal/handler/admin_theme.go:240
 #, c-format
 msgid "写入主题下载文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:312
+#: internal/handler/admin_theme.go:319
 #, c-format
 msgid "加载预览主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:316
+#: internal/handler/admin_theme.go:323
 #, c-format
 msgid "正在预览主题「%s」，前台已生效。"
 msgstr ""
 
-#: internal/handler/admin_theme.go:326
+#: internal/handler/admin_theme.go:333
 msgid "已退出主题预览"
 msgstr ""
 
