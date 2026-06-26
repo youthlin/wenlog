@@ -182,7 +182,7 @@ msgstr "English"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/templates/header.gohtml:36
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/templates/header.gohtml:37
 msgid "切换主题"
-msgstr "Themes"
+msgstr "Switch theme"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/templates/header.gohtml:38
 msgid "暗黑"
@@ -251,8 +251,8 @@ msgstr "Draft preview"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/popular_posts.gohtml:2
 msgid "最热文章"
-msgstr ""
+msgstr "Popular posts"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/saying.gohtml:2
 msgid "博主动态"
-msgstr ""
+msgstr "Author updates"

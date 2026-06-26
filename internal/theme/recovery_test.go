@@ -6,6 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	gettext "github.com/youthlin/t"
+
+	"github.com/youthlin/blog/internal/i18n"
 )
 
 type testSettingStore struct{}
@@ -50,6 +54,7 @@ func TestThemeFilePathRejectsTraversalAndPrefixSibling(t *testing.T) {
 }
 
 func TestManagerInstallReplacesThemeAtomically(t *testing.T) {
+	initTestI18n(t)
 	root := t.TempDir()
 	if err := writeTestTheme(filepath.Join(root, "themes", "custom"), "custom", "old"); err != nil {
 		t.Fatalf("write old theme: %v", err)
@@ -86,14 +91,63 @@ func TestManagerInstallReplacesThemeAtomically(t *testing.T) {
 			t.Fatalf("temporary install directory was not cleaned up: %s", entry.Name())
 		}
 	}
+	if !gettext.HasDomain("custom") {
+		t.Fatal("installed theme domain should be rebuilt into global translations")
+	}
+}
+
+func TestManagerDeleteRebuildsTranslations(t *testing.T) {
+	initTestI18n(t)
+	root := t.TempDir()
+	if err := writeTestTheme(filepath.Join(root, "themes", "default"), "default", "default"); err != nil {
+		t.Fatalf("write default theme: %v", err)
+	}
+	if err := writeTestTheme(filepath.Join(root, "themes", "custom"), "custom", "custom"); err != nil {
+		t.Fatalf("write custom theme: %v", err)
+	}
+	m, err := NewManager(filepath.Join(root, "themes"), testSettingStore{}, nil)
+	if err != nil {
+		t.Fatalf("new manager: %v", err)
+	}
+	if !gettext.HasDomain("custom") {
+		t.Fatal("custom theme domain should be loaded during scan")
+	}
+	if err := m.Delete("custom"); err != nil {
+		t.Fatalf("delete theme: %v", err)
+	}
+	if gettext.HasDomain("custom") {
+		t.Fatal("deleted theme domain should be removed after rebuild")
+	}
+	if _, err := os.Stat(filepath.Join(root, "themes", "custom")); !os.IsNotExist(err) {
+		t.Fatalf("deleted theme dir should not exist, got err=%v", err)
+	}
+	if !gettext.HasDomain("default") {
+		t.Fatal("default theme domain should remain after deleting another theme")
+	}
+}
+
+func initTestI18n(t *testing.T) {
+	t.Helper()
+	gettext.SetGlobal(gettext.NewTranslations())
+	i18n.SetHot(false)
+	if err := i18n.Init(); err != nil {
+		t.Fatalf("init i18n: %v", err)
+	}
 }
 
 func writeTestTheme(dir, name, indexContent string) error {
 	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o755); err != nil {
 		return err
 	}
+	if err := os.MkdirAll(filepath.Join(dir, "i18n"), 0o755); err != nil {
+		return err
+	}
 	if err := os.WriteFile(filepath.Join(dir, "theme.yaml"), []byte("name: "+name+"\n"), 0o644); err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(dir, "templates", "index.gohtml"), []byte(indexContent), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "templates", "index.gohtml"), []byte(indexContent), 0o644); err != nil {
+		return err
+	}
+	po := "msgid \"\"\nmsgstr \"\"\n\"Language: en_US\\n\"\n\nmsgid \"主题\"\nmsgstr \"Theme\"\n"
+	return os.WriteFile(filepath.Join(dir, "i18n", "en_US.po"), []byte(po), 0o644)
 }

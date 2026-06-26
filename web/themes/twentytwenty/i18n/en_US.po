@@ -1,0 +1,213 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: blog\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-26 08:31:38+0800\n"
+"Language: en_US\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:3
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:16
+msgid "%d 条评论"
+msgid_plural "%d 条评论"
+msgstr[0] "%d comment"
+msgstr[1] "%d comments"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:30
+msgid "回复时邮件通知"
+msgstr "Email notifications for replies"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:30
+msgid "文章作者"
+msgstr "Post author"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:30
+msgid "登录用户"
+msgstr "Logged-in user"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:30
+msgid "管理员"
+msgstr "Administrator"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:31
+msgid "评论审核中,当前仅自己可见"
+msgstr "Comment is awaiting moderation and is visible only to you."
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:34
+msgid "回复"
+msgstr "Reply"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:33
+msgid "回复 @%s"
+msgstr "Reply to @%s"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/pagination.gohtml:6
+msgid "上一页"
+msgstr "Previous"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/pagination.gohtml:15
+msgid "下一页"
+msgstr "Next"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:53
+msgid "以 <strong>%s</strong> 的身份发表评论，"
+msgstr "Commenting as <strong>%s</strong>, "
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:54
+msgid "登出"
+msgstr "Log out"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:66
+msgid "昵称"
+msgstr "Name"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:66
+msgid "昵称 *"
+msgstr "Name *"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:67
+msgid "邮箱"
+msgstr "Email"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:67
+msgid "邮箱 *(不公开)"
+msgstr "Email * (not public)"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:68
+msgid "网站"
+msgstr "Website"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:68
+msgid "网站(可选)"
+msgstr "Website (optional)"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:71
+msgid "评论内容"
+msgstr "Comment"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:71
+msgid "说点什么吧…… *"
+msgstr "Say something… *"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:75
+msgid "表情"
+msgstr "Emojis"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:85
+msgid "有回复时邮件通知我"
+msgstr "Email me when there are replies"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:86
+msgid "取消回复"
+msgstr "Cancel reply"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:86
+msgid "提交评论"
+msgstr "Submit comment"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:87
+msgid "评论提交后需经审核才会显示。"
+msgstr "Comments will appear after moderation."
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:90
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:14
+msgid "评论已关闭"
+msgstr "Comments are closed"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/error.gohtml:6
+msgid "返回首页"
+msgstr "Back to home"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/footer.gohtml:5
+msgid "回顶部"
+msgstr "Back to top"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/footer.gohtml:6
+msgid "到底部"
+msgstr "Go to bottom"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/footer.gohtml:20
+msgid "SQL 执行详情 (%d 条)"
+msgstr "SQL Details (%d items)"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:3
+msgid "评论已提交,等待审核后显示。"
+msgstr "Comment submitted and awaiting moderation."
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:4
+msgid "提交失败,请稍后重试。"
+msgstr "Submission failed. Please try again later."
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:5
+msgid "网络错误,请稍后重试。"
+msgstr "Network error. Please try again later."
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:36
+msgid "打开菜单"
+msgstr "Open menu"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:7
+msgid "收起菜单"
+msgstr "Collapse menu"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:19
+msgid "跳到主要内容"
+msgstr "Skip to main content"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:31
+msgid "切换主题"
+msgstr "Switch theme"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:32
+msgid "明亮"
+msgstr "Light"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:33
+msgid "暗黑"
+msgstr "Dark"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/page.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:9
+msgid "%d 次阅读"
+msgid_plural "%d 次阅读"
+msgstr[0] "%d view"
+msgstr[1] "%d views"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:15
+msgid "暂无评论"
+msgstr "No comments"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/page.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:10
+msgid "编辑"
+msgstr "Edit"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:19
+msgid "阅读全文 →"
+msgstr "Read more →"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:21
+msgid "没有找到匹配的文章。"
+msgstr "No matching posts found."
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:4
+msgid "草稿预览"
+msgstr "Draft preview"

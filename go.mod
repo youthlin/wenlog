@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/prometheus/client_golang v1.23.2
-	github.com/youthlin/t v0.1.9
+	github.com/youthlin/t v0.1.10
 	golang.org/x/crypto v0.52.0
 	golang.org/x/text v0.37.0
 	gopkg.in/yaml.v3 v3.0.1

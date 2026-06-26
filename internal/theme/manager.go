@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/render"
 )
 
@@ -94,6 +95,15 @@ func (m *Manager) LoadTranslations() error {
 		}
 	}
 	return nil
+}
+
+// RebuildTranslations 重新构建应用域和所有主题域的翻译映射。
+// 适用于主题安装/删除后清理失效 domain，同时保留当前 locale 配置。
+func (m *Manager) RebuildTranslations() error {
+	if m == nil {
+		return nil
+	}
+	return i18n.RebuildDomains(m.LoadTranslations)
 }
 
 // List 返回所有已安装的主题列表，按名称排序。
@@ -247,6 +257,21 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 	m.mu.Lock()
 	m.themes[themeName] = t
 	m.mu.Unlock()
+	if err := m.RebuildTranslations(); err != nil {
+		m.mu.Lock()
+		if oldTheme != nil {
+			m.themes[themeName] = oldTheme
+		} else {
+			delete(m.themes, themeName)
+		}
+		m.mu.Unlock()
+		rbErr := rollbackThemeInstall(targetDir, backupDir)
+		restoreErr := m.RebuildTranslations()
+		if rbErr != nil || restoreErr != nil {
+			return nil, errors.Wrapf(err, "rebuild theme translations; rollback failed: %v; restore translations failed: %v", rbErr, restoreErr)
+		}
+		return nil, err
+	}
 	return t, nil
 }
 
@@ -264,14 +289,37 @@ func (m *Manager) Delete(name string) error {
 	if name == defaultThemeName {
 		return errors.New("cannot delete the default theme")
 	}
+	backupDir, err := backupExistingThemeDir(t.Dir)
+	if err != nil {
+		return err
+	}
 	m.mu.Lock()
 	delete(m.themes, name)
 	m.mu.Unlock()
-	if err := os.RemoveAll(t.Dir); err != nil {
+	if err := m.RebuildTranslations(); err != nil {
 		m.mu.Lock()
 		m.themes[name] = t
 		m.mu.Unlock()
-		return errors.Wrap(err, "remove theme dir")
+		if backupDir != "" {
+			_ = os.Rename(backupDir, t.Dir)
+		}
+		restoreErr := m.RebuildTranslations()
+		if restoreErr != nil {
+			return errors.Wrapf(err, "rebuild theme translations after delete; restore translations failed: %v", restoreErr)
+		}
+		return err
+	}
+	if backupDir != "" {
+		if err := os.RemoveAll(backupDir); err != nil {
+			m.mu.Lock()
+			m.themes[name] = t
+			m.mu.Unlock()
+			if _, statErr := os.Stat(t.Dir); os.IsNotExist(statErr) {
+				_ = os.Rename(backupDir, t.Dir)
+			}
+			_ = m.RebuildTranslations()
+			return errors.Wrap(err, "remove theme backup dir")
+		}
 	}
 	return nil
 }

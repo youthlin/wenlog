@@ -54,6 +54,10 @@ func loadTranslations() error {
 	// 这样启动阶段插入的初始内容也能跟随服务器默认语言做翻译。
 	// $ LANG=zh_CN ./blog start
 	gettext.SetLocale("")
+	return bindDefaultDomain()
+}
+
+func bindDefaultDomain() error {
 	if hot.Load() {
 		if _, err := os.Stat("web/i18n"); err == nil {
 			gettext.Load("web/i18n")
@@ -72,6 +76,22 @@ func loadTranslations() error {
 // Reload 重新加载翻译资源: 本地目录存在时优先使用本地目录,否则回退到 embed。
 func Reload() error {
 	return loadTranslations()
+}
+
+// RebuildDomains 清空当前已加载的文本域后重新绑定应用默认域，必要时再绑定额外 domain。
+// 它会保留当前 locale/sourceCodeLocale，适合主题安装/删除后重建翻译映射。
+func RebuildDomains(rebind func() error) error {
+	if gettext.Global() == nil {
+		return loadTranslations()
+	}
+	gettext.ClearDomains()
+	if err := bindDefaultDomain(); err != nil {
+		return err
+	}
+	if rebind == nil {
+		return nil
+	}
+	return rebind()
 }
 
 // BindDomain 从本地路径加载翻译文件并绑定到指定文本域。
