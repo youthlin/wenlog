@@ -91,7 +91,7 @@ func TestManagerInstallReplacesThemeAtomically(t *testing.T) {
 			t.Fatalf("temporary install directory was not cleaned up: %s", entry.Name())
 		}
 	}
-	if !gettext.HasDomain("custom") {
+	if !gettext.HasDomain("theme_custom") {
 		t.Fatal("installed theme domain should be rebuilt into global translations")
 	}
 }
@@ -109,19 +109,19 @@ func TestManagerDeleteRebuildsTranslations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new manager: %v", err)
 	}
-	if !gettext.HasDomain("custom") {
+	if !gettext.HasDomain("theme_custom") {
 		t.Fatal("custom theme domain should be loaded during scan")
 	}
 	if err := m.Delete("custom"); err != nil {
 		t.Fatalf("delete theme: %v", err)
 	}
-	if gettext.HasDomain("custom") {
+	if gettext.HasDomain("theme_custom") {
 		t.Fatal("deleted theme domain should be removed after rebuild")
 	}
 	if _, err := os.Stat(filepath.Join(root, "themes", "custom")); !os.IsNotExist(err) {
 		t.Fatalf("deleted theme dir should not exist, got err=%v", err)
 	}
-	if !gettext.HasDomain("default") {
+	if !gettext.HasDomain("theme_default") {
 		t.Fatal("default theme domain should remain after deleting another theme")
 	}
 }

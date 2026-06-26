@@ -491,7 +491,11 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 	if currentUser != nil && currentUser.Role == model.RoleAdmin && s.ShowSQLDetails {
 		data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
 	}
-	return i18n.InjectDomain(c, data, themeName)
+	themeDomain := ""
+	if currentTheme != nil {
+		themeDomain = currentTheme.ThemeDomain()
+	}
+	return i18n.InjectDomain(c, data, themeDomain)
 }
 
 func displayUserName(u *model.User) string {

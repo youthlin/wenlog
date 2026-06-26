@@ -111,12 +111,20 @@ func loadWidgetTemplates(dir string) map[string]bool {
 	return ids
 }
 
+// ThemeDomain 返回主题翻译使用的文本域名（加 theme_ 前缀避免与应用默认域冲突）。
+func (t *Theme) ThemeDomain() string {
+	if t == nil {
+		return ""
+	}
+	return "theme_" + t.Name
+}
+
 // LoadTranslations 把主题 i18n 目录绑定到主题名称对应的文本域。
 func (t *Theme) LoadTranslations() error {
 	if t == nil {
 		return nil
 	}
-	return i18n.BindDomain(t.Name, t.I18nDir())
+	return i18n.BindDomain(t.ThemeDomain(), t.I18nDir())
 }
 
 // TemplatesDir 返回主题的模板目录路径。
