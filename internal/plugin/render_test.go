@@ -54,3 +54,28 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 		t.Fatalf("RenderWidget(template)=(%q,%v), want template html", html, ok)
 	}
 }
+
+func TestRenderWidgetTemplateCanInvokePluginFunc(t *testing.T) {
+	dir := t.TempDir()
+	widgetsDir := filepath.Join(dir, "widgets")
+	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(`{{define "widget_hello"}}<section>{{pluginInvoke "greeting" "name" (pluginOption "name")}}</section>{{end}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	api := root.New(nil, nil, "plugin_demo")
+	api.RegisterFunc("greeting", func(api *root.API, args map[string]any) any {
+		return "Hello, " + args["name"].(string)
+	})
+	m := &Manager{
+		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
+		hooks:   NewRegistry(),
+		scripts: map[string]*FunctionsScript{"demo": {PluginID: "demo", api: api}},
+	}
+
+	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"name": "Plugin"}, nil)
+	if !ok || html != template.HTML("<section>Hello, Plugin</section>") {
+		t.Fatalf("RenderWidget(pluginInvoke)=(%q,%v), want invoked html", html, ok)
+	}
+}

@@ -56,7 +56,8 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 	if _, err := os.Stat(path); err != nil {
 		return "", false
 	}
-	tpl, err := template.New(filepath.Base(path)).Funcs(pluginTemplateFuncs(renderCtx.Options)).ParseFiles(path)
+	api := m.pluginAPI(ctx, p)
+	tpl, err := template.New(filepath.Base(path)).Funcs(pluginTemplateFuncs(ctx, renderCtx.Options, api)).ParseFiles(path)
 	if err != nil {
 		if m.log != nil {
 			m.log.Warn("解析插件组件模板失败", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
@@ -70,7 +71,7 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 		"Options":  renderCtx.Options,
 		"Data":     renderCtx.Data,
 		"tp":       tr,
-		"api":      root.New(nil, nil, p.PluginDomain()).WithContext(ctx),
+		"api":      api,
 	}
 	for _, name := range []string{"widget_" + renderCtx.WidgetID, filepath.Base(path)} {
 		var buf bytes.Buffer
@@ -81,12 +82,31 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 	return "", false
 }
 
-func pluginTemplateFuncs(options map[string]string) template.FuncMap {
+func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *root.API {
+	if p == nil {
+		return root.New(nil, nil, "").WithContext(ctx)
+	}
+	m.mu.RLock()
+	script := m.scripts[p.ID]
+	m.mu.RUnlock()
+	if script != nil && script.api != nil {
+		return script.api.WithContext(ctx)
+	}
+	return root.New(nil, nil, p.PluginDomain()).WithContext(ctx)
+}
+
+func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *root.API) template.FuncMap {
 	return template.FuncMap{
 		"pluginOption": func(key string) string { return options[key] },
-		"safeHTML":     func(s string) template.HTML { return template.HTML(s) },
-		"escapeHTML":   html.EscapeString,
-		"toInt":        func(s string) int { n, _ := strconv.Atoi(s); return n },
+		"pluginInvoke": func(name string, args ...any) any {
+			if api == nil {
+				return nil
+			}
+			return api.InvokeFunc(ctx, name, parseKVArgs(args))
+		},
+		"safeHTML":   func(s string) template.HTML { return template.HTML(s) },
+		"escapeHTML": html.EscapeString,
+		"toInt":      func(s string) int { n, _ := strconv.Atoi(s); return n },
 		"default": func(def, val any) any {
 			if val == nil {
 				return def
@@ -98,6 +118,18 @@ func pluginTemplateFuncs(options map[string]string) template.FuncMap {
 			return val
 		},
 	}
+}
+
+func parseKVArgs(args []any) map[string]any {
+	result := make(map[string]any, len(args)/2)
+	for i := 0; i+1 < len(args); i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+		result[key] = args[i+1]
+	}
+	return result
 }
 
 // WidgetsDir 返回插件组件模板目录路径。

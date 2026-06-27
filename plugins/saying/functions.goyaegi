@@ -1,5 +1,48 @@
 package plugin
 
+import "pluginapi/pluginapi"
+
+type SayingItem struct {
+	CommentURL  string
+	AuthorURL   string
+	Snippet     string
+	AuthorName  string
+	AuthorEmail string
+}
+
 // Register 保留插件运行时入口。
-// 当前 saying 组件由 plugin.yaml 声明，宿主会把启用插件的组件声明加入 widgets.available。
-func Register() {}
+// saying 组件由 plugin.yaml 声明，宿主会把启用插件的组件声明加入 widgets.available。
+func Register() {
+	pluginapi.Api.RegisterFunc("sayingItems", sayingItems)
+}
+
+func sayingItems(api *pluginapi.API, args map[string]any) any {
+	postID := args["post_id"]
+	count := 5
+	if n, ok := args["count"].(int); ok && n > 0 {
+		count = n
+	}
+	post := api.Post(postID)
+	if post == nil {
+		return nil
+	}
+	author := api.User(post.AuthorID)
+	if author == nil {
+		return nil
+	}
+	comments := api.SayingComments(postID, count)
+	if len(comments) == 0 {
+		return nil
+	}
+	items := make([]SayingItem, 0, len(comments))
+	for _, c := range comments {
+		items = append(items, SayingItem{
+			CommentURL:  api.CommentURL(post, c),
+			AuthorURL:   c.URL,
+			Snippet:     api.Snippet(c.Content, 36),
+			AuthorName:  author.DisplayName,
+			AuthorEmail: author.Email,
+		})
+	}
+	return items
+}
