@@ -1,0 +1,113 @@
+package plugin
+
+import (
+	"context"
+	"net/url"
+	"strings"
+
+	"pluginapi"
+)
+
+var smileyNames = []string{
+	"微笑",
+	"呲牙",
+	"偷笑",
+	"调皮",
+	"可爱",
+	"亲亲",
+	"鼓掌",
+	"坏笑",
+	"得意",
+	"大兵",
+	"白眼",
+	"疑问",
+	"惊讶",
+	"吓到",
+	"流汗",
+	"流泪",
+	"难过",
+	"发怒",
+	"发呆",
+	"撇嘴",
+	"抠鼻",
+}
+
+// Register 注册评论表情插件的 hook。
+func Register() {
+	pluginapi.Api.AddAction("head.end", func(ctx context.Context, args ...any) {
+		renderAssets(pluginapi.Api.WithContext(ctx), args...)
+	})
+	pluginapi.Api.AddAction("comment_form.after_textarea", func(ctx context.Context, args ...any) {
+		renderSmileyPanel(pluginapi.Api.WithContext(ctx), args...)
+	})
+	pluginapi.Api.AddFilter("comment.render_html", func(ctx context.Context, value any, args ...any) any {
+		return renderCommentSmilies(pluginapi.Api.WithContext(ctx), value, args...)
+	})
+}
+
+func renderAssets(api *pluginapi.API, args ...any) {
+	out := writerArg(args)
+	if out == nil {
+		return
+	}
+	if !enabled(api) {
+		return
+	}
+	api.WriteString(out, `<link rel="stylesheet" href="/plugin-assets/comment-smilies/comment-smilies.css">`)
+}
+
+func renderSmileyPanel(api *pluginapi.API, args ...any) {
+	out := writerArg(args)
+	if out == nil {
+		return
+	}
+	if !enabled(api) {
+		return
+	}
+	api.WriteString(out, `<div class="comment-smilies" data-smilies>`)
+	api.WriteString(out, `<div class="comment-smilies-label">`+api.EscapeHTML(api.T("表情"))+`</div>`)
+	api.WriteString(out, `<div class="comment-smilies-list">`)
+	for _, name := range smileyNames {
+		code := "[/" + name + "]"
+		escapedName := api.EscapeHTML(name)
+		escapedCode := api.EscapeHTML(code)
+		api.WriteString(out, `<button type="button" class="comment-smiley-btn" data-smiley-code="`+escapedCode+`" title="`+escapedName+`" aria-label="`+escapedName+`">`)
+		api.WriteString(out, `<img src="`+smileySrc(name)+`" alt="`+escapedName+`" width="24" height="24">`)
+		api.WriteString(out, `</button>`)
+	}
+	api.WriteString(out, `</div></div>`)
+}
+
+func renderCommentSmilies(api *pluginapi.API, value any, args ...any) any {
+	content, ok := value.(string)
+	if !ok || content == "" {
+		return value
+	}
+	if !enabled(api) {
+		return value
+	}
+	for _, name := range smileyNames {
+		code := "[/" + name + "]"
+		img := `<img class="comment-smiley" src="` + smileySrc(name) + `" alt="` + api.EscapeHTML(name) + `" title="` + api.EscapeHTML(name) + `" width="24" height="24">`
+		content = strings.ReplaceAll(content, code, img)
+	}
+	return content
+}
+
+func enabled(api *pluginapi.API) bool {
+	return api.PluginOption("enabled", "true") != "false"
+}
+
+func smileySrc(name string) string {
+	return "/plugin-assets/comment-smilies/smilies/" + url.PathEscape(name) + ".gif"
+}
+
+func writerArg(args []any) any {
+	if len(args) == 0 {
+		return nil
+	}
+	if nested, ok := args[0].([]any); ok {
+		return writerArg(nested)
+	}
+	return args[0]
+}

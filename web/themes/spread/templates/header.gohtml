@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 {{$customCSS := themeOption "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+{{pluginSlot "head.end" .}}
 </head>
 <body>
 <a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>

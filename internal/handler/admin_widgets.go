@@ -14,12 +14,13 @@ import (
 
 // configuredWidget 是模板中一个已配置组件的展示数据。
 type configuredWidget struct {
-	ID     string            // 组件 ID
-	Label  string            // 中文显示名
-	Decl   theme.WidgetDecl  // 主题声明（含选项定义）
-	Opts   map[string]string // 当前选项值
-	Index  int               // 在区域内的序号
-	Source string            // "builtin" 或 "theme"
+	ID           string            // 组件 ID
+	Label        string            // 中文显示名
+	Decl         theme.WidgetDecl  // 主题声明（含选项定义）
+	Opts         map[string]string // 当前选项值
+	Index        int               // 在区域内的序号
+	Source       string            // builtin / theme / plugin
+	ConfigSource string            // 保存到配置里的来源，如 plugin:saying
 }
 
 // areaPanel 是模板中一个区域面板的展示数据。
@@ -27,6 +28,7 @@ type areaPanel struct {
 	Area              theme.WidgetArea
 	AreaKey           string
 	ConfiguredWidgets []configuredWidget
+	ResetLegacyConfig bool
 }
 
 // WidgetsPage 组件配置页。
@@ -39,20 +41,18 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 	}
 
 	widgetDecls := theme.WidgetDeclsWithBuiltins(t)
-	widgetDecls = translateBuiltinWidgetDecls(widgetDecls, tr)
-
-	// 构建 widgetDecl 查找表
-	declByID := make(map[string]theme.WidgetDecl)
-	for _, w := range widgetDecls {
-		declByID[w.ID] = w
+	if h.themeManager != nil {
+		widgetDecls = h.themeManager.WidgetDecls(c.Request.Context(), t, "")
 	}
+	widgetDecls = translateBuiltinWidgetDecls(widgetDecls, tr)
 
 	// 可用组件列表（用于"添加"下拉）
 	type availWidget struct {
-		ID     string
-		Label  string
-		Area   string // 默认区域
-		Source string // "builtin" 或 "theme"
+		ID           string
+		Label        string
+		Area         string // 默认区域
+		Source       string // builtin / theme / plugin
+		ConfigSource string // 保存到配置里的来源，如 plugin:saying
 	}
 	var availableWidgets []availWidget
 	for _, w := range widgetDecls {
@@ -60,15 +60,16 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		if label == "" {
 			label = w.ID
 		}
-		source := "theme"
-		if theme.IsBuiltinWidget(w.ID) {
-			source = "builtin"
+		source := w.Source
+		if source == "" {
+			source = theme.WidgetSourceTheme
 		}
 		availableWidgets = append(availableWidgets, availWidget{
-			ID:     w.ID,
-			Label:  label,
-			Area:   w.Area,
-			Source: source,
+			ID:           w.ID,
+			Label:        label,
+			Area:         w.Area,
+			Source:       source,
+			ConfigSource: widgetConfigSource(w),
 		})
 	}
 
@@ -76,11 +77,17 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 	var areas []areaPanel
 	for areaKey, area := range t.WidgetAreas {
 		configJSON := h.getWidgetConfig(c, areaKey)
+		resetLegacyConfig := false
+		if theme.HasLegacyWidgetConfig(configJSON) {
+			_ = h.st.DeleteSetting(c, "widget_"+areaKey)
+			configJSON = ""
+			resetLegacyConfig = true
+		}
 		items := theme.ParseWidgetConfig(configJSON)
 
 		var configured []configuredWidget
 		for i, item := range items {
-			decl, ok := declByID[item.ID]
+			decl, ok := widgetDeclForConfig(widgetDecls, item)
 			if !ok {
 				// 配置中存在但主题未声明，跳过
 				continue
@@ -93,17 +100,18 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 			if opts == nil {
 				opts = make(map[string]string)
 			}
-			source := "theme"
-			if theme.IsBuiltinWidget(item.ID) {
-				source = "builtin"
+			source := decl.Source
+			if source == "" {
+				source = theme.WidgetSourceTheme
 			}
 			configured = append(configured, configuredWidget{
-				ID:     item.ID,
-				Label:  label,
-				Decl:   decl,
-				Opts:   opts,
-				Index:  i,
-				Source: source,
+				ID:           item.ID,
+				Label:        label,
+				Decl:         decl,
+				Opts:         opts,
+				Index:        i,
+				Source:       source,
+				ConfigSource: widgetConfigSource(decl),
 			})
 		}
 
@@ -111,6 +119,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 			Area:              area,
 			AreaKey:           areaKey,
 			ConfiguredWidgets: configured,
+			ResetLegacyConfig: resetLegacyConfig,
 		})
 	}
 
@@ -149,6 +158,9 @@ func (h *Admin) SaveWidgets(c *gin.Context) {
 		var items []theme.WidgetConfigItem
 		for i, id := range ids {
 			item := theme.WidgetConfigItem{ID: id, Opts: make(map[string]string)}
+			if source := c.PostForm(fmt.Sprintf("widget_source_%s_%d", areaKey, i)); source != "" {
+				item.Source = source
+			}
 			// 读取该位置组件的选项
 			prefix := fmt.Sprintf("opts_%s_%d_", areaKey, i)
 			for key, values := range c.Request.PostForm {
@@ -174,6 +186,32 @@ func (h *Admin) SaveWidgets(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/widgets?notice="+tr.T("组件配置已保存"))
+}
+
+func widgetDeclForConfig(decls []theme.WidgetDecl, item theme.WidgetConfigItem) (theme.WidgetDecl, bool) {
+	if item.Source == "" {
+		return theme.WidgetDecl{}, false
+	}
+	for _, decl := range decls {
+		if decl.ID != item.ID {
+			continue
+		}
+		source := decl.Source
+		if decl.Source == theme.WidgetSourcePlugin && decl.PluginID != "" {
+			source = "plugin:" + decl.PluginID
+		}
+		if source == item.Source || decl.Source == item.Source {
+			return decl, true
+		}
+	}
+	return theme.WidgetDecl{}, false
+}
+
+func widgetConfigSource(decl theme.WidgetDecl) string {
+	if decl.Source == theme.WidgetSourcePlugin && decl.PluginID != "" {
+		return "plugin:" + decl.PluginID
+	}
+	return decl.Source
 }
 
 func translateBuiltinWidgetDecls(decls []theme.WidgetDecl, tr interface{ T(string, ...any) string }) []theme.WidgetDecl {

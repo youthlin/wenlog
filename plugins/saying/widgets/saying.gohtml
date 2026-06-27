@@ -1,16 +1,14 @@
 {{define "widget_saying"}}
-{{$title := widgetOption "title" | default (.th.T "博主动态")}}
-{{$postID := widgetOption "post_id" | toInt}}
-{{$saying := themeInvoke "saying" "n" 5 "post_id" $postID}}
+{{$title := pluginOption "title" | default (.tp.T "博主动态")}}
+{{$postID := pluginOption "post_id" | toInt}}
+{{$saying := .api.SayingItems $postID 5}}
 {{if $saying}}
 <section class="widget widget-saying">
   <h3>{{$title}}</h3>
-  {{if $saying}}
   <div class="widget-saying-author">
-    <img class="avatar" src="{{avatarURL (index $saying 0).AuthorEmail .DefaultAvatar}}" alt="" width="32" height="32">
+    <img class="avatar" src="{{.api.AvatarURL (index $saying 0).AuthorEmail .Data.DefaultAvatar}}" alt="" width="32" height="32">
     <span>{{(index $saying 0).AuthorName}}</span>
   </div>
-  {{end}}
   <ul>
     {{range $saying}}
     <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>

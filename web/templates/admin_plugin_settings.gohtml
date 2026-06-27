@@ -1,0 +1,59 @@
+{{define "admin_plugin_settings.gohtml"}}
+{{template "admin_header" .}}
+<div class="page-head">
+  <h1>{{.t.T "插件设置"}} — {{.PluginName}}</h1>
+</div>
+
+{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+
+{{if .Plugin}}
+<p class="tip"><a href="/admin/plugins">← {{.t.T "返回插件列表"}}</a></p>
+{{if .NoOptions}}
+<p class="tip">{{.t.T "当前插件未声明任何可配置选项。"}}</p>
+{{else}}
+<form method="post" action="/admin/plugin/{{.PluginID}}/settings" class="theme-options-form">
+  {{template "csrf_field" .}}
+  {{range .Options}}
+  {{$opt := .}}
+  <section class="card settings-card">
+    <label for="option_{{$opt.ID}}"><strong>{{$.tp.T $opt.Label}}</strong></label>
+    {{if $opt.Description}}<p class="tip">{{$.tp.T $opt.Description}}</p>{{end}}
+
+    {{if eq $opt.Type "text"}}
+    <input type="text" id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" value="{{$opt.Value}}">
+
+    {{else if eq $opt.Type "textarea"}}
+    <textarea id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" rows="4">{{$opt.Value}}</textarea>
+
+    {{else if eq $opt.Type "number"}}
+    <input type="number" id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" value="{{$opt.Value}}"
+      {{if $opt.Min}}min="{{$opt.Min}}"{{end}} {{if $opt.Max}}max="{{$opt.Max}}"{{end}}>
+
+    {{else if eq $opt.Type "select"}}
+    <select id="option_{{$opt.ID}}" name="option_{{$opt.ID}}">
+      {{range $opt.Options}}
+      <option value="{{.Value}}" {{if eq .Value $opt.Value}}selected{{end}}>{{$.tp.T .Label}}</option>
+      {{end}}
+    </select>
+
+    {{else if eq $opt.Type "bool"}}
+    <label class="checkbox-label">
+      <input type="checkbox" id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" value="true" {{if eq $opt.Value "true"}}checked{{end}}>
+      <span>{{$.t.T "启用"}}</span>
+    </label>
+
+    {{else}}
+    <input type="text" id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" value="{{$opt.Value}}">
+    {{end}}
+
+    {{if $opt.Default}}<p class="option-default-hint">{{$.t.T "默认值：%s" $opt.Default}}</p>{{end}}
+  </section>
+  {{end}}
+
+  <p><button type="submit" class="btn">{{.t.T "保存"}}</button></p>
+</form>
+{{end}}
+{{end}}
+
+{{template "admin_footer" .}}
+{{end}}

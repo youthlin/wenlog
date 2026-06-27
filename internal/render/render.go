@@ -2,6 +2,7 @@
 package render
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 	"reflect"
@@ -22,6 +23,7 @@ var _ ginrender.Render = (*widgetHTMLRender)(nil)
 // RequestContext 是一次模板渲染独占的运行时上下文。
 // 类型保持为 any，避免 render 包依赖 store/theme 包。
 type RequestContext struct {
+	Context       context.Context
 	Template      *template.Template
 	ThemeLoader   any
 	Theme         any
@@ -35,11 +37,14 @@ const (
 	// ThemeDataKey 是模板数据中保存当前请求主题对象的内部 key。
 	// 它不供模板直接使用，仅用于模板函数复用请求级当前主题，避免重复查询 Setting。
 	ThemeDataKey = "__theme"
+	// ContextDataKey 是模板数据中保存当前请求 context 的内部 key。
+	ContextDataKey = "__request_context"
 )
 
 // Render 实现 [ginrender.Render] 接口
 func (w *widgetHTMLRender) Render(wr http.ResponseWriter) error {
 	ctx := &RequestContext{
+		Context:     dataContext(w.data),
 		ThemeLoader: dataValue(w.data, ThemeLoaderDataKey),
 		Theme:       dataValue(w.data, ThemeDataKey),
 	}
@@ -49,6 +54,13 @@ func (w *widgetHTMLRender) Render(wr http.ResponseWriter) error {
 	}
 	ctx.Template = tpl
 	return tpl.ExecuteTemplate(wr, w.name, w.data)
+}
+
+func dataContext(data any) context.Context {
+	if ctx, ok := dataValue(data, ContextDataKey).(context.Context); ok && ctx != nil {
+		return ctx
+	}
+	return context.Background()
 }
 
 func dataValue(data any, key string) any {
@@ -87,6 +99,11 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		"themeWidgets":  func(area string) any { return themeWidgets(runtime, ctx, area) },
 		"renderWidgets": func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
 		"widgetOption":  func(key string) string { return widgetOption(ctx, key) },
+		"pluginSlot":    func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
+		"postContent":   func(post any) template.HTML { return postContent(runtime, ctx, post) },
+		"commentContent": func(comment any) template.HTML {
+			return commentContent(runtime, ctx, comment)
+		},
 	})
 	return cloned, nil
 }

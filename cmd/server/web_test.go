@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/web"
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -149,5 +152,57 @@ func TestEnsureInitialContent(t *testing.T) {
 	}
 	if comments[0].Status != model.CommentApproved || comments[0].Author != "youthlin" {
 		t.Fatalf("comment = %+v", comments[0])
+	}
+}
+
+func TestEnsureThemesOnDiskRefreshesBundledThemeWhenVersionChanged(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get wd: %v", err)
+	}
+	root := t.TempDir()
+	if err := os.Chdir(root); err != nil {
+		t.Fatalf("chdir temp dir: %v", err)
+	}
+	defer func() { _ = os.Chdir(wd) }()
+
+	staleDir := filepath.Join("themes", "spread", "templates")
+	if err := os.MkdirAll(staleDir, 0o755); err != nil {
+		t.Fatalf("mkdir stale theme dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join("themes", "spread", "theme.yaml"), []byte("name: spread\nversion: 0.0.0\n"), 0o644); err != nil {
+		t.Fatalf("write stale theme yaml: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(staleDir, "header.gohtml"), []byte("stale-header"), 0o644); err != nil {
+		t.Fatalf("write stale header: %v", err)
+	}
+
+	ensureThemesOnDisk()
+
+	wantYAML, err := fs.ReadFile(web.Themes, "themes/spread/theme.yaml")
+	if err != nil {
+		t.Fatalf("read bundled theme yaml: %v", err)
+	}
+	gotYAML, err := os.ReadFile(filepath.Join("themes", "spread", "theme.yaml"))
+	if err != nil {
+		t.Fatalf("read refreshed theme yaml: %v", err)
+	}
+	if string(gotYAML) != string(wantYAML) {
+		t.Fatalf("theme yaml not refreshed: got %q want %q", gotYAML, wantYAML)
+	}
+
+	wantHeader, err := fs.ReadFile(web.Themes, "themes/spread/templates/header.gohtml")
+	if err != nil {
+		t.Fatalf("read bundled header: %v", err)
+	}
+	gotHeader, err := os.ReadFile(filepath.Join("themes", "spread", "templates", "header.gohtml"))
+	if err != nil {
+		t.Fatalf("read refreshed header: %v", err)
+	}
+	if string(gotHeader) != string(wantHeader) {
+		t.Fatalf("theme template not refreshed")
+	}
+	if !strings.Contains(string(gotHeader), `pluginSlot "head.end"`) {
+		t.Fatalf("refreshed header missing plugin hook: %s", gotHeader)
 	}
 }

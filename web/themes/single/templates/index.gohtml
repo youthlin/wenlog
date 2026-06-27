@@ -12,6 +12,7 @@
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+{{pluginSlot "head.end" .}}
 </head>
 <body>
 <a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
@@ -86,6 +87,7 @@
 })();
 </script>
 <script src="/assets/common.js"></script>
+{{pluginSlot "body.end" .}}
 </body>
 </html>
 {{end}}
@@ -114,7 +116,7 @@
         <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
         {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.th.T "评论审核中,当前仅自己可见"}}</span>{{end}}
       </div>
-      <div class="comment-body">{{.Content}}</div>
+      <div class="comment-body">{{commentContent .}}</div>
       <button class="comment-reply" type="button" data-reply="{{.ID}}" data-reply-target="comment-{{.ID}}">{{$.th.T "回复"}}</button>
       {{$pid := .ID}}
       <ul class="comment-children">
@@ -126,7 +128,7 @@
             <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
             {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.th.T "评论审核中,当前仅自己可见"}}</span>{{end}}
           </div>
-          <div class="comment-body">{{if .ReplyToAuthor}}<a class="comment-reply-to" href="#comment-{{.ReplyToID}}">{{$.th.T "回复 @%s" .ReplyToAuthor}}</a>{{end}}{{.Content}}</div>
+          <div class="comment-body">{{if .ReplyToAuthor}}<a class="comment-reply-to" href="#comment-{{.ReplyToID}}">{{$.th.T "回复 @%s" .ReplyToAuthor}}</a>{{end}}{{commentContent .}}</div>
           <button class="comment-reply" type="button" data-reply="{{.ID}}" data-reply-target="comment-{{.ID}}">{{$.th.T "回复"}}</button>
         </li>
         {{end}}
@@ -164,6 +166,7 @@
     {{end}}
     <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
     <p><label class="sr-only" for="comment-content">{{.th.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="5" placeholder="{{.th.T "说点什么吧…… *"}}" required></textarea></p>
+    {{pluginSlot "comment_form.after_textarea" .}}
     {{if .MailEnabled}}<p><label><input type="checkbox" name="notify"> {{.th.T "有回复时邮件通知我"}}</label></p>{{end}}
     <p class="comment-form-actions"><button type="submit">{{.th.T "提交评论"}}</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>{{.th.T "取消回复"}}</button></p>
     <p class="comment-tip">{{.th.T "评论提交后需经审核才会显示。"}}</p>
@@ -214,7 +217,7 @@
       <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
       {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
     </div>
-    <div class="post-content">{{detailHTML .Post}}</div>
+    <div class="post-content">{{postContent .Post}}</div>
     {{if .Post.Tags}}
     <div class="post-tags">
       {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}

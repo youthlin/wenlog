@@ -9,7 +9,7 @@
     <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
     {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
   </div>
-  <div class="post-content">{{detailHTML .Post}}</div>
+  <div class="post-content">{{postContent .Post}}</div>
   {{if .Post.Tags}}
   <div class="post-tags">
     {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}

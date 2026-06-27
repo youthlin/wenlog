@@ -442,6 +442,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		"RegistrationOpen": s.RegistrationOpen,
 		"MailEnabled":      s.MailEnabled,
 	}
+	data[render.ContextDataKey] = c.Request.Context()
 	if loader != nil {
 		data[render.ThemeLoaderDataKey] = loader
 	}

@@ -20,7 +20,7 @@
       <nav class="toc-list" data-toc-list></nav>
     </aside>
     <div class="article-body">
-      <div class="post-content">{{detailHTML .Post}}</div>
+      <div class="post-content">{{postContent .Post}}</div>
       {{if .Post.Tags}}
       <div class="post-tags">
         {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}

@@ -185,6 +185,12 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, 
 	adminGroup.GET("/widgets", adm.WidgetsPage)
 	adminGroup.POST("/widgets", adm.SaveWidgets)
 
+	// 插件管理
+	adminGroup.GET("/plugins", adm.PluginsPage)
+	adminGroup.POST("/plugin/:id/:action", adm.PluginAction)
+	adminGroup.GET("/plugin/:id/settings", adm.PluginSettingsPage)
+	adminGroup.POST("/plugin/:id/settings", adm.SavePluginSettings)
+
 	// 主题全局选项
 	adminGroup.GET("/theme-options", adm.ThemeOptionsPage)
 	adminGroup.POST("/theme-options", adm.SaveThemeOptions)

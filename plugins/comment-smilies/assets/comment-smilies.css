@@ -1,0 +1,60 @@
+.comment-smiley {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.12em;
+}
+
+.comment-smilies {
+  margin: -4px 0 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.comment-smilies-label {
+  margin-bottom: 8px;
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.comment-smilies-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.comment-form .comment-smiley-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.comment-form .comment-smiley-btn:hover,
+.comment-form .comment-smiley-btn:focus-visible {
+  border-color: var(--border, #d1d5db);
+  background: transparent;
+  opacity: 0.9;
+  outline: none;
+}
+
+.comment-form .comment-smiley-btn img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 640px) {
+  .comment-smilies-list { gap: 4px; }
+  .comment-form .comment-smiley-btn { padding: 1px; }
+}

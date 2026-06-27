@@ -1,11 +1,24 @@
 package theme
 
 import (
+	"context"
 	"encoding/json"
+	"reflect"
 	"slices"
 	"sort"
+	"strings"
 
+	"github.com/youthlin/blog/internal/plugin"
 	gettext "github.com/youthlin/t"
+)
+
+const (
+	// WidgetSourceBuiltin 表示内置组件。
+	WidgetSourceBuiltin = "builtin"
+	// WidgetSourceTheme 表示主题提供的组件。
+	WidgetSourceTheme = "theme"
+	// WidgetSourcePlugin 表示插件提供的组件。
+	WidgetSourcePlugin = "plugin"
 )
 
 // BuiltinWidgetIDs 内置组件 ID 列表。
@@ -57,6 +70,7 @@ func WidgetDeclsWithBuiltins(t *Theme) []WidgetDecl {
 			if w.ID == "" || seen[w.ID] {
 				continue
 			}
+			w.Source = WidgetSourceTheme
 			decls = append(decls, w)
 			seen[w.ID] = true
 		}
@@ -65,23 +79,95 @@ func WidgetDeclsWithBuiltins(t *Theme) []WidgetDecl {
 		if seen[w.ID] {
 			continue
 		}
+		w.Source = WidgetSourceBuiltin
 		decls = append(decls, w)
 		seen[w.ID] = true
 	}
 	return decls
 }
 
+// WidgetDeclsWithFilter 返回应用 widgets.available filter 后的组件声明列表。
+func WidgetDeclsWithFilter(ctx context.Context, hooks *plugin.Registry, t *Theme, area string) []WidgetDecl {
+	decls := WidgetDeclsWithBuiltins(t)
+	if hooks == nil {
+		return normalizeWidgetDecls(decls)
+	}
+	filtered := hooks.ApplyFilters(ctx, "widgets.available", decls, map[string]any{
+		"theme": t,
+		"area":  area,
+	})
+	switch v := filtered.(type) {
+	case []WidgetDecl:
+		return normalizeWidgetDecls(v)
+	case []*WidgetDecl:
+		out := make([]WidgetDecl, 0, len(v))
+		for _, item := range v {
+			if item != nil {
+				out = append(out, *item)
+			}
+		}
+		return normalizeWidgetDecls(out)
+	default:
+		if converted, ok := reflectWidgetDecls(filtered); ok {
+			return normalizeWidgetDecls(converted)
+		}
+		return normalizeWidgetDecls(decls)
+	}
+}
+
 // WidgetInfo 渲染时使用的组件信息。
 type WidgetInfo struct {
 	ID           string            // 组件 ID
+	Source       string            // builtin / theme / plugin
+	PluginID     string            // Source=plugin 时的插件 ID
 	TemplateName string            // 模板 define 名称，如 "widget_search"
 	Options      map[string]string // 组件选项
 }
 
 // WidgetConfigItem 是组件配置对象数组中的一个条目。
 type WidgetConfigItem struct {
-	ID   string            `json:"id"`
-	Opts map[string]string `json:"opts,omitempty"`
+	ID     string            `json:"id"`
+	Source string            `json:"source,omitempty"`
+	Opts   map[string]string `json:"opts,omitempty"`
+}
+
+// ResolveWidgetsWithDecls 根据用户配置和已过滤的组件声明解析区域组件列表。
+func ResolveWidgetsWithDecls(userConfigJSON string, t *Theme, area string, decls []WidgetDecl) []WidgetInfo {
+	if t == nil {
+		return nil
+	}
+	decls = normalizeWidgetDecls(decls)
+	available := widgetsInAreaFromDecls(t, area, decls)
+	if len(available) == 0 {
+		return nil
+	}
+	items := ParseWidgetConfig(userConfigJSON)
+	if len(items) == 0 {
+		for _, w := range decls {
+			if w.Source == WidgetSourceTheme && w.Area == area {
+				items = append(items, WidgetConfigItem{ID: w.ID, Source: widgetConfigSource(w)})
+			}
+		}
+	}
+
+	var result []WidgetInfo
+	for _, item := range items {
+		decl, ok := resolveWidgetDecl(available, item)
+		if !ok {
+			continue
+		}
+		if decl.Source != WidgetSourcePlugin && !widgetTemplateExists(t, decl.ID) && !IsBuiltinWidget(decl.ID) {
+			continue
+		}
+		result = append(result, WidgetInfo{
+			ID:           decl.ID,
+			Source:       decl.Source,
+			PluginID:     decl.PluginID,
+			TemplateName: "widget_" + decl.ID,
+			Options:      item.Opts,
+		})
+	}
+	return result
 }
 
 // ResolveWidgets 根据用户配置和主题声明，解析某个区域应渲染的组件列表。
@@ -90,54 +176,47 @@ type WidgetConfigItem struct {
 //
 // 为空则使用主题默认。
 func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
-	available := widgetsInArea(t, area)
-	if len(available) == 0 {
-		return nil
-	}
-	items := ParseWidgetConfig(userConfigJSON)
-	if len(items) == 0 {
-		// 使用主题默认：该区域声明的全部组件，按 yaml 声明顺序
-		for _, w := range t.Widgets {
-			if w.Area == area {
-				items = append(items, WidgetConfigItem{ID: w.ID})
-			}
-		}
-	}
-
-	var result []WidgetInfo
-	for _, item := range items {
-		if !available[item.ID] {
-			continue
-		}
-		tmplName := "widget_" + item.ID
-		if !widgetTemplateExists(t, item.ID) && !IsBuiltinWidget(item.ID) {
-			continue
-		}
-		result = append(result, WidgetInfo{
-			ID:           item.ID,
-			TemplateName: tmplName,
-			Options:      item.Opts,
-		})
-	}
-	return result
+	return ResolveWidgetsWithDecls(userConfigJSON, t, area, WidgetDeclsWithBuiltins(t))
 }
 
-func widgetsInArea(t *Theme, area string) map[string]bool {
+func widgetsInAreaFromDecls(t *Theme, area string, decls []WidgetDecl) map[string]WidgetDecl {
 	if t == nil {
 		return nil
 	}
-	available := make(map[string]bool)
-	for _, w := range t.Widgets {
-		if w.Area == area {
-			available[w.ID] = true
-		}
-	}
+	available := make(map[string]WidgetDecl)
+	areaDeclared := false
 	if _, ok := t.WidgetAreas[area]; ok || area == "" {
-		for _, id := range BuiltinWidgetIDs {
-			available[id] = true
+		areaDeclared = true
+	}
+	for _, w := range decls {
+		if w.ID == "" {
+			continue
+		}
+		switch w.Source {
+		case WidgetSourceTheme:
+			if w.Area == area {
+				available[widgetDeclKey(w)] = w
+			}
+		case WidgetSourceBuiltin, WidgetSourcePlugin:
+			if areaDeclared {
+				available[widgetDeclKey(w)] = w
+			}
 		}
 	}
 	return available
+}
+
+func resolveWidgetDecl(available map[string]WidgetDecl, item WidgetConfigItem) (WidgetDecl, bool) {
+	if item.ID == "" {
+		return WidgetDecl{}, false
+	}
+	if item.Source == "" {
+		return WidgetDecl{}, false
+	}
+	if decl, ok := available[widgetConfigKey(item.Source, item.ID)]; ok {
+		return decl, true
+	}
+	return WidgetDecl{}, false
 }
 
 // ParseWidgetConfig 解析用户配置 JSON。
@@ -152,6 +231,21 @@ func ParseWidgetConfig(userConfigJSON string) []WidgetConfigItem {
 	return nil
 }
 
+// HasLegacyWidgetConfig 判断配置中是否存在缺少 source 的旧格式条目。
+// 插件化后组件 ID 不再全局唯一，旧格式无法可靠判断来源，因此需要清空后重新配置。
+func HasLegacyWidgetConfig(userConfigJSON string) bool {
+	items := ParseWidgetConfig(userConfigJSON)
+	if len(items) == 0 {
+		return false
+	}
+	for _, item := range items {
+		if item.ID != "" && strings.TrimSpace(item.Source) == "" {
+			return true
+		}
+	}
+	return false
+}
+
 // widgetTemplateExists 检查主题是否提供了指定组件的模板文件。
 func widgetTemplateExists(t *Theme, id string) bool {
 	return t != nil && t.WidgetTemplates[id]
@@ -164,13 +258,8 @@ func MissingWidgets(userConfigJSON string, t *Theme) []string {
 		return nil
 	}
 	available := make(map[string]bool)
-	for _, w := range t.Widgets {
+	for _, w := range WidgetDeclsWithBuiltins(t) {
 		available[w.ID] = true
-	}
-	if len(t.WidgetAreas) > 0 {
-		for _, id := range BuiltinWidgetIDs {
-			available[id] = true
-		}
 	}
 	var missing []string
 	seen := make(map[string]bool)
@@ -182,6 +271,140 @@ func MissingWidgets(userConfigJSON string, t *Theme) []string {
 	}
 	sort.Strings(missing)
 	return missing
+}
+
+func normalizeWidgetDecls(decls []WidgetDecl) []WidgetDecl {
+	seen := make(map[string]bool, len(decls))
+	out := make([]WidgetDecl, 0, len(decls))
+	for _, w := range decls {
+		if w.ID == "" {
+			continue
+		}
+		rawSource := w.Source
+		w.Source = normalizeWidgetSource(w.Source)
+		if w.Source == WidgetSourcePlugin && w.PluginID == "" {
+			w.PluginID = pluginIDFromSource(rawSource)
+		}
+		key := widgetDeclKey(w)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, w)
+	}
+	return out
+}
+
+func normalizeWidgetSource(source string) string {
+	source = strings.TrimSpace(source)
+	if strings.HasPrefix(source, "plugin:") {
+		return WidgetSourcePlugin
+	}
+	switch source {
+	case WidgetSourceBuiltin, WidgetSourceTheme, WidgetSourcePlugin:
+		return source
+	default:
+		return WidgetSourceTheme
+	}
+}
+
+func pluginIDFromSource(source string) string {
+	if strings.HasPrefix(source, "plugin:") {
+		return strings.TrimPrefix(source, "plugin:")
+	}
+	return ""
+}
+
+func widgetDeclKey(w WidgetDecl) string {
+	if w.Source == WidgetSourcePlugin && w.PluginID != "" {
+		return WidgetSourcePlugin + ":" + w.PluginID + ":" + w.ID
+	}
+	return w.Source + ":" + w.ID
+}
+
+func widgetConfigKey(source, id string) string {
+	if normalizeWidgetSource(source) == WidgetSourcePlugin {
+		if pluginID := pluginIDFromSource(source); pluginID != "" {
+			return WidgetSourcePlugin + ":" + pluginID + ":" + id
+		}
+	}
+	return normalizeWidgetSource(source) + ":" + id
+}
+
+func widgetConfigSource(w WidgetDecl) string {
+	if w.Source == WidgetSourcePlugin && w.PluginID != "" {
+		return "plugin:" + w.PluginID
+	}
+	return w.Source
+}
+
+func reflectWidgetDecls(v any) ([]WidgetDecl, bool) {
+	rv := reflect.ValueOf(v)
+	if !rv.IsValid() || rv.Kind() != reflect.Slice {
+		return nil, false
+	}
+	out := make([]WidgetDecl, 0, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		item := rv.Index(i)
+		for item.IsValid() && (item.Kind() == reflect.Pointer || item.Kind() == reflect.Interface) {
+			if item.IsNil() {
+				item = reflect.Value{}
+				break
+			}
+			item = item.Elem()
+		}
+		if !item.IsValid() || item.Kind() != reflect.Struct {
+			continue
+		}
+		decl := WidgetDecl{
+			ID:       reflectStringField(item, "ID"),
+			Label:    reflectStringField(item, "Label"),
+			Area:     reflectStringField(item, "Area"),
+			Source:   reflectStringField(item, "Source"),
+			PluginID: reflectStringField(item, "PluginID"),
+		}
+		if opts := reflectOptionDecls(item.FieldByName("Options")); opts != nil {
+			decl.Options = opts
+		}
+		out = append(out, decl)
+	}
+	return out, true
+}
+
+func reflectOptionDecls(rv reflect.Value) []OptionDecl {
+	if !rv.IsValid() || rv.Kind() != reflect.Slice {
+		return nil
+	}
+	out := make([]OptionDecl, 0, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		item := rv.Index(i)
+		for item.IsValid() && (item.Kind() == reflect.Pointer || item.Kind() == reflect.Interface) {
+			if item.IsNil() {
+				item = reflect.Value{}
+				break
+			}
+			item = item.Elem()
+		}
+		if !item.IsValid() || item.Kind() != reflect.Struct {
+			continue
+		}
+		out = append(out, OptionDecl{
+			ID:          reflectStringField(item, "ID"),
+			Type:        reflectStringField(item, "Type"),
+			Label:       reflectStringField(item, "Label"),
+			Description: reflectStringField(item, "Description"),
+			Default:     reflectStringField(item, "Default"),
+		})
+	}
+	return out
+}
+
+func reflectStringField(rv reflect.Value, name string) string {
+	f := rv.FieldByName(name)
+	if f.IsValid() && f.Kind() == reflect.String {
+		return f.String()
+	}
+	return ""
 }
 
 func floatPtr(v float64) *float64 {

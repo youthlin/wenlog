@@ -62,6 +62,11 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"themeWidgets":  func(area string) any { return nil },
 		"renderWidgets": func(area string, data any) template.HTML { return "" },
 		"widgetOption":  func(key string) string { return "" },
+		"pluginSlot":    func(name string, data any) template.HTML { return "" },
+		"postContent":   func(post any) template.HTML { return "" },
+		"commentContent": func(comment any) template.HTML {
+			return ""
+		},
 		"widgetInConfig": func(id string, config []string) bool {
 			return slices.Contains(config, id)
 		},

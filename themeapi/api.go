@@ -2,6 +2,7 @@
 package themeapi
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -111,11 +112,34 @@ type OptionDecl struct {
 // Func 是 functions.goyaegi 中注册的主题函数。
 type Func func(args map[string]any) any
 
+// ActionFunc 是主题注册 action 时推荐使用的函数签名。
+type ActionFunc func(api *API, args ...any)
+
+// FilterFunc 是主题注册 filter 时推荐使用的函数签名。
+type FilterFunc func(api *API, value any, args ...any) any
+
+type loaderContextKey struct{}
+
+// WithDataLoader 把当前请求的只读数据加载器绑定到 context，供主题 hook API 读取。
+func WithDataLoader(ctx context.Context, loader any) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	dl, _ := loader.(*store.DataLoader)
+	if dl == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, loaderContextKey{}, dl)
+}
+
 // API 是暴露给主题脚本的只读数据视图。
 type API struct {
 	loader       *store.DataLoader
+	ctx          context.Context
 	funcs        map[string]Func
 	themeOptions []OptionDecl
+	addAction    func(name string, fn any, priority ...int)
+	addFilter    func(name string, fn any, priority ...int)
 }
 
 // New 创建 ThemeAPI 实例。
@@ -125,6 +149,76 @@ func New(loader *store.DataLoader) *API {
 
 // SetLoader 设置当前模板渲染请求的 DataLoader。
 func (api *API) SetLoader(loader *store.DataLoader) { api.loader = loader }
+
+// WithContext 返回绑定到当前请求 context 的 API 副本。
+func (api *API) WithContext(ctx context.Context) *API {
+	if api == nil {
+		return nil
+	}
+	clone := *api
+	clone.ctx = ctx
+	if ctx != nil {
+		if loader, _ := ctx.Value(loaderContextKey{}).(*store.DataLoader); loader != nil {
+			clone.loader = loader
+		}
+	}
+	return &clone
+}
+
+// SetHookRegistrars 设置主题 hook 注册函数，由宿主在加载当前主题时注入。
+func (api *API) SetHookRegistrars(addAction, addFilter func(name string, fn any, priority ...int)) {
+	if api == nil {
+		return
+	}
+	api.addAction = addAction
+	api.addFilter = addFilter
+}
+
+// AddAction 注册一个 action。主题注册的 hook 只应用于当前主题展示适配。
+func (api *API) AddAction(name string, fn any, priority ...int) {
+	if api == nil || api.addAction == nil || name == "" || fn == nil {
+		return
+	}
+	if wrapped, ok := api.wrapAction(fn); ok {
+		api.addAction(name, wrapped, priority...)
+		return
+	}
+	api.addAction(name, fn, priority...)
+}
+
+func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
+	switch f := fn.(type) {
+	case ActionFunc:
+		return func(ctx context.Context, args ...any) { f(api.WithContext(ctx), args...) }, true
+	case func(*API, ...any):
+		return func(ctx context.Context, args ...any) { f(api.WithContext(ctx), args...) }, true
+	default:
+		return nil, false
+	}
+}
+
+// AddFilter 注册一个 filter。主题注册的 hook 只应用于当前主题展示适配。
+func (api *API) AddFilter(name string, fn any, priority ...int) {
+	if api == nil || api.addFilter == nil || name == "" || fn == nil {
+		return
+	}
+	if wrapped, ok := api.wrapFilter(fn); ok {
+		api.addFilter(name, wrapped, priority...)
+		return
+	}
+	api.addFilter(name, fn, priority...)
+}
+
+func (api *API) wrapFilter(fn any) (func(context.Context, any, ...any) any, bool) {
+	switch f := fn.(type) {
+	case FilterFunc:
+		return func(ctx context.Context, value any, args ...any) any { return f(api.WithContext(ctx), value, args...) }, true
+	case func(*API, any, ...any) any:
+		return func(ctx context.Context, value any, args ...any) any { return f(api.WithContext(ctx), value, args...) }, true
+	default:
+		return nil, false
+	}
+}
 
 // RegisterFunc 注册一个命名主题函数。
 func (api *API) RegisterFunc(name string, fn Func) { api.funcs[name] = fn }

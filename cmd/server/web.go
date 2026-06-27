@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -15,15 +16,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"gopkg.in/yaml.v3"
 
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
+	"github.com/youthlin/blog/internal/plugin"
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/blog/pluginapi"
 	"github.com/youthlin/blog/web"
 )
 
@@ -106,6 +110,15 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 		slog.Error("初始化主题管理器失败", slog.Any("error", err))
 		os.Exit(1)
 	}
+	pm, err := initPluginManager(st, tplRenderer)
+	if err != nil {
+		slog.Error("初始化插件管理器失败", slog.Any("error", err))
+		os.Exit(1)
+	}
+	tm.SetHookRegistry(pm.Hooks())
+	if err := tm.LoadTheme(context.Background(), ""); err != nil {
+		slog.Error("加载主题 hook 失败", slog.Any("error", err))
+	}
 
 	// 前台
 	pub := handler.NewPublic(st, cfg, tm, tplRenderer)
@@ -117,10 +130,11 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 	registerAuthRoutes(r, auth, rateLimiter)
 
 	// 后台
-	adm := handler.NewAdmin(st, cfg, tplRenderer, assetLocalFS, tm)
+	adm := handler.NewAdmin(st, cfg, tplRenderer, assetLocalFS, tm, pm)
 	registerAdminRoutes(r, adm, auth, st)
 
 	registerThemeAssetsRoute(r, tm)
+	registerPluginAssetsRoute(r, pm)
 }
 
 // cacheStatic 返回一个 gin handler，从 fsys 提供静态文件并设置 Cache-Control 头。
@@ -176,8 +190,38 @@ func initThemeManager(st *store.Store, tplRenderer *render.Renderer) (*theme.Man
 	return tm, nil
 }
 
+func initPluginManager(st *store.Store, tplRenderer *render.Renderer) (*plugin.Manager, error) {
+	pm, err := plugin.NewManager("plugins", st)
+	if err != nil {
+		return nil, err
+	}
+	if err := pm.LoadEnabledFunctions(context.Background()); err != nil {
+		return nil, err
+	}
+	if tplRenderer != nil {
+		tplRenderer.SetHookProvider(pm.Hooks())
+		tplRenderer.SetPluginWidgetProvider(func(ctx *render.RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
+			reqCtx := renderRequestContext(ctx)
+			if ctx != nil {
+				if loader, ok := ctx.ThemeLoader.(*store.DataLoader); ok {
+					reqCtx = pluginapi.WithDataLoader(reqCtx, loader)
+				}
+			}
+			return pm.RenderWidget(reqCtx, pluginID, widgetID, options, data)
+		})
+	}
+	return pm, nil
+}
+
+func renderRequestContext(ctx *render.RequestContext) context.Context {
+	if ctx != nil && ctx.Context != nil {
+		return ctx.Context
+	}
+	return context.Background()
+}
+
 // ensureThemesOnDisk 确保所有内嵌主题在磁盘上存在。
-// 优先从 embed 释放到 themes/ 目录，已存在则跳过。
+// 首次启动会释放内嵌主题；如果内嵌主题版本更新，则覆盖运行时目录，避免旧模板缺少新增 hook 点。
 func ensureThemesOnDisk() {
 	entries, err := fs.ReadDir(web.Themes, "themes")
 	if err != nil {
@@ -191,28 +235,77 @@ func ensureThemesOnDisk() {
 		themeName := entry.Name()
 		themeYAML := filepath.Join("themes", themeName, "theme.yaml")
 		if _, err := os.Stat(themeYAML); err == nil {
-			continue // 已存在，跳过
+			if sameBundledThemeVersion(themeYAML, filepath.Join("themes", themeName, "theme.yaml")) {
+				continue // 已存在且版本一致，保留用户可能做过的本地调整
+			}
+			if err := os.RemoveAll(filepath.Join("themes", themeName)); err != nil {
+				slog.Warn("清理旧运行时主题失败", "theme", themeName, "error", err)
+				continue
+			}
 		}
-		_ = os.MkdirAll(filepath.Join("themes", themeName), 0o755)
-		prefix := filepath.Join("themes", themeName)
-		if err := fs.WalkDir(web.Themes, prefix, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			target := filepath.Join(path)
-			if d.IsDir() {
-				return os.MkdirAll(target, 0o755)
-			}
-			data, err := fs.ReadFile(web.Themes, path)
-			if err != nil {
-				return err
-			}
-			return os.WriteFile(target, data, 0o644)
-		}); err != nil {
+		if err := releaseBundledTheme(themeName); err != nil {
 			slog.Warn("释放内嵌主题失败", "theme", themeName, "error", err)
 		}
 	}
 }
+
+func sameBundledThemeVersion(diskYAML, embedPath string) bool {
+	disk, err := readThemeMetaFromDisk(diskYAML)
+	if err != nil {
+		return false
+	}
+	bundled, err := readThemeMetaFromEmbed(embedPath)
+	if err != nil {
+		return false
+	}
+	return disk.Name == bundled.Name && disk.Version == bundled.Version
+}
+
+type themeMeta struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+}
+
+func readThemeMetaFromDisk(path string) (themeMeta, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return themeMeta{}, err
+	}
+	var meta themeMeta
+	return meta, yaml.Unmarshal(data, &meta)
+}
+
+func readThemeMetaFromEmbed(path string) (themeMeta, error) {
+	data, err := fs.ReadFile(web.Themes, path)
+	if err != nil {
+		return themeMeta{}, err
+	}
+	var meta themeMeta
+	return meta, yaml.Unmarshal(data, &meta)
+}
+
+func releaseBundledTheme(themeName string) error {
+	themeDir := filepath.Join("themes", themeName)
+	if err := os.MkdirAll(themeDir, 0o755); err != nil {
+		return err
+	}
+	prefix := filepath.Join("themes", themeName)
+	return fs.WalkDir(web.Themes, prefix, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(path)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := fs.ReadFile(web.Themes, path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	})
+}
+
 func registerThemeAssetsRoute(r *gin.Engine, tm *theme.Manager) {
 	// 当前主题静态资源：/theme-assets/... → themes/{current}/assets/...
 	// 管理员预览主题时优先使用预览主题的资源。
@@ -236,4 +329,33 @@ func registerThemeAssetsRoute(r *gin.Engine, tm *theme.Manager) {
 		c.Header("Cache-Control", "public, max-age=31536000")
 		c.File(filepath.Join(current.AssetsDir(), name))
 	})
+}
+
+func registerPluginAssetsRoute(r *gin.Engine, pm *plugin.Manager) {
+	// 插件静态资源：/plugin-assets/{plugin_id}/{path} → plugins/{plugin_id}/assets/{path}
+	// 只有已启用插件的资源会对外暴露。
+	r.GET("/plugin-assets/:plugin/*filepath", func(c *gin.Context) {
+		id := c.Param("plugin")
+		p := pm.Get(id)
+		if p == nil || !p.HasAssets() || !pluginEnabled(c, pm, id) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		name := strings.TrimPrefix(filepath.Clean(c.Param("filepath")), string(filepath.Separator))
+		if name == "." || strings.HasPrefix(name, "..") {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Header("Cache-Control", "public, max-age=31536000")
+		c.File(filepath.Join(p.AssetsDir(), name))
+	})
+}
+
+func pluginEnabled(ctx context.Context, pm *plugin.Manager, id string) bool {
+	for _, enabledID := range pm.EnabledIDs(ctx) {
+		if enabledID == id {
+			return true
+		}
+	}
+	return false
 }

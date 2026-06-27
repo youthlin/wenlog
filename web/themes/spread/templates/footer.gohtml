@@ -26,6 +26,7 @@
 {{end}}
 <script src="/theme-assets/theme.js?theme={{.ThemeName}}&v={{.ThemeVersion}}"></script>
 <script src="/assets/common.js"></script>
+{{pluginSlot "body.end" .}}
 </body>
 </html>
 {{end}}

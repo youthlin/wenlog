@@ -1,0 +1,22 @@
+id: saying
+name: "博主动态"
+version: "1.0.0"
+description: "把指定文章或页面下博主本人的评论渲染为可跨主题复用的小组件。"
+author: "youthlin"
+default_enabled: true
+
+widgets:
+  - id: saying
+    label: "博主动态"
+    options:
+      - id: title
+        type: text
+        label: "标题"
+        default: "博主动态"
+
+      - id: post_id
+        type: number
+        label: "文章 ID"
+        description: "用于读取博主评论的文章/页面 ID"
+        default: "456"
+        min: 1

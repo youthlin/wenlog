@@ -18,12 +18,13 @@
       <div>
         <h3>{{$.th.T .Area.Name}}</h3>
         {{if .Area.Description}}<p class="tip">{{$.th.T .Area.Description}}</p>{{end}}
+        {{if .ResetLegacyConfig}}<p class="notice-banner">{{$.t.T "检测到该区域存在旧版组件配置，已清除，请重新配置。"}}</p>{{end}}
       </div>
       <div class="widget-area-add-row">
         <select class="widget-add-select" data-area="{{$areaKey}}">
           <option value="">{{$.t.T "— 选择组件 —"}}</option>
           {{range $.AvailableWidgets}}
-          <option value="{{.ID}}" data-label="{{.Label}}" data-source="{{.Source}}">{{.Label}} ({{if eq .Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}})</option>
+          <option value="{{.ID}}" data-label="{{.Label}}" data-source="{{.Source}}" data-config-source="{{.ConfigSource}}">{{.Label}} ({{if eq .Source "builtin"}}{{$.t.T "内置"}}{{else if eq .Source "plugin"}}{{$.t.T "插件"}}{{else}}{{$.t.T "主题"}}{{end}})</option>
           {{end}}
         </select>
         <button type="button" class="btn btn-secondary widget-add-btn" data-area="{{$areaKey}}">{{$.t.T "添加"}}</button>
@@ -36,10 +37,11 @@
       {{$w := .}}
       <div class="widget-config-item" data-widget-id="{{$w.ID}}" data-index="{{$w.Index}}">
         <input type="hidden" name="widgets_{{$areaKey}}" value="{{$w.ID}}">
+        <input type="hidden" name="widget_source_{{$areaKey}}_{{$w.Index}}" value="{{$w.ConfigSource}}">
 
         <div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
-          <span class="widget-config-name">{{if $w.Decl.Options}}<span class="widget-options-caret" aria-hidden="true">▸</span>{{end}}{{$.th.T $w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
+          <span class="widget-config-name">{{if $w.Decl.Options}}<span class="widget-options-caret" aria-hidden="true">▸</span>{{end}}{{$.th.T $w.Label}} <span class="widget-source-badge widget-source-{{$w.Source}}">{{if eq $w.Source "builtin"}}{{$.t.T "内置"}}{{else if eq $w.Source "plugin"}}{{$.t.T "插件"}}{{else}}{{$.t.T "主题"}}{{end}}</span></span>
           <div class="widget-config-actions">
             <button type="button" class="btn-icon widget-move-up" title="{{$.t.T "上移"}}" aria-label="{{$.t.T "上移"}}">↑</button>
             <button type="button" class="btn-icon widget-move-down" title="{{$.t.T "下移"}}" aria-label="{{$.t.T "下移"}}">↓</button>
@@ -141,12 +143,13 @@
       var opt = select.options[select.selectedIndex];
       var label = opt.getAttribute('data-label') || opt.text;
       var source = opt.getAttribute('data-source') || 'theme';
+      var configSource = opt.getAttribute('data-config-source') || source;
 
       var div = document.createElement('div');
       div.className = 'widget-config-item';
       div.setAttribute('data-widget-id', widgetId);
       div.setAttribute('data-index', index);
-      div.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source);
+      div.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source, configSource);
       list.appendChild(div);
 
       reindexList(list);
@@ -155,12 +158,13 @@
     });
   });
 
-  function buildWidgetItemHTML(widgetId, label, areaKey, index, source) {
-    var sourceLabel = source === 'builtin' ? t('内置') : t('主题');
+  function buildWidgetItemHTML(widgetId, label, areaKey, index, source, configSource) {
+    var sourceLabel = source === 'builtin' ? t('内置') : (source === 'plugin' ? t('插件') : t('主题'));
     var decl = widgetDecls[widgetId];
     var hasOpts = decl && decl.options && decl.options.length > 0;
 
     var html = '<input type="hidden" name="widgets_' + areaKey + '" value="' + widgetId + '">';
+    html += '<input type="hidden" name="widget_source_' + areaKey + '_' + index + '" value="' + escapeHTML(configSource || source) + '">';
     html += '<div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">';
     html += '<span class="widget-config-handle" aria-label="' + t('拖拽排序') + '">⠿</span>';
     html += '<span class="widget-config-name">' + (hasOpts ? '<span class="widget-options-caret" aria-hidden="true">▸</span>' : '') + escapeHTML(label) + ' <span class="widget-source-badge widget-source-' + source + '">' + sourceLabel + '</span></span>';
@@ -224,7 +228,7 @@
   }
 
   function t(key) {
-    var map = { '拖拽排序': '拖拽排序', '上移': '上移', '下移': '下移', '移除': '移除', '配置选项': '配置选项', '启用': '启用', '默认值：': '默认值：', '内置': '内置', '主题': '主题' };
+    var map = { '拖拽排序': '拖拽排序', '上移': '上移', '下移': '下移', '移除': '移除', '配置选项': '配置选项', '启用': '启用', '默认值：': '默认值：', '内置': '内置', '主题': '主题', '插件': '插件' };
     return map[key] || key;
   }
 
@@ -297,6 +301,8 @@
       item.setAttribute('data-index', i);
       var input = item.querySelector('input[type="hidden"]');
       if (input) input.name = 'widgets_' + areaKey;
+      var sourceInput = item.querySelector('input[name^="widget_source_"]');
+      if (sourceInput) sourceInput.name = 'widget_source_' + areaKey + '_' + i;
       item.querySelectorAll('[name^="opts_"]').forEach(function(field) {
         field.name = reindexOptionFieldName(field.name, areaKey, i);
         if (field.id) field.id = reindexOptionFieldName(field.id, areaKey, i);

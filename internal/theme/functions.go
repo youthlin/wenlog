@@ -134,6 +134,8 @@ func injectThemeAPI(i *interp.Interpreter, api *API) error {
 		"themeapi/themeapi": {
 			"API":              reflect.ValueOf((*root.API)(nil)),
 			"Api":              reflect.ValueOf(root.Api),
+			"ActionFunc":       reflect.ValueOf((*root.ActionFunc)(nil)),
+			"FilterFunc":       reflect.ValueOf((*root.FilterFunc)(nil)),
 			"PostView":         reflect.ValueOf((*root.PostView)(nil)),
 			"CategoryView":     reflect.ValueOf((*root.CategoryView)(nil)),
 			"TagView":          reflect.ValueOf((*root.TagView)(nil)),

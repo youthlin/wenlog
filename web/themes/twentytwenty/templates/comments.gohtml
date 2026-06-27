@@ -18,7 +18,7 @@
         <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
         {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.th.T "评论审核中,当前仅自己可见"}}</span>{{end}}
       </div>
-      <div class="comment-body">{{safeHTML (themeInvoke "render_comment" "content" .Content)}}</div>
+      <div class="comment-body">{{commentContent .}}</div>
       <button class="comment-reply" type="button" data-reply="{{.ID}}" data-reply-target="comment-{{.ID}}">{{$.th.T "回复"}}</button>
       {{$pid := .ID}}
       <ul class="comment-children">
@@ -30,7 +30,7 @@
             <a class="comment-id" href="#comment-{{.ID}}">#{{.ID}}</a><span class="comment-author">{{.Author}}</span>{{if .CommenterRole}}<span class="comment-badge comment-badge-{{.CommenterRole}}" title="{{if eq .CommenterRole "author"}}{{$.th.T "文章作者"}}{{else if eq .CommenterRole "admin"}}{{$.th.T "管理员"}}{{else}}{{$.th.T "登录用户"}}{{end}}"></span>{{end}}{{if .NotifyOnReply}}<span class="comment-badge comment-badge-notify" title="{{$.th.T "回复时邮件通知"}}"></span>{{end}}<time>{{fmtDateTime .CreatedAt}}</time>
             {{if eq .Status "pending"}}<span class="comment-pending-badge">{{$.th.T "评论审核中,当前仅自己可见"}}</span>{{end}}
           </div>
-          <div class="comment-body">{{if .ReplyToAuthor}}<a class="comment-reply-to" href="#comment-{{.ReplyToID}}">{{$.th.T "回复 @%s" .ReplyToAuthor}}</a>{{end}}{{safeHTML (themeInvoke "render_comment" "content" .Content)}}</div>
+          <div class="comment-body">{{if .ReplyToAuthor}}<a class="comment-reply-to" href="#comment-{{.ReplyToID}}">{{$.th.T "回复 @%s" .ReplyToAuthor}}</a>{{end}}{{commentContent .}}</div>
           <button class="comment-reply" type="button" data-reply="{{.ID}}" data-reply-target="comment-{{.ID}}">{{$.th.T "回复"}}</button>
         </li>
         {{end}}
@@ -69,19 +69,7 @@
     {{end}}
     <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
     <p><label class="sr-only" for="comment-content">{{.th.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="5" placeholder="{{.th.T "说点什么吧…… *"}}" required></textarea></p>
-    {{$smilies := themeInvoke "smilies"}}
-    {{if $smilies}}
-    <div class="comment-smilies" data-smilies>
-      <div class="comment-smilies-label">{{.th.T "表情"}}</div>
-      <div class="comment-smilies-list">
-        {{range $smilies}}
-        <button type="button" class="comment-smiley-btn" data-smiley-code="{{index . "code"}}" title="{{index . "name"}}" aria-label="{{index . "name"}}">
-          <img src="{{index . "src"}}" alt="{{index . "name"}}" width="24" height="24">
-        </button>
-        {{end}}
-      </div>
-    </div>
-    {{end}}
+    {{pluginSlot "comment_form.after_textarea" .}}
     {{if .MailEnabled}}<p><label><input type="checkbox" name="notify"> {{.th.T "有回复时邮件通知我"}}</label></p>{{end}}
     <p class="comment-form-actions"><button type="submit">{{.th.T "提交评论"}}</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>{{.th.T "取消回复"}}</button></p>
     <p class="comment-tip">{{.th.T "评论提交后需经审核才会显示。"}}</p>

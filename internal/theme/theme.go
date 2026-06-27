@@ -50,10 +50,12 @@ type WidgetArea struct {
 
 // WidgetDecl 描述主题声明的一个可用组件。
 type WidgetDecl struct {
-	ID      string       `yaml:"id" json:"id"`
-	Label   string       `yaml:"label" json:"label"`                         // 后台显示名
-	Area    string       `yaml:"area" json:"area"`                           // 默认区域
-	Options []OptionDecl `yaml:"options,omitempty" json:"options,omitempty"` // 组件级选项
+	ID       string       `yaml:"id" json:"id"`
+	Label    string       `yaml:"label" json:"label"`                         // 后台显示名
+	Area     string       `yaml:"area" json:"area"`                           // 默认区域
+	Options  []OptionDecl `yaml:"options,omitempty" json:"options,omitempty"` // 组件级选项
+	Source   string       `yaml:"-" json:"source,omitempty"`                  // builtin / theme / plugin
+	PluginID string       `yaml:"-" json:"plugin_id,omitempty"`               // Source=plugin 时的插件 ID
 }
 
 // OptionDecl 描述主题声明的一个可配置选项。

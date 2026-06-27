@@ -1,0 +1,24 @@
+id: comment-smilies
+name: "评论表情"
+version: "1.0.0"
+description: "为评论表单和评论正文提供表情短码插入与渲染能力。"
+author: "youthlin"
+default_enabled: true
+
+assets:
+  dir: assets
+
+hooks:
+  actions:
+    - head.end
+    - comment_form.after_textarea
+  filters:
+    - comment.render_html
+  slots:
+    - comment_form.after_textarea
+
+settings:
+  - id: enabled
+    type: bool
+    label: "启用表情"
+    default: "true"

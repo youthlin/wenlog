@@ -1,0 +1,5 @@
+package plugin
+
+// Register 保留插件运行时入口。
+// 当前 saying 组件由 plugin.yaml 声明，宿主会把启用插件的组件声明加入 widgets.available。
+func Register() {}

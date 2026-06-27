@@ -18,6 +18,7 @@ import (
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/blog/internal/plugin"
 	renderx "github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/theme"
@@ -27,25 +28,30 @@ import (
 // ThemeManager 是主题管理器的类型别名，方便 handler 层引用。
 type ThemeManager = theme.Manager
 
+// PluginManager 是插件管理器的类型别名，方便 handler 层引用。
+type PluginManager = plugin.Manager
+
 // Admin 是后台处理器。
 type Admin struct {
-	st           *store.Store
-	cfg          *config.Config
-	log          *slog.Logger
-	renderer     *renderx.Renderer
-	assets       hotSwitcher
-	themeManager *ThemeManager
+	st            *store.Store
+	cfg           *config.Config
+	log           *slog.Logger
+	renderer      *renderx.Renderer
+	assets        hotSwitcher
+	themeManager  *ThemeManager
+	pluginManager *PluginManager
 }
 
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, renderer *renderx.Renderer, assets *LocalFirstFileSystem, tm *ThemeManager) *Admin {
+func NewAdmin(st *store.Store, cfg *config.Config, renderer *renderx.Renderer, assets *LocalFirstFileSystem, tm *ThemeManager, pm *PluginManager) *Admin {
 	return &Admin{
-		st:           st,
-		cfg:          cfg,
-		log:          slog.Default().With("component", "admin-handler"),
-		renderer:     renderer,
-		assets:       assets,
-		themeManager: tm,
+		st:            st,
+		cfg:           cfg,
+		log:           slog.Default().With("component", "admin-handler"),
+		renderer:      renderer,
+		assets:        assets,
+		themeManager:  tm,
+		pluginManager: pm,
 	}
 }
 
@@ -217,6 +223,8 @@ func adminNavKey(c *gin.Context) string {
 		return "themes"
 	case "/admin/theme/files", "/admin/theme/file", "/admin/theme/file/create", "/admin/theme/file/delete", "/admin/theme/recovery/clear", "/admin/theme/reload":
 		return "theme-files"
+	case "/admin/plugins", "/admin/plugin/:id/:action", "/admin/plugin/:id/settings":
+		return "plugins"
 	default:
 		return ""
 	}

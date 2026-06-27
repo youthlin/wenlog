@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/internal/plugin"
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 )
@@ -33,7 +34,7 @@ func (m *Manager) BindTemplateFunctions() {
 			return nil
 		}
 		config := m.renderSetting(ctx, "widget_"+area)
-		return ResolveWidgets(config, t, area)
+		return ResolveWidgetsWithDecls(config, t, area, m.WidgetDecls(renderContext(ctx), t, area))
 	})
 
 	m.renderer.SetOptionProvider(func(ctx *render.RequestContext, optionID string) string {
@@ -45,6 +46,30 @@ func (m *Manager) BindTemplateFunctions() {
 			return m.renderSetting(ctx, key), nil
 		}, t.Name, t.Options, optionID)
 	})
+}
+
+// WidgetDecls 返回当前主题可用组件声明，并应用 widgets.available filter。
+func (m *Manager) WidgetDecls(ctx context.Context, t *Theme, area string) []WidgetDecl {
+	if m == nil {
+		return WidgetDeclsWithBuiltins(t)
+	}
+	return WidgetDeclsWithFilter(ctx, m.hookRegistry(), t, area)
+}
+
+func (m *Manager) hookRegistry() *plugin.Registry {
+	if m == nil {
+		return nil
+	}
+	m.runtimeMu.Lock()
+	defer m.runtimeMu.Unlock()
+	return m.hooks
+}
+
+func renderContext(ctx *render.RequestContext) context.Context {
+	if ctx != nil && ctx.Context != nil {
+		return ctx.Context
+	}
+	return context.Background()
 }
 
 func (m *Manager) renderSetting(ctx *render.RequestContext, key string) string {
@@ -108,6 +133,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 2. 编译 functions.go（如果存在）
 	api := NewAPI(nil)             // loader 在模板渲染时按请求注入
 	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
+	api.SetHookRegistry(m.hooks, plugin.Source{Type: plugin.SourceTheme, ID: t.Name})
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")

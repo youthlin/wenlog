@@ -10,6 +10,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/plugin"
 	"github.com/youthlin/blog/internal/render"
 )
 
@@ -35,10 +36,21 @@ type Manager struct {
 	themeOpMu     sync.Mutex
 	mu            sync.RWMutex
 	renderer      *render.Renderer
+	hooks         *plugin.Registry
 	log           *slog.Logger
 	currentScript *FunctionsScript
 	currentAPI    *API
 	recoveryInfo  *RecoveryInfo
+}
+
+// SetHookRegistry 设置当前主题 functions.goyaegi 注册 AddAction/AddFilter 使用的 registry。
+func (m *Manager) SetHookRegistry(hooks *plugin.Registry) {
+	if m == nil {
+		return
+	}
+	m.runtimeMu.Lock()
+	defer m.runtimeMu.Unlock()
+	m.hooks = hooks
 }
 
 // NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。

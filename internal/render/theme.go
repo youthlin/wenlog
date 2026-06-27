@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+	"html"
 	"html/template"
 	"io/fs"
 	"os"
@@ -10,6 +12,9 @@ import (
 	"sync/atomic"
 
 	ginrender "github.com/gin-gonic/gin/render"
+	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/blog/internal/wxr"
+	"github.com/youthlin/blog/themeapi"
 	"github.com/youthlin/blog/web"
 )
 
@@ -263,6 +268,13 @@ type TemplateRuntime struct {
 	optionProvider       atomic.Value // stores optionProviderHolder
 	themeInvokeProvider  atomic.Value // stores themeInvokeProviderHolder
 	themeWidgetsProvider atomic.Value // stores themeWidgetsProviderHolder
+	hookProvider         atomic.Value // stores hookProviderHolder
+	pluginWidgetProvider atomic.Value // stores pluginWidgetProviderHolder
+}
+
+type hookProvider interface {
+	DoAction(ctx context.Context, name string, args ...any)
+	ApplyFilters(ctx context.Context, name string, value any, args ...any) any
 }
 
 type optionProviderHolder struct {
@@ -275,6 +287,14 @@ type themeInvokeProviderHolder struct {
 
 type themeWidgetsProviderHolder struct {
 	fn func(ctx *RequestContext, area string) any
+}
+
+type hookProviderHolder struct {
+	provider hookProvider
+}
+
+type pluginWidgetProviderHolder struct {
+	fn func(ctx *RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool)
 }
 
 // SetOptionProvider 设置 option 读取函数。
@@ -299,6 +319,22 @@ func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area str
 		return
 	}
 	r.themeRuntime.themeWidgetsProvider.Store(themeWidgetsProviderHolder{fn: fn})
+}
+
+// SetHookProvider 设置插件 Hook Registry，用于 pluginSlot/postContent/commentContent 等模板函数。
+func (r *Renderer) SetHookProvider(provider hookProvider) {
+	if r == nil {
+		return
+	}
+	r.themeRuntime.hookProvider.Store(hookProviderHolder{provider: provider})
+}
+
+// SetPluginWidgetProvider 设置插件组件渲染函数。
+func (r *Renderer) SetPluginWidgetProvider(fn func(ctx *RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool)) {
+	if r == nil {
+		return
+	}
+	r.themeRuntime.pluginWidgetProvider.Store(pluginWidgetProviderHolder{fn: fn})
 }
 
 func themeInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
@@ -334,6 +370,139 @@ func themeWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string) an
 	return provider.fn(ctx, area)
 }
 
+func hooks(runtime *TemplateRuntime) hookProvider {
+	if runtime == nil {
+		return nil
+	}
+	provider, _ := runtime.hookProvider.Load().(hookProviderHolder)
+	return provider.provider
+}
+
+func pluginWidgetRenderer(runtime *TemplateRuntime) func(ctx *RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
+	if runtime == nil {
+		return nil
+	}
+	provider, _ := runtime.pluginWidgetProvider.Load().(pluginWidgetProviderHolder)
+	return provider.fn
+}
+
+func requestContext(ctx *RequestContext) context.Context {
+	var req context.Context
+	if ctx != nil && ctx.Context != nil {
+		req = ctx.Context
+	} else {
+		req = context.Background()
+	}
+	if ctx != nil && ctx.ThemeLoader != nil {
+		req = themeapi.WithDataLoader(req, ctx.ThemeLoader)
+	}
+	return req
+}
+
+// pluginSlot 触发一个模板 slot action，并收集插件写入的 HTML。
+func pluginSlot(runtime *TemplateRuntime, ctx *RequestContext, name string, data any) template.HTML {
+	h := hooks(runtime)
+	if h == nil || name == "" {
+		return ""
+	}
+	var result strings.Builder
+	h.DoAction(requestContext(ctx), name, &result, data)
+	return template.HTML(result.String())
+}
+
+// postContent 输出文章正文，并应用 post.content_html filter。
+func postContent(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
+	html := postContentHTML(post)
+	if h := hooks(runtime); h != nil {
+		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), "post.content_html", string(html), post))
+	}
+	return html
+}
+
+func postContentHTML(post any) template.HTML {
+	switch p := post.(type) {
+	case *model.Post:
+		if p == nil {
+			return ""
+		}
+		return detailHTML(p)
+	case model.Post:
+		return detailHTML(&p)
+	default:
+		content := reflectStringField(post, "Content")
+		id := reflectUintField(post, "ID")
+		if content == "" {
+			return ""
+		}
+		return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(wxr.RenderDetail(content, id)))))
+	}
+}
+
+// commentContent 输出评论正文，并应用 comment.render_html filter。
+func commentContent(runtime *TemplateRuntime, ctx *RequestContext, comment any) template.HTML {
+	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
+	if h := hooks(runtime); h != nil {
+		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), "comment.render_html", string(html), comment))
+	}
+	return html
+}
+
+func htmlFromFilterValue(v any) template.HTML {
+	switch val := v.(type) {
+	case template.HTML:
+		return val
+	case string:
+		return template.HTML(val)
+	case []byte:
+		return template.HTML(string(val))
+	default:
+		return ""
+	}
+}
+
+func reflectStringField(v any, name string) string {
+	rv := indirectValue(v)
+	if !rv.IsValid() || rv.Kind() != reflect.Struct {
+		return ""
+	}
+	f := rv.FieldByName(name)
+	if f.IsValid() && f.Kind() == reflect.String {
+		return f.String()
+	}
+	return ""
+}
+
+func reflectUintField(v any, name string) uint {
+	rv := indirectValue(v)
+	if !rv.IsValid() || rv.Kind() != reflect.Struct {
+		return 0
+	}
+	f := rv.FieldByName(name)
+	if !f.IsValid() {
+		return 0
+	}
+	switch f.Kind() {
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return uint(f.Uint())
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if f.Int() > 0 {
+			return uint(f.Int())
+		}
+	}
+	return 0
+}
+
+func indirectValue(v any) reflect.Value {
+	rv := reflect.ValueOf(v)
+	for rv.IsValid() && (rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Interface) {
+		if rv.IsNil() {
+			return reflect.Value{}
+		}
+		rv = rv.Elem()
+	}
+	return rv
+}
+
 // renderWidgets 渲染指定区域的所有组件，返回 HTML。
 func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, data any) template.HTML {
 	if runtime == nil || ctx == nil || ctx.Template == nil {
@@ -355,25 +524,58 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 	var result strings.Builder
 	for i := 0; i < rv.Len(); i++ {
 		item := rv.Index(i)
-		if item.Kind() == reflect.Struct {
-			tmplName := item.FieldByName("TemplateName")
-			if !tmplName.IsValid() {
-				continue
+		for item.IsValid() && (item.Kind() == reflect.Interface || item.Kind() == reflect.Pointer) {
+			if item.IsNil() {
+				item = reflect.Value{}
+				break
 			}
+			item = item.Elem()
+		}
+		if item.IsValid() && item.Kind() == reflect.Struct {
+			tmplName := item.FieldByName("TemplateName")
+			widgetID := reflectStringValue(item.FieldByName("ID"))
+			source := reflectStringValue(item.FieldByName("Source"))
+			pluginID := reflectStringValue(item.FieldByName("PluginID"))
 			// 设置当前组件选项
 			optsField := item.FieldByName("Options")
-			if optsField.IsValid() && !optsField.IsNil() {
+			if optsField.IsValid() && optsField.Kind() == reflect.Map && !optsField.IsNil() {
 				ctx.WidgetOptions = optsField.Interface().(map[string]string)
 			} else {
 				ctx.WidgetOptions = nil
 			}
-			if err := ctx.Template.ExecuteTemplate(&result, tmplName.String(), data); err != nil {
+			html, ok := renderWidgetItem(runtime, ctx, source, pluginID, widgetID, tmplName, data)
+			if !ok {
 				continue
 			}
+			if h := hooks(runtime); h != nil {
+				var widget any
+				if item.CanInterface() {
+					widget = item.Interface()
+				}
+				html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), "widget.render_html", string(html), widget, area, data))
+			}
+			result.WriteString(string(html))
 		}
 	}
 	ctx.WidgetOptions = nil
 	return template.HTML(result.String())
+}
+
+func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, source, pluginID, widgetID string, tmplName reflect.Value, data any) (template.HTML, bool) {
+	if source == "plugin" {
+		if renderer := pluginWidgetRenderer(runtime); renderer != nil {
+			return renderer(ctx, pluginID, widgetID, ctx.WidgetOptions, data)
+		}
+		return "", false
+	}
+	if !tmplName.IsValid() || tmplName.Kind() != reflect.String || tmplName.String() == "" {
+		return "", false
+	}
+	var itemHTML strings.Builder
+	if err := ctx.Template.ExecuteTemplate(&itemHTML, tmplName.String(), data); err != nil {
+		return "", false
+	}
+	return template.HTML(itemHTML.String()), true
 }
 
 // widgetOption 模板函数：读取当前渲染组件的选项值。
@@ -382,4 +584,11 @@ func widgetOption(ctx *RequestContext, key string) string {
 		return ""
 	}
 	return ctx.WidgetOptions[key]
+}
+
+func reflectStringValue(v reflect.Value) string {
+	if v.IsValid() && v.Kind() == reflect.String {
+		return v.String()
+	}
+	return ""
 }

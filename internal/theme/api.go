@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"github.com/youthlin/blog/internal/plugin"
 	"github.com/youthlin/blog/internal/store"
 	root "github.com/youthlin/blog/themeapi"
 )
@@ -23,6 +24,17 @@ type API struct {
 // NewAPI 创建 ThemeAPI 实例。
 func NewAPI(loader *store.DataLoader) *API {
 	return &API{API: root.New(loader)}
+}
+
+// SetHookRegistry 设置当前主题注册 action/filter 使用的 Hook Registry。
+func (api *API) SetHookRegistry(hooks *plugin.Registry, source plugin.Source) {
+	if api == nil || api.API == nil || hooks == nil {
+		return
+	}
+	api.API.SetHookRegistrars(
+		func(name string, fn any, priority ...int) { hooks.AddAction(name, fn, source, priority...) },
+		func(name string, fn any, priority ...int) { hooks.AddFilter(name, fn, source, priority...) },
+	)
 }
 
 // SetThemeOptions 设置主题声明的选项列表（含默认值），供 GetOption 回退使用。
