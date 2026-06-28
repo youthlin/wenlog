@@ -99,7 +99,14 @@ func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *root.API {
 func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *root.API) template.FuncMap {
 	return template.FuncMap{
 		"pluginOption": func(key string) string { return options[key] },
+		"option":       func(key string) string { return options[key] },
 		"hookInvoke": func(name string, args ...any) any {
+			if api == nil {
+				return nil
+			}
+			return api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
+		},
+		"pluginData": func(name string, args ...any) any {
 			if api == nil {
 				return nil
 			}

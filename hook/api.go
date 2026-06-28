@@ -54,8 +54,78 @@ type ActionFunc = func(api *API, args ...any)
 // FilterFunc 是插件注册 filter 时推荐使用的函数签名。
 type FilterFunc = func(api *API, value any, args ...any) any
 
+// Args 是模板通过 hookInvoke 传给扩展函数的命名参数。
+//
+// 主题/插件作者可以直接用：
+//
+//	api.RegisterFunc("latest", func(api *hook.API, args hook.Args) any {
+//		return api.RecentPosts(args.Int("count", 5))
+//	})
+//
+// 比起在每个扩展里重复写类型断言，这些小工具让 functions.goyaegi 的主流程更接近业务描述。
+type Args map[string]any
+
+// Any 返回原始参数值；不存在时返回 nil。
+func (a Args) Any(key string) any { return a[key] }
+
+// String 读取字符串参数；空字符串或不存在时返回 def。
+func (a Args) String(key, def string) string {
+	if s, ok := a[key].(string); ok && s != "" {
+		return s
+	}
+	return def
+}
+
+// Int 读取整数参数；支持常见整型、浮点数和数字字符串。
+func (a Args) Int(key string, def int) int {
+	switch v := a[key].(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case int32:
+		return int(v)
+	case uint:
+		return int(v)
+	case uint64:
+		return int(v)
+	case uint32:
+		return int(v)
+	case float64:
+		return int(v)
+	case float32:
+		return int(v)
+	case string:
+		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil {
+			return n
+		}
+	}
+	return def
+}
+
+// PositiveInt 读取正整数参数；不存在、无法转换或小于等于 0 时返回 def。
+func (a Args) PositiveInt(key string, def int) int {
+	if n := a.Int(key, def); n > 0 {
+		return n
+	}
+	return def
+}
+
+// Bool 读取布尔参数；支持 bool 和 strconv.ParseBool 可识别的字符串。
+func (a Args) Bool(key string, def bool) bool {
+	switch v := a[key].(type) {
+	case bool:
+		return v
+	case string:
+		if b, err := strconv.ParseBool(strings.TrimSpace(v)); err == nil {
+			return b
+		}
+	}
+	return def
+}
+
 // Func 是插件注册给模板调用的数据函数。
-type Func = func(api *API, args map[string]any) any
+type Func func(api *API, args Args) any
 
 // WidgetRenderContext 是 widget.render action 接收的插件组件渲染上下文。
 type WidgetRenderContext struct {
@@ -150,11 +220,20 @@ func (api *API) WithContext(ctx context.Context) *API {
 }
 
 // RegisterFunc 注册一个可在模板中通过 hookInvoke 调用的数据函数。
-func (api *API) RegisterFunc(name string, fn Func) {
-	if api == nil || name == "" || fn == nil {
+//
+// 推荐签名为 func(api *hook.API, args hook.Args) any。为了降低迁移和编写门槛，
+// 也兼容以下简化签名：
+//
+//   - func(args hook.Args) any
+//   - func(api *hook.API) any
+//   - func() any
+//   - 旧签名 func(api *hook.API, args map[string]any) any
+func (api *API) RegisterFunc(name string, fn any) {
+	wrapped := wrapTemplateFunc(fn)
+	if api == nil || name == "" || wrapped == nil {
 		return
 	}
-	api.funcs[name] = fn
+	api.funcs[name] = wrapped
 }
 
 // GetFunc 获取已注册的命名函数。
@@ -188,7 +267,71 @@ func (api *API) InvokeFunc(ctx context.Context, name string, args map[string]any
 		return nil
 	}
 	defer func() { _ = recover() }()
-	return fn(api.WithContext(ctx), args)
+	return fn(api.WithContext(ctx), Args(args))
+}
+
+func wrapTemplateFunc(fn any) Func {
+	switch f := fn.(type) {
+	case nil:
+		return nil
+	case Func:
+		return f
+	case func(*API, Args) any:
+		return f
+	case func(*API, map[string]any) any:
+		return func(api *API, args Args) any { return f(api, map[string]any(args)) }
+	case func(Args) any:
+		return func(_ *API, args Args) any { return f(args) }
+	case func(map[string]any) any:
+		return func(_ *API, args Args) any { return f(map[string]any(args)) }
+	case func(*API) any:
+		return func(api *API, _ Args) any { return f(api) }
+	case func() any:
+		return func(_ *API, _ Args) any { return f() }
+	}
+	return wrapTemplateFuncByReflection(fn)
+}
+
+func wrapTemplateFuncByReflection(fn any) Func {
+	rv := reflect.ValueOf(fn)
+	if !rv.IsValid() || rv.Kind() != reflect.Func || rv.Type().NumOut() == 0 {
+		return nil
+	}
+	return func(api *API, args Args) any {
+		in, ok := buildTemplateFuncArgs(rv.Type(), api, args)
+		if !ok {
+			return nil
+		}
+		outs := rv.Call(in)
+		if len(outs) == 0 || !outs[0].IsValid() || !outs[0].CanInterface() {
+			return nil
+		}
+		return outs[0].Interface()
+	}
+}
+
+var argsType = reflect.TypeOf(Args{})
+var rawArgsType = reflect.TypeOf(map[string]any{})
+
+func buildTemplateFuncArgs(rt reflect.Type, api *API, args Args) ([]reflect.Value, bool) {
+	if rt.IsVariadic() || rt.NumIn() > 2 {
+		return nil, false
+	}
+	values := make([]reflect.Value, 0, rt.NumIn())
+	for i := 0; i < rt.NumIn(); i++ {
+		typ := rt.In(i)
+		switch {
+		case apiType.AssignableTo(typ) || apiType.ConvertibleTo(typ):
+			values = append(values, reflect.ValueOf(api).Convert(typ))
+		case argsType.AssignableTo(typ) || argsType.ConvertibleTo(typ):
+			values = append(values, reflect.ValueOf(args).Convert(typ))
+		case rawArgsType.AssignableTo(typ) || rawArgsType.ConvertibleTo(typ):
+			values = append(values, reflect.ValueOf(map[string]any(args)).Convert(typ))
+		default:
+			return nil, false
+		}
+	}
+	return values, true
 }
 
 // AddAction 注册 action。插件可以使用 ActionFunc，也可以使用 func(...any) / func()。

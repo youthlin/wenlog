@@ -129,7 +129,7 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 
 func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	dir := t.TempDir()
-	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{hookInvoke "loader"}}/{{hookInvoke "theme"}}|{{renderWidgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{themeData "loader"}}/{{themeData "theme"}}|{{widgets "sidebar" .}}{{end}}`)
 	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}{{widgetOption "name"}}{{end}}`)
 	r, err := NewHot(dir)
 	if err != nil {

@@ -16,12 +16,9 @@ func Register(api *hook.API) {
 	api.RegisterFunc("sayingItems", sayingItems)
 }
 
-func sayingItems(api *hook.API, args map[string]any) any {
-	postID := args["post_id"]
-	count := 5
-	if n, ok := args["count"].(int); ok && n > 0 {
-		count = n
-	}
+func sayingItems(api *hook.API, args hook.Args) any {
+	postID := args.Any("post_id")
+	count := args.PositiveInt("count", 5)
 	post := api.Post(postID)
 	if post == nil {
 		return nil

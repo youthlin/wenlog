@@ -9,8 +9,8 @@ import (
 // 常用数据（RecentPosts、Categories、Tags 等）已全局可用，无需在此注册。
 func Register(api *hook.API) {
 	// popular_posts: 热门文章（按浏览量排序）
-	api.RegisterFunc("popular_posts", func(api *hook.API, args map[string]any) any {
-		n := getInt(args, "n", 5)
+	api.RegisterFunc("popular_posts", func(api *hook.API, args hook.Args) any {
+		n := args.PositiveInt("n", 5)
 		posts := api.Posts()
 		sort.Slice(posts, func(i, j int) bool {
 			return posts[i].Views > posts[j].Views
@@ -20,18 +20,4 @@ func Register(api *hook.API) {
 		}
 		return posts[:n]
 	})
-}
-
-func getInt(args map[string]any, key string, def int) int {
-	if v, ok := args[key]; ok {
-		switch n := v.(type) {
-		case int:
-			return n
-		case int64:
-			return int(n)
-		case float64:
-			return int(n)
-		}
-	}
-	return def
 }

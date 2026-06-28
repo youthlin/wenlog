@@ -58,11 +58,15 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		// 扩展函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
 		// 这里提供占位函数，仅用于模板解析阶段识别函数名。
 		tplFuncHookInvoke:     func(name string, args ...any) any { return nil },
+		tplFuncThemeData:      func(name string, args ...any) any { return nil },
 		tplFuncThemeOption:    func(optionID string) string { return "" },
+		tplFuncOption:         func(optionID string) string { return "" },
 		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return "" },
+		tplFuncWidgets:        func(area string, data any) template.HTML { return "" },
 		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return "" },
 		tplFuncWidgetOption:   func(key string) string { return "" },
 		tplFuncPluginSlot:     func(name string, data any) template.HTML { return "" },
+		tplFuncSlot:           func(name string, data any) template.HTML { return "" },
 		tplFuncPostTitle:      func(data any) template.HTML { return "" },
 		tplFuncPostExcerpt:    func(post any) template.HTML { return "" },
 		tplFuncPostContent:    func(post any) template.HTML { return "" },

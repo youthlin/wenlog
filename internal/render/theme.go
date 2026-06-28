@@ -358,14 +358,7 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 }
 
 func pluginWidgetRenderer(runtime *TemplateRuntime) func(ctx *RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
-	if runtime == nil {
-		return nil
-	}
-	provider := runtime.pluginWidgetProvider.Load()
-	if provider == nil {
-		return nil
-	}
-	return provider.fn
+	return runtime.current().PluginWidget
 }
 
 func requestContext(ctx *RequestContext) context.Context {
@@ -450,11 +443,11 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 	if runtime == nil || ctx == nil || ctx.Template == nil {
 		return ""
 	}
-	provider := runtime.themeWidgetsProvider.Load()
-	if provider == nil || provider.fn == nil {
+	provider := runtime.current().ThemeWidgets
+	if provider == nil {
 		return ""
 	}
-	widgets := provider.fn(ctx, area)
+	widgets := provider(ctx, area)
 	if len(widgets) == 0 {
 		return ""
 	}

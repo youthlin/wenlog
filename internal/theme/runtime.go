@@ -28,24 +28,30 @@ func (m *Manager) BindTemplateFunctions() {
 	if m == nil || m.renderer == nil {
 		return
 	}
-	m.renderer.SetThemeWidgetsProvider(func(ctx *render.RequestContext, area string) []render.WidgetInfo {
-		t := m.renderTheme(ctx)
-		if t == nil {
-			return nil
-		}
-		config := m.renderSetting(ctx, "widget_"+area)
-		return ResolveWidgetsWithDecls(config, t, area, m.WidgetDecls(renderContext(ctx), t, area))
+	m.renderer.ConfigureTemplateRuntime(render.TemplateProviders{
+		ThemeWidgets: m.templateWidgets,
+		ThemeOption:  m.templateOption,
+		Hooks:        m.hookRegistry(),
 	})
+}
 
-	m.renderer.SetOptionProvider(func(ctx *render.RequestContext, optionID string) string {
-		t := m.renderTheme(ctx)
-		if t == nil {
-			return ""
-		}
-		return GetOptionByID(func(key string) (string, error) {
-			return m.renderSetting(ctx, key), nil
-		}, t.Name, t.Options, optionID)
-	})
+func (m *Manager) templateWidgets(ctx *render.RequestContext, area string) []render.WidgetInfo {
+	t := m.renderTheme(ctx)
+	if t == nil {
+		return nil
+	}
+	config := m.renderSetting(ctx, "widget_"+area)
+	return ResolveWidgetsWithDecls(config, t, area, m.WidgetDecls(renderContext(ctx), t, area))
+}
+
+func (m *Manager) templateOption(ctx *render.RequestContext, optionID string) string {
+	t := m.renderTheme(ctx)
+	if t == nil {
+		return ""
+	}
+	return GetOptionByID(func(key string) (string, error) {
+		return m.renderSetting(ctx, key), nil
+	}, t.Name, t.Options, optionID)
 }
 
 // WidgetDecls 返回当前主题可用组件声明，并追加当前启用插件声明的小组件。
@@ -163,6 +169,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 注册 hookInvoke 模板函数
 	if m.renderer != nil {
 		m.renderer.SetHookInvokeProvider(hookInvokeFunc(script, api))
+		m.renderer.SetHookProvider(m.hooks)
 	}
 
 	if m.log != nil {

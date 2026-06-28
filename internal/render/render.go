@@ -80,11 +80,15 @@ const (
 
 const (
 	tplFuncHookInvoke     = "hookInvoke"
+	tplFuncThemeData      = "themeData"
 	tplFuncThemeOption    = "themeOption"
+	tplFuncOption         = "option"
 	tplFuncRenderWidgets  = "renderWidgets"
+	tplFuncWidgets        = "widgets"
 	tplFuncRenderMenu     = "renderMenu"
 	tplFuncWidgetOption   = "widgetOption"
 	tplFuncPluginSlot     = "pluginSlot"
+	tplFuncSlot           = "slot"
 	tplFuncPostTitle      = "postTitle"
 	tplFuncPostExcerpt    = "postExcerpt"
 	tplFuncPostContent    = "postContent"
@@ -134,11 +138,15 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 	}
 	cloned.Funcs(template.FuncMap{
 		tplFuncHookInvoke:     func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
+		tplFuncThemeData:      func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
 		tplFuncThemeOption:    func(optionID string) string { return themeOption(runtime, ctx, optionID) },
+		tplFuncOption:         func(optionID string) string { return themeOption(runtime, ctx, optionID) },
 		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
+		tplFuncWidgets:        func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
 		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
 		tplFuncWidgetOption:   func(key string) string { return widgetOption(ctx, key) },
 		tplFuncPluginSlot:     func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
+		tplFuncSlot:           func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
 		tplFuncPostTitle:      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
 		tplFuncPostExcerpt:    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
 		tplFuncPostContent:    func(post any) template.HTML { return postContent(runtime, ctx, post) },

@@ -19,11 +19,11 @@ func hookInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args
 	if runtime == nil {
 		return nil
 	}
-	provider := runtime.hookInvokeProvider.Load()
-	if provider == nil || provider.fn == nil {
+	provider := runtime.current().HookInvoke
+	if provider == nil {
 		return nil
 	}
-	return provider.fn(ctx, name, args...)
+	return provider(ctx, name, args...)
 }
 
 // themeOption 在模板中使用 {{themeOption "<optionID>"}}
@@ -31,11 +31,11 @@ func themeOption(runtime *TemplateRuntime, ctx *RequestContext, optionID string)
 	if runtime == nil {
 		return ""
 	}
-	provider := runtime.optionProvider.Load()
-	if provider == nil || provider.fn == nil {
+	provider := runtime.current().ThemeOption
+	if provider == nil {
 		return ""
 	}
-	return provider.fn(ctx, optionID)
+	return provider(ctx, optionID)
 }
 
 // widgetOption 模板函数：读取当前渲染组件的选项值。

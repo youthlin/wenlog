@@ -13,6 +13,7 @@ func HookAPIExports() interp.Exports {
 	return interp.Exports{
 		"hook/hook": {
 			"API":                          reflect.ValueOf((*root.API)(nil)),
+			"Args":                         reflect.ValueOf((*root.Args)(nil)),
 			"ActionFunc":                   reflect.ValueOf((*root.ActionFunc)(nil)),
 			"FilterFunc":                   reflect.ValueOf((*root.FilterFunc)(nil)),
 			"Func":                         reflect.ValueOf((*root.Func)(nil)),
