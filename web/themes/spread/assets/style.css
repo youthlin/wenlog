@@ -730,10 +730,53 @@ body.nav-is-open::before {
   letter-spacing: -0.08em;
 }
 .footer-text { color: rgba(255, 248, 236, 0.68); }
+.footer-brand .menu-footer {
+  margin-top: 22px;
+}
+.footer-brand .menu-footer .menu-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.footer-brand .menu-footer .menu-item { position: relative; }
+.footer-brand .menu-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid rgba(255, 248, 236, 0.22);
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: rgba(255, 248, 236, 0.78);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+}
+.footer-brand .menu-footer a:hover {
+  border-color: rgba(244, 200, 91, 0.58);
+  color: var(--yellow);
+}
+.footer-brand .menu-footer .sub-menu {
+  width: 100%;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0 0 0 10px;
+}
 .footer-widgets {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+}
+.footer-widgets.is-masonry {
+  align-items: start;
+}
+.footer-widget-column {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  min-width: 0;
 }
 .footer-widgets .widget { min-width: 0; }
 .footer-widgets .widget h3 {
@@ -970,6 +1013,7 @@ body.nav-is-open::before {
   }
   .article-body { padding: 22px; }
   .footer-widgets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .footer-widgets.is-masonry { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 620px) {
@@ -987,6 +1031,7 @@ body.nav-is-open::before {
   .post-content > p:first-of-type::first-letter { float: none; margin: 0; font-size: inherit; color: inherit; }
   .post-nav { grid-template-columns: 1fr; }
   .footer-widgets { grid-template-columns: 1fr; }
+  .footer-widgets.is-masonry { grid-template-columns: 1fr; }
   .footer-widgets .widget-search form { flex-direction: column; }
   .archive-year-group { padding: 20px; }
   .archive-list li {
@@ -1347,6 +1392,15 @@ body {
 }
 .footer-text,
 .footer-widgets a { color: var(--muted); }
+.footer-brand .menu-footer a {
+  border-color: var(--line-strong);
+  color: var(--muted);
+  font-weight: 720;
+}
+.footer-brand .menu-footer a:hover {
+  border-color: rgba(157, 78, 63, 0.45);
+  color: var(--accent);
+}
 .footer-widgets .widget h3 {
   color: var(--accent);
   font-weight: 780;

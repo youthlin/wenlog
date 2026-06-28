@@ -17,6 +17,9 @@ menu_locations:
   primary:
     name: "主导航"
     description: "站点顶部导航菜单"
+  footer:
+    name: "页脚菜单"
+    description: "显示在页脚站点信息下方的次级菜单"
 
 options:
   - id: custom_css

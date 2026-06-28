@@ -5,6 +5,7 @@
     <div class="footer-brand">
       <p class="footer-title">{{.SiteName}}</p>
       <p class="footer-text">{{themeOption "footer_text" | default "Published with Blog"}}</p>
+      {{renderMenu "footer" .}}
     </div>
     <div class="footer-widgets">{{renderWidgets "footer" .}}</div>
   </div>
