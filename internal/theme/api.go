@@ -13,7 +13,6 @@ type TagView = root.TagView
 type CommentView = root.CommentView
 type UserView = root.UserView
 type ArchiveMonthView = root.ArchiveMonthView
-type SayingItem = root.SayingItem
 
 // API 是 hook.API 在 internal/theme 中的包装，负责桥接内部主题声明类型。
 type API struct {

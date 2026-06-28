@@ -20,16 +20,6 @@ func Register(api *hook.API) {
 		}
 		return posts[:n]
 	})
-
-	// saying: 博主动态（从参数读取 post_id，由 widgetOption 传入）
-	api.RegisterFunc("saying", func(api *hook.API, args map[string]any) any {
-		postID := getInt(args, "post_id", 0)
-		if postID <= 0 {
-			return nil
-		}
-		n := getInt(args, "n", 5)
-		return api.SayingItems(uint(postID), n)
-	})
 }
 
 func getInt(args map[string]any, key string, def int) int {

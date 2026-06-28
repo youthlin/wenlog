@@ -46,7 +46,7 @@ func serve(cfg *config.Config, st *store.Store) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			slog.Error("系统退出成功", slog.Any("error", err))
+			slog.Error("系统退出异常", slog.Any("error", err))
 		}
 	})
 
@@ -117,6 +117,7 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 	}
 	tm.SetHookRegistry(pm.Hooks())
 	tm.SetPluginWidgetsProvider(pm.EnabledWidgetDecls)
+	// TODO 为什么再次 LoadTheme 一遍? initThemeManager里面有一遍
 	if err := tm.LoadTheme(context.Background(), ""); err != nil {
 		slog.Error("加载主题 hook 失败", slog.Any("error", err))
 	}
@@ -199,18 +200,17 @@ func initPluginManager(st *store.Store, tplRenderer *render.Renderer) (*plugin.M
 	if err := pm.LoadEnabledFunctions(context.Background()); err != nil {
 		return nil, err
 	}
-	if tplRenderer != nil {
-		tplRenderer.SetHookProvider(pm.Hooks())
-		tplRenderer.SetPluginWidgetProvider(func(ctx *render.RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
-			reqCtx := renderRequestContext(ctx)
-			if ctx != nil {
-				if loader, ok := ctx.ThemeLoader.(*store.DataLoader); ok {
-					reqCtx = hook.WithDataLoader(reqCtx, loader)
-				}
+
+	tplRenderer.SetHookProvider(pm.Hooks())
+	tplRenderer.SetPluginWidgetProvider(func(ctx *render.RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
+		reqCtx := renderRequestContext(ctx)
+		if ctx != nil {
+			if loader, ok := ctx.ThemeLoader.(*store.DataLoader); ok {
+				reqCtx = hook.WithDataLoader(reqCtx, loader)
 			}
-			return pm.RenderWidget(reqCtx, pluginID, widgetID, options, data)
-		})
-	}
+		}
+		return pm.RenderWidget(reqCtx, pluginID, widgetID, options, data)
+	})
 	return pm, nil
 }
 
@@ -236,6 +236,7 @@ func ensureThemesOnDisk() {
 		themeName := entry.Name()
 		themeYAML := filepath.Join("themes", themeName, "theme.yaml")
 		if _, err := os.Stat(themeYAML); err == nil {
+			// TODO 改成磁盘版本比内嵌版本更低才覆盖?
 			if sameBundledThemeVersion(themeYAML, filepath.Join("themes", themeName, "theme.yaml")) {
 				continue // 已存在且版本一致，保留用户可能做过的本地调整
 			}

@@ -28,15 +28,17 @@ type FunctionsScript struct {
 // CompileFunctions 编译主题目录下的 functions.go 或 functions.goyaegi 文件。
 // 返回编译后的脚本实例；如果文件不存在则返回 nil, nil。
 func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsScript, error) {
+	// 查找 function.go[yaegi] 文件
 	path := internalscript.FindFunctionsPath(themeDir)
 	if path == "" {
 		return nil, nil
 	}
+	// 读取文件内容
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "读取主题函数文件失败: %s", path)
 	}
-
+	// 编译
 	return compileFunctionsSource(path, string(data), api, log)
 }
 
@@ -98,6 +100,9 @@ func hashString(s string) string {
 // hookInvokeFunc 返回一个可在模板中调用的 hookInvoke 函数。
 // 用法：{{hookInvoke "func_name" "key1" value1 "key2" value2}}
 func hookInvokeFunc(script *FunctionsScript, api *API) func(ctx *render.RequestContext, name string, args ...any) any {
+	if script == nil {
+		return nil
+	}
 	return func(ctx *render.RequestContext, name string, args ...any) any {
 		if script == nil || api == nil {
 			return nil

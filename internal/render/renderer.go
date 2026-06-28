@@ -16,6 +16,9 @@ import (
 var _ render.HTMLRender = (*Renderer)(nil)
 
 // Renderer 持有模板配置,既支持静态模板,也支持开发期热更新。
+// 项目启动时会将 [Renderer] 实例赋值给 gin 引擎的 HTMLRender
+//   - c.HTML(code, name, obj) 时, 会通过 [Renderer.Instance] 生成一个 [Render] 实例
+//   - 也可以直接获取到 [Render] 后调用 c.Render(code, render)
 type Renderer struct {
 	mu             sync.RWMutex
 	tpl            *template.Template
@@ -33,6 +36,16 @@ type Renderer struct {
 
 	themeRuntime TemplateRuntime
 }
+
+// Instance 实现 gin 的 [render.HTMLRender] 接口。它始终使用当前缓存的模板实例。
+func (r *Renderer) Instance(name string, data any) ginrender.Render {
+	r.mu.RLock()
+	tpl := r.tpl
+	r.mu.RUnlock()
+	return &themeHTMLRender{tmpl: tpl, name: name, data: data, runtime: &r.themeRuntime}
+}
+
+// ========== ========== ========== ========== ========== ========== ==========
 
 // NewHot 从磁盘目录创建一个可热更新的模板渲染器。
 // 启动时会先 Parse 一次模板,之后只有显式调用 Reload 才会重新解析。
@@ -59,14 +72,6 @@ func New(fsys fs.FS) (*Renderer, error) {
 		pattern:   pattern,
 		defaultFS: fsys,
 	}, nil
-}
-
-// Instance 实现 gin 的 [render.HTMLRender] 接口。它始终使用当前缓存的模板实例。
-func (r *Renderer) Instance(name string, data any) ginrender.Render {
-	r.mu.RLock()
-	tpl := r.tpl
-	r.mu.RUnlock()
-	return &widgetHTMLRender{tmpl: tpl, name: name, data: data, runtime: &r.themeRuntime}
 }
 
 // Hot 返回当前渲染器是否处于本地模板热更新模式。

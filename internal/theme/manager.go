@@ -44,6 +44,21 @@ type Manager struct {
 	pluginWidgets func(ctx context.Context) []plugin.WidgetDecl
 }
 
+// NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。
+func NewManager(themesDir string, store settingStore, renderer *render.Renderer) (*Manager, error) {
+	m := &Manager{
+		themesDir: themesDir,
+		store:     store,
+		themes:    make(map[string]*Theme),
+		renderer:  renderer,
+		log:       slog.Default().With("component", "theme-manager"),
+	}
+	if err := m.scan(); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // SetHookRegistry 设置当前主题 functions.goyaegi 注册 AddAction/AddFilter 使用的 registry。
 func (m *Manager) SetHookRegistry(hooks *plugin.Registry) {
 	if m == nil {
@@ -62,21 +77,6 @@ func (m *Manager) SetPluginWidgetsProvider(fn func(ctx context.Context) []plugin
 	m.runtimeMu.Lock()
 	defer m.runtimeMu.Unlock()
 	m.pluginWidgets = fn
-}
-
-// NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。
-func NewManager(themesDir string, store settingStore, renderer *render.Renderer) (*Manager, error) {
-	m := &Manager{
-		themesDir: themesDir,
-		store:     store,
-		themes:    make(map[string]*Theme),
-		renderer:  renderer,
-		log:       slog.Default().With("component", "theme-manager"),
-	}
-	if err := m.scan(); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 // scan 扫描 themesDir 下所有子目录，加载 theme.yaml。

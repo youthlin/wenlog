@@ -22,7 +22,6 @@ func HookAPIExports() interp.Exports {
 			"CommentView":                  reflect.ValueOf((*root.CommentView)(nil)),
 			"UserView":                     reflect.ValueOf((*root.UserView)(nil)),
 			"ArchiveMonthView":             reflect.ValueOf((*root.ArchiveMonthView)(nil)),
-			"SayingItem":                   reflect.ValueOf((*root.SayingItem)(nil)),
 			"SelectOpt":                    reflect.ValueOf((*root.SelectOpt)(nil)),
 			"OptionDecl":                   reflect.ValueOf((*root.OptionDecl)(nil)),
 			"WidgetRenderContext":          reflect.ValueOf((*root.WidgetRenderContext)(nil)),

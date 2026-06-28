@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"io/fs"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -45,6 +44,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"sub":              func(a, b int) int { return a - b },
 		"seq":              seq,
 		"toInt":            func(s string) int { n, _ := strconv.Atoi(s); return n },
+		// TODO 内置的 or 也是这个作用吗
 		"default": func(def, val any) any {
 			if val == nil {
 				return def
@@ -57,29 +57,22 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		},
 		// 扩展函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
 		// 这里提供占位函数，仅用于模板解析阶段识别函数名。
-		"hookInvoke":    func(name string, args ...any) any { return nil },
-		"themeOption":   func(optionID string) string { return "" },
-		"themeWidgets":  func(area string) any { return nil },
-		"renderWidgets": func(area string, data any) template.HTML { return "" },
-		"renderMenu":    func(location string, data ...any) template.HTML { return "" },
-		"widgetOption":  func(key string) string { return "" },
-		"pluginSlot":    func(name string, data any) template.HTML { return "" },
-		"postTitle":     func(data any) template.HTML { return "" },
-		"postExcerpt":   func(post any) template.HTML { return "" },
-		"postContent":   func(post any) template.HTML { return "" },
-		"postTags":      func(post any) template.HTML { return "" },
-		"postNavigation": func(data any, classes ...string) template.HTML {
-			return ""
-		},
-		"bodyClass":    func(data any) string { return "" },
-		"postClass":    func(post any, extra ...string) string { return "" },
-		"commentClass": func(comment any, extra ...string) string { return "" },
-		"commentContent": func(comment any) template.HTML {
-			return ""
-		},
-		"widgetInConfig": func(id string, config []string) bool {
-			return slices.Contains(config, id)
-		},
+		"hookInvoke":     func(name string, args ...any) any { return nil },
+		"themeOption":    func(optionID string) string { return "" },
+		"themeWidgets":   func(area string) any { return nil },
+		"renderWidgets":  func(area string, data any) template.HTML { return "" },
+		"renderMenu":     func(location string, data ...any) template.HTML { return "" },
+		"widgetOption":   func(key string) string { return "" },
+		"pluginSlot":     func(name string, data any) template.HTML { return "" },
+		"postTitle":      func(data any) template.HTML { return "" },
+		"postExcerpt":    func(post any) template.HTML { return "" },
+		"postContent":    func(post any) template.HTML { return "" },
+		"postTags":       func(post any) template.HTML { return "" },
+		"postNavigation": func(data any, classes ...string) template.HTML { return "" },
+		"bodyClass":      func(data any) string { return "" },
+		"postClass":      func(post any, extra ...string) string { return "" },
+		"commentClass":   func(comment any, extra ...string) string { return "" },
+		"commentContent": func(comment any) template.HTML { return "" },
 	}
 	tpl, err := template.New("").
 		Funcs(funcs).
@@ -99,6 +92,7 @@ func postURL(p any) string {
 		return permalink.Post(&v)
 	default:
 		// 处理 yaegi 返回的 theme.PostView（通过反射提取 ID/Title/Slug/PostType/PublishedAt/ModifiedAt）
+		// TODO 能够改成断言成接口, 通过接口的 GetID() 这种方法获取字段 避免反射
 		rv := reflect.ValueOf(p)
 		if rv.Kind() == reflect.Struct {
 			id := reflectGetUint(rv, "ID")
@@ -160,6 +154,7 @@ func reflectGetTime(rv reflect.Value, field string) (time.Time, bool) {
 func postExcerptHTML(p *model.Post) template.HTML {
 	above, hasMore := wxr.SplitMore(p.Content)
 	if hasMore {
+		// TODO 将多处 addSrcSet+HighlightCodeBlocks+SanitizeHTML 抽出一个小函数?
 		return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(above))))
 	}
 	if p.Excerpt != "" {

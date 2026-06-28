@@ -162,11 +162,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 
 	// 注册 hookInvoke 模板函数
 	if m.renderer != nil {
-		if script != nil {
-			m.renderer.SetHookInvokeProvider(hookInvokeFunc(script, api))
-		} else {
-			m.renderer.SetHookInvokeProvider(nil)
-		}
+		m.renderer.SetHookInvokeProvider(hookInvokeFunc(script, api))
 	}
 
 	if m.log != nil {

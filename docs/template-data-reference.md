@@ -85,7 +85,6 @@
 | `themeWidgets` | `func(string) any` | 返回某个组件区域的组件配置，通常由 `renderWidgets` 间接使用 |
 | `renderWidgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{renderWidgets "sidebar" .}}` |
 | `widgetOption` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
-| `widgetInConfig` | `func(string, []string) bool` | 判断组件 ID 是否在旧格式配置中，主要用于后台兼容 |
 
 ## 数据模型
 
