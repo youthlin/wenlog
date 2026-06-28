@@ -94,6 +94,10 @@
       {{else}}
       <p class="tip">{{.t.T "暂无已安装的主题。"}}</p>
       {{end}}
+    </section>
+
+    <section class="card settings-card theme-upload-card">
+      <h3>{{.t.T "上传主题包"}}</h3>
       <form class="edit-form" method="post" action="/admin/theme/upload" enctype="multipart/form-data">
         {{template "csrf_field" .}}
         <label>{{.t.T "上传主题包 (.zip)"}}<input type="file" name="theme_zip" accept=".zip" required></label>

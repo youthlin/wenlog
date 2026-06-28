@@ -126,7 +126,7 @@
     {{- if .RecentPosts}}
     <ul class="dashboard-list">
       {{- range .RecentPosts}}
-      <li>
+      <li class="dashboard-recent-post-item">
         <a class="dashboard-list-link" href="{{postURL .}}">{{.Title}}</a>
         {{- if or (eq $.CurrentUserRole "admin") (eq $.User.ID .AuthorID)}}
         <a class="dashboard-list-edit" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
@@ -144,13 +144,14 @@
     {{- if .RecentComments}}
     <ul class="dashboard-list">
       {{- range .RecentComments}}
-      <li>
+      <li class="dashboard-recent-comment-item">
         {{- $postURL := index $.CommentPostURLs .PostID}}
         {{- $postTitle := index $.CommentPostTitles .PostID}}
         <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{.Content}}</a>
-        <span class="dashboard-list-meta">
-          {{.Author}} {{$.t.T "发表在"}}
-          {{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}
+        <span class="dashboard-list-meta dashboard-comment-meta">
+          <span class="dashboard-comment-author">{{.Author}}</span>
+          <span>{{$.t.T "发表在"}}</span>
+          <span class="dashboard-comment-post-title">《{{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}》</span>
         </span>
       </li>
       {{- end}}

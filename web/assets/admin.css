@@ -984,6 +984,7 @@ body.admin.nav-open { overflow: hidden; }
   min-width: 0;
 }
 .dashboard-list li:last-child { padding-bottom: 0; border-bottom: 0; }
+.dashboard-recent-post-item .dashboard-list-link { flex: 1 1 auto; }
 .dashboard-list-link {
   font-weight: 600;
   color: var(--fg);
@@ -1008,6 +1009,15 @@ body.admin.nav-open { overflow: hidden; }
   white-space: nowrap;
   max-width: 100%;
 }
+.dashboard-comment-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  min-width: 0;
+  max-width: min(100%, 360px);
+}
+.dashboard-comment-author { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.dashboard-comment-post-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dashboard-list-comment {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1022,7 +1032,7 @@ body.admin.nav-open { overflow: hidden; }
 .dashboard-list-edit {
   color: var(--accent);
   font-size: 12px;
-  margin-left: 8px;
+  margin-left: auto;
   white-space: nowrap;
 }
 .dashboard-list-edit:hover { text-decoration: underline; }
@@ -1043,10 +1053,12 @@ body.admin.nav-open { overflow: hidden; }
   .stat-value { font-size: 24px; }
   .dashboard-panel { padding: 14px; }
   .dashboard-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  .dashboard-recent-post-item .dashboard-list-link { flex: none; }
   .dashboard-list-link,
   .dashboard-list-comment { max-width: 100%; }
   .dashboard-list-edit { margin-left: 0; }
   .dashboard-list-meta { grid-column: 1 / -1; margin-left: 0; white-space: normal; overflow-wrap: anywhere; }
+  .dashboard-comment-meta { max-width: 100%; white-space: nowrap; overflow-wrap: normal; }
   .markdown-toolbar .btn-secondary,
   .md-view-tabs .btn-secondary { flex: 1 1 auto; }
   .md-editor textarea,
@@ -1357,7 +1369,8 @@ body.admin.nav-open { overflow: hidden; }
 .theme-actions-cell .theme-action-link { text-decoration: none; }
 /* 操作按钮分两行：第一行激活/预览，第二行编辑/下载/删除 */
 .theme-actions-cell { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-.theme-actions-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+.theme-actions-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; min-height: 31px; }
+.theme-actions-row:empty { display: none; }
 .theme-actions-cell .inline { margin: 0; }
 .theme-actions-cell .inline button,
 .theme-actions-cell .theme-action-link {
@@ -1394,6 +1407,40 @@ body.admin.nav-open { overflow: hidden; }
 .backup-actions-cell .inline button.link-danger:hover { background: var(--danger-mix-hover-bg); }
 .backup-enable-checkbox { margin: 0 0 14px; }
 .backup-list-card { margin-top: 18px; }
+
+/* 菜单管理 */
+.menu-location-card { margin-top: 18px; }
+.menu-location-card:first-of-type { margin-top: 0; }
+.menu-items-table { min-width: 980px; }
+.menu-items-table th,
+.menu-items-table td { vertical-align: middle; }
+.menu-items-table select,
+.menu-items-table input[type="text"] { width: 100%; min-width: 0; }
+.menu-items-table [data-menu-type] { min-width: 112px; }
+.menu-items-table [data-menu-page] { min-width: 150px; }
+.menu-items-table .actions { text-align: left; }
+.menu-settings-form > .btn,
+.menu-settings-form > button[type="submit"] { margin-top: 16px; }
+
+/* 插件管理 */
+.plugins-table { min-width: 880px; }
+.plugins-table th,
+.plugins-table td { vertical-align: top; }
+.plugin-info-cell { min-width: 260px; }
+.plugin-status-cell { min-width: 130px; }
+.plugin-capabilities-cell { min-width: 280px; }
+.plugin-actions-cell { min-width: 220px; }
+.plugin-title-panel { display: grid; gap: 5px; }
+.plugin-description { color: var(--fg); line-height: 1.6; }
+.plugin-meta-line { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.plugin-capability-line { margin-bottom: 6px; line-height: 1.6; word-break: break-word; }
+.plugin-capability-line:last-child { margin-bottom: 0; }
+.plugin-actions-cell { white-space: normal; }
+.plugin-actions-cell .inline,
+.plugin-actions-cell .theme-action-link { margin-right: 4px; margin-bottom: 6px; }
+.developer-settings-main .edit-form > p:has(.btn),
+.developer-settings-main .edit-form > p:has(.btn-secondary) { margin-top: 14px; }
+
 /* ============================================================
    18.1 主题文件编辑器 (Theme File Editor)
    ============================================================ */
@@ -1688,6 +1735,27 @@ body.admin.nav-open { overflow: hidden; }
   .themes-table .actions .inline { flex: 0 0 auto; }
   .themes-table .actions .inline button { width: auto; min-width: 0; }
   .themes-table .actions .theme-action-link { width: auto; min-width: 0; flex: 0 0 auto; }
+
+  .plugins-table,
+  .plugins-table thead,
+  .plugins-table tbody,
+  .plugins-table tr,
+  .plugins-table th,
+  .plugins-table td { display: block; width: 100%; }
+  .plugins-table { min-width: 0 !important; background: transparent; border-spacing: 0; }
+  .plugins-table thead { display: none; }
+  .plugins-table tbody { display: grid; gap: 14px; }
+  .plugins-table tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--surface-shadow); overflow: hidden; }
+  .plugins-table tbody tr td { border-bottom: 0; padding: 12px 14px; }
+  .plugins-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .plugins-table .plugin-info-cell,
+  .plugins-table .plugin-status-cell,
+  .plugins-table .plugin-capabilities-cell,
+  .plugins-table .plugin-actions-cell { min-width: 0; max-width: none; }
+  .plugins-table .plugin-actions-cell { display: grid !important; gap: 8px; }
+  .plugins-table .plugin-actions-cell .inline,
+  .plugins-table .plugin-actions-cell .theme-action-link { width: 100%; margin: 0; }
+  .plugins-table .plugin-actions-cell .inline button { width: 100%; }
 
   .backup-table,
   .backup-table thead,
@@ -2027,6 +2095,11 @@ body.admin.nav-open { overflow: hidden; }
   background: rgba(111, 66, 193, .10);
   border: 1px solid rgba(111, 66, 193, .22);
 }
+.widget-source-plugin {
+  color: #6f42c1;
+  background: rgba(111, 66, 193, .10);
+  border: 1px solid rgba(111, 66, 193, .22);
+}
 .widget-config-actions {
   display: flex;
   gap: 4px;
@@ -2201,6 +2274,9 @@ body.admin.nav-open { overflow: hidden; }
    ============================================================ */
 .theme-options-form .settings-card {
   padding: 20px 24px;
+}
+.theme-options-form .settings-card + .settings-card {
+  margin-top: 18px;
 }
 .theme-options-form .settings-card label strong {
   display: block;

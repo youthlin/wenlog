@@ -70,7 +70,7 @@ func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
 
 	var panel strings.Builder
 	hooks.DoAction(context.Background(), root.HookCommentFormAfterTextarea, &panel, nil)
-	if got := panel.String(); !strings.Contains(got, `class="comment-smilies"`) || !strings.Contains(got, `data-smiley-code="[/微笑]"`) {
+	if got := panel.String(); !strings.Contains(got, `class="comment-smilies"`) || !strings.Contains(got, `class="comment-smilies-label sr-only"`) || !strings.Contains(got, `data-smiley-code="[/微笑]"`) {
 		t.Fatalf("smiley panel not rendered: %s", got)
 	}
 

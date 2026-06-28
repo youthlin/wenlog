@@ -162,7 +162,9 @@ func menuNode(item MenuConfigItem, pages map[uint]model.Post) (MenuItem, bool) {
 
 func normalizeMenuConfig(items []MenuConfigItem) []MenuConfigItem {
 	out := make([]MenuConfigItem, 0, len(items))
+	idMap := make(map[string]string)
 	for i, item := range items {
+		oldID := strings.TrimSpace(item.ID)
 		item.ID = strings.TrimSpace(item.ID)
 		item.Type = strings.TrimSpace(item.Type)
 		item.Title = strings.TrimSpace(item.Title)
@@ -172,13 +174,25 @@ func normalizeMenuConfig(items []MenuConfigItem) []MenuConfigItem {
 		if item.Order == 0 {
 			item.Order = i + 1
 		}
-		if item.ID == "" && item.PostID > 0 {
+		if item.Type == MenuItemTypePage && item.PostID > 0 {
+			item.ID = menuPageID(item.PostID)
+		} else if item.ID == "" && item.PostID > 0 {
 			item.ID = menuPageID(item.PostID)
 		}
 		if item.ID == "" {
 			continue
 		}
+		if oldID != "" && oldID != item.ID {
+			idMap[oldID] = item.ID
+		}
 		out = append(out, item)
+	}
+	if len(idMap) > 0 {
+		for i := range out {
+			if mapped := idMap[out[i].ParentID]; mapped != "" {
+				out[i].ParentID = mapped
+			}
+		}
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Order < out[j].Order })
 	return out

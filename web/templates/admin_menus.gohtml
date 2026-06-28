@@ -49,13 +49,13 @@
                 <option value="0">{{$.t.T "选择页面"}}</option>
                 {{range $.Pages}}<option value="{{.ID}}" {{if eq .ID $item.PostID}}selected{{end}}>{{.Title}}</option>{{end}}
               </select>
-              <input type="text" name="menu_title_{{$loc}}" value="{{.Title}}" placeholder="{{$.t.T "自定义标题，可留空使用页面标题"}}">
+              <input type="text" name="menu_title_{{$loc}}" value="{{.Title}}" placeholder="{{$.t.T "菜单标题"}}" data-menu-title>
             </td>
-            <td data-label="{{$.t.T "链接"}}"><input type="text" name="menu_url_{{$loc}}" value="{{.URL}}" placeholder="/about 或 https://example.com"></td>
+            <td data-label="{{$.t.T "链接"}}"><input type="text" name="menu_url_{{$loc}}" value="{{.URL}}" placeholder="/about 或 https://example.com" data-menu-url></td>
             <td data-label="{{$.t.T "父级"}}">
               <select name="menu_parent_{{$loc}}">
                 <option value="">{{$.t.T "无"}}</option>
-                {{range $.Items}}{{if ne .ID $item.ID}}<option value="{{.ID}}" {{if eq .ID $item.ParentID}}selected{{end}}>{{if .Title}}{{.Title}}{{else}}{{.ID}}{{end}}</option>{{end}}{{end}}
+                {{range $.Items}}{{if ne .ID $item.ID}}{{$parent := .}}{{$parentPageTitle := ""}}{{if .PostID}}{{range $.Pages}}{{if eq .ID $parent.PostID}}{{$parentPageTitle = .Title}}{{end}}{{end}}{{end}}<option value="{{.ID}}" {{if eq .ID $item.ParentID}}selected{{end}}>{{if .Title}}{{.Title}}{{else if $parentPageTitle}}{{$parentPageTitle}}{{else}}{{.ID}}{{end}}</option>{{end}}{{end}}
               </select>
             </td>
             <td data-label="{{$.t.T "新窗口"}}"><select name="menu_target_{{$loc}}"><option value="">{{$.t.T "否"}}</option><option value="_blank" {{if eq .Target "_blank"}}selected{{end}}>{{$.t.T "是"}}</option></select></td>
@@ -78,32 +78,65 @@
 <script>
 (function(){
   function newId(){ return 'm_' + Math.random().toString(16).slice(2) + Date.now().toString(16); }
+  function pageId(id){ return id && id !== '0' ? 'page_' + id : ''; }
   function pageOptions(){
     return '<option value="0">{{.t.T "选择页面"}}</option>{{range .Pages}}<option value="{{.ID}}">{{js .Title}}</option>{{end}}';
+  }
+  function itemLabel(row){
+    var type = row.querySelector('[data-menu-type]');
+    if(type && type.value === 'page'){
+      var page = row.querySelector('[data-menu-page]');
+      var opt = page && page.options[page.selectedIndex];
+      if(opt && opt.value !== '0') return opt.textContent;
+    }
+    var titleInput = row.querySelector('[data-menu-title]');
+    var title = titleInput && titleInput.value ? titleInput.value : '';
+    if(title) return title;
+    var idInput = row.querySelector('input[name^="menu_id_"]');
+    return idInput ? idInput.value : '';
   }
   function parentOptions(tbody){
     var html = '<option value="">{{.t.T "无"}}</option>';
     tbody.querySelectorAll('tr').forEach(function(row){
       var id = row.querySelector('input[name^="menu_id_"]').value;
-      var titleInput = row.querySelector('input[name^="menu_title_"]');
-      var title = titleInput && titleInput.value ? titleInput.value : id;
+      var title = itemLabel(row) || id;
       if(id) html += '<option value="'+id.replace(/"/g,'&quot;')+'">'+title.replace(/</g,'&lt;')+'</option>';
     });
     return html;
+  }
+  function syncRow(row){
+    var type = row.querySelector('[data-menu-type]');
+    var page = row.querySelector('[data-menu-page]');
+    var title = row.querySelector('[data-menu-title]');
+    var url = row.querySelector('[data-menu-url]');
+    var id = row.querySelector('input[name^="menu_id_"]');
+    var isPage = type && type.value === 'page';
+    if(page) page.hidden = !isPage;
+    if(title) title.hidden = isPage;
+    if(url) url.hidden = isPage;
+    if(isPage && id && page){
+      id.value = pageId(page.value) || id.value;
+    } else if(!isPage && id && id.value.indexOf('page_') === 0){
+      id.value = newId();
+    }
   }
   function addRow(loc, type){
     var table = document.querySelector('[data-menu-location="'+loc+'"]');
     if(!table) return;
     var tbody = table.querySelector('tbody');
     var tr = document.createElement('tr');
-    tr.innerHTML = '<td data-label="{{.t.T "类型"}}"><input type="hidden" name="menu_id_'+loc+'" value="'+newId()+'"><select name="menu_type_'+loc+'" data-menu-type><option value="page">{{.t.T "页面"}}</option><option value="custom">{{.t.T "自定义链接"}}</option></select></td>'+
-      '<td data-label="{{.t.T "页面/标题"}}"><select name="menu_post_id_'+loc+'" data-menu-page>'+pageOptions()+'</select><input type="text" name="menu_title_'+loc+'" placeholder="{{.t.T "自定义标题，可留空使用页面标题"}}"></td>'+
-      '<td data-label="{{.t.T "链接"}}"><input type="text" name="menu_url_'+loc+'" placeholder="/about 或 https://example.com"></td>'+
-      '<td data-label="{{.t.T "父级"}}"><select name="menu_parent_'+loc+'">'+parentOptions(tbody)+'</select></td>'+
+    tr.innerHTML = '<td data-label="{{.t.T "类型"}}"><input type="hidden" name="menu_id_'+loc+'" value="'+newId()+'"><select name="menu_type_'+loc+'" data-menu-type><option value="page">{{.t.T "页面"}}</option><option value="custom">{{.t.T "自定义链接"}}</option></select></td>'+ 
+      '<td data-label="{{.t.T "页面/标题"}}"><select name="menu_post_id_'+loc+'" data-menu-page>'+pageOptions()+'</select><input type="text" name="menu_title_'+loc+'" placeholder="{{.t.T "菜单标题"}}" data-menu-title></td>'+ 
+      '<td data-label="{{.t.T "链接"}}"><input type="text" name="menu_url_'+loc+'" placeholder="/about 或 https://example.com" data-menu-url></td>'+ 
+      '<td data-label="{{.t.T "父级"}}"><select name="menu_parent_'+loc+'">'+parentOptions(tbody)+'</select></td>'+ 
       '<td data-label="{{.t.T "新窗口"}}"><select name="menu_target_'+loc+'"><option value="">{{.t.T "否"}}</option><option value="_blank">{{.t.T "是"}}</option></select></td>'+
       '<td class="actions" data-label="{{.t.T "操作"}}"><button type="button" class="btn-secondary btn-sm" data-menu-remove>{{.t.T "移除"}}</button></td>';
     tbody.appendChild(tr);
     tr.querySelector('[data-menu-type]').value = type;
+    syncRow(tr);
+  }
+  function syncAll(){
+    document.querySelectorAll('.menu-items-table tbody tr').forEach(syncRow);
   }
   document.addEventListener('click', function(e){
     var page = e.target.closest('[data-menu-add-page]');
@@ -113,6 +146,13 @@
     var remove = e.target.closest('[data-menu-remove]');
     if(remove){ remove.closest('tr').remove(); }
   });
+  document.addEventListener('change', function(e){
+    var type = e.target.closest('[data-menu-type]');
+    if(type){ syncRow(type.closest('tr')); return; }
+    var page = e.target.closest('[data-menu-page]');
+    if(page){ syncRow(page.closest('tr')); }
+  });
+  syncAll();
 })();
 </script>
 {{template "admin_footer" .}}

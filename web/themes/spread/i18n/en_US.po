@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog spread theme\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 23:09:48+0800\n"
+"POT-Creation-Date: 2026-06-29 00:11:19+0800\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -111,23 +111,23 @@ msgstr "Comment"
 msgid "说点什么吧…… *"
 msgstr "Say something... *"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:83
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:84
 msgid "有回复时邮件通知我"
 msgstr "Notify me by email when there are replies"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:85
 msgid "取消回复"
 msgstr "Cancel reply"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:85
 msgid "提交评论"
 msgstr "Post comment"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:86
 msgid "评论提交后需经审核才会显示。"
 msgstr "Comments appear after moderation."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:89
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:17
 msgid "评论已关闭"
@@ -141,19 +141,19 @@ msgstr "Page error"
 msgid "返回首页"
 msgstr "Back to home"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:14
 msgid "目录"
 msgstr "Contents"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:15
 msgid "回顶部"
 msgstr "Back to top"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:16
 msgid "到底部"
 msgstr "Go to bottom"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/footer.gohtml:22
 msgid "SQL 执行详情 (%d 条)"
 msgstr "SQL Details (%d items)"
 
@@ -170,7 +170,7 @@ msgid "网络错误,请稍后重试。"
 msgstr "Network error. Please try again later."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:35
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:36
 msgid "打开菜单"
 msgstr "Open menu"
 
@@ -178,24 +178,24 @@ msgstr "Open menu"
 msgid "收起菜单"
 msgstr "Close menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:19
 msgid "跳到主要内容"
 msgstr "Skip to main content"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:25
 msgid "首页"
 msgstr "Home"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:30
 msgid "语言"
 msgstr "Language"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:31
 msgid "中文"
 msgstr "中文"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:32
 msgid "English"
 msgstr "English"
 
@@ -236,10 +236,6 @@ msgstr "Open story"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/page.gohtml:18
 msgid "页面目录"
 msgstr "Page contents"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/post.gohtml:14
-msgid "草稿预览"
-msgstr "Draft preview"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/post.gohtml:18
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/post.gohtml:19

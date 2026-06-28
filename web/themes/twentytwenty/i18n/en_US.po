@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 15:17:38+0800\n"
+"POT-Creation-Date: 2026-06-29 00:11:19+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -99,27 +99,23 @@ msgstr "Comment"
 msgid "说点什么吧…… *"
 msgstr "Say something… *"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:75
-msgid "表情"
-msgstr "Emojis"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:73
 msgid "有回复时邮件通知我"
 msgstr "Email me when there are replies"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:86
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:74
 msgid "取消回复"
 msgstr "Cancel reply"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:86
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:74
 msgid "提交评论"
 msgstr "Submit comment"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:75
 msgid "评论提交后需经审核才会显示。"
 msgstr "Comments will appear after moderation."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:90
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:78
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:13
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:14
 msgid "评论已关闭"
@@ -154,7 +150,7 @@ msgid "网络错误,请稍后重试。"
 msgstr "Network error. Please try again later."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:37
 msgid "打开菜单"
 msgstr "Open menu"
 
@@ -162,20 +158,20 @@ msgstr "Open menu"
 msgid "收起菜单"
 msgstr "Collapse menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:20
 msgid "跳到主要内容"
 msgstr "Skip to main content"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:32
 msgid "切换主题"
 msgstr "Switch theme"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:33
 msgid "明亮"
 msgstr "Light"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:34
 msgid "暗黑"
 msgstr "Dark"
 
@@ -207,10 +203,6 @@ msgstr "Read more →"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:21
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:4
-msgid "草稿预览"
-msgstr "Draft preview"
 
 #: theme.yaml:description
 msgid "Twenty Twenty 风格，居中单栏布局，暖米色背景，Inter 字体，支持暗色模式"

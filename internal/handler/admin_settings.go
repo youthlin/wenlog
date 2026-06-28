@@ -121,6 +121,10 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["TemplateHotReload"] = h.renderer != nil && h.renderer.Hot()
 	data["AssetHotReload"] = h.assets != nil && h.assets.Hot()
 	data["I18nHotReload"] = i18n.Hot()
+	data["PluginManagerAvailable"] = h.pluginManager != nil
+	if h.pluginManager != nil {
+		data["EnabledPluginIDs"] = strings.Join(h.pluginManager.EnabledIDs(c), ", ")
+	}
 	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
@@ -168,6 +172,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "theme-reloaded" {
 		data["Notice"] = tr.T("主题已重载。")
+	}
+	if c != nil && c.Query("message") == "plugins-reloaded" {
+		data["Notice"] = tr.T("插件资源已重载。")
 	}
 	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
 		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
@@ -651,4 +658,28 @@ func (h *Admin) ReloadTheme(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "theme-reloaded"))
+}
+
+// ReloadPlugins 从开发设置页重载所有已启用插件资源。
+func (h *Admin) ReloadPlugins(c *gin.Context) {
+	tr := i18n.Get(c)
+	if h.pluginManager == nil {
+		data := h.settingsDataForTab(c, "developer")
+		data["Error"] = tr.T("插件管理器未初始化。")
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if err := h.reloadPluginRuntime(c); err != nil {
+		data := h.settingsDataForTab(c, "developer")
+		data["Error"] = tr.T("重载插件资源失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	if err := h.pluginManager.RebuildTranslations(); err != nil {
+		data := h.settingsDataForTab(c, "developer")
+		data["Error"] = tr.T("重载插件翻译资源失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "plugins-reloaded"))
 }

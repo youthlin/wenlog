@@ -11,7 +11,7 @@
 {{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
 
 {{if eq .CurrentSettingsSection "developer"}}
-<div class="settings-main">
+<div class="settings-main developer-settings-main">
   <div class="settings-stack">
     <section class="card settings-card">
       <h3>{{.t.T "模板设置"}}</h3>
@@ -86,6 +86,20 @@
       </form>
       {{else}}
       <p class="tip">{{.t.T "未检测到激活的主题。"}}</p>
+      {{end}}
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "插件资源"}}</h3>
+      {{if .PluginManagerAvailable}}
+      {{if .EnabledPluginIDs}}<p class="tip">{{.t.T "当前启用插件：%s" .EnabledPluginIDs}}</p>{{else}}<p class="tip">{{.t.T "当前没有启用插件。"}}</p>{{end}}
+      <p class="tip">{{.t.T "插件可以同时启用多个；这里会重新加载所有已启用插件的 functions、hooks、组件和翻译绑定，并刷新当前主题 hooks。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/plugins/reload">
+        {{template "csrf_field" .}}
+        <p><button type="submit" class="btn-secondary">{{.t.T "重载插件资源"}}</button></p>
+      </form>
+      {{else}}
+      <p class="tip">{{.t.T "插件管理器未初始化。"}}</p>
       {{end}}
     </section>
 

@@ -202,7 +202,7 @@ func adminNavKey(c *gin.Context) string {
 		return "categories"
 	case "/admin/tags", "/admin/tag", "/admin/tag/:id/delete":
 		return "tags"
-	case "/admin/settings", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload":
+	case "/admin/settings", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/theme/reload", "/admin/settings/plugins/reload":
 		return "settings"
 	case "/admin/profile", "/admin/profile/password":
 		return "profile"

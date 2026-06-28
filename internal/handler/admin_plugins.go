@@ -119,7 +119,15 @@ func (h *Admin) PluginAction(c *gin.Context) {
 		h.redirectPlugins(c, tr.T("插件「%s」已停用", id), "")
 	case "reload":
 		if err := h.reloadPluginRuntime(c); err != nil {
+			if pluginActionWantsJSON(c) {
+				c.JSON(http.StatusOK, gin.H{"ok": false, "error": tr.T("重载插件失败: %s", err.Error())})
+				return
+			}
 			h.redirectPlugins(c, "", tr.T("重载插件失败: %s", err.Error()))
+			return
+		}
+		if pluginActionWantsJSON(c) {
+			c.JSON(http.StatusOK, gin.H{"ok": true})
 			return
 		}
 		h.redirectPlugins(c, tr.T("插件「%s」已重载", id), "")
@@ -328,4 +336,8 @@ func (h *Admin) redirectPlugins(c *gin.Context, message, errMsg string) {
 		path += "?" + encoded
 	}
 	c.Redirect(http.StatusSeeOther, path)
+}
+
+func pluginActionWantsJSON(c *gin.Context) bool {
+	return strings.Contains(c.GetHeader("Accept"), "application/json") || c.GetHeader("X-Requested-With") == "fetch"
 }

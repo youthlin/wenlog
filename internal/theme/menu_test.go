@@ -33,3 +33,19 @@ func TestResolveMenuItemsFallbackAndEmptyOverride(t *testing.T) {
 		t.Fatalf("ResolveMenuItems([])=%+v, want explicit empty menu", got)
 	}
 }
+
+func TestNormalizeMenuConfigCanonicalizesPageIDsAndParents(t *testing.T) {
+	items := normalizeMenuConfig([]MenuConfigItem{
+		{ID: "m_old", Type: MenuItemTypePage, PostID: 7, Order: 1},
+		{ID: "custom_1", Type: MenuItemTypeCustom, Title: "Child", URL: "/child", ParentID: "m_old", Order: 2},
+	})
+	if len(items) != 2 {
+		t.Fatalf("normalizeMenuConfig count = %d, want 2", len(items))
+	}
+	if items[0].ID != "page_7" {
+		t.Fatalf("page item id = %q, want page_7", items[0].ID)
+	}
+	if items[1].ParentID != "page_7" {
+		t.Fatalf("child parent id = %q, want page_7", items[1].ParentID)
+	}
+}

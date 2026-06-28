@@ -65,7 +65,7 @@ func renderSmileyPanel(api *hook.API, args ...any) {
 		return
 	}
 	api.WriteString(out, `<div class="comment-smilies" data-smilies>`)
-	api.WriteString(out, `<div class="comment-smilies-label">`+api.EscapeHTML(api.T("表情"))+`</div>`)
+	api.WriteString(out, `<div class="comment-smilies-label sr-only">`+api.EscapeHTML(api.T("表情"))+`</div>`)
 	api.WriteString(out, `<div class="comment-smilies-list">`)
 	for _, name := range smileyNames {
 		code := "[/" + name + "]"

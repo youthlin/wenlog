@@ -1,6 +1,6 @@
-{{define "admin_theme_files.gohtml"}}
+{{define "admin_edit_files.gohtml"}}
 {{template "admin_header" .}}
-<h1>{{.t.T "编辑主题文件"}}</h1>
+<h1>{{.t.T "编辑文件"}}</h1>
 
 {{if .RecoveryInfo}}
 <div class="err-banner" style="display:flex;justify-content:space-between;align-items:center;">
@@ -21,11 +21,25 @@
             <h3>{{.t.T "文件列表"}}</h3>
             <button type="button" class="theme-editor-toggle" id="file-tree-toggle" onclick="toggleFileTree()" aria-label="{{.t.T "切换文件列表"}}">☰</button>
           </div>
+          <select id="resource-kind-selector" onchange="switchKind(this.value)" style="width:100%;margin-bottom:0.5rem;">
+            <option value="theme" {{if eq .EditKind "theme"}}selected{{end}}>{{.t.T "主题"}}</option>
+            <option value="plugin" {{if eq .EditKind "plugin"}}selected{{end}}>{{.t.T "插件"}}</option>
+          </select>
+          {{if eq .EditKind "plugin"}}
+          <select id="plugin-selector" onchange="switchPlugin(this.value)" style="width:100%;margin-bottom:0.5rem;">
+            {{range .Plugins}}
+            <option value="{{.ID}}" {{if eq .ID $.EditPlugin}}selected{{end}}>{{.Name}} ({{.ID}})</option>
+            {{else}}
+            <option value="">{{$.t.T "暂无已安装插件"}}</option>
+            {{end}}
+          </select>
+          {{else}}
           <select id="theme-selector" onchange="switchTheme(this.value)" style="width:100%;margin-bottom:0.5rem;">
             {{range .Themes}}
             <option value="{{.Name}}" {{if eq .Name $.EditTheme}}selected{{end}}>{{.Name}}</option>
             {{end}}
           </select>
+          {{end}}
           <ul id="file-tree" class="theme-editor-file-tree">
             {{range .ThemeFiles}}
             <li>
@@ -37,7 +51,7 @@
           </ul>
           <div class="theme-editor-actions">
             <button class="btn btn-sm" onclick="showNewFileDialog()">{{.t.T "新建文件"}}</button>
-            <button class="btn-secondary btn-sm" onclick="reloadTheme()">{{.t.T "重载主题"}}</button>
+            <button class="btn-secondary btn-sm" onclick="reloadCurrentResource()">{{if eq .EditKind "plugin"}}{{.t.T "重载插件"}}{{else}}{{.t.T "重载主题"}}{{end}}</button>
           </div>
         </div>
 
@@ -60,7 +74,9 @@
 </div>
 
 <script>
+let currentKind = '{{.EditKind}}';
 let currentTheme = '{{.EditTheme}}';
+let currentPlugin = '{{.EditPlugin}}';
 let currentPath = '';
 let currentContent = '';
 
@@ -70,7 +86,7 @@ function csrfToken() {
 }
 
 function jsonHeaders() {
-  var headers = {'Content-Type': 'application/json'};
+  var headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'fetch'};
   var token = csrfToken();
   if (token) headers['X-CSRF-Token'] = token;
   return headers;
@@ -85,7 +101,35 @@ function parseJSONResponse(resp) {
 }
 
 function switchTheme(name) {
-  window.location.href = '/admin/theme/files?theme=' + encodeURIComponent(name);
+  window.location.href = '/admin/theme/files?kind=theme&theme=' + encodeURIComponent(name);
+}
+
+function switchPlugin(id) {
+  window.location.href = '/admin/theme/files?kind=plugin&plugin=' + encodeURIComponent(id);
+}
+
+function switchKind(kind) {
+  if (kind === 'plugin') {
+    window.location.href = '/admin/theme/files?kind=plugin' + (currentPlugin ? '&plugin=' + encodeURIComponent(currentPlugin) : '');
+    return;
+  }
+  window.location.href = '/admin/theme/files?kind=theme' + (currentTheme ? '&theme=' + encodeURIComponent(currentTheme) : '');
+}
+
+function resourceQuery() {
+  var query = 'kind=' + encodeURIComponent(currentKind) + '&path=' + encodeURIComponent(currentPath);
+  if (currentKind === 'plugin') {
+    query += '&plugin=' + encodeURIComponent(currentPlugin);
+  } else {
+    query += '&theme=' + encodeURIComponent(currentTheme);
+  }
+  return query;
+}
+
+function resourcePayload(extra) {
+  var payload = {kind: currentKind, theme: currentTheme, plugin: currentPlugin};
+  Object.keys(extra || {}).forEach(function(key) { payload[key] = extra[key]; });
+  return payload;
 }
 
 function loadFile(path) {
@@ -96,7 +140,7 @@ function loadFile(path) {
   document.getElementById('delete-btn').disabled = true;
   document.getElementById('file-editor').disabled = true;
 
-  fetch('/admin/theme/file?theme=' + encodeURIComponent(currentTheme) + '&path=' + encodeURIComponent(path))
+  fetch('/admin/theme/file?' + resourceQuery())
     .then(r => r.json())
     .then(data => {
       if (data.error) {
@@ -107,7 +151,7 @@ function loadFile(path) {
       document.getElementById('file-editor').value = data.content;
       document.getElementById('file-editor').disabled = false;
       document.getElementById('save-btn').disabled = false;
-      document.getElementById('delete-btn').disabled = (path === 'theme.yaml' || path === 'functions.go');
+      document.getElementById('delete-btn').disabled = isCoreFile(path);
       document.getElementById('editor-status').textContent = '';
       // 高亮当前文件
       document.querySelectorAll('.theme-editor-file-link').forEach(el => el.classList.remove('active'));
@@ -127,7 +171,7 @@ function saveFile() {
   fetch('/admin/theme/file', {
     method: 'POST',
     headers: jsonHeaders(),
-    body: JSON.stringify({theme: currentTheme, path: currentPath, content: content})
+    body: JSON.stringify(resourcePayload({path: currentPath, content: content}))
   })
     .then(parseJSONResponse)
     .then(data => {
@@ -137,7 +181,7 @@ function saveFile() {
       }
       currentContent = content;
       if (data.reloaded) {
-        document.getElementById('editor-status').textContent = '{{.t.T "已保存并重载主题"}}';
+        document.getElementById('editor-status').textContent = currentKind === 'plugin' ? '{{.t.T "已保存并重载插件"}}' : '{{.t.T "已保存并重载主题"}}';
       } else {
         document.getElementById('editor-status').textContent = '{{.t.T "已保存"}}';
       }
@@ -147,6 +191,10 @@ function saveFile() {
     });
 }
 
+function isCoreFile(path) {
+  return path === 'theme.yaml' || path === 'plugin.yaml' || path === 'functions.go' || path === 'functions.goyaegi';
+}
+
 function deleteFile() {
   if (!currentPath) return;
   if (!confirm('{{.t.T "确定要删除 %s 吗？"}}'.replace('%s', currentPath))) return;
@@ -154,7 +202,7 @@ function deleteFile() {
   fetch('/admin/theme/file/delete', {
     method: 'POST',
     headers: jsonHeaders(),
-    body: JSON.stringify({theme: currentTheme, path: currentPath})
+    body: JSON.stringify(resourcePayload({path: currentPath}))
   })
     .then(parseJSONResponse)
     .then(data => {
@@ -166,15 +214,16 @@ function deleteFile() {
     });
 }
 
-function reloadTheme() {
+function reloadCurrentResource() {
   document.getElementById('editor-status').textContent = '{{.t.T "重载中..."}}';
-  fetch('/admin/theme/reload', {method: 'POST', headers: jsonHeaders()})
+  var url = currentKind === 'plugin' ? '/admin/plugin/' + encodeURIComponent(currentPlugin) + '/reload' : '/admin/theme/reload';
+  fetch(url, {method: 'POST', headers: jsonHeaders()})
     .then(parseJSONResponse)
     .then(data => {
       if (data.error) {
         document.getElementById('editor-status').textContent = data.error;
       } else {
-        document.getElementById('editor-status').textContent = '{{.t.T "主题已重载"}}';
+        document.getElementById('editor-status').textContent = currentKind === 'plugin' ? '{{.t.T "插件已重载"}}' : '{{.t.T "主题已重载"}}';
       }
     });
 }
@@ -235,7 +284,7 @@ function createFile() {
   fetch('/admin/theme/file/create', {
     method: 'POST',
     headers: jsonHeaders(),
-    body: JSON.stringify({theme: currentTheme, path: path, content: ''})
+    body: JSON.stringify(resourcePayload({path: path, content: ''}))
   })
     .then(parseJSONResponse)
     .then(function(data) {
