@@ -38,17 +38,6 @@ func themeOption(runtime *TemplateRuntime, ctx *RequestContext, optionID string)
 	return provider.fn(ctx, optionID)
 }
 
-func themeWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string) any {
-	if runtime == nil {
-		return nil
-	}
-	provider := runtime.themeWidgetsProvider.Load()
-	if provider == nil || provider.fn == nil {
-		return nil
-	}
-	return provider.fn(ctx, area)
-}
-
 // widgetOption 模板函数：读取当前渲染组件的选项值。
 // themeOption 在模板中使用 {{widgetOption "<key>"}}
 func widgetOption(ctx *RequestContext, key string) string {
@@ -126,11 +115,11 @@ func postExcerptHTMLAny(post any) template.HTML {
 		above, hasMore := wxr.SplitMore(content)
 		switch {
 		case hasMore:
-			return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(above))))
+			return renderContentHTML(above)
 		case excerpt != "":
-			return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(excerpt))))
+			return renderContentHTML(excerpt)
 		case content != "":
-			return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(content))))
+			return renderContentHTML(content)
 		default:
 			return ""
 		}
@@ -161,7 +150,7 @@ func postContentHTML(post any) template.HTML {
 		if content == "" {
 			return ""
 		}
-		return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(wxr.RenderDetail(content, id)))))
+		return renderContentHTML(wxr.RenderDetail(content, id))
 	}
 }
 

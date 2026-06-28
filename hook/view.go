@@ -22,6 +22,33 @@ type PostView struct {
 	Tags         []TagView
 }
 
+// PostURLFields 返回生成文章/页面永久链接所需的最小字段集。
+// 返回类型保持匿名结构，避免 hook 包反向依赖 render 包。
+func (p PostView) PostURLFields() struct {
+	ID          uint
+	Title       string
+	Slug        string
+	PostType    string
+	PublishedAt time.Time
+	ModifiedAt  time.Time
+} {
+	return struct {
+		ID          uint
+		Title       string
+		Slug        string
+		PostType    string
+		PublishedAt time.Time
+		ModifiedAt  time.Time
+	}{
+		ID:          p.ID,
+		Title:       p.Title,
+		Slug:        p.Slug,
+		PostType:    p.PostType,
+		PublishedAt: p.PublishedAt,
+		ModifiedAt:  p.ModifiedAt,
+	}
+}
+
 // CategoryView 是扩展 API 暴露的分类只读视图。
 type CategoryView struct {
 	ID          uint

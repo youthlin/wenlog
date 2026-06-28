@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/youthlin/blog/internal/plugin"
+	"github.com/youthlin/blog/internal/render"
 	gettext "github.com/youthlin/t"
 )
 
@@ -136,14 +137,7 @@ func pluginSelectOptionsToThemeOptions(options []plugin.SelectOpt) []SelectOpt {
 }
 
 // WidgetInfo 渲染时使用的组件信息。
-type WidgetInfo struct {
-	InstanceID   string            // 组件实例 ID，同一组件重复添加时用于区分实例
-	ID           string            // 组件 ID
-	Source       string            // builtin / theme / plugin
-	PluginID     string            // Source=plugin 时的插件 ID
-	TemplateName string            // 模板 define 名称，如 "widget_search"
-	Options      map[string]string // 组件选项
-}
+type WidgetInfo = render.WidgetInfo
 
 // WidgetConfigItem 是组件配置对象数组中的一个条目。
 type WidgetConfigItem struct {

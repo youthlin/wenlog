@@ -411,24 +411,14 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 
 // base 返回模板通用数据(站点名、菜单、当前年份、当前登录用户)。
 // 所有常用前台数据始终注入，主题无需声明 data 依赖。
-// loader 为全量预加载的数据，为 nil 时回退到 store 查询（后台等场景）。
+// loader 为全量预加载的数据，前台页面统一从 loader 取公共数据，避免模板渲染期反复查库。
 func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, loader *store.DataLoader) gin.H {
-	var menu []model.Post
-	if loader != nil {
-		menu = loader.MenuPages()
-	} else {
-		menu, _ = h.st.MenuPages(c)
-	}
+	menu := loader.MenuPages()
 	if strings.TrimSpace(desc) == "" {
 		desc = s.SiteDescription
 	}
 	uid := currentUserID(c)
-	var currentUser *model.User
-	if loader != nil {
-		currentUser = currentUserFromLoader(c, loader)
-	} else {
-		currentUser = h.currentUser(c)
-	}
+	currentUser := currentUserFromLoader(c, loader)
 	csrfToken := ""
 	if uid != 0 {
 		if token, err := middleware.EnsureCSRFToken(c); err == nil {
@@ -436,13 +426,8 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		}
 	}
 	// 缓存当前主题和版本号。
-	var currentTheme *theme.Theme
+	currentTheme := h.currentThemeFromLoader(c, loader)
 	var themeVersion string
-	if loader != nil {
-		currentTheme = h.currentThemeFromLoader(c, loader)
-	} else {
-		currentTheme = h.currentTheme(c)
-	}
 	menus := h.resolveMenus(c, currentTheme, menu, loader)
 	data := gin.H{
 		"SiteName":         s.SiteName,
@@ -460,25 +445,15 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		"MailEnabled":      s.MailEnabled,
 	}
 	data[render.ContextDataKey] = c.Request.Context()
-	if loader != nil {
-		data[render.ThemeLoaderDataKey] = loader
-	}
+	data[render.ThemeLoaderDataKey] = loader
 
 	// 所有常用数据始终注入，不再按需查询
-	if loader != nil {
-		data["RecentPosts"] = loader.RecentPosts(20)
-		data["Categories"] = loader.AllCategories()
-		data["Tags"] = loader.AllTags()
-		data["ArchiveMonths"] = loader.ArchiveMonths()
-		recentComments := loader.RecentComments(8)
-		data["RecentCommentItems"] = loader.CommentWidgetItems(recentComments)
-	} else {
-		data["RecentPosts"] = h.st.RecentPosts(c, 20)
-		data["Categories"] = h.st.AllCategories(c)
-		data["Tags"] = h.st.AllTags(c)
-		data["ArchiveMonths"] = h.st.ArchiveMonths(c)
-		data["RecentCommentItems"] = h.st.RecentCommentItems(c, 8, commentPageSize)
-	}
+	data["RecentPosts"] = loader.RecentPosts(20)
+	data["Categories"] = loader.AllCategories()
+	data["Tags"] = loader.AllTags()
+	data["ArchiveMonths"] = loader.ArchiveMonths()
+	recentComments := loader.RecentComments(8)
+	data["RecentCommentItems"] = loader.CommentWidgetItems(recentComments)
 
 	themeName := ""
 	if currentTheme != nil {
@@ -515,12 +490,7 @@ func (h *Public) resolveMenus(c *gin.Context, currentTheme *theme.Theme, fallbac
 	}
 	menus := make(map[string][]theme.MenuItem, len(locations))
 	for location := range locations {
-		raw := ""
-		if loader != nil {
-			raw = loader.GetSetting(theme.MenuSettingKey(location))
-		} else if h != nil && h.st != nil {
-			raw, _ = h.st.GetSetting(c, theme.MenuSettingKey(location))
-		}
+		raw := loader.GetSetting(theme.MenuSettingKey(location))
 		menus[location] = theme.ResolveMenuItems(raw, fallback)
 	}
 	return menus
@@ -538,19 +508,6 @@ func displayUserName(u *model.User) string {
 
 func (h *Public) mailEnabled(ctx context.Context) bool {
 	return smtpConfigFromStore(ctx, h.st).Configured()
-}
-
-func (h *Public) currentTheme(c *gin.Context) *theme.Theme {
-	if h.themeManager == nil {
-		return nil
-	}
-	// 管理员主题预览：从 session 读取预览主题名
-	if previewName := middleware.GetPreviewTheme(c); previewName != "" {
-		if t := h.themeManager.Get(previewName); t != nil {
-			return t
-		}
-	}
-	return h.themeManager.Current(c)
 }
 
 // currentThemeFromLoader 从 DataLoader 内存中读取 current_theme，不查 DB。
@@ -628,11 +585,6 @@ func (h *Public) buildSettings(settings map[string]string) publicSettings {
 	}
 }
 
-// currentUser 返回当前登录用户(未登录为 nil)。
-func (h *Public) currentUser(c *gin.Context) *model.User {
-	return currentUserByStore(c, h.st, c)
-}
-
 // draftForAuthor 返回草稿文章,仅当请求者是该文章作者本人;否则 nil。
 func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 	uid := currentUserID(c)
@@ -647,17 +599,18 @@ func (h *Public) draftForAuthor(c *gin.Context, id uint) *model.Post {
 }
 
 func (h *Public) NotFound(c *gin.Context) {
-	var loader = h.loadCache(c)
+	loader := h.loadCache(c)
 	if loader == nil {
 		return
 	}
 	h.notFound(c, loader)
 }
 
-// notFound 渲染 404。
+// notFound 渲染 404 页面。
 func (h *Public) notFound(c *gin.Context, loader *store.DataLoader) {
 	tr := i18n.Get(c)
-	data := h.base(c, tr.T("页面不存在"), "", h.loadSettings(c), loader)
+	s := h.loadSettingsFromLoader(loader)
+	data := h.base(c, tr.T("页面不存在"), "", s, loader)
 	data["Code"] = 404
 	data["Message"] = tr.T("你访问的页面不存在或已被删除。")
 	h.renderPageHTML(c, http.StatusNotFound, "error", data)
@@ -668,11 +621,15 @@ func (h *Public) serverError(c *gin.Context, err error) {
 		slog.String("path", c.Request.URL.Path),
 		slog.Any("error", err),
 	)
-	tr := i18n.Get(c)
-	data := h.base(c, tr.T("出错了"), "", h.loadSettings(c), nil)
-	data["Code"] = 500
-	data["Message"] = tr.T("服务器内部错误，请稍后重试。")
-	h.renderPageHTML(c, http.StatusInternalServerError, "error", data)
+	msg := "服务器内部错误"
+	if err != nil && strings.TrimSpace(err.Error()) != "" {
+		msg = err.Error()
+	}
+	h.textError(c, http.StatusInternalServerError, msg)
+}
+
+func (h *Public) textError(c *gin.Context, code int, msg string) {
+	c.String(code, "%d %s", code, msg)
 }
 
 // --- 辅助函数 ---

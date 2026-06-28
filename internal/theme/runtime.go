@@ -28,7 +28,7 @@ func (m *Manager) BindTemplateFunctions() {
 	if m == nil || m.renderer == nil {
 		return
 	}
-	m.renderer.SetThemeWidgetsProvider(func(ctx *render.RequestContext, area string) any {
+	m.renderer.SetThemeWidgetsProvider(func(ctx *render.RequestContext, area string) []render.WidgetInfo {
 		t := m.renderTheme(ctx)
 		if t == nil {
 			return nil

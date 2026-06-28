@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -117,7 +118,7 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 	}
 	tm.SetHookRegistry(pm.Hooks())
 	tm.SetPluginWidgetsProvider(pm.EnabledWidgetDecls)
-	// TODO 为什么再次 LoadTheme 一遍? initThemeManager里面有一遍
+	// 插件 Hook Registry 和组件声明提供者就绪后，再加载当前主题的 functions。
 	if err := tm.LoadTheme(context.Background(), ""); err != nil {
 		slog.Error("加载主题 hook 失败", slog.Any("error", err))
 	}
@@ -185,10 +186,6 @@ func initThemeManager(st *store.Store, tplRenderer *render.Renderer) (*theme.Man
 		tplRenderer.SetDefaultThemeFS(defaultThemeFS)
 	}
 	tm.BindTemplateFunctions()
-	// 启动时加载当前激活主题（含 functions.go）。加载失败会记录恢复信息并回退默认主题。
-	if err := tm.LoadTheme(context.Background(), ""); err != nil {
-		slog.Error("加载当前主题失败", slog.Any("error", err))
-	}
 	return tm, nil
 }
 
@@ -236,9 +233,8 @@ func ensureThemesOnDisk() {
 		themeName := entry.Name()
 		themeYAML := filepath.Join("themes", themeName, "theme.yaml")
 		if _, err := os.Stat(themeYAML); err == nil {
-			// TODO 改成磁盘版本比内嵌版本更低才覆盖?
-			if sameBundledThemeVersion(themeYAML, filepath.Join("themes", themeName, "theme.yaml")) {
-				continue // 已存在且版本一致，保留用户可能做过的本地调整
+			if !bundledThemeNewer(themeYAML, filepath.Join("themes", themeName, "theme.yaml")) {
+				continue // 已存在且版本不低于内嵌版本，保留用户可能做过的本地调整
 			}
 			if err := os.RemoveAll(filepath.Join("themes", themeName)); err != nil {
 				slog.Warn("清理旧运行时主题失败", "theme", themeName, "error", err)
@@ -251,7 +247,7 @@ func ensureThemesOnDisk() {
 	}
 }
 
-func sameBundledThemeVersion(diskYAML, embedPath string) bool {
+func bundledThemeNewer(diskYAML, embedPath string) bool {
 	disk, err := readThemeMetaFromDisk(diskYAML)
 	if err != nil {
 		return false
@@ -260,7 +256,35 @@ func sameBundledThemeVersion(diskYAML, embedPath string) bool {
 	if err != nil {
 		return false
 	}
-	return disk.Name == bundled.Name && disk.Version == bundled.Version
+	return disk.Name == bundled.Name && compareVersion(disk.Version, bundled.Version) < 0
+}
+
+func compareVersion(a, b string) int {
+	as := strings.Split(strings.TrimSpace(a), ".")
+	bs := strings.Split(strings.TrimSpace(b), ".")
+	n := len(as)
+	if len(bs) > n {
+		n = len(bs)
+	}
+	for i := 0; i < n; i++ {
+		av := versionPart(as, i)
+		bv := versionPart(bs, i)
+		switch {
+		case av < bv:
+			return -1
+		case av > bv:
+			return 1
+		}
+	}
+	return 0
+}
+
+func versionPart(parts []string, i int) int {
+	if i >= len(parts) {
+		return 0
+	}
+	v, _ := strconv.Atoi(strings.TrimSpace(parts[i]))
+	return v
 }
 
 type themeMeta struct {

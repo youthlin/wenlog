@@ -43,11 +43,11 @@ type Handler struct {
 
 // ActionFunc 是 action hook 的推荐函数签名。
 // action 不返回值，只用于执行副作用或向输出 writer 写入内容。
-type ActionFunc func(ctx context.Context, args ...any)
+type ActionFunc = func(ctx context.Context, args ...any)
 
 // FilterFunc 是 filter hook 的推荐函数签名。
 // filter 接收当前值并返回修改后的新值。
-type FilterFunc func(ctx context.Context, value any, args ...any) any
+type FilterFunc = func(ctx context.Context, value any, args ...any) any
 
 // Registry 保存所有 action/filter 处理器。
 type Registry struct {
@@ -156,8 +156,6 @@ func (r *Registry) safeDoAction(ctx context.Context, h Handler, args ...any) {
 	switch fn := h.Fn.(type) {
 	case ActionFunc:
 		fn(ctx, args...)
-	case func(context.Context, ...any):
-		fn(ctx, args...)
 	case func(...any):
 		fn(args...)
 	case func():
@@ -186,8 +184,6 @@ func (r *Registry) safeApplyFilter(ctx context.Context, h Handler, value any, ar
 	}()
 	switch fn := h.Fn.(type) {
 	case FilterFunc:
-		return fn(ctx, value, args...)
-	case func(context.Context, any, ...any) any:
 		return fn(ctx, value, args...)
 	case func(any, ...any) any:
 		return fn(value, args...)

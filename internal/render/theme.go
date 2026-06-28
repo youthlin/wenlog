@@ -455,75 +455,38 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 		return ""
 	}
 	widgets := provider.fn(ctx, area)
-	if widgets == nil {
-		return ""
-	}
-	// widgets is []theme.WidgetInfo, use reflection to avoid circular import
-	// TODO 如果组织package能够避免使用反射
-	rv := reflect.ValueOf(widgets)
-	if rv.Kind() != reflect.Slice {
+	if len(widgets) == 0 {
 		return ""
 	}
 	var result strings.Builder
-	for i := 0; i < rv.Len(); i++ {
-		item := rv.Index(i)
-		for item.IsValid() && (item.Kind() == reflect.Interface || item.Kind() == reflect.Pointer) {
-			if item.IsNil() {
-				item = reflect.Value{}
-				break
-			}
-			item = item.Elem()
+	for _, item := range widgets {
+		ctx.WidgetOptions = item.Options
+		html, ok := renderWidgetItem(runtime, ctx, item, data)
+		if !ok {
+			continue
 		}
-		if item.IsValid() && item.Kind() == reflect.Struct {
-			tmplName := item.FieldByName("TemplateName")
-			widgetID := reflectStringValue(item.FieldByName("ID"))
-			source := reflectStringValue(item.FieldByName("Source"))
-			pluginID := reflectStringValue(item.FieldByName("PluginID"))
-			// 设置当前组件选项
-			optsField := item.FieldByName("Options")
-			if optsField.IsValid() && optsField.Kind() == reflect.Map && !optsField.IsNil() {
-				ctx.WidgetOptions = optsField.Interface().(map[string]string)
-			} else {
-				ctx.WidgetOptions = nil
-			}
-			html, ok := renderWidgetItem(runtime, ctx, source, pluginID, widgetID, tmplName, data)
-			if !ok {
-				continue
-			}
-			if h := hooks(runtime); h != nil {
-				var widget any
-				if item.CanInterface() {
-					widget = item.Interface()
-				}
-				html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), widget, area, data))
-			}
-			result.WriteString(string(html))
+		if h := hooks(runtime); h != nil {
+			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), item, area, data))
 		}
+		result.WriteString(string(html))
 	}
 	ctx.WidgetOptions = nil
 	return template.HTML(result.String())
 }
 
-func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, source, pluginID, widgetID string, tmplName reflect.Value, data any) (template.HTML, bool) {
-	if source == "plugin" {
+func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
+	if item.Source == "plugin" {
 		if renderer := pluginWidgetRenderer(runtime); renderer != nil {
-			return renderer(ctx, pluginID, widgetID, ctx.WidgetOptions, data)
+			return renderer(ctx, item.PluginID, item.ID, ctx.WidgetOptions, data)
 		}
 		return "", false
 	}
-	if !tmplName.IsValid() || tmplName.Kind() != reflect.String || tmplName.String() == "" {
+	if item.TemplateName == "" {
 		return "", false
 	}
 	var itemHTML strings.Builder
-	if err := ctx.Template.ExecuteTemplate(&itemHTML, tmplName.String(), data); err != nil {
+	if err := ctx.Template.ExecuteTemplate(&itemHTML, item.TemplateName, data); err != nil {
 		return "", false
 	}
 	return template.HTML(itemHTML.String()), true
-}
-
-func reflectStringValue(v reflect.Value) string {
-	if v.IsValid() && v.Kind() == reflect.String {
-		return v.String()
-	}
-	return ""
 }

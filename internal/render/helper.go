@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	stdhtml "html"
+	"html/template"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -38,6 +39,11 @@ var htmlSanitizer = func() *bluemonday.Policy {
 // SanitizeHTML 清理用户可编辑/导入的正文 HTML,保留常见富文本但移除脚本与事件属性。
 func SanitizeHTML(src string) string {
 	return htmlSanitizer.Sanitize(src)
+}
+
+// renderContentHTML 统一处理前台正文片段：先消毒，再高亮代码块，最后补历史图片 srcset。
+func renderContentHTML(src string) template.HTML {
+	return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(src))))
 }
 
 var fencedCodeRe = regexp.MustCompile(`(?s)<pre><code(?: class="language-([^"]+)")?>(.*?)</code></pre>`)

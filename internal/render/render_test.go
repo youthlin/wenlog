@@ -136,10 +136,6 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 		t.Fatalf("new hot renderer: %v", err)
 	}
 
-	type widgetInfo struct {
-		TemplateName string
-		Options      map[string]string
-	}
 	r.SetHookInvokeProvider(func(ctx *RequestContext, name string, args ...any) any {
 		switch name {
 		case "loader":
@@ -150,10 +146,10 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 			return nil
 		}
 	})
-	r.SetThemeWidgetsProvider(func(ctx *RequestContext, area string) any {
+	r.SetThemeWidgetsProvider(func(ctx *RequestContext, area string) []WidgetInfo {
 		loader, _ := ctx.ThemeLoader.(string)
 		theme, _ := ctx.Theme.(string)
-		return []widgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
+		return []WidgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
 	})
 	t.Cleanup(func() {
 		r.SetHookInvokeProvider(nil)

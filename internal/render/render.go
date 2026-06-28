@@ -5,6 +5,7 @@ import (
 	"context"
 	"html/template"
 	"net/http"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	ginrender "github.com/gin-gonic/gin/render"
@@ -54,6 +55,17 @@ type RequestContext struct {
 	WidgetOptions map[string]string
 }
 
+// WidgetInfo 是模板渲染阶段需要的组件信息。
+// 放在 render 包里，避免 renderWidgets 为了读取 theme.WidgetInfo 而使用反射。
+type WidgetInfo struct {
+	InstanceID   string            // 组件实例 ID，同一组件重复添加时用于区分实例
+	ID           string            // 组件 ID
+	Source       string            // builtin / theme / plugin
+	PluginID     string            // Source=plugin 时的插件 ID
+	TemplateName string            // 模板 define 名称，如 "widget_search"
+	Options      map[string]string // 组件选项
+}
+
 const (
 	// ThemeLoaderDataKey 是模板数据中保存当前请求 DataLoader 的内部 key。
 	// 它不供模板直接使用，仅用于主题模板函数读取请求级数据。
@@ -64,6 +76,24 @@ const (
 	// ContextDataKey 是模板数据中保存当前请求 context 的内部 key。
 	// 前台页面的 Data[ContextDataKey] = c.Request.Context()
 	ContextDataKey = "__request_context"
+)
+
+const (
+	tplFuncHookInvoke     = "hookInvoke"
+	tplFuncThemeOption    = "themeOption"
+	tplFuncRenderWidgets  = "renderWidgets"
+	tplFuncRenderMenu     = "renderMenu"
+	tplFuncWidgetOption   = "widgetOption"
+	tplFuncPluginSlot     = "pluginSlot"
+	tplFuncPostTitle      = "postTitle"
+	tplFuncPostExcerpt    = "postExcerpt"
+	tplFuncPostContent    = "postContent"
+	tplFuncPostTags       = "postTags"
+	tplFuncPostNavigation = "postNavigation"
+	tplFuncBodyClass      = "bodyClass"
+	tplFuncPostClass      = "postClass"
+	tplFuncCommentClass   = "commentClass"
+	tplFuncCommentContent = "commentContent"
 )
 
 // dataContext 从前台页面的 Data 中通过 [ContextDataKey] 拿到 [context.Context]
@@ -81,6 +111,16 @@ func dataValue(data any, key string) any {
 	if m, ok := data.(gin.H); ok {
 		return m[key]
 	}
+	if m, ok := data.(map[string]any); ok {
+		return m[key]
+	}
+	rv := reflect.ValueOf(data)
+	if rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String {
+		v := rv.MapIndex(reflect.ValueOf(key))
+		if v.IsValid() && v.CanInterface() {
+			return v.Interface()
+		}
+	}
 	return nil
 }
 
@@ -93,23 +133,21 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		return nil, err
 	}
 	cloned.Funcs(template.FuncMap{
-		// todo 将函数名收集在 consts 文件里维护?
-		"hookInvoke":     func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
-		"themeOption":    func(optionID string) string { return themeOption(runtime, ctx, optionID) },
-		"themeWidgets":   func(area string) any { return themeWidgets(runtime, ctx, area) }, // TODO 是老设计遗留的吗?可以去掉了?
-		"renderWidgets":  func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
-		"renderMenu":     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
-		"widgetOption":   func(key string) string { return widgetOption(ctx, key) },
-		"pluginSlot":     func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
-		"postTitle":      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
-		"postExcerpt":    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
-		"postContent":    func(post any) template.HTML { return postContent(runtime, ctx, post) },
-		"postTags":       func(post any) template.HTML { return postTags(post) },
-		"postNavigation": func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
-		"bodyClass":      func(data any) string { return bodyClass(data) },
-		"postClass":      func(post any, extra ...string) string { return postClass(post, extra...) },
-		"commentClass":   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
-		"commentContent": func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
+		tplFuncHookInvoke:     func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
+		tplFuncThemeOption:    func(optionID string) string { return themeOption(runtime, ctx, optionID) },
+		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
+		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
+		tplFuncWidgetOption:   func(key string) string { return widgetOption(ctx, key) },
+		tplFuncPluginSlot:     func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
+		tplFuncPostTitle:      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
+		tplFuncPostExcerpt:    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
+		tplFuncPostContent:    func(post any) template.HTML { return postContent(runtime, ctx, post) },
+		tplFuncPostTags:       func(post any) template.HTML { return postTags(post) },
+		tplFuncPostNavigation: func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
+		tplFuncBodyClass:      func(data any) string { return bodyClass(data) },
+		tplFuncPostClass:      func(post any, extra ...string) string { return postClass(post, extra...) },
+		tplFuncCommentClass:   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
+		tplFuncCommentContent: func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
 	})
 	return cloned, nil
 }

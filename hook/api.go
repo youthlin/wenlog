@@ -49,14 +49,13 @@ const (
 )
 
 // ActionFunc 是插件注册 action 时推荐使用的函数签名。
-// TODO 这些类是否适合使用 type alias(即使用等号定义类型别名 而不是类型重定义)
-type ActionFunc func(api *API, args ...any)
+type ActionFunc = func(api *API, args ...any)
 
 // FilterFunc 是插件注册 filter 时推荐使用的函数签名。
-type FilterFunc func(api *API, value any, args ...any) any
+type FilterFunc = func(api *API, value any, args ...any) any
 
 // Func 是插件注册给模板调用的数据函数。
-type Func func(api *API, args map[string]any) any
+type Func = func(api *API, args map[string]any) any
 
 // WidgetRenderContext 是 widget.render action 接收的插件组件渲染上下文。
 type WidgetRenderContext struct {
@@ -208,8 +207,6 @@ func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
 	switch f := fn.(type) {
 	case ActionFunc:
 		return func(ctx context.Context, args ...any) { f(api.WithContext(ctx), args...) }, true
-	case func(*API, ...any):
-		return func(ctx context.Context, args ...any) { f(api.WithContext(ctx), args...) }, true
 	}
 	if rv := reflect.ValueOf(fn); pluginAPIFunc(rv) {
 		return func(ctx context.Context, args ...any) { callPluginAction(rv, api.WithContext(ctx), args...) }, true
@@ -232,8 +229,6 @@ func (api *API) AddFilter(name string, fn any, priority ...int) {
 func (api *API) wrapFilter(fn any) (func(context.Context, any, ...any) any, bool) {
 	switch f := fn.(type) {
 	case FilterFunc:
-		return func(ctx context.Context, value any, args ...any) any { return f(api.WithContext(ctx), value, args...) }, true
-	case func(*API, any, ...any) any:
 		return func(ctx context.Context, value any, args ...any) any { return f(api.WithContext(ctx), value, args...) }, true
 	}
 	if rv := reflect.ValueOf(fn); pluginAPIFunc(rv) {

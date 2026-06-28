@@ -31,7 +31,7 @@ type hookInvokeProviderHolder struct {
 }
 
 type themeWidgetsProviderHolder struct {
-	fn func(ctx *RequestContext, area string) any
+	fn func(ctx *RequestContext, area string) []WidgetInfo
 }
 
 type hookProviderHolder struct {
@@ -58,8 +58,8 @@ func (r *Renderer) SetOptionProvider(fn func(ctx *RequestContext, optionID strin
 	r.themeRuntime.optionProvider.Store(&optionProviderHolder{fn: fn})
 }
 
-// SetThemeWidgetsProvider 设置 themeWidgets 模板函数的实现。
-func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area string) any) {
+// SetThemeWidgetsProvider 设置 renderWidgets 获取区域组件列表的实现。
+func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area string) []WidgetInfo) {
 	if r == nil {
 		return
 	}
