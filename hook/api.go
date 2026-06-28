@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -289,49 +288,7 @@ func wrapTemplateFunc(fn any) Func {
 	case func() any:
 		return func(_ *API, _ Args) any { return f() }
 	}
-	return wrapTemplateFuncByReflection(fn)
-}
-
-func wrapTemplateFuncByReflection(fn any) Func {
-	rv := reflect.ValueOf(fn)
-	if !rv.IsValid() || rv.Kind() != reflect.Func || rv.Type().NumOut() == 0 {
-		return nil
-	}
-	return func(api *API, args Args) any {
-		in, ok := buildTemplateFuncArgs(rv.Type(), api, args)
-		if !ok {
-			return nil
-		}
-		outs := rv.Call(in)
-		if len(outs) == 0 || !outs[0].IsValid() || !outs[0].CanInterface() {
-			return nil
-		}
-		return outs[0].Interface()
-	}
-}
-
-var argsType = reflect.TypeOf(Args{})
-var rawArgsType = reflect.TypeOf(map[string]any{})
-
-func buildTemplateFuncArgs(rt reflect.Type, api *API, args Args) ([]reflect.Value, bool) {
-	if rt.IsVariadic() || rt.NumIn() > 2 {
-		return nil, false
-	}
-	values := make([]reflect.Value, 0, rt.NumIn())
-	for i := 0; i < rt.NumIn(); i++ {
-		typ := rt.In(i)
-		switch {
-		case apiType.AssignableTo(typ) || apiType.ConvertibleTo(typ):
-			values = append(values, reflect.ValueOf(api).Convert(typ))
-		case argsType.AssignableTo(typ) || argsType.ConvertibleTo(typ):
-			values = append(values, reflect.ValueOf(args).Convert(typ))
-		case rawArgsType.AssignableTo(typ) || rawArgsType.ConvertibleTo(typ):
-			values = append(values, reflect.ValueOf(map[string]any(args)).Convert(typ))
-		default:
-			return nil, false
-		}
-	}
-	return values, true
+	return nil
 }
 
 // AddAction 注册 action。插件可以使用 ActionFunc，也可以使用 func(...any) / func()。
@@ -350,9 +307,8 @@ func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
 	switch f := fn.(type) {
 	case ActionFunc:
 		return func(ctx context.Context, args ...any) { f(api.WithContext(ctx), args...) }, true
-	}
-	if rv := reflect.ValueOf(fn); pluginAPIFunc(rv) {
-		return func(ctx context.Context, args ...any) { callPluginAction(rv, api.WithContext(ctx), args...) }, true
+	case func(*API):
+		return func(ctx context.Context, _ ...any) { f(api.WithContext(ctx)) }, true
 	}
 	return nil, false
 }
@@ -373,72 +329,12 @@ func (api *API) wrapFilter(fn any) (func(context.Context, any, ...any) any, bool
 	switch f := fn.(type) {
 	case FilterFunc:
 		return func(ctx context.Context, value any, args ...any) any { return f(api.WithContext(ctx), value, args...) }, true
-	}
-	if rv := reflect.ValueOf(fn); pluginAPIFunc(rv) {
-		return func(ctx context.Context, value any, args ...any) any {
-			return callPluginFilter(rv, api.WithContext(ctx), value, args...)
-		}, true
+	case func(*API, any) any:
+		return func(ctx context.Context, value any, _ ...any) any { return f(api.WithContext(ctx), value) }, true
+	case func(*API) any:
+		return func(ctx context.Context, _ any, _ ...any) any { return f(api.WithContext(ctx)) }, true
 	}
 	return nil, false
-}
-
-var apiType = reflect.TypeOf((*API)(nil))
-
-func pluginAPIFunc(rv reflect.Value) bool {
-	if !rv.IsValid() || rv.Kind() != reflect.Func || rv.Type().NumIn() == 0 {
-		return false
-	}
-	first := rv.Type().In(0)
-	return apiType.AssignableTo(first) || apiType.ConvertibleTo(first)
-}
-
-func callPluginAction(fn reflect.Value, api *API, args ...any) {
-	callPluginFunc(fn, append([]any{api}, args...)...)
-}
-
-func callPluginFilter(fn reflect.Value, api *API, value any, args ...any) any {
-	outs := callPluginFunc(fn, append([]any{api, value}, args...)...)
-	if len(outs) == 0 || !outs[0].IsValid() || !outs[0].CanInterface() {
-		return value
-	}
-	return outs[0].Interface()
-}
-
-func callPluginFunc(fn reflect.Value, args ...any) []reflect.Value {
-	rt := fn.Type()
-	if !rt.IsVariadic() && len(args) != rt.NumIn() {
-		return nil
-	}
-	if rt.IsVariadic() && len(args) < rt.NumIn()-1 {
-		return nil
-	}
-	in := make([]reflect.Value, 0, len(args))
-	for i, arg := range args {
-		argType := rt.In(i)
-		if rt.IsVariadic() && i >= rt.NumIn()-1 {
-			argType = rt.In(rt.NumIn() - 1).Elem()
-		}
-		v, ok := pluginReflectArg(arg, argType)
-		if !ok {
-			return nil
-		}
-		in = append(in, v)
-	}
-	return fn.Call(in)
-}
-
-func pluginReflectArg(v any, typ reflect.Type) (reflect.Value, bool) {
-	if v == nil {
-		return reflect.Zero(typ), true
-	}
-	rv := reflect.ValueOf(v)
-	if rv.Type().AssignableTo(typ) {
-		return rv, true
-	}
-	if rv.Type().ConvertibleTo(typ) {
-		return rv.Convert(typ), true
-	}
-	return reflect.Value{}, false
 }
 
 // T 翻译普通消息。

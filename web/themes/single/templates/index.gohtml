@@ -12,7 +12,7 @@
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
-{{pluginSlot "head.end" .}}
+{{slot "head.end" .}}
 </head>
 <body>
 <a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
@@ -87,7 +87,7 @@
 })();
 </script>
 <script src="/assets/common.js"></script>
-{{pluginSlot "body.end" .}}
+{{slot "body.end" .}}
 </body>
 </html>
 {{end}}
@@ -166,7 +166,7 @@
     {{end}}
     <p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>
     <p><label class="sr-only" for="comment-content">{{.th.T "评论内容"}}</label><textarea id="comment-content" name="content" rows="5" placeholder="{{.th.T "说点什么吧…… *"}}" required></textarea></p>
-    {{pluginSlot "comment_form.after_textarea" .}}
+    {{slot "comment.form.after_textarea" .}}
     {{if .MailEnabled}}<p><label><input type="checkbox" name="notify"> {{.th.T "有回复时邮件通知我"}}</label></p>{{end}}
     <p class="comment-form-actions"><button type="submit">{{.th.T "提交评论"}}</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>{{.th.T "取消回复"}}</button></p>
     <p class="comment-tip">{{.th.T "评论提交后需经审核才会显示。"}}</p>

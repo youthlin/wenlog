@@ -18,7 +18,7 @@ func TestBundledPluginFunctionsCompile(t *testing.T) {
 	for _, id := range []string{"saying", "comment-smilies"} {
 		id := id
 		t.Run(id, func(t *testing.T) {
-			p, err := LoadPlugin(filepath.Join("..", "..", "plugins", id))
+			p, err := LoadPlugin(filepath.Join("..", "..", "web", "plugins", id))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -31,7 +31,7 @@ func TestBundledPluginFunctionsCompile(t *testing.T) {
 }
 
 func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
-	m, err := NewManager(filepath.Join("..", "..", "plugins"), testSettingStore{})
+	m, err := NewManager(filepath.Join("..", "..", "web", "plugins"), testSettingStore{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,13 @@ func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
 }
 
 func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
-	p, err := LoadPlugin(filepath.Join("..", "..", "plugins", "comment-smilies"))
+	// 主题模板里直接用这个 slot 名称调用 slot；常量必须和模板/manifest 保持一致，
+	// 否则插件虽然成功注册 hook，但评论表单不会渲染表情面板。
+	if root.HookCommentFormAfterTextarea != "comment.form.after_textarea" {
+		t.Fatalf("HookCommentFormAfterTextarea = %q, want comment.form.after_textarea", root.HookCommentFormAfterTextarea)
+	}
+
+	p, err := LoadPlugin(filepath.Join("..", "..", "web", "plugins", "comment-smilies"))
 	if err != nil {
 		t.Fatal(err)
 	}

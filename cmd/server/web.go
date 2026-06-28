@@ -30,6 +30,7 @@ import (
 	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/web"
+	bundledplugins "github.com/youthlin/blog/web/plugins"
 )
 
 // serve 启动 web 服务器
@@ -190,6 +191,7 @@ func initThemeManager(st *store.Store, tplRenderer *render.Renderer) (*theme.Man
 }
 
 func initPluginManager(st *store.Store, tplRenderer *render.Renderer) (*plugin.Manager, error) {
+	ensurePluginsOnDisk()
 	pm, err := plugin.NewManager("plugins", st)
 	if err != nil {
 		return nil, err
@@ -308,6 +310,50 @@ func readThemeMetaFromEmbed(path string) (themeMeta, error) {
 	}
 	var meta themeMeta
 	return meta, yaml.Unmarshal(data, &meta)
+}
+
+// ensurePluginsOnDisk 确保所有内嵌插件在磁盘上存在。
+// 插件与主题一样以磁盘目录作为运行时来源：首次启动释放内置插件；已存在的插件保留本地调整。
+func ensurePluginsOnDisk() {
+	entries, err := fs.ReadDir(bundledplugins.Plugins, ".")
+	if err != nil {
+		slog.Warn("读取内嵌插件失败", "error", err)
+		return
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		pluginID := entry.Name()
+		pluginYAML := filepath.Join("plugins", pluginID, "plugin.yaml")
+		if _, err := os.Stat(pluginYAML); err == nil {
+			continue
+		}
+		if err := releaseBundledPlugin(pluginID); err != nil {
+			slog.Warn("释放内嵌插件失败", "plugin", pluginID, "error", err)
+		}
+	}
+}
+
+func releaseBundledPlugin(pluginID string) error {
+	pluginDir := filepath.Join("plugins", pluginID)
+	if err := os.MkdirAll(pluginDir, 0o755); err != nil {
+		return err
+	}
+	return fs.WalkDir(bundledplugins.Plugins, pluginID, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join("plugins", path)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := fs.ReadFile(bundledplugins.Plugins, path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0o644)
+	})
 }
 
 func releaseBundledTheme(themeName string) error {

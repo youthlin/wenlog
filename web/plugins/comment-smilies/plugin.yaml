@@ -11,11 +11,11 @@ assets:
 hooks:
   actions:
     - head.end
-    - comment_form.after_textarea
+    - comment.form.after_textarea
   filters:
     - comment.render_html
   slots:
-    - comment_form.after_textarea
+    - comment.form.after_textarea
 
 settings:
   - id: enabled

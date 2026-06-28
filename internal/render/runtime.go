@@ -75,7 +75,7 @@ func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area str
 	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.ThemeWidgets = fn })
 }
 
-// SetHookProvider 设置插件 Hook Registry，用于 pluginSlot/postContent/commentContent 等模板函数。
+// SetHookProvider 设置 Hook Registry，用于 slot/postContent/commentContent 等模板函数。
 func (r *Renderer) SetHookProvider(provider hookProvider) {
 	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.Hooks = provider })
 }
@@ -85,8 +85,8 @@ func (r *Renderer) SetPluginWidgetProvider(fn func(ctx *RequestContext, pluginID
 	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.PluginWidget = fn })
 }
 
-// pluginSlot 触发一个模板 slot action，并收集插件写入的 HTML。
-func pluginSlot(runtime *TemplateRuntime, ctx *RequestContext, name string, data any) template.HTML {
+// slot 触发一个模板 slot action，并收集主题/插件写入的 HTML。
+func slot(runtime *TemplateRuntime, ctx *RequestContext, name string, data any) template.HTML {
 	h := hooks(runtime)
 	if h == nil || name == "" {
 		return ""

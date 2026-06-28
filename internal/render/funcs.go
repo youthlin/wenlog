@@ -63,20 +63,12 @@ func postTitle(runtime *TemplateRuntime, ctx *RequestContext, post any) template
 }
 
 func translate(ctx *RequestContext, msg string) string {
-	if ctx == nil {
-		return html.EscapeString(msg)
+	if ctx != nil {
+		if tr, ok := dataValue(ctx.Data, "th").(interface{ T(string, ...any) string }); ok && tr != nil {
+			return html.EscapeString(tr.T(msg))
+		}
 	}
-	tr := dataValue(ctx.Data, "th")
-	rv := reflect.ValueOf(tr)
-	if !rv.IsValid() {
-		return html.EscapeString(msg)
-	}
-	method := rv.MethodByName("T")
-	if !method.IsValid() || method.Type().NumIn() != 1 || method.Type().In(0).Kind() != reflect.String || method.Type().NumOut() != 1 || method.Type().Out(0).Kind() != reflect.String {
-		return html.EscapeString(msg)
-	}
-	out := method.Call([]reflect.Value{reflect.ValueOf(msg)})
-	return html.EscapeString(out[0].String())
+	return html.EscapeString(msg)
 }
 
 func stringFromFilterValue(v any, fallback string) string {
@@ -240,6 +232,8 @@ func isNilAny(v any) bool {
 	if v == nil {
 		return true
 	}
+	// 模板数据通过 any 传递时，(*model.Post)(nil) 这类 typed nil 会被装进非 nil 的 interface。
+	// 这里保留极小范围的反射，只用于识别 Go 运行时可为 nil 的类型，避免文章导航等模板辅助函数把 typed nil 当成有效数据渲染。
 	rv := reflect.ValueOf(v)
 	switch rv.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
@@ -350,42 +344,33 @@ func menuItemsForLocation(data any, location string) []any {
 }
 
 func menuLocationItems(menus any, location string) []any {
-	rv := reflect.ValueOf(menus)
-	for rv.IsValid() && (rv.Kind() == reflect.Interface || rv.Kind() == reflect.Pointer) {
-		if rv.IsNil() {
-			return nil
-		}
-		rv = rv.Elem()
-	}
-	if !rv.IsValid() || rv.Kind() != reflect.Map || rv.Type().Key().Kind() != reflect.String {
+	switch m := menus.(type) {
+	case map[string]any:
+		return anySlice(m[location])
+	default:
 		return nil
 	}
-	v := rv.MapIndex(reflect.ValueOf(location))
-	if !v.IsValid() || !v.CanInterface() {
-		return nil
-	}
-	return anySlice(v.Interface())
 }
 
 func anySlice(v any) []any {
-	rv := reflect.ValueOf(v)
-	for rv.IsValid() && (rv.Kind() == reflect.Interface || rv.Kind() == reflect.Pointer) {
-		if rv.IsNil() {
-			return nil
+	switch items := v.(type) {
+	case []any:
+		return items
+	case []model.Post:
+		out := make([]any, 0, len(items))
+		for i := range items {
+			out = append(out, items[i])
 		}
-		rv = rv.Elem()
-	}
-	if !rv.IsValid() || rv.Kind() != reflect.Slice {
+		return out
+	case []hook.PostView:
+		out := make([]any, 0, len(items))
+		for i := range items {
+			out = append(out, items[i])
+		}
+		return out
+	default:
 		return nil
 	}
-	items := make([]any, 0, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		item := rv.Index(i)
-		if item.CanInterface() {
-			items = append(items, item.Interface())
-		}
-	}
-	return items
 }
 
 func bodyClass(data any) string {

@@ -80,6 +80,10 @@ func CompileAndRegister(source string, options CompileOptions) (*interp.Interpre
 	return i, nil
 }
 
+// 以下 helper 都在 yaegi 解释器边界工作：Eval 返回的是 reflect.Value，
+// Register/Activate 等脚本入口也只能通过 reflect.Call 调用。因此这里的反射不可避免，
+// 但范围限制在脚本加载/生命周期调用阶段，不进入普通模板渲染主流程。
+
 // CallOptionalFunc 调用脚本包中的可选函数；函数不存在时返回 false, nil。
 // 生命周期函数复用 Register 的参数校验规则，并允许函数返回 error。
 func CallOptionalFunc(i *interp.Interpreter, packageName, funcName, subject string, args []any) (bool, error) {

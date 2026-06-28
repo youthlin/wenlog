@@ -46,11 +46,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"toInt":            func(s string) int { n, _ := strconv.Atoi(s); return n },
 		// default 与内置 or 接近，但语义更明确：仅在值为空时使用默认值。
 		"default": func(def, val any) any {
-			if val == nil {
-				return def
-			}
-			rv := reflect.ValueOf(val)
-			if !rv.IsValid() || rv.IsZero() {
+			if ok, _ := template.IsTrue(val); !ok {
 				return def
 			}
 			return val
@@ -65,7 +61,6 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		tplFuncWidgets:        func(area string, data any) template.HTML { return "" },
 		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return "" },
 		tplFuncWidgetOption:   func(key string) string { return "" },
-		tplFuncPluginSlot:     func(name string, data any) template.HTML { return "" },
 		tplFuncSlot:           func(name string, data any) template.HTML { return "" },
 		tplFuncPostTitle:      func(data any) template.HTML { return "" },
 		tplFuncPostExcerpt:    func(post any) template.HTML { return "" },
@@ -90,6 +85,9 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 func postURL(p any) string {
 	switch v := p.(type) {
 	case *model.Post:
+		if v == nil {
+			return ""
+		}
 		return permalink.Post(v)
 	case model.Post:
 		return permalink.Post(&v)
@@ -120,7 +118,9 @@ func postURL(p any) string {
 				})
 			}
 		}
-		// 处理 yaegi 返回的 theme.PostView（通过反射提取 ID/Title/Slug/PostType/PublishedAt/ModifiedAt）
+		// 必须保留反射兜底：主题/插件 functions.goyaegi 返回的 hook.PostView 穿过 yaegi 边界后，
+		// 在宿主侧不一定能直接断言为 hook.PostView 或实现 PostURLFields 接口；模板函数又需要继续
+		// 接受这些脚本值生成永久链接。因此这里仅按固定字段白名单读取生成 URL 所需的最小数据。
 		rv := reflect.ValueOf(p)
 		if rv.Kind() == reflect.Struct {
 			id := reflectGetUint(rv, "ID")

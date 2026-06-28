@@ -428,7 +428,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 	// 缓存当前主题和版本号。
 	currentTheme := h.currentThemeFromLoader(c, loader)
 	var themeVersion string
-	menus := h.resolveMenus(c, currentTheme, menu, loader)
+	menus := templateMenus(h.resolveMenus(c, currentTheme, menu, loader))
 	data := gin.H{
 		"SiteName":         s.SiteName,
 		"SiteLogo":         s.SiteLogo,
@@ -494,6 +494,21 @@ func (h *Public) resolveMenus(c *gin.Context, currentTheme *theme.Theme, fallbac
 		menus[location] = theme.ResolveMenuItems(raw, fallback)
 	}
 	return menus
+}
+
+func templateMenus(menus map[string][]theme.MenuItem) map[string]any {
+	if len(menus) == 0 {
+		return nil
+	}
+	result := make(map[string]any, len(menus))
+	for location, items := range menus {
+		out := make([]any, 0, len(items))
+		for i := range items {
+			out = append(out, items[i])
+		}
+		result[location] = out
+	}
+	return result
 }
 
 func displayUserName(u *model.User) string {

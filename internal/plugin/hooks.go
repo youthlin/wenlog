@@ -161,6 +161,9 @@ func (r *Registry) safeDoAction(ctx context.Context, h Handler, args ...any) {
 	case func():
 		fn()
 	default:
+		// 这里保留反射是为了兼容 yaegi 脚本里声明的具体函数签名。
+		// 解释器导出的函数类型可能不是宿主侧的 type alias，但参数可赋值/可转换；
+		// 不通过反射就只能要求插件作者全部写成 func(context.Context, ...any)，开发体验会明显变差。
 		callByReflection(h.Fn, ctx, nil, args...)
 	}
 }
@@ -190,6 +193,8 @@ func (r *Registry) safeApplyFilter(ctx context.Context, h Handler, value any, ar
 	case func(any) any:
 		return fn(value)
 	default:
+		// 同 safeDoAction：filter 也允许插件/主题使用具体签名（例如 func(context.Context, string) string），
+		// 需要运行时按 hook 参数列表做一次安全适配。
 		result, ok := callByReflection(h.Fn, ctx, value, args...)
 		if !ok {
 			return value

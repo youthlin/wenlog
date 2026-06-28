@@ -16,6 +16,7 @@ import (
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/web"
+	bundledplugins "github.com/youthlin/blog/web/plugins"
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -202,7 +203,76 @@ func TestEnsureThemesOnDiskRefreshesBundledThemeWhenVersionChanged(t *testing.T)
 	if string(gotHeader) != string(wantHeader) {
 		t.Fatalf("theme template not refreshed")
 	}
-	if !strings.Contains(string(gotHeader), `pluginSlot "head.end"`) {
+	if !strings.Contains(string(gotHeader), `slot "head.end"`) {
 		t.Fatalf("refreshed header missing plugin hook: %s", gotHeader)
+	}
+}
+
+func TestEnsurePluginsOnDiskReleasesBundledPlugins(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get wd: %v", err)
+	}
+	root := t.TempDir()
+	if err := os.Chdir(root); err != nil {
+		t.Fatalf("chdir temp dir: %v", err)
+	}
+	defer func() { _ = os.Chdir(wd) }()
+
+	ensurePluginsOnDisk()
+
+	wantYAML, err := fs.ReadFile(bundledplugins.Plugins, "comment-smilies/plugin.yaml")
+	if err != nil {
+		t.Fatalf("read bundled plugin yaml: %v", err)
+	}
+	gotYAML, err := os.ReadFile(filepath.Join("plugins", "comment-smilies", "plugin.yaml"))
+	if err != nil {
+		t.Fatalf("read released plugin yaml: %v", err)
+	}
+	if string(gotYAML) != string(wantYAML) {
+		t.Fatalf("plugin yaml not released: got %q want %q", gotYAML, wantYAML)
+	}
+
+	wantWidget, err := fs.ReadFile(bundledplugins.Plugins, "saying/widgets/saying.gohtml")
+	if err != nil {
+		t.Fatalf("read bundled plugin widget: %v", err)
+	}
+	gotWidget, err := os.ReadFile(filepath.Join("plugins", "saying", "widgets", "saying.gohtml"))
+	if err != nil {
+		t.Fatalf("read released plugin widget: %v", err)
+	}
+	if string(gotWidget) != string(wantWidget) {
+		t.Fatalf("plugin widget not released")
+	}
+}
+
+func TestEnsurePluginsOnDiskKeepsExistingPlugin(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get wd: %v", err)
+	}
+	root := t.TempDir()
+	if err := os.Chdir(root); err != nil {
+		t.Fatalf("chdir temp dir: %v", err)
+	}
+	defer func() { _ = os.Chdir(wd) }()
+
+	pluginDir := filepath.Join("plugins", "saying")
+	if err := os.MkdirAll(pluginDir, 0o755); err != nil {
+		t.Fatalf("mkdir plugin dir: %v", err)
+	}
+	customYAML := []byte("id: saying\nname: 本地修改\nversion: 0.0.0\n")
+	if err := os.WriteFile(filepath.Join(pluginDir, "plugin.yaml"), customYAML, 0o644); err != nil {
+		t.Fatalf("write custom plugin yaml: %v", err)
+	}
+
+	ensurePluginsOnDisk()
+
+	gotYAML, err := os.ReadFile(filepath.Join(pluginDir, "plugin.yaml"))
+	if err != nil {
+		t.Fatalf("read custom plugin yaml: %v", err)
+	}
+	if string(gotYAML) != string(customYAML) {
+		t.Fatalf("existing plugin should be kept: got %q want %q", gotYAML, customYAML)
 	}
 }

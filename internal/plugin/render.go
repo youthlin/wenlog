@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -116,11 +115,7 @@ func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *ro
 		"escapeHTML": html.EscapeString,
 		"toInt":      func(s string) int { n, _ := strconv.Atoi(s); return n },
 		"default": func(def, val any) any {
-			if val == nil {
-				return def
-			}
-			rv := reflect.ValueOf(val)
-			if !rv.IsValid() || rv.IsZero() {
+			if ok, _ := template.IsTrue(val); !ok {
 				return def
 			}
 			return val

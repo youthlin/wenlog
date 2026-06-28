@@ -174,6 +174,8 @@ func isInternalFrame(fn string) bool {
 		strings.HasSuffix(fn, ".afterDefault") ||
 		strings.Contains(fn, "gorm.io/gorm") ||
 		strings.Contains(fn, "runtime.") ||
+		// SQL 调用栈有时会经过反射分发（例如 GORM callback 或测试替身），
+		// 这些帧不是业务调用点，跳过后才能在 SQL Debug 中看到更有用的上层函数名。
 		strings.Contains(fn, "reflect.")
 }
 

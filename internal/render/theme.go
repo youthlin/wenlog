@@ -376,7 +376,15 @@ func requestContext(ctx *RequestContext) context.Context {
 	return req
 }
 
+// 以下 reflect* 辅助集中服务于模板函数的“宽输入”能力：模板里传入的 post/comment/menu
+// 可能来自 model.Post、hook.PostView、theme.MenuItem、匿名测试结构或 yaegi 脚本值。
+// 为了不把模板函数签名收窄到某一个包的具体类型，这里只按固定字段白名单读取展示所需数据。
 func reflectStringField(v any, name string) string {
+	if m, ok := v.(map[string]any); ok {
+		if s, _ := m[name].(string); s != "" {
+			return s
+		}
+	}
 	rv := indirectValue(v)
 	if !rv.IsValid() || rv.Kind() != reflect.Struct {
 		return ""
@@ -389,6 +397,16 @@ func reflectStringField(v any, name string) string {
 }
 
 func reflectUintField(v any, name string) uint {
+	if m, ok := v.(map[string]any); ok {
+		switch n := m[name].(type) {
+		case uint:
+			return n
+		case int:
+			if n > 0 {
+				return uint(n)
+			}
+		}
+	}
 	rv := indirectValue(v)
 	if !rv.IsValid() || rv.Kind() != reflect.Struct {
 		return 0
@@ -409,6 +427,9 @@ func reflectUintField(v any, name string) uint {
 }
 
 func reflectSliceField(v any, name string) []any {
+	if m, ok := v.(map[string]any); ok {
+		return anySlice(m[name])
+	}
 	rv := indirectValue(v)
 	if !rv.IsValid() || rv.Kind() != reflect.Struct {
 		return nil

@@ -87,7 +87,6 @@ const (
 	tplFuncWidgets        = "widgets"
 	tplFuncRenderMenu     = "renderMenu"
 	tplFuncWidgetOption   = "widgetOption"
-	tplFuncPluginSlot     = "pluginSlot"
 	tplFuncSlot           = "slot"
 	tplFuncPostTitle      = "postTitle"
 	tplFuncPostExcerpt    = "postExcerpt"
@@ -118,6 +117,9 @@ func dataValue(data any, key string) any {
 	if m, ok := data.(map[string]any); ok {
 		return m[key]
 	}
+	// gin.H 是 map[string]any 的命名类型，通常会命中上面的断言。
+	// 这里保留 map 反射兜底，是为了兼容测试或未来调用方传入自定义命名 map 类型；
+	// 只读取 string key，不做结构体字段探测，避免模板数据访问规则继续扩散。
 	rv := reflect.ValueOf(data)
 	if rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String {
 		v := rv.MapIndex(reflect.ValueOf(key))
@@ -145,8 +147,7 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		tplFuncWidgets:        func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
 		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
 		tplFuncWidgetOption:   func(key string) string { return widgetOption(ctx, key) },
-		tplFuncPluginSlot:     func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
-		tplFuncSlot:           func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
+		tplFuncSlot:           func(name string, data any) template.HTML { return slot(runtime, ctx, name, data) },
 		tplFuncPostTitle:      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
 		tplFuncPostExcerpt:    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
 		tplFuncPostContent:    func(post any) template.HTML { return postContent(runtime, ctx, post) },

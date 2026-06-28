@@ -11,6 +11,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/web"
 )
 
@@ -23,6 +24,19 @@ func TestAvatarURL(t *testing.T) {
 	}
 	if got := avatarURL("me@example.com", ""); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
 		t.Errorf("avatar url too short: %q", got)
+	}
+}
+
+func TestPostNavigationSkipsTypedNilPosts(t *testing.T) {
+	data := map[string]any{
+		"PrevPost": (*model.Post)(nil),
+		"NextPost": (*model.Post)(nil),
+	}
+	if got := postNavigation(nil, data); got != "" {
+		t.Fatalf("postNavigation with typed nil posts = %q, want empty", got)
+	}
+	if got := postURL((*model.Post)(nil)); got != "" {
+		t.Fatalf("postURL with typed nil post = %q, want empty", got)
 	}
 }
 
@@ -236,12 +250,7 @@ func TestRenderMenuRendersPrimaryLocation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new hot renderer: %v", err)
 	}
-	data := map[string]any{"Menus": map[string][]struct {
-		ID       uint
-		Title    string
-		Slug     string
-		PostType string
-	}{"primary": {{ID: 1, Title: "About", Slug: "about", PostType: "page"}}}}
+	data := map[string]any{"Menus": map[string]any{"primary": []any{map[string]any{"Title": "About", "URL": "/about"}}}}
 	rr := httptest.NewRecorder()
 	if err := r.Instance("index", data).Render(rr); err != nil {
 		t.Fatalf("render menu: %v", err)
@@ -259,13 +268,7 @@ func TestRenderMenuRendersChildrenAndCustomURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new hot renderer: %v", err)
 	}
-	type item struct {
-		Title    string
-		URL      string
-		Target   string
-		Children []item
-	}
-	data := map[string]any{"Menus": map[string][]item{"primary": {{Title: "Docs", URL: "/docs", Children: []item{{Title: "GitHub", URL: "https://github.com", Target: "_blank"}}}}}}
+	data := map[string]any{"Menus": map[string]any{"primary": []any{map[string]any{"Title": "Docs", "URL": "/docs", "Children": []any{map[string]any{"Title": "GitHub", "URL": "https://github.com", "Target": "_blank"}}}}}}
 	rr := httptest.NewRecorder()
 	if err := r.Instance("index", data).Render(rr); err != nil {
 		t.Fatalf("render menu: %v", err)
