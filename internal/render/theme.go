@@ -2,6 +2,7 @@ package render
 
 import (
 	"context"
+	"fmt"
 	"html"
 	"html/template"
 	"io/fs"
@@ -12,9 +13,11 @@ import (
 	"sync/atomic"
 
 	ginrender "github.com/gin-gonic/gin/render"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/wxr"
-	"github.com/youthlin/blog/themeapi"
 	"github.com/youthlin/blog/web"
 )
 
@@ -205,13 +208,15 @@ func (r *Renderer) ClearPreviewTheme() {
 // TemplateHierarchy 定义页面类型到模板文件名的 fallback 链。
 // 主题只需提供链中任一模板即可，系统按顺序查找第一个存在的。
 var TemplateHierarchy = map[string][]string{
-	"index":   {"index.gohtml"},
-	"post":    {"post.gohtml", "index.gohtml"},
-	"page":    {"page.gohtml", "post.gohtml", "index.gohtml"},
-	"search":  {"search.gohtml", "list.gohtml", "index.gohtml"},
-	"list":    {"list.gohtml", "index.gohtml"},
-	"archive": {"archive.gohtml", "list.gohtml", "index.gohtml"},
-	"error":   {"error.gohtml"},
+	"index":    {"index.gohtml"},
+	"post":     {"post.gohtml", "index.gohtml"},
+	"page":     {"page.gohtml", "post.gohtml", "index.gohtml"},
+	"category": {"category.gohtml", "list.gohtml", "index.gohtml"},
+	"tag":      {"tag.gohtml", "list.gohtml", "index.gohtml"},
+	"search":   {"search.gohtml", "list.gohtml", "index.gohtml"},
+	"list":     {"list.gohtml", "index.gohtml"},
+	"archive":  {"archive.gohtml", "list.gohtml", "index.gohtml"},
+	"error":    {"error.gohtml"},
 }
 
 // ResolveTemplate 根据页面类型查找主题中第一个存在的模板。
@@ -220,24 +225,33 @@ func (r *Renderer) ResolveTemplate(pageType string) string {
 	r.mu.RLock()
 	tpl := r.tpl
 	r.mu.RUnlock()
-	return resolveTemplateIn(tpl, pageType)
+	return resolveTemplateIn(tpl, pageType, nil)
 }
 
 // ResolveTemplateWithPreview 根据预览主题状态在对应模板集中解析页面类型。
 func (r *Renderer) ResolveTemplateWithPreview(pageType, previewName string) string {
+	return r.ResolveTemplateWithPreviewData(pageType, previewName, nil)
+}
+
+// ResolveTemplateWithPreviewData 根据页面类型和当前模板数据解析更细粒度的模板层级。
+// 例如 page-about.gohtml、post-123.gohtml、category-go.gohtml 会优先于通用模板。
+func (r *Renderer) ResolveTemplateWithPreviewData(pageType, previewName string, data any) string {
 	r.mu.RLock()
 	tpl := r.tpl
 	if previewName != "" && r.previewTpl != nil && previewName == r.previewThemeName {
 		tpl = r.previewTpl
 	}
 	r.mu.RUnlock()
-	return resolveTemplateIn(tpl, pageType)
+	return resolveTemplateIn(tpl, pageType, data)
 }
 
-func resolveTemplateIn(tpl *template.Template, pageType string) string {
-	chain, ok := TemplateHierarchy[pageType]
-	if !ok {
-		return pageType + ".gohtml"
+func resolveTemplateIn(tpl *template.Template, pageType string, data any) string {
+	chain := templateHierarchyFor(pageType, data)
+	if len(chain) == 0 {
+		chain = TemplateHierarchy[pageType]
+	}
+	if len(chain) == 0 {
+		chain = []string{pageType + ".gohtml"}
 	}
 	for _, name := range chain {
 		if tpl != nil && tpl.Lookup(name) != nil {
@@ -245,6 +259,92 @@ func resolveTemplateIn(tpl *template.Template, pageType string) string {
 		}
 	}
 	return chain[0]
+}
+
+func templateHierarchyFor(pageType string, data any) []string {
+	chain, ok := TemplateHierarchy[pageType]
+	if !ok {
+		return []string{pageType + ".gohtml"}
+	}
+	result := make([]string, 0, len(chain)+2)
+	switch pageType {
+	case "post":
+		post := dataValue(data, "Post")
+		if slug := safeTemplateSegment(reflectStringField(post, "Slug")); slug != "" {
+			result = append(result, "post-"+slug+".gohtml")
+		}
+		if id := reflectUintField(post, "ID"); id > 0 {
+			result = append(result, fmt.Sprintf("post-%d.gohtml", id))
+		}
+	case "page":
+		post := dataValue(data, "Post")
+		if slug := safeTemplateSegment(reflectStringField(post, "Slug")); slug != "" {
+			result = append(result, "page-"+slug+".gohtml")
+		}
+		if id := reflectUintField(post, "ID"); id > 0 {
+			result = append(result, fmt.Sprintf("page-%d.gohtml", id))
+		}
+	case "category":
+		if slug := safeTemplateSegment(firstDataString(data, "CategorySlug", "TermSlug", "Slug")); slug != "" {
+			result = append(result, "category-"+slug+".gohtml")
+		}
+	case "tag":
+		if slug := safeTemplateSegment(firstDataString(data, "TagSlug", "TermSlug", "Slug")); slug != "" {
+			result = append(result, "tag-"+slug+".gohtml")
+		}
+	case "archive":
+		if year := firstDataInt(data, "ArchiveYear", "Year"); year > 0 {
+			result = append(result, fmt.Sprintf("archive-%d.gohtml", year))
+		}
+	}
+	result = append(result, chain...)
+	return uniqueStrings(result)
+}
+
+func firstDataString(data any, keys ...string) string {
+	for _, key := range keys {
+		if value, _ := dataValue(data, key).(string); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstDataInt(data any, keys ...string) int {
+	for _, key := range keys {
+		switch value := dataValue(data, key).(type) {
+		case int:
+			return value
+		case int64:
+			return int(value)
+		case uint:
+			return int(value)
+		case uint64:
+			return int(value)
+		}
+	}
+	return 0
+}
+
+func safeTemplateSegment(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "." || s == ".." || strings.ContainsAny(s, `/\`) {
+		return ""
+	}
+	return s
+}
+
+func uniqueStrings(values []string) []string {
+	seen := make(map[string]bool, len(values))
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if value == "" || seen[value] {
+			continue
+		}
+		seen[value] = true
+		out = append(out, value)
+	}
+	return out
 }
 
 // PreviewInstance 返回预览主题的模板实例。previewName 需与 LoadPreviewTheme 时一致。
@@ -266,7 +366,7 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 // 它归属于 Renderer 实例，避免不同渲染器之间通过包级全局变量串联。
 type TemplateRuntime struct {
 	optionProvider       atomic.Value // stores optionProviderHolder
-	themeInvokeProvider  atomic.Value // stores themeInvokeProviderHolder
+	hookInvokeProvider   atomic.Value // stores hookInvokeProviderHolder
 	themeWidgetsProvider atomic.Value // stores themeWidgetsProviderHolder
 	hookProvider         atomic.Value // stores hookProviderHolder
 	pluginWidgetProvider atomic.Value // stores pluginWidgetProviderHolder
@@ -281,7 +381,7 @@ type optionProviderHolder struct {
 	fn func(ctx *RequestContext, optionID string) string
 }
 
-type themeInvokeProviderHolder struct {
+type hookInvokeProviderHolder struct {
 	fn func(ctx *RequestContext, name string, args ...any) any
 }
 
@@ -305,12 +405,12 @@ func (r *Renderer) SetOptionProvider(fn func(ctx *RequestContext, optionID strin
 	r.themeRuntime.optionProvider.Store(optionProviderHolder{fn: fn})
 }
 
-// SetThemeInvokeProvider 设置 themeInvoke 模板函数的实现（由 theme.Manager 注入）。
-func (r *Renderer) SetThemeInvokeProvider(fn func(ctx *RequestContext, name string, args ...any) any) {
+// SetHookInvokeProvider 设置 hookInvoke 模板函数的实现（由 theme.Manager 注入）。
+func (r *Renderer) SetHookInvokeProvider(fn func(ctx *RequestContext, name string, args ...any) any) {
 	if r == nil {
 		return
 	}
-	r.themeRuntime.themeInvokeProvider.Store(themeInvokeProviderHolder{fn: fn})
+	r.themeRuntime.hookInvokeProvider.Store(hookInvokeProviderHolder{fn: fn})
 }
 
 // SetThemeWidgetsProvider 设置 themeWidgets 模板函数的实现。
@@ -337,11 +437,11 @@ func (r *Renderer) SetPluginWidgetProvider(fn func(ctx *RequestContext, pluginID
 	r.themeRuntime.pluginWidgetProvider.Store(pluginWidgetProviderHolder{fn: fn})
 }
 
-func themeInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
+func hookInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
 	if runtime == nil {
 		return nil
 	}
-	provider, _ := runtime.themeInvokeProvider.Load().(themeInvokeProviderHolder)
+	provider, _ := runtime.hookInvokeProvider.Load().(hookInvokeProviderHolder)
 	if provider.fn == nil {
 		return nil
 	}
@@ -394,7 +494,9 @@ func requestContext(ctx *RequestContext) context.Context {
 		req = context.Background()
 	}
 	if ctx != nil && ctx.ThemeLoader != nil {
-		req = themeapi.WithDataLoader(req, ctx.ThemeLoader)
+		if loader, _ := ctx.ThemeLoader.(*store.DataLoader); loader != nil {
+			req = hook.WithDataLoader(req, loader)
+		}
 	}
 	return req
 }
@@ -410,13 +512,363 @@ func pluginSlot(runtime *TemplateRuntime, ctx *RequestContext, name string, data
 	return template.HTML(result.String())
 }
 
+func postTitle(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
+	title := reflectStringField(post, "Title")
+	if h := hooks(runtime); h != nil {
+		title = stringFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostTitle, title, post), title)
+	}
+	title = html.EscapeString(title)
+	if title == "" {
+		return ""
+	}
+	if isDraft(ctx) {
+		title += ` <span class="draft-badge">` + translate(ctx, "草稿预览") + `</span>`
+	}
+	return template.HTML(`<h1 class="post-title">` + title + `</h1>`)
+}
+
+func postExcerpt(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
+	html := postExcerptHTMLAny(post)
+	if h := hooks(runtime); h != nil {
+		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostExcerptHTML, string(html), post))
+	}
+	return html
+}
+
+func postTags(post any) template.HTML {
+	tags := reflectSliceField(post, "Tags")
+	if len(tags) == 0 {
+		return ""
+	}
+	var out strings.Builder
+	out.WriteString(`<div class="post-tags">`)
+	for _, tag := range tags {
+		name := html.EscapeString(reflectStringField(tag, "Name"))
+		slug := reflectStringField(tag, "Slug")
+		if name == "" || slug == "" {
+			continue
+		}
+		out.WriteString(`<a class="tag" href="`)
+		out.WriteString(html.EscapeString(permalink.Tag(slug)))
+		out.WriteString(`">#`)
+		out.WriteString(name)
+		out.WriteString(`</a>`)
+	}
+	out.WriteString(`</div>`)
+	return template.HTML(out.String())
+}
+
+func postNavigation(ctx *RequestContext, data any, classes ...string) template.HTML {
+	if data == nil && ctx != nil {
+		data = ctx.Data
+	}
+	prev := dataValue(data, "PrevPost")
+	next := dataValue(data, "NextPost")
+	if prev == nil && next == nil {
+		return ""
+	}
+	class := "post-nav"
+	if len(classes) > 0 && strings.TrimSpace(classes[0]) != "" {
+		class = strings.TrimSpace(classes[0])
+	}
+	var out strings.Builder
+	out.WriteString(`<nav class="` + html.EscapeString(class) + `">`)
+	out.WriteString(`<span class="prev">`)
+	if prev != nil {
+		out.WriteString(`<a href="` + html.EscapeString(postURL(prev)) + `">← ` + html.EscapeString(reflectStringField(prev, "Title")) + `</a>`)
+	}
+	out.WriteString(`</span><span class="next">`)
+	if next != nil {
+		out.WriteString(`<a href="` + html.EscapeString(postURL(next)) + `">` + html.EscapeString(reflectStringField(next, "Title")) + ` →</a>`)
+	}
+	out.WriteString(`</span></nav>`)
+	return template.HTML(out.String())
+}
+
+func renderMenu(ctx *RequestContext, location string, data ...any) template.HTML {
+	source := any(nil)
+	if len(data) > 0 {
+		source = data[0]
+	}
+	if source == nil && ctx != nil {
+		source = ctx.Data
+	}
+	items := menuItemsForLocation(source, location)
+	if len(items) == 0 {
+		return ""
+	}
+	class := "menu"
+	if location != "" {
+		class += " menu-" + slugClass(location)
+	}
+	var out strings.Builder
+	out.WriteString(`<nav class="` + html.EscapeString(class) + `">`)
+	out.WriteString(`<ul class="menu-items">`)
+	for _, item := range items {
+		title := html.EscapeString(reflectStringField(item, "Title"))
+		url := reflectStringField(item, "URL")
+		if url == "" {
+			url = postURL(item)
+		}
+		if title == "" || url == "" {
+			continue
+		}
+		target := reflectStringField(item, "Target")
+		out.WriteString(`<li class="menu-item"><a href="`)
+		out.WriteString(html.EscapeString(url))
+		out.WriteString(`"`)
+		if target != "" {
+			out.WriteString(` target="` + html.EscapeString(target) + `" rel="noreferrer"`)
+		}
+		out.WriteString(`>`)
+		out.WriteString(title)
+		out.WriteString(`</a>`)
+		children := reflectSliceField(item, "Children")
+		if len(children) > 0 {
+			out.WriteString(`<ul class="sub-menu">`)
+			for _, child := range children {
+				writeMenuItem(&out, child)
+			}
+			out.WriteString(`</ul>`)
+		}
+		out.WriteString(`</li>`)
+	}
+	out.WriteString(`</ul></nav>`)
+	return template.HTML(out.String())
+}
+
+func writeMenuItem(out *strings.Builder, item any) {
+	title := html.EscapeString(reflectStringField(item, "Title"))
+	url := reflectStringField(item, "URL")
+	if title == "" || url == "" {
+		return
+	}
+	target := reflectStringField(item, "Target")
+	out.WriteString(`<li class="menu-item"><a href="`)
+	out.WriteString(html.EscapeString(url))
+	out.WriteString(`"`)
+	if target != "" {
+		out.WriteString(` target="` + html.EscapeString(target) + `" rel="noreferrer"`)
+	}
+	out.WriteString(`>`)
+	out.WriteString(title)
+	out.WriteString(`</a>`)
+	children := reflectSliceField(item, "Children")
+	if len(children) > 0 {
+		out.WriteString(`<ul class="sub-menu">`)
+		for _, child := range children {
+			writeMenuItem(out, child)
+		}
+		out.WriteString(`</ul>`)
+	}
+	out.WriteString(`</li>`)
+}
+
+func menuItemsForLocation(data any, location string) []any {
+	if location != "" {
+		if menus := dataValue(data, "Menus"); menus != nil {
+			if items := menuLocationItems(menus, location); len(items) > 0 {
+				return items
+			}
+		}
+		key := "Menu" + strings.ToUpper(location[:1]) + location[1:]
+		if items := anySlice(dataValue(data, key)); len(items) > 0 {
+			return items
+		}
+	}
+	return anySlice(dataValue(data, "Menu"))
+}
+
+func menuLocationItems(menus any, location string) []any {
+	rv := reflect.ValueOf(menus)
+	for rv.IsValid() && (rv.Kind() == reflect.Interface || rv.Kind() == reflect.Pointer) {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if !rv.IsValid() || rv.Kind() != reflect.Map || rv.Type().Key().Kind() != reflect.String {
+		return nil
+	}
+	v := rv.MapIndex(reflect.ValueOf(location))
+	if !v.IsValid() || !v.CanInterface() {
+		return nil
+	}
+	return anySlice(v.Interface())
+}
+
+func anySlice(v any) []any {
+	rv := reflect.ValueOf(v)
+	for rv.IsValid() && (rv.Kind() == reflect.Interface || rv.Kind() == reflect.Pointer) {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if !rv.IsValid() || rv.Kind() != reflect.Slice {
+		return nil
+	}
+	items := make([]any, 0, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		item := rv.Index(i)
+		if item.CanInterface() {
+			items = append(items, item.Interface())
+		}
+	}
+	return items
+}
+
+func bodyClass(data any) string {
+	classes := []string{"site"}
+	if pageType, _ := dataValue(data, "PageType").(string); pageType != "" {
+		classes = append(classes, "page-type-"+slugClass(pageType))
+	}
+	if dataValue(data, "Post") != nil {
+		classes = append(classes, "singular")
+	}
+	if dataValue(data, "List") != nil {
+		classes = append(classes, "archive-list")
+	}
+	if uid, _ := dataValue(data, "CurrentUserID").(uint); uid != 0 {
+		classes = append(classes, "logged-in")
+	}
+	if preview, _ := dataValue(data, "IsPreview").(bool); preview {
+		classes = append(classes, "theme-preview")
+	}
+	return strings.Join(uniqueClasses(classes), " ")
+}
+
+func postClass(post any, extra ...string) string {
+	classes := append([]string{"post"}, extra...)
+	if id := reflectUintField(post, "ID"); id > 0 {
+		classes = append(classes, fmt.Sprintf("post-%d", id))
+	}
+	if postType := reflectStringField(post, "PostType"); postType != "" {
+		classes = append(classes, "type-"+slugClass(postType))
+	}
+	if status := reflectStringField(post, "Status"); status != "" {
+		classes = append(classes, "status-"+slugClass(status))
+	}
+	for _, cat := range reflectSliceField(post, "Categories") {
+		if slug := reflectStringField(cat, "Slug"); slug != "" {
+			classes = append(classes, "category-"+slugClass(slug))
+		}
+	}
+	for _, tag := range reflectSliceField(post, "Tags") {
+		if slug := reflectStringField(tag, "Slug"); slug != "" {
+			classes = append(classes, "tag-"+slugClass(slug))
+		}
+	}
+	return strings.Join(uniqueClasses(classes), " ")
+}
+
+func commentClass(comment any, extra ...string) string {
+	classes := append([]string{"comment"}, extra...)
+	if id := reflectUintField(comment, "ID"); id > 0 {
+		classes = append(classes, fmt.Sprintf("comment-%d", id))
+	}
+	if parentID := reflectUintField(comment, "ParentID"); parentID > 0 {
+		classes = append(classes, "comment-reply")
+	} else {
+		classes = append(classes, "comment-root")
+	}
+	if status := reflectStringField(comment, "Status"); status != "" {
+		classes = append(classes, "status-"+slugClass(status))
+	}
+	return strings.Join(uniqueClasses(classes), " ")
+}
+
+func slugClass(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	lastDash := false
+	for _, r := range s {
+		ok := (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-'
+		if ok {
+			b.WriteRune(r)
+			lastDash = r == '-'
+			continue
+		}
+		if !lastDash {
+			b.WriteByte('-')
+			lastDash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+func uniqueClasses(classes []string) []string {
+	seen := make(map[string]bool, len(classes))
+	out := make([]string, 0, len(classes))
+	for _, class := range classes {
+		class = strings.TrimSpace(class)
+		if class == "" || seen[class] {
+			continue
+		}
+		seen[class] = true
+		out = append(out, class)
+	}
+	return out
+}
+
+func isDraft(ctx *RequestContext) bool {
+	if ctx == nil {
+		return false
+	}
+	value, _ := dataValue(ctx.Data, "IsDraft").(bool)
+	return value
+}
+
+func translate(ctx *RequestContext, msg string) string {
+	if ctx == nil {
+		return html.EscapeString(msg)
+	}
+	tr := dataValue(ctx.Data, "th")
+	rv := reflect.ValueOf(tr)
+	if !rv.IsValid() {
+		return html.EscapeString(msg)
+	}
+	method := rv.MethodByName("T")
+	if !method.IsValid() || method.Type().NumIn() != 1 || method.Type().In(0).Kind() != reflect.String || method.Type().NumOut() != 1 || method.Type().Out(0).Kind() != reflect.String {
+		return html.EscapeString(msg)
+	}
+	out := method.Call([]reflect.Value{reflect.ValueOf(msg)})
+	return html.EscapeString(out[0].String())
+}
+
 // postContent 输出文章正文，并应用 post.content_html filter。
 func postContent(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
 	html := postContentHTML(post)
 	if h := hooks(runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), "post.content_html", string(html), post))
+		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostContentHTML, string(html), post))
 	}
 	return html
+}
+
+func postExcerptHTMLAny(post any) template.HTML {
+	switch p := post.(type) {
+	case *model.Post:
+		if p == nil {
+			return ""
+		}
+		return postExcerptHTML(p)
+	case model.Post:
+		return postExcerptHTML(&p)
+	default:
+		content := reflectStringField(post, "Content")
+		excerpt := reflectStringField(post, "Excerpt")
+		above, hasMore := wxr.SplitMore(content)
+		switch {
+		case hasMore:
+			return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(above))))
+		case excerpt != "":
+			return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(excerpt))))
+		case content != "":
+			return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(content))))
+		default:
+			return ""
+		}
+	}
 }
 
 func postContentHTML(post any) template.HTML {
@@ -442,7 +894,7 @@ func postContentHTML(post any) template.HTML {
 func commentContent(runtime *TemplateRuntime, ctx *RequestContext, comment any) template.HTML {
 	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
 	if h := hooks(runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), "comment.render_html", string(html), comment))
+		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookCommentContentHTML, string(html), comment))
 	}
 	return html
 }
@@ -457,6 +909,19 @@ func htmlFromFilterValue(v any) template.HTML {
 		return template.HTML(string(val))
 	default:
 		return ""
+	}
+}
+
+func stringFromFilterValue(v any, fallback string) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case template.HTML:
+		return string(val)
+	case []byte:
+		return string(val)
+	default:
+		return fallback
 	}
 }
 
@@ -490,6 +955,25 @@ func reflectUintField(v any, name string) uint {
 		}
 	}
 	return 0
+}
+
+func reflectSliceField(v any, name string) []any {
+	rv := indirectValue(v)
+	if !rv.IsValid() || rv.Kind() != reflect.Struct {
+		return nil
+	}
+	f := rv.FieldByName(name)
+	if !f.IsValid() || f.Kind() != reflect.Slice {
+		return nil
+	}
+	items := make([]any, 0, f.Len())
+	for i := 0; i < f.Len(); i++ {
+		item := f.Index(i)
+		if item.CanInterface() {
+			items = append(items, item.Interface())
+		}
+	}
+	return items
 }
 
 func indirectValue(v any) reflect.Value {
@@ -552,7 +1036,7 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 				if item.CanInterface() {
 					widget = item.Interface()
 				}
-				html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), "widget.render_html", string(html), widget, area, data))
+				html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), widget, area, data))
 			}
 			result.WriteString(string(html))
 		}

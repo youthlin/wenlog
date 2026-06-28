@@ -11,7 +11,7 @@
         <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
         {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
       </div>
-      <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">{{.th.T "草稿预览"}}</span>{{end}}</h1>
+      {{postTitle .Post}}
     </div>
   </header>
   <div class="article-layout wide-shell">
@@ -21,18 +21,11 @@
     </aside>
     <div class="article-body">
       <div class="post-content">{{postContent .Post}}</div>
-      {{if .Post.Tags}}
-      <div class="post-tags">
-        {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
-      </div>
-      {{end}}
+      {{postTags .Post}}
     </div>
   </div>
 </article>
-<nav class="post-nav wide-shell">
-  <span class="prev">{{if .PrevPost}}<a href="{{postURL .PrevPost}}">← {{.PrevPost.Title}}</a>{{end}}</span>
-  <span class="next">{{if .NextPost}}<a href="{{postURL .NextPost}}">{{.NextPost.Title}} →</a>{{end}}</span>
-</nav>
+{{postNavigation . "post-nav wide-shell"}}
 {{template "comments" .}}
 {{template "footer" .}}
 {{end}}

@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -14,6 +16,7 @@ import (
 
 // configuredWidget 是模板中一个已配置组件的展示数据。
 type configuredWidget struct {
+	InstanceID   string            // 组件实例 ID
 	ID           string            // 组件 ID
 	Label        string            // 中文显示名
 	Decl         theme.WidgetDecl  // 主题声明（含选项定义）
@@ -105,6 +108,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 				source = theme.WidgetSourceTheme
 			}
 			configured = append(configured, configuredWidget{
+				InstanceID:   item.InstanceID,
 				ID:           item.ID,
 				Label:        label,
 				Decl:         decl,
@@ -154,10 +158,13 @@ func (h *Admin) SaveWidgets(c *gin.Context) {
 			continue
 		}
 
-		// 构建对象数组格式: [{"id":"x","opts":{...}}]
+		// 构建对象数组格式: [{"instance_id":"...","id":"x","source":"...","opts":{...}}]
 		var items []theme.WidgetConfigItem
 		for i, id := range ids {
-			item := theme.WidgetConfigItem{ID: id, Opts: make(map[string]string)}
+			item := theme.WidgetConfigItem{ID: id, InstanceID: c.PostForm(fmt.Sprintf("widget_instance_%s_%d", areaKey, i)), Opts: make(map[string]string)}
+			if item.InstanceID == "" {
+				item.InstanceID = newWidgetInstanceID()
+			}
 			if source := c.PostForm(fmt.Sprintf("widget_source_%s_%d", areaKey, i)); source != "" {
 				item.Source = source
 			}
@@ -186,6 +193,14 @@ func (h *Admin) SaveWidgets(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusSeeOther, "/admin/widgets?notice="+tr.T("组件配置已保存"))
+}
+
+func newWidgetInstanceID() string {
+	var b [6]byte
+	if _, err := rand.Read(b[:]); err == nil {
+		return "w_" + hex.EncodeToString(b[:])
+	}
+	return "w_fallback"
 }
 
 func widgetDeclForConfig(decls []theme.WidgetDecl, item theme.WidgetConfigItem) (theme.WidgetDecl, bool) {

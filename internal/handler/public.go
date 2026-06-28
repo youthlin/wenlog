@@ -99,8 +99,11 @@ func (h *Public) renderHTML(c *gin.Context, code int, name string, data gin.H) {
 
 // renderPageHTML 按当前/预览主题的模板层级解析页面类型并渲染。
 func (h *Public) renderPageHTML(c *gin.Context, code int, pageType string, data gin.H) {
+	if data != nil {
+		data["PageType"] = pageType
+	}
 	previewName := middleware.GetPreviewTheme(c)
-	name := h.renderer.ResolveTemplateWithPreview(pageType, previewName)
+	name := h.renderer.ResolveTemplateWithPreviewData(pageType, previewName, data)
 	c.Render(code, h.renderer.PreviewInstance(name, data, previewName))
 }
 
@@ -319,9 +322,11 @@ func (h *Public) categoryWithLoader(c *gin.Context, loader *store.DataLoader) {
 	tr := i18n.Get(c)
 	data := h.base(c, tr.T("分类：%s", displaySlug), "", s, loader)
 	data["Heading"] = tr.T("分类：%s", displaySlug)
+	data["TermSlug"] = slug
+	data["CategorySlug"] = slug
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Category(slug))
-	h.renderPageHTML(c, http.StatusOK, "list", data)
+	h.renderPageHTML(c, http.StatusOK, "category", data)
 }
 
 func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
@@ -337,9 +342,11 @@ func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
 	tr := i18n.Get(c)
 	data := h.base(c, tr.T("标签：%s", displaySlug), "", s, loader)
 	data["Heading"] = tr.T("标签：%s", displaySlug)
+	data["TermSlug"] = slug
+	data["TagSlug"] = slug
 	data["List"] = res
 	data["Pager"] = pager(res, permalink.Tag(slug))
-	h.renderPageHTML(c, http.StatusOK, "list", data)
+	h.renderPageHTML(c, http.StatusOK, "tag", data)
 }
 
 // renderResolvedPostWithLoader 处理文章
@@ -428,12 +435,22 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 			csrfToken = token
 		}
 	}
+	// 缓存当前主题和版本号。
+	var currentTheme *theme.Theme
+	var themeVersion string
+	if loader != nil {
+		currentTheme = h.currentThemeFromLoader(c, loader)
+	} else {
+		currentTheme = h.currentTheme(c)
+	}
+	menus := h.resolveMenus(c, currentTheme, menu, loader)
 	data := gin.H{
 		"SiteName":         s.SiteName,
 		"SiteLogo":         s.SiteLogo,
 		"Title":            title,
 		"Description":      desc,
 		"Menu":             menu,
+		"Menus":            menus,
 		"CurrentYear":      time.Now().Year(),
 		"CurrentUserID":    uid,
 		"CurrentUser":      currentUser,
@@ -463,14 +480,6 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		data["RecentCommentItems"] = h.st.RecentCommentItems(c, 8, commentPageSize)
 	}
 
-	// 缓存当前主题和版本号。
-	var currentTheme *theme.Theme
-	var themeVersion string
-	if loader != nil {
-		currentTheme = h.currentThemeFromLoader(c, loader)
-	} else {
-		currentTheme = h.currentTheme(c)
-	}
 	themeName := ""
 	if currentTheme != nil {
 		themeName = currentTheme.Name
@@ -497,6 +506,24 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		themeDomain = currentTheme.ThemeDomain()
 	}
 	return i18n.InjectDomain(c, data, themeDomain)
+}
+
+func (h *Public) resolveMenus(c *gin.Context, currentTheme *theme.Theme, fallback []model.Post, loader *store.DataLoader) map[string][]theme.MenuItem {
+	locations := map[string]theme.MenuLocation{"primary": {Name: "主导航"}}
+	if currentTheme != nil && len(currentTheme.MenuLocations) > 0 {
+		locations = currentTheme.MenuLocations
+	}
+	menus := make(map[string][]theme.MenuItem, len(locations))
+	for location := range locations {
+		raw := ""
+		if loader != nil {
+			raw = loader.GetSetting(theme.MenuSettingKey(location))
+		} else if h != nil && h.st != nil {
+			raw, _ = h.st.GetSetting(c, theme.MenuSettingKey(location))
+		}
+		menus[location] = theme.ResolveMenuItems(raw, fallback)
+	}
+	return menus
 }
 
 func displayUserName(u *model.User) string {

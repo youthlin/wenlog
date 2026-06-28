@@ -95,6 +95,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		if currentTheme := h.themeManager.Current(c); currentTheme != nil {
 			data["AdminThemeSupportsWidgets"] = len(currentTheme.WidgetAreas) > 0
 			data["AdminThemeSupportsOptions"] = len(currentTheme.Options) > 0
+			data["AdminThemeSupportsMenus"] = len(currentTheme.MenuLocations) > 0
 		}
 	}
 	if c != nil {
@@ -223,6 +224,12 @@ func adminNavKey(c *gin.Context) string {
 		return "themes"
 	case "/admin/theme/files", "/admin/theme/file", "/admin/theme/file/create", "/admin/theme/file/delete", "/admin/theme/recovery/clear", "/admin/theme/reload":
 		return "theme-files"
+	case "/admin/menus":
+		return "menus"
+	case "/admin/widgets":
+		return "widgets"
+	case "/admin/theme-options":
+		return "theme-options"
 	case "/admin/plugins", "/admin/plugin/:id/:action", "/admin/plugin/:id/settings":
 		return "plugins"
 	default:

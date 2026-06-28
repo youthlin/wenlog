@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"sync"
 
@@ -15,6 +14,12 @@ import (
 )
 
 const settingEnabledPlugins = "enabled_plugins"
+
+const (
+	LifecycleActivate   = "Activate"
+	LifecycleDeactivate = "Deactivate"
+	LifecycleUninstall  = "Uninstall"
+)
 
 // settingStore 是 Manager 需要的设置存储接口。
 type settingStore interface {
@@ -81,7 +86,6 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 		if p == nil {
 			continue
 		}
-		registerPluginWidgets(hooks, p)
 		script, err := CompileFunctions(p, hooks, m.log)
 		if err != nil {
 			loadErrors[id] = err.Error()
@@ -96,6 +100,29 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 	m.scripts = scripts
 	m.loadErrors = loadErrors
 	return nil
+}
+
+// EnabledWidgetDecls 返回当前所有已启用插件声明的小组件。
+func (m *Manager) EnabledWidgetDecls(ctx context.Context) []WidgetDecl {
+	if m == nil {
+		return nil
+	}
+	ids := m.EnabledIDs(ctx)
+	result := make([]WidgetDecl, 0)
+	for _, id := range ids {
+		p := m.Get(id)
+		if p == nil || len(p.Widgets) == 0 {
+			continue
+		}
+		for _, w := range p.Widgets {
+			if w.ID == "" {
+				continue
+			}
+			w.Source = "plugin:" + p.ID
+			result = append(result, w)
+		}
+	}
+	return result
 }
 
 // scan 扫描 pluginsDir 下所有子目录，加载 plugin.yaml。
@@ -188,6 +215,51 @@ func (m *Manager) LoadErrors() map[string]string {
 		result[id] = err
 	}
 	return result
+}
+
+// CallLifecycle 调用插件 functions 中可选的生命周期函数。
+// 启用中的插件优先复用已编译脚本；未启用插件则临时编译一份，只执行生命周期，不污染当前 Hook Registry。
+func (m *Manager) CallLifecycle(ctx context.Context, id, name string) error {
+	if m == nil || id == "" || name == "" {
+		return nil
+	}
+	p := m.Get(id)
+	if p == nil {
+		return errors.Errorf("plugin %q not found", id)
+	}
+	m.mu.RLock()
+	loaded := m.scripts[id]
+	m.mu.RUnlock()
+	if loaded != nil {
+		return loaded.CallLifecycle(ctx, name)
+	}
+
+	hooks := NewRegistry()
+	hooks.SetLogger(m.log)
+	tmp, err := CompileFunctions(p, hooks, m.log)
+	if err != nil {
+		return errors.Wrapf(err, "加载插件[%s]生命周期运行时失败", id)
+	}
+	if tmp == nil {
+		return nil
+	}
+	return tmp.CallLifecycle(ctx, name)
+}
+
+// Uninstall 执行插件卸载生命周期并从启用列表移除。插件目录本身不在这里删除。
+func (m *Manager) Uninstall(ctx context.Context, id string) error {
+	if m == nil || id == "" {
+		return nil
+	}
+	if enabledIDsContain(m.EnabledIDs(ctx), id) {
+		if err := m.CallLifecycle(ctx, id, LifecycleDeactivate); err != nil {
+			return err
+		}
+	}
+	if err := m.CallLifecycle(ctx, id, LifecycleUninstall); err != nil {
+		return err
+	}
+	return m.Disable(ctx, id)
 }
 
 // HasAssets 检查插件是否包含静态资源目录。
@@ -318,112 +390,11 @@ func filterInstalledIDs(ids []string, installed map[string]bool) []string {
 	return out
 }
 
-func registerPluginWidgets(hooks *Registry, p *Plugin) {
-	if hooks == nil || p == nil || len(p.Widgets) == 0 {
-		return
-	}
-	widgets := append([]WidgetDecl(nil), p.Widgets...)
-	source := Source{Type: SourcePlugin, ID: p.ID}
-	hooks.AddFilter("widgets.available", func(value any, args ...any) any {
-		return appendWidgetDecls(value, widgets, p.ID)
-	}, source)
-}
-
-func appendWidgetDecls(value any, widgets []WidgetDecl, pluginID string) any {
-	if len(widgets) == 0 {
-		return value
-	}
-	rv := reflect.ValueOf(value)
-	if !rv.IsValid() || rv.Kind() != reflect.Slice {
-		return value
-	}
-	out := reflect.MakeSlice(rv.Type(), rv.Len(), rv.Len()+len(widgets))
-	reflect.Copy(out, rv)
-	for _, w := range widgets {
-		item, ok := makeWidgetDeclValue(rv.Type().Elem(), w, pluginID)
-		if !ok {
-			continue
-		}
-		out = reflect.Append(out, item)
-	}
-	return out.Interface()
-}
-
-func makeWidgetDeclValue(t reflect.Type, w WidgetDecl, pluginID string) (reflect.Value, bool) {
-	ptr := false
-	if t.Kind() == reflect.Pointer {
-		ptr = true
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Struct {
-		return reflect.Value{}, false
-	}
-	item := reflect.New(t).Elem()
-	setStringField(item, "ID", w.ID)
-	setStringField(item, "Label", w.Label)
-	setStringField(item, "Source", "plugin:"+pluginID)
-	setStringField(item, "PluginID", pluginID)
-	setOptionDecls(item.FieldByName("Options"), w.Options)
-	if ptr {
-		p := reflect.New(t)
-		p.Elem().Set(item)
-		return p, true
-	}
-	return item, true
-}
-
-func setOptionDecls(field reflect.Value, options []OptionDecl) {
-	if !field.IsValid() || !field.CanSet() || field.Kind() != reflect.Slice || len(options) == 0 {
-		return
-	}
-	out := reflect.MakeSlice(field.Type(), 0, len(options))
-	for _, opt := range options {
-		item, ok := makeOptionDeclValue(field.Type().Elem(), opt)
-		if ok {
-			out = reflect.Append(out, item)
+func enabledIDsContain(ids []string, id string) bool {
+	for _, current := range ids {
+		if current == id {
+			return true
 		}
 	}
-	field.Set(out)
-}
-
-func makeOptionDeclValue(t reflect.Type, opt OptionDecl) (reflect.Value, bool) {
-	ptr := false
-	if t.Kind() == reflect.Pointer {
-		ptr = true
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Struct {
-		return reflect.Value{}, false
-	}
-	item := reflect.New(t).Elem()
-	setStringField(item, "ID", opt.ID)
-	setStringField(item, "Type", opt.Type)
-	setStringField(item, "Label", opt.Label)
-	setStringField(item, "Description", opt.Description)
-	setStringField(item, "Default", opt.Default)
-	setFloatPtrField(item, "Min", opt.Min)
-	setFloatPtrField(item, "Max", opt.Max)
-	if ptr {
-		p := reflect.New(t)
-		p.Elem().Set(item)
-		return p, true
-	}
-	return item, true
-}
-
-func setStringField(item reflect.Value, name, value string) {
-	field := item.FieldByName(name)
-	if field.IsValid() && field.CanSet() && field.Kind() == reflect.String {
-		field.SetString(value)
-	}
-}
-
-func setFloatPtrField(item reflect.Value, name string, value *float64) {
-	field := item.FieldByName(name)
-	if value == nil || !field.IsValid() || !field.CanSet() || field.Kind() != reflect.Pointer || field.Type().Elem().Kind() != reflect.Float64 {
-		return
-	}
-	v := reflect.New(field.Type().Elem())
-	v.Elem().SetFloat(*value)
-	field.Set(v)
+	return false
 }

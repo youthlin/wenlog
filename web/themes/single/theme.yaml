@@ -13,6 +13,11 @@ widget_areas:
     name: "页脚"
     description: "页面底部区域"
 
+menu_locations:
+  primary:
+    name: "主导航"
+    description: "站点顶部导航菜单"
+
 options:
   - id: footer_text
     type: text

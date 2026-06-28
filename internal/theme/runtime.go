@@ -48,12 +48,25 @@ func (m *Manager) BindTemplateFunctions() {
 	})
 }
 
-// WidgetDecls 返回当前主题可用组件声明，并应用 widgets.available filter。
+// WidgetDecls 返回当前主题可用组件声明，并追加当前启用插件声明的小组件。
 func (m *Manager) WidgetDecls(ctx context.Context, t *Theme, area string) []WidgetDecl {
 	if m == nil {
 		return WidgetDeclsWithBuiltins(t)
 	}
-	return WidgetDeclsWithFilter(ctx, m.hookRegistry(), t, area)
+	return WidgetDeclsWithPlugins(t, m.pluginWidgetDecls(ctx))
+}
+
+func (m *Manager) pluginWidgetDecls(ctx context.Context) []plugin.WidgetDecl {
+	if m == nil {
+		return nil
+	}
+	m.runtimeMu.Lock()
+	provider := m.pluginWidgets
+	m.runtimeMu.Unlock()
+	if provider == nil {
+		return nil
+	}
+	return provider(ctx)
 }
 
 func (m *Manager) hookRegistry() *plugin.Registry {
@@ -147,12 +160,12 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	m.recoveryInfo = nil
 	m.mu.Unlock()
 
-	// 注册 themeInvoke 模板函数
+	// 注册 hookInvoke 模板函数
 	if m.renderer != nil {
 		if script != nil {
-			m.renderer.SetThemeInvokeProvider(themeInvokeFunc(script, api))
+			m.renderer.SetHookInvokeProvider(hookInvokeFunc(script, api))
 		} else {
-			m.renderer.SetThemeInvokeProvider(nil)
+			m.renderer.SetHookInvokeProvider(nil)
 		}
 	}
 
@@ -185,7 +198,7 @@ func (m *Manager) fallbackToDefault(ctx context.Context, failedName string, err 
 	m.mu.Unlock()
 
 	if m.renderer != nil {
-		m.renderer.SetThemeInvokeProvider(nil)
+		m.renderer.SetHookInvokeProvider(nil)
 	}
 
 	if m.renderer != nil {

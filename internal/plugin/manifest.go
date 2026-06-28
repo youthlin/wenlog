@@ -9,6 +9,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/blog/internal/script"
 	"gopkg.in/yaml.v3"
 )
 
@@ -180,13 +181,7 @@ func (p *Plugin) FunctionsPath() string {
 	if p == nil {
 		return ""
 	}
-	for _, name := range []string{"functions.go", "functions.goyaegi"} {
-		path := filepath.Join(p.Dir, name)
-		if _, err := os.Stat(path); err == nil {
-			return path
-		}
-	}
-	return ""
+	return script.FindFunctionsPath(p.Dir)
 }
 
 // TemplatesDir 返回插件模板目录路径。

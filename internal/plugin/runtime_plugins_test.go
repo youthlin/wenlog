@@ -5,7 +5,14 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	root "github.com/youthlin/blog/hook"
 )
+
+type testSettingStore struct{}
+
+func (testSettingStore) GetSetting(context.Context, string) (string, error) { return "", nil }
+func (testSettingStore) SetSetting(context.Context, string, string) error   { return nil }
 
 func TestBundledPluginFunctionsCompile(t *testing.T) {
 	for _, id := range []string{"saying", "comment-smilies"} {
@@ -24,32 +31,23 @@ func TestBundledPluginFunctionsCompile(t *testing.T) {
 }
 
 func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
-	p, err := LoadPlugin(filepath.Join("..", "..", "plugins", "saying"))
+	m, err := NewManager(filepath.Join("..", "..", "plugins"), testSettingStore{})
 	if err != nil {
 		t.Fatal(err)
 	}
+	p := m.Get("saying")
+	if p == nil {
+		t.Fatal("saying plugin not loaded")
+	}
 	if len(p.Hooks.Filters) != 0 {
-		t.Fatalf("plugin manifest should not need to declare widgets.available filter, got %v", p.Hooks.Filters)
+		t.Fatalf("plugin manifest should not need to declare widget filter, got %v", p.Hooks.Filters)
 	}
 
-	hooks := NewRegistry()
-	registerPluginWidgets(hooks, p)
-
-	type widgetDecl struct {
-		ID       string
-		Label    string
-		Source   string
-		PluginID string
-	}
-	filtered := hooks.ApplyFilters(context.Background(), "widgets.available", []widgetDecl{})
-	widgets, ok := filtered.([]widgetDecl)
-	if !ok {
-		t.Fatalf("filtered widgets type = %T", filtered)
-	}
+	widgets := m.EnabledWidgetDecls(context.Background())
 	if len(widgets) != 1 {
 		t.Fatalf("widgets count = %d, want 1", len(widgets))
 	}
-	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin:saying" || got.PluginID != "saying" {
+	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin:saying" {
 		t.Fatalf("registered widget = %+v", got)
 	}
 }
@@ -65,12 +63,12 @@ func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	}
 
 	var panel strings.Builder
-	hooks.DoAction(context.Background(), "comment_form.after_textarea", &panel, nil)
+	hooks.DoAction(context.Background(), root.HookCommentFormAfterTextarea, &panel, nil)
 	if got := panel.String(); !strings.Contains(got, `class="comment-smilies"`) || !strings.Contains(got, `data-smiley-code="[/微笑]"`) {
 		t.Fatalf("smiley panel not rendered: %s", got)
 	}
 
-	filtered := hooks.ApplyFilters(context.Background(), "comment.render_html", "hello [/微笑]", nil)
+	filtered := hooks.ApplyFilters(context.Background(), root.HookCommentContentHTML, "hello [/微笑]", nil)
 	got, ok := filtered.(string)
 	if !ok {
 		t.Fatalf("filtered content type = %T", filtered)

@@ -86,6 +86,10 @@
               <a class="admin-nav-link{{if eq .CurrentAdminNav "widgets"}} is-active{{end}}" href="/admin/widgets">
                 <span>{{.t.T "组件"}}</span></a>
               {{end}}
+              {{if .AdminThemeSupportsMenus}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "menus"}} is-active{{end}}" href="/admin/menus">
+                <span>{{.t.T "菜单"}}</span></a>
+              {{end}}
               {{if .AdminThemeSupportsOptions}}
               <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-options"}} is-active{{end}}" href="/admin/theme-options">
                 <span>{{.t.T "选项"}}</span></a>

@@ -1,14 +1,14 @@
 package plugin
 
 import (
+	"context"
 	"log/slog"
 	"os"
-	"reflect"
 
 	"github.com/cockroachdb/errors"
 	"github.com/traefik/yaegi/interp"
-	"github.com/traefik/yaegi/stdlib"
-	root "github.com/youthlin/blog/pluginapi"
+	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/internal/script"
 )
 
 // FunctionsScript 表示一个已编译的插件 functions 脚本。
@@ -17,6 +17,7 @@ type FunctionsScript struct {
 	sourcePath string
 	source     string
 	api        *root.API
+	interp     *interp.Interpreter
 }
 
 // CompileFunctions 编译插件目录下的 functions.go 或 functions.goyaegi 文件。
@@ -43,57 +44,30 @@ func CompileFunctions(p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsS
 }
 
 func compileFunctionsSource(pluginID, path, source string, api *root.API, log *slog.Logger) (*FunctionsScript, error) {
-	i := interp.New(interp.Options{
-		GoPath: os.Getenv("GOPATH"),
-		Env:    os.Environ(),
-		Stdout: nil,
-		Stderr: nil,
+	i, err := script.CompileAndRegister(source, script.CompileOptions{
+		Subject:      "插件",
+		PackageName:  "plugin",
+		Exports:      script.HookAPIExports(),
+		RegisterArgs: []any{api},
 	})
-	if err := i.Use(stdlib.Symbols); err != nil {
-		return nil, errors.Wrap(err, "准备插件运行环境失败")
-	}
-	if err := injectPluginAPI(i, api); err != nil {
-		return nil, errors.Wrap(err, "注入插件API失败")
-	}
-	if _, err := i.Eval(source); err != nil {
-		return nil, errors.Wrap(err, "执行插件函数失败")
-	}
-	registerFn, err := i.Eval("plugin.Register")
 	if err != nil {
-		return nil, errors.Wrap(err, "执行插件函数[plugin.Register]失败")
+		return nil, err
 	}
-	if registerFn.Kind() != reflect.Func {
-		return nil, errors.New("插件函数中Register必须是函数类型")
-	}
-	if registerFn.Type().NumIn() != 0 {
-		return nil, errors.New("插件函数中Register应当是无参函数")
-	}
-	registerFn.Call(nil)
 	if log != nil {
 		log.Info("插件函数functions.goyaegi编译执行成功",
 			"plugin", pluginID,
 			"path", path,
 		)
 	}
-	return &FunctionsScript{PluginID: pluginID, sourcePath: path, source: source, api: api}, nil
+	return &FunctionsScript{PluginID: pluginID, sourcePath: path, source: source, api: api, interp: i}, nil
 }
 
-func injectPluginAPI(i *interp.Interpreter, api *root.API) error {
-	root.Api = api
-	return i.Use(interp.Exports{
-		"pluginapi/pluginapi": {
-			"API":                 reflect.ValueOf((*root.API)(nil)),
-			"ActionFunc":          reflect.ValueOf((*root.ActionFunc)(nil)),
-			"FilterFunc":          reflect.ValueOf((*root.FilterFunc)(nil)),
-			"Func":                reflect.ValueOf((*root.Func)(nil)),
-			"PostView":            reflect.ValueOf((*root.PostView)(nil)),
-			"CommentView":         reflect.ValueOf((*root.CommentView)(nil)),
-			"UserView":            reflect.ValueOf((*root.UserView)(nil)),
-			"WidgetRenderContext": reflect.ValueOf((*root.WidgetRenderContext)(nil)),
-			"Api":                 reflect.ValueOf(root.Api),
-			"PriorityEarly":       reflect.ValueOf(root.PriorityEarly),
-			"PriorityDefault":     reflect.ValueOf(root.PriorityDefault),
-			"PriorityLate":        reflect.ValueOf(root.PriorityLate),
-		},
-	})
+// CallLifecycle 调用插件 functions 中可选的生命周期函数。
+// 支持 Activate/Deactivate/Uninstall 这类签名：func(api *hook.API) error。
+func (s *FunctionsScript) CallLifecycle(ctx context.Context, name string) error {
+	if s == nil || s.interp == nil || s.api == nil || name == "" {
+		return nil
+	}
+	_, err := script.CallOptionalFunc(s.interp, "plugin", name, "插件", []any{s.api.WithContext(ctx)})
+	return err
 }

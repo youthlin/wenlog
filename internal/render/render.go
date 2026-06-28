@@ -25,6 +25,7 @@ var _ ginrender.Render = (*widgetHTMLRender)(nil)
 type RequestContext struct {
 	Context       context.Context
 	Template      *template.Template
+	Data          any
 	ThemeLoader   any
 	Theme         any
 	WidgetOptions map[string]string
@@ -45,6 +46,7 @@ const (
 func (w *widgetHTMLRender) Render(wr http.ResponseWriter) error {
 	ctx := &RequestContext{
 		Context:     dataContext(w.data),
+		Data:        w.data,
 		ThemeLoader: dataValue(w.data, ThemeLoaderDataKey),
 		Theme:       dataValue(w.data, ThemeDataKey),
 	}
@@ -94,13 +96,21 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		return nil, err
 	}
 	cloned.Funcs(template.FuncMap{
-		"themeInvoke":   func(name string, args ...any) any { return themeInvoke(runtime, ctx, name, args...) },
-		"themeOption":   func(optionID string) string { return themeOption(runtime, ctx, optionID) },
-		"themeWidgets":  func(area string) any { return themeWidgets(runtime, ctx, area) },
-		"renderWidgets": func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
-		"widgetOption":  func(key string) string { return widgetOption(ctx, key) },
-		"pluginSlot":    func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
-		"postContent":   func(post any) template.HTML { return postContent(runtime, ctx, post) },
+		"hookInvoke":     func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
+		"themeOption":    func(optionID string) string { return themeOption(runtime, ctx, optionID) },
+		"themeWidgets":   func(area string) any { return themeWidgets(runtime, ctx, area) },
+		"renderWidgets":  func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
+		"renderMenu":     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
+		"widgetOption":   func(key string) string { return widgetOption(ctx, key) },
+		"pluginSlot":     func(name string, data any) template.HTML { return pluginSlot(runtime, ctx, name, data) },
+		"postTitle":      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
+		"postExcerpt":    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
+		"postContent":    func(post any) template.HTML { return postContent(runtime, ctx, post) },
+		"postTags":       func(post any) template.HTML { return postTags(post) },
+		"postNavigation": func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
+		"bodyClass":      func(data any) string { return bodyClass(data) },
+		"postClass":      func(post any, extra ...string) string { return postClass(post, extra...) },
+		"commentClass":   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
 		"commentContent": func(comment any) template.HTML {
 			return commentContent(runtime, ctx, comment)
 		},

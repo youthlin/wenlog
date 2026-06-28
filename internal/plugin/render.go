@@ -12,7 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	root "github.com/youthlin/blog/pluginapi"
+	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/internal/script"
 	gettext "github.com/youthlin/t"
 )
 
@@ -41,7 +42,7 @@ func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx root.Widge
 		return "", false
 	}
 	var out strings.Builder
-	hooks.DoAction(ctx, "widget.render", &out, renderCtx)
+	hooks.DoAction(ctx, root.HookWidgetRender, &out, renderCtx)
 	if out.Len() == 0 {
 		return "", false
 	}
@@ -98,11 +99,11 @@ func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *root.API {
 func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *root.API) template.FuncMap {
 	return template.FuncMap{
 		"pluginOption": func(key string) string { return options[key] },
-		"pluginInvoke": func(name string, args ...any) any {
+		"hookInvoke": func(name string, args ...any) any {
 			if api == nil {
 				return nil
 			}
-			return api.InvokeFunc(ctx, name, parseKVArgs(args))
+			return api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
 		},
 		"safeHTML":   func(s string) template.HTML { return template.HTML(s) },
 		"escapeHTML": html.EscapeString,
@@ -118,18 +119,6 @@ func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *ro
 			return val
 		},
 	}
-}
-
-func parseKVArgs(args []any) map[string]any {
-	result := make(map[string]any, len(args)/2)
-	for i := 0; i+1 < len(args); i += 2 {
-		key, ok := args[i].(string)
-		if !ok {
-			continue
-		}
-		result[key] = args[i+1]
-	}
-	return result
 }
 
 // WidgetsDir 返回插件组件模板目录路径。

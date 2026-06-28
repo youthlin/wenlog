@@ -393,6 +393,16 @@ func (s *Store) MenuPages(ctx context.Context) ([]model.Post, error) {
 	return pages, nil
 }
 
+func (s *Store) PublishedPages(ctx context.Context) ([]model.Post, error) {
+	var pages []model.Post
+	err := s.DB(ctx).Where("post_type = ? AND status = ?", model.PostTypePage, model.StatusPublished).
+		Order("menu_order ASC, title ASC").Find(&pages).Error
+	if err != nil {
+		return nil, errors.Wrap(err, "published pages")
+	}
+	return pages, nil
+}
+
 func (s *Store) PostMeta(ctx context.Context, id uint) (*model.Post, error) {
 	var p model.Post
 	err := s.DB(ctx).

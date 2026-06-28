@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"pluginapi"
+	"hook"
 )
 
 var smileyNames = []string{
@@ -33,19 +33,19 @@ var smileyNames = []string{
 }
 
 // Register 注册评论表情插件的 hook。
-func Register() {
-	pluginapi.Api.AddAction("head.end", func(ctx context.Context, args ...any) {
-		renderAssets(pluginapi.Api.WithContext(ctx), args...)
+func Register(api *hook.API) {
+	api.AddAction(hook.HookHeadEnd, func(ctx context.Context, args ...any) {
+		renderAssets(api.WithContext(ctx), args...)
 	})
-	pluginapi.Api.AddAction("comment_form.after_textarea", func(ctx context.Context, args ...any) {
-		renderSmileyPanel(pluginapi.Api.WithContext(ctx), args...)
+	api.AddAction(hook.HookCommentFormAfterTextarea, func(ctx context.Context, args ...any) {
+		renderSmileyPanel(api.WithContext(ctx), args...)
 	})
-	pluginapi.Api.AddFilter("comment.render_html", func(ctx context.Context, value any, args ...any) any {
-		return renderCommentSmilies(pluginapi.Api.WithContext(ctx), value, args...)
+	api.AddFilter(hook.HookCommentContentHTML, func(ctx context.Context, value any, args ...any) any {
+		return renderCommentSmilies(api.WithContext(ctx), value, args...)
 	})
 }
 
-func renderAssets(api *pluginapi.API, args ...any) {
+func renderAssets(api *hook.API, args ...any) {
 	out := writerArg(args)
 	if out == nil {
 		return
@@ -56,7 +56,7 @@ func renderAssets(api *pluginapi.API, args ...any) {
 	api.WriteString(out, `<link rel="stylesheet" href="/plugin-assets/comment-smilies/comment-smilies.css">`)
 }
 
-func renderSmileyPanel(api *pluginapi.API, args ...any) {
+func renderSmileyPanel(api *hook.API, args ...any) {
 	out := writerArg(args)
 	if out == nil {
 		return
@@ -78,7 +78,7 @@ func renderSmileyPanel(api *pluginapi.API, args ...any) {
 	api.WriteString(out, `</div></div>`)
 }
 
-func renderCommentSmilies(api *pluginapi.API, value any, args ...any) any {
+func renderCommentSmilies(api *hook.API, value any, args ...any) any {
 	content, ok := value.(string)
 	if !ok || content == "" {
 		return value
@@ -94,7 +94,7 @@ func renderCommentSmilies(api *pluginapi.API, value any, args ...any) any {
 	return content
 }
 
-func enabled(api *pluginapi.API) bool {
+func enabled(api *hook.API) bool {
 	return api.PluginOption("enabled", "true") != "false"
 }
 

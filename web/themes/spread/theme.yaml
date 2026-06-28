@@ -13,6 +13,11 @@ widget_areas:
     name: "页脚组件区"
     description: "显示在页脚的内置小组件区域"
 
+menu_locations:
+  primary:
+    name: "主导航"
+    description: "站点顶部导航菜单"
+
 options:
   - id: custom_css
     type: css

@@ -129,7 +129,7 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 
 func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	dir := t.TempDir()
-	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{themeInvoke "loader"}}/{{themeInvoke "theme"}}|{{renderWidgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{hookInvoke "loader"}}/{{hookInvoke "theme"}}|{{renderWidgets "sidebar" .}}{{end}}`)
 	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}{{widgetOption "name"}}{{end}}`)
 	r, err := NewHot(dir)
 	if err != nil {
@@ -140,7 +140,7 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 		TemplateName string
 		Options      map[string]string
 	}
-	r.SetThemeInvokeProvider(func(ctx *RequestContext, name string, args ...any) any {
+	r.SetHookInvokeProvider(func(ctx *RequestContext, name string, args ...any) any {
 		switch name {
 		case "loader":
 			return ctx.ThemeLoader
@@ -156,7 +156,7 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 		return []widgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
 	})
 	t.Cleanup(func() {
-		r.SetThemeInvokeProvider(nil)
+		r.SetHookInvokeProvider(nil)
 		r.SetThemeWidgetsProvider(nil)
 	})
 
@@ -198,6 +198,85 @@ func TestBuiltinWidgetFilesDoNotShadowPageTemplates(t *testing.T) {
 	}
 	if !r.HasTemplate("widget_search") {
 		t.Fatal("builtin search widget should still be available")
+	}
+}
+
+func TestResolveTemplateUsesSpecificFallbacks(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "index.gohtml", `index`)
+	writeTemplateFile(t, dir, "page.gohtml", `page`)
+	writeTemplateFile(t, dir, "page-about.gohtml", `about`)
+	writeTemplateFile(t, dir, "post-123.gohtml", `post123`)
+	writeTemplateFile(t, dir, "category-go.gohtml", `catgo`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+
+	pageData := map[string]any{"Post": struct {
+		ID   uint
+		Slug string
+	}{ID: 7, Slug: "about"}}
+	if got := r.ResolveTemplateWithPreviewData("page", "", pageData); got != "page-about.gohtml" {
+		t.Fatalf("ResolveTemplateWithPreviewData(page)=%q, want page-about.gohtml", got)
+	}
+	postData := map[string]any{"Post": struct {
+		ID   uint
+		Slug string
+	}{ID: 123}}
+	if got := r.ResolveTemplateWithPreviewData("post", "", postData); got != "post-123.gohtml" {
+		t.Fatalf("ResolveTemplateWithPreviewData(post)=%q, want post-123.gohtml", got)
+	}
+	catData := map[string]any{"CategorySlug": "go"}
+	if got := r.ResolveTemplateWithPreviewData("category", "", catData); got != "category-go.gohtml" {
+		t.Fatalf("ResolveTemplateWithPreviewData(category)=%q, want category-go.gohtml", got)
+	}
+}
+
+func TestRenderMenuRendersPrimaryLocation(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}{{renderMenu "primary" .}}{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+	data := map[string]any{"Menus": map[string][]struct {
+		ID       uint
+		Title    string
+		Slug     string
+		PostType string
+	}{"primary": {{ID: 1, Title: "About", Slug: "about", PostType: "page"}}}}
+	rr := httptest.NewRecorder()
+	if err := r.Instance("index", data).Render(rr); err != nil {
+		t.Fatalf("render menu: %v", err)
+	}
+	got := rr.Body.String()
+	if !strings.Contains(got, `class="menu menu-primary"`) || !strings.Contains(got, `href="/about"`) || !strings.Contains(got, `About`) {
+		t.Fatalf("rendered menu missing expected output: %s", got)
+	}
+}
+
+func TestRenderMenuRendersChildrenAndCustomURL(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}{{renderMenu "primary" .}}{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+	type item struct {
+		Title    string
+		URL      string
+		Target   string
+		Children []item
+	}
+	data := map[string]any{"Menus": map[string][]item{"primary": {{Title: "Docs", URL: "/docs", Children: []item{{Title: "GitHub", URL: "https://github.com", Target: "_blank"}}}}}}
+	rr := httptest.NewRecorder()
+	if err := r.Instance("index", data).Render(rr); err != nil {
+		t.Fatalf("render menu: %v", err)
+	}
+	got := rr.Body.String()
+	if !strings.Contains(got, `class="sub-menu"`) || !strings.Contains(got, `href="https://github.com" target="_blank"`) {
+		t.Fatalf("rendered submenu missing expected output: %s", got)
 	}
 }
 

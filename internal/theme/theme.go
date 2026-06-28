@@ -34,6 +34,8 @@ type Theme struct {
 	Dir string `yaml:"-" json:"-"`
 	// WidgetAreas 是主题声明的组件区域。
 	WidgetAreas map[string]WidgetArea `yaml:"widget_areas" json:"widget_areas"`
+	// MenuLocations 是主题声明的菜单位置，如 primary/footer。
+	MenuLocations map[string]MenuLocation `yaml:"menu_locations" json:"menu_locations"`
 	// Widgets 是主题声明的可用组件列表。
 	Widgets []WidgetDecl `yaml:"widgets" json:"widgets"`
 	// Options 是主题声明的全局可配置选项。
@@ -44,6 +46,12 @@ type Theme struct {
 
 // WidgetArea 描述一个可配置的组件区域。
 type WidgetArea struct {
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description" json:"description"`
+}
+
+// MenuLocation 描述一个主题菜单位置。
+type MenuLocation struct {
 	Name        string `yaml:"name" json:"name"`
 	Description string `yaml:"description" json:"description"`
 }

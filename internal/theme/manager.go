@@ -41,6 +41,7 @@ type Manager struct {
 	currentScript *FunctionsScript
 	currentAPI    *API
 	recoveryInfo  *RecoveryInfo
+	pluginWidgets func(ctx context.Context) []plugin.WidgetDecl
 }
 
 // SetHookRegistry 设置当前主题 functions.goyaegi 注册 AddAction/AddFilter 使用的 registry。
@@ -51,6 +52,16 @@ func (m *Manager) SetHookRegistry(hooks *plugin.Registry) {
 	m.runtimeMu.Lock()
 	defer m.runtimeMu.Unlock()
 	m.hooks = hooks
+}
+
+// SetPluginWidgetsProvider 设置插件小组件声明提供者。
+func (m *Manager) SetPluginWidgetsProvider(fn func(ctx context.Context) []plugin.WidgetDecl) {
+	if m == nil {
+		return
+	}
+	m.runtimeMu.Lock()
+	defer m.runtimeMu.Unlock()
+	m.pluginWidgets = fn
 }
 
 // NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。

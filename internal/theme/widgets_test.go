@@ -1,7 +1,6 @@
 package theme
 
 import (
-	"context"
 	"testing"
 
 	"github.com/youthlin/blog/internal/plugin"
@@ -57,15 +56,10 @@ func TestResolveWidgetsDefaultUsesDeclaredAreaOnly(t *testing.T) {
 	}
 }
 
-func TestWidgetDeclsWithFilterAllowsPluginWidget(t *testing.T) {
+func TestWidgetDeclsWithPluginsAllowsPluginWidget(t *testing.T) {
 	theme := &Theme{WidgetAreas: map[string]WidgetArea{"sidebar": {Name: "侧栏"}}}
-	hooks := plugin.NewRegistry()
-	hooks.AddFilter("widgets.available", func(ctx context.Context, value any, args ...any) any {
-		decls := value.([]WidgetDecl)
-		return append(decls, WidgetDecl{ID: "saying", Label: "博主动态", Source: "plugin:saying"})
-	}, plugin.Source{Type: plugin.SourcePlugin, ID: "saying"})
 
-	decls := WidgetDeclsWithFilter(context.Background(), hooks, theme, "sidebar")
+	decls := WidgetDeclsWithPlugins(theme, []plugin.WidgetDecl{{ID: "saying", Label: "博主动态", Source: "plugin:saying"}})
 	widgets := ResolveWidgetsWithDecls(`[{
   "id": "saying",
   "source": "plugin:saying",

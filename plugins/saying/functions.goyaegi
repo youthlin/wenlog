@@ -1,6 +1,6 @@
 package plugin
 
-import "pluginapi/pluginapi"
+import "hook"
 
 type SayingItem struct {
 	CommentURL  string
@@ -12,11 +12,11 @@ type SayingItem struct {
 
 // Register 保留插件运行时入口。
 // saying 组件由 plugin.yaml 声明，宿主会把启用插件的组件声明加入 widgets.available。
-func Register() {
-	pluginapi.Api.RegisterFunc("sayingItems", sayingItems)
+func Register(api *hook.API) {
+	api.RegisterFunc("sayingItems", sayingItems)
 }
 
-func sayingItems(api *pluginapi.API, args map[string]any) any {
+func sayingItems(api *hook.API, args map[string]any) any {
 	postID := args["post_id"]
 	count := 5
 	if n, ok := args["count"].(int); ok && n > 0 {

@@ -72,13 +72,23 @@ func (h *Admin) PluginAction(c *gin.Context) {
 	switch action {
 	case "enable":
 		wasEnabled := h.enabledPluginSet(c)[id]
+		if !wasEnabled {
+			if err := h.pluginManager.CallLifecycle(c, id, plugin.LifecycleActivate); err != nil {
+				h.redirectPlugins(c, "", tr.T("启用插件失败: %s", err.Error()))
+				return
+			}
+		}
 		if err := h.pluginManager.Enable(c, id); err != nil {
+			if !wasEnabled {
+				_ = h.pluginManager.CallLifecycle(c, id, plugin.LifecycleDeactivate)
+			}
 			h.redirectPlugins(c, "", tr.T("启用插件失败: %s", err.Error()))
 			return
 		}
 		if err := h.reloadPluginRuntime(c); err != nil {
 			if !wasEnabled {
 				_ = h.pluginManager.Disable(c, id)
+				_ = h.pluginManager.CallLifecycle(c, id, plugin.LifecycleDeactivate)
 				_ = h.reloadPluginRuntime(c)
 			}
 			h.redirectPlugins(c, "", tr.T("启用插件失败，已回滚: %s", err.Error()))
@@ -87,6 +97,12 @@ func (h *Admin) PluginAction(c *gin.Context) {
 		h.redirectPlugins(c, tr.T("插件「%s」已启用", id), "")
 	case "disable":
 		wasEnabled := h.enabledPluginSet(c)[id]
+		if wasEnabled {
+			if err := h.pluginManager.CallLifecycle(c, id, plugin.LifecycleDeactivate); err != nil {
+				h.redirectPlugins(c, "", tr.T("停用插件失败: %s", err.Error()))
+				return
+			}
+		}
 		if err := h.pluginManager.Disable(c, id); err != nil {
 			h.redirectPlugins(c, "", tr.T("停用插件失败: %s", err.Error()))
 			return
@@ -94,6 +110,7 @@ func (h *Admin) PluginAction(c *gin.Context) {
 		if err := h.reloadPluginRuntime(c); err != nil {
 			if wasEnabled {
 				_ = h.pluginManager.Enable(c, id)
+				_ = h.pluginManager.CallLifecycle(c, id, plugin.LifecycleActivate)
 				_ = h.reloadPluginRuntime(c)
 			}
 			h.redirectPlugins(c, "", tr.T("停用插件失败，已回滚: %s", err.Error()))
@@ -106,6 +123,16 @@ func (h *Admin) PluginAction(c *gin.Context) {
 			return
 		}
 		h.redirectPlugins(c, tr.T("插件「%s」已重载", id), "")
+	case "uninstall":
+		if err := h.pluginManager.Uninstall(c, id); err != nil {
+			h.redirectPlugins(c, "", tr.T("卸载插件失败: %s", err.Error()))
+			return
+		}
+		if err := h.reloadPluginRuntime(c); err != nil {
+			h.redirectPlugins(c, "", tr.T("卸载插件后重载失败: %s", err.Error()))
+			return
+		}
+		h.redirectPlugins(c, tr.T("插件「%s」已卸载", id), "")
 	default:
 		h.redirectPlugins(c, "", tr.T("未知插件操作: %s", action))
 	}

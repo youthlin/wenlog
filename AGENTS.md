@@ -50,7 +50,7 @@
 - `internal/render.Renderer` 负责解析模板、模板函数、模板层级 fallback、预览模板缓存和组件渲染。页面类型到模板的 fallback 链在 `render.TemplateHierarchy` 中维护。
 - `theme.yaml` 当前不只是元数据，还声明 `widget_areas`、`widgets`、组件级 `options` 与主题全局 `options`。组件配置保存在 Setting 表的 `widget_<area>`，主题选项保存在 `option_<theme>_<option>`。
 - 前台请求通常先通过 `store.DataLoader` 全量预加载公开数据，再由 `Public.base()` 注入 `.RecentPosts`、`.Categories`、`.Tags`、`.ArchiveMonths`、`.RecentCommentItems`、`.Menu` 等通用模板数据。
-- 主题自定义逻辑通过 `functions.goyaegi` 使用 `themeapi.Api.RegisterFunc(...)` 注册主题函数；模板侧通过 `themeInvoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
+- 主题自定义逻辑通过 `functions.goyaegi` 的 `Register(api *themeapi.API)` 注册主题函数；模板侧通过 `themeInvoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
 - 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `renderWidgets "area" .` 渲染区域，用 `widgetOption "key"` 读取当前组件实例选项。
 - 主题静态资源通过 `/theme-assets/...` 引用，当前/预览主题会自动解析到对应 `assets/` 目录。不要在主题模板里硬编码 `/web/themes/...`。
 

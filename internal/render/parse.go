@@ -55,15 +55,25 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 			}
 			return val
 		},
-		// 主题函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
+		// 扩展函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
 		// 这里提供占位函数，仅用于模板解析阶段识别函数名。
-		"themeInvoke":   func(name string, args ...any) any { return nil },
+		"hookInvoke":    func(name string, args ...any) any { return nil },
 		"themeOption":   func(optionID string) string { return "" },
 		"themeWidgets":  func(area string) any { return nil },
 		"renderWidgets": func(area string, data any) template.HTML { return "" },
+		"renderMenu":    func(location string, data ...any) template.HTML { return "" },
 		"widgetOption":  func(key string) string { return "" },
 		"pluginSlot":    func(name string, data any) template.HTML { return "" },
+		"postTitle":     func(data any) template.HTML { return "" },
+		"postExcerpt":   func(post any) template.HTML { return "" },
 		"postContent":   func(post any) template.HTML { return "" },
+		"postTags":      func(post any) template.HTML { return "" },
+		"postNavigation": func(data any, classes ...string) template.HTML {
+			return ""
+		},
+		"bodyClass":    func(data any) string { return "" },
+		"postClass":    func(post any, extra ...string) string { return "" },
+		"commentClass": func(comment any, extra ...string) string { return "" },
 		"commentContent": func(comment any) template.HTML {
 			return ""
 		},

@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/yaml.v3"
 
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/config"
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/i18n"
@@ -27,7 +28,6 @@ import (
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/pluginapi"
 	"github.com/youthlin/blog/web"
 )
 
@@ -116,6 +116,7 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 		os.Exit(1)
 	}
 	tm.SetHookRegistry(pm.Hooks())
+	tm.SetPluginWidgetsProvider(pm.EnabledWidgetDecls)
 	if err := tm.LoadTheme(context.Background(), ""); err != nil {
 		slog.Error("加载主题 hook 失败", slog.Any("error", err))
 	}
@@ -204,7 +205,7 @@ func initPluginManager(st *store.Store, tplRenderer *render.Renderer) (*plugin.M
 			reqCtx := renderRequestContext(ctx)
 			if ctx != nil {
 				if loader, ok := ctx.ThemeLoader.(*store.DataLoader); ok {
-					reqCtx = pluginapi.WithDataLoader(reqCtx, loader)
+					reqCtx = hook.WithDataLoader(reqCtx, loader)
 				}
 			}
 			return pm.RenderWidget(reqCtx, pluginID, widgetID, options, data)

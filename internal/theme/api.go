@@ -1,9 +1,9 @@
 package theme
 
 import (
+	root "github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/plugin"
 	"github.com/youthlin/blog/internal/store"
-	root "github.com/youthlin/blog/themeapi"
 )
 
 type ThemeFunc = root.Func
@@ -15,15 +15,15 @@ type UserView = root.UserView
 type ArchiveMonthView = root.ArchiveMonthView
 type SayingItem = root.SayingItem
 
-// API 是 themeapi.API 在 internal/theme 中的包装，负责桥接内部主题声明类型。
+// API 是 hook.API 在 internal/theme 中的包装，负责桥接内部主题声明类型。
 type API struct {
 	*root.API
 	themeOptions []OptionDecl
 }
 
-// NewAPI 创建 ThemeAPI 实例。
+// NewAPI 创建主题 Hook API 实例。
 func NewAPI(loader *store.DataLoader) *API {
-	return &API{API: root.New(loader)}
+	return &API{API: root.NewWithLoader(loader, "theme")}
 }
 
 // SetHookRegistry 设置当前主题注册 action/filter 使用的 Hook Registry。
