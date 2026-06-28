@@ -564,7 +564,7 @@ func postNavigation(ctx *RequestContext, data any, classes ...string) template.H
 	}
 	prev := dataValue(data, "PrevPost")
 	next := dataValue(data, "NextPost")
-	if prev == nil && next == nil {
+	if isNilAny(prev) && isNilAny(next) {
 		return ""
 	}
 	class := "post-nav"
@@ -574,15 +574,28 @@ func postNavigation(ctx *RequestContext, data any, classes ...string) template.H
 	var out strings.Builder
 	out.WriteString(`<nav class="` + html.EscapeString(class) + `">`)
 	out.WriteString(`<span class="prev">`)
-	if prev != nil {
+	if !isNilAny(prev) {
 		out.WriteString(`<a href="` + html.EscapeString(postURL(prev)) + `">← ` + html.EscapeString(reflectStringField(prev, "Title")) + `</a>`)
 	}
 	out.WriteString(`</span><span class="next">`)
-	if next != nil {
+	if !isNilAny(next) {
 		out.WriteString(`<a href="` + html.EscapeString(postURL(next)) + `">` + html.EscapeString(reflectStringField(next, "Title")) + ` →</a>`)
 	}
 	out.WriteString(`</span></nav>`)
 	return template.HTML(out.String())
+}
+
+func isNilAny(v any) bool {
+	if v == nil {
+		return true
+	}
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return rv.IsNil()
+	default:
+		return false
+	}
 }
 
 func renderMenu(ctx *RequestContext, location string, data ...any) template.HTML {

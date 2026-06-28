@@ -45,14 +45,14 @@ func TestResolveWidgetsAllowsBuiltinsInDeclaredArea(t *testing.T) {
 	}
 }
 
-func TestResolveWidgetsDefaultUsesDeclaredAreaOnly(t *testing.T) {
+func TestResolveWidgetsEmptyConfigRendersNoWidgets(t *testing.T) {
 	theme := &Theme{Widgets: []WidgetDecl{
 		{ID: "search", Area: "sidebar"},
 		{ID: "recent_posts", Area: "footer"},
 	}}
 	got := ResolveWidgets("", theme, "sidebar")
-	if len(got) != 1 || got[0].ID != "search" {
-		t.Fatalf("ResolveWidgets(default)=%+v, want only sidebar widget", got)
+	if len(got) != 0 {
+		t.Fatalf("ResolveWidgets(empty config)=%+v, want no widgets", got)
 	}
 }
 

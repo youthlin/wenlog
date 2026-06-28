@@ -165,11 +165,7 @@ func ResolveWidgetsWithDecls(userConfigJSON string, t *Theme, area string, decls
 	}
 	items := ParseWidgetConfig(userConfigJSON)
 	if len(items) == 0 {
-		for _, w := range decls {
-			if w.Source == WidgetSourceTheme && w.Area == area {
-				items = append(items, WidgetConfigItem{ID: w.ID, Source: widgetConfigSource(w)})
-			}
-		}
+		return nil
 	}
 
 	var result []WidgetInfo
@@ -204,7 +200,7 @@ func widgetInstanceID(item WidgetConfigItem, index int) string {
 // userConfigJSON 是 Setting 表中存储的 JSON, 格式:
 //   - 对象数组格式: `[{"id":"search"},{"id":"recent_posts","opts":{"count":"10"}}]`
 //
-// 为空则使用主题默认。
+// 为空表示用户尚未配置该区域，不渲染任何组件。
 func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
 	return ResolveWidgetsWithDecls(userConfigJSON, t, area, WidgetDeclsWithBuiltins(t))
 }
