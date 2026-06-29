@@ -357,10 +357,6 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 	return &themeHTMLRender{tmpl: mainTpl, name: name, data: data, runtime: &r.themeRuntime}
 }
 
-func pluginWidgetRenderer(runtime *TemplateRuntime) func(ctx *RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
-	return runtime.current().PluginWidget
-}
-
 func requestContext(ctx *RequestContext) context.Context {
 	var req context.Context
 	if ctx != nil && ctx.Context != nil {
@@ -489,12 +485,29 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 }
 
 func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
+	// 优先使用统一的 Widget 接口
+	if resolver := runtime.current().WidgetResolver; resolver != nil {
+		if w := resolver(item.Source, item.ID, item.PluginID); w != nil {
+			instance := hook.WidgetInstance{
+				InstanceID: item.InstanceID,
+				WidgetID:   item.ID,
+				Settings:   ctx.WidgetOptions,
+			}
+			html, err := w.Render(requestContext(ctx), ctx.Template, instance, data)
+			if err == nil && html != "" {
+				return html, true
+			}
+			return "", false
+		}
+	}
+	// 兼容旧路径：插件组件走 PluginWidgetRenderer
 	if item.Source == "plugin" {
-		if renderer := pluginWidgetRenderer(runtime); renderer != nil {
-			return renderer(ctx, item.PluginID, item.ID, ctx.WidgetOptions, data)
+		if renderer := runtime.current().PluginWidget; renderer != nil {
+			return renderer.RenderWidget(requestContext(ctx), item.PluginID, item.ID, ctx.WidgetOptions, data)
 		}
 		return "", false
 	}
+	// 兼容旧路径：内置/主题组件走模板渲染
 	if item.TemplateName == "" {
 		return "", false
 	}

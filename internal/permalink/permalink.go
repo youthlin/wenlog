@@ -411,10 +411,10 @@ func (cp *compiledPattern) render(p *model.Post) string {
 	var b strings.Builder
 	for _, part := range cp.parts {
 		if part.token == "" {
-			b.WriteString(part.literal)
+			_, _ = b.WriteString(part.literal)
 			continue
 		}
-		b.WriteString(tokenSpecs[part.token].render(p))
+		_, _ = b.WriteString(tokenSpecs[part.token].render(p))
 	}
 	return b.String()
 }

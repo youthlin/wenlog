@@ -3,15 +3,15 @@ package plugin
 import (
 	"bytes"
 	"context"
-	"html"
 	"html/template"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
-	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/script"
 	gettext "github.com/youthlin/t"
 )
@@ -28,27 +28,62 @@ func (m *Manager) RenderWidget(ctx context.Context, pluginID, widgetID string, o
 	if options == nil {
 		options = map[string]string{}
 	}
-	renderCtx := root.WidgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
+	renderCtx := hook.WidgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
 	if html, ok := m.renderWidgetByAction(ctx, renderCtx); ok {
 		return html, true
 	}
 	return m.renderWidgetByTemplate(ctx, p, renderCtx)
 }
 
-func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx root.WidgetRenderContext) (template.HTML, bool) {
+// pluginWidget 是插件组件的 Widget 接口实现，组合了 action 和 template 两种渲染模式。
+type pluginWidget struct {
+	m        *Manager
+	decl     hook.WidgetDecl
+	pluginID string
+}
+
+func (w *pluginWidget) Meta() hook.WidgetDecl { return w.decl }
+
+func (w *pluginWidget) Render(ctx context.Context, tpl *template.Template, instance hook.WidgetInstance, data any) (template.HTML, error) {
+	html, ok := w.m.RenderWidget(ctx, w.pluginID, w.decl.ID, instance.Settings, data)
+	if !ok {
+		return "", nil
+	}
+	return html, nil
+}
+
+// RegisterPluginWidgets 将已启用插件的组件注册到组件注册表。
+func (m *Manager) RegisterPluginWidgets(ctx context.Context, registry interface{ Register(hook.Widget) }) {
+	if m == nil || registry == nil {
+		return
+	}
+	for _, p := range m.Enabled(ctx) {
+		for _, decl := range p.Widgets {
+			if decl.ID == "" {
+				continue
+			}
+			d := decl
+			d.Source = "plugin"
+			d.PluginID = p.ID
+			registry.Register(&pluginWidget{m: m, decl: d, pluginID: p.ID})
+		}
+	}
+}
+
+func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
 	hooks := m.Hooks()
 	if hooks == nil {
 		return "", false
 	}
 	var out strings.Builder
-	hooks.DoAction(ctx, root.HookWidgetRender, &out, renderCtx)
+	hooks.DoAction(ctx, hook.HookWidgetRender, &out, renderCtx)
 	if out.Len() == 0 {
 		return "", false
 	}
 	return template.HTML(out.String()), true
 }
 
-func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderCtx root.WidgetRenderContext) (template.HTML, bool) {
+func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -57,7 +92,9 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 		return "", false
 	}
 	api := m.pluginAPI(ctx, p)
-	tpl, err := template.New(filepath.Base(path)).Funcs(pluginTemplateFuncs(ctx, renderCtx.Options, api)).ParseFiles(path)
+	tpl, err := template.New(filepath.Base(path)).
+		Funcs(pluginTemplateFuncs(ctx, renderCtx.Options, api)).
+		ParseFiles(path)
 	if err != nil {
 		if m.log != nil {
 			m.log.Warn("解析插件组件模板失败", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
@@ -82,9 +119,9 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 	return "", false
 }
 
-func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *root.API {
+func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *hook.API {
 	if p == nil {
-		return root.New(nil, nil, "").WithContext(ctx)
+		return hook.New(nil, nil, "").WithContext(ctx)
 	}
 	m.mu.RLock()
 	script := m.scripts[p.ID]
@@ -92,35 +129,21 @@ func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *root.API {
 	if script != nil && script.api != nil {
 		return script.api.WithContext(ctx)
 	}
-	return root.New(nil, nil, p.PluginDomain()).WithContext(ctx)
+	return hook.New(nil, nil, p.PluginDomain()).WithContext(ctx)
 }
 
-func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *root.API) template.FuncMap {
-	return template.FuncMap{
+func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *hook.API) template.FuncMap {
+	funcs := render.CommonFuncMap()
+	maps.Copy(funcs, template.FuncMap{
 		"pluginOption": func(key string) string { return options[key] },
-		"option":       func(key string) string { return options[key] },
 		"hookInvoke": func(name string, args ...any) any {
 			if api == nil {
 				return nil
 			}
 			return api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
 		},
-		"pluginData": func(name string, args ...any) any {
-			if api == nil {
-				return nil
-			}
-			return api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
-		},
-		"safeHTML":   func(s string) template.HTML { return template.HTML(s) },
-		"escapeHTML": html.EscapeString,
-		"toInt":      func(s string) int { n, _ := strconv.Atoi(s); return n },
-		"default": func(def, val any) any {
-			if ok, _ := template.IsTrue(val); !ok {
-				return def
-			}
-			return val
-		},
-	}
+	})
+	return funcs
 }
 
 // WidgetsDir 返回插件组件模板目录路径。

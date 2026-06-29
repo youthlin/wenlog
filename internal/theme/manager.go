@@ -9,16 +9,10 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/plugin"
 	"github.com/youthlin/blog/internal/render"
 )
-
-// settingStore 是 Manager 需要的设置存储接口。
-type settingStore interface {
-	GetSetting(ctx context.Context, key string) (string, error)
-	SetSetting(ctx context.Context, key, value string) error
-}
 
 const (
 	settingCurrentTheme = "current_theme"
@@ -28,7 +22,7 @@ const (
 // Manager 管理主题的安装、激活、删除。
 type Manager struct {
 	themesDir string
-	store     settingStore
+	store     hook.SettingStore
 	themes    map[string]*Theme // name → Theme
 
 	// 运行时状态：模板渲染器、functions 脚本、恢复信息。
@@ -36,16 +30,16 @@ type Manager struct {
 	themeOpMu     sync.Mutex
 	mu            sync.RWMutex
 	renderer      *render.Renderer
-	hooks         *plugin.Registry
+	hooks         HookRegistry
 	log           *slog.Logger
 	currentScript *FunctionsScript
 	currentAPI    *API
 	recoveryInfo  *RecoveryInfo
-	pluginWidgets func(ctx context.Context) []plugin.WidgetDecl
+	pluginWidgets func(ctx context.Context) []WidgetDecl
 }
 
 // NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。
-func NewManager(themesDir string, store settingStore, renderer *render.Renderer) (*Manager, error) {
+func NewManager(themesDir string, store hook.SettingStore, renderer *render.Renderer) (*Manager, error) {
 	m := &Manager{
 		themesDir: themesDir,
 		store:     store,
@@ -60,7 +54,7 @@ func NewManager(themesDir string, store settingStore, renderer *render.Renderer)
 }
 
 // SetHookRegistry 设置当前主题 functions.goyaegi 注册 AddAction/AddFilter 使用的 registry。
-func (m *Manager) SetHookRegistry(hooks *plugin.Registry) {
+func (m *Manager) SetHookRegistry(hooks HookRegistry) {
 	if m == nil {
 		return
 	}
@@ -70,7 +64,7 @@ func (m *Manager) SetHookRegistry(hooks *plugin.Registry) {
 }
 
 // SetPluginWidgetsProvider 设置插件小组件声明提供者。
-func (m *Manager) SetPluginWidgetsProvider(fn func(ctx context.Context) []plugin.WidgetDecl) {
+func (m *Manager) SetPluginWidgetsProvider(fn func(ctx context.Context) []WidgetDecl) {
 	if m == nil {
 		return
 	}
@@ -112,12 +106,7 @@ func (m *Manager) LoadTranslations() error {
 	if m == nil {
 		return nil
 	}
-	for _, t := range m.List() {
-		if err := t.LoadTranslations(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return hook.LoadTranslations(m.List())
 }
 
 // RebuildTranslations 重新构建应用域和所有主题域的翻译映射。

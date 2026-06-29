@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -117,12 +116,28 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 		slog.Error("初始化插件管理器失败", slog.Any("error", err))
 		os.Exit(1)
 	}
-	tm.SetHookRegistry(pm.Hooks())
+	hookAdapter := &hookRegistryAdapter{registry: pm.Hooks()}
+	tm.SetHookRegistry(hookAdapter)
+	tplRenderer.SetHookProvider(hookAdapter)
 	tm.SetPluginWidgetsProvider(pm.EnabledWidgetDecls)
+
+	// 创建统一的组件注册表，注册内置、主题和插件组件。
+	widgetRegistry := theme.NewWidgetRegistry()
+	widgetRegistry.RegisterBuiltins()
+
 	// 插件 Hook Registry 和组件声明提供者就绪后，再加载当前主题的 functions。
 	if err := tm.LoadTheme(context.Background(), ""); err != nil {
 		slog.Error("加载主题 hook 失败", slog.Any("error", err))
 	}
+
+	// 主题加载完成后注册主题组件。
+	if t := tm.Current(context.Background()); t != nil {
+		widgetRegistry.RegisterThemeWidgets(t)
+	}
+	// 注册插件组件。
+	pm.RegisterPluginWidgets(context.Background(), widgetRegistry)
+	// 设置统一的组件查找器。
+	tplRenderer.SetWidgetResolver(widgetRegistry.Get)
 
 	// 前台
 	pub := handler.NewPublic(st, cfg, tm, tplRenderer)
@@ -200,24 +215,8 @@ func initPluginManager(st *store.Store, tplRenderer *render.Renderer) (*plugin.M
 		return nil, err
 	}
 
-	tplRenderer.SetHookProvider(pm.Hooks())
-	tplRenderer.SetPluginWidgetProvider(func(ctx *render.RequestContext, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
-		reqCtx := renderRequestContext(ctx)
-		if ctx != nil {
-			if loader, ok := ctx.ThemeLoader.(*store.DataLoader); ok {
-				reqCtx = hook.WithDataLoader(reqCtx, loader)
-			}
-		}
-		return pm.RenderWidget(reqCtx, pluginID, widgetID, options, data)
-	})
+	tplRenderer.SetPluginWidgetProvider(pm)
 	return pm, nil
-}
-
-func renderRequestContext(ctx *render.RequestContext) context.Context {
-	if ctx != nil && ctx.Context != nil {
-		return ctx.Context
-	}
-	return context.Background()
 }
 
 // ensureThemesOnDisk 确保所有内嵌主题在磁盘上存在。
@@ -430,4 +429,41 @@ func pluginEnabled(ctx context.Context, pm *plugin.Manager, id string) bool {
 		}
 	}
 	return false
+}
+
+// hookRegistryAdapter 将 *plugin.Registry 适配为 theme.HookRegistry 接口。
+type hookRegistryAdapter struct {
+	registry *plugin.Registry
+}
+
+func (a *hookRegistryAdapter) AddAction(name string, fn any, source hook.Source, priority ...int) {
+	a.registry.AddAction(name, fn, source, priority...)
+}
+
+func (a *hookRegistryAdapter) AddFilter(name string, fn any, source hook.Source, priority ...int) {
+	a.registry.AddFilter(name, fn, source, priority...)
+}
+
+func (a *hookRegistryAdapter) RemoveAction(name string, source hook.Source) int {
+	return a.registry.RemoveAction(name, source)
+}
+
+func (a *hookRegistryAdapter) RemoveFilter(name string, source hook.Source) int {
+	return a.registry.RemoveFilter(name, source)
+}
+
+func (a *hookRegistryAdapter) DoAction(ctx context.Context, name string, args ...any) {
+	a.registry.DoAction(ctx, name, args...)
+}
+
+func (a *hookRegistryAdapter) ApplyFilters(ctx context.Context, name string, value any, args ...any) any {
+	return a.registry.ApplyFilters(ctx, name, value, args...)
+}
+
+func (a *hookRegistryAdapter) DidAction(name string) int {
+	return a.registry.DidAction(name)
+}
+
+func (a *hookRegistryAdapter) DoingAction(ctx context.Context, name string) bool {
+	return a.registry.DoingAction(ctx, name)
 }

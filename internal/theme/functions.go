@@ -3,12 +3,10 @@ package theme
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/cockroachdb/errors"
-	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/render"
 	internalscript "github.com/youthlin/blog/internal/script"
 	"github.com/youthlin/blog/internal/store"
@@ -16,7 +14,6 @@ import (
 
 // FunctionsScript 表示一个已编译的 functions.go 脚本。
 type FunctionsScript struct {
-	sourcePath string
 	source     string
 	sourceHash string // 文件内容的简单 hash，用于检测变更
 	api        *API
@@ -28,50 +25,38 @@ type FunctionsScript struct {
 // CompileFunctions 编译主题目录下的 functions.go 或 functions.goyaegi 文件。
 // 返回编译后的脚本实例；如果文件不存在则返回 nil, nil。
 func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsScript, error) {
-	// 查找 function.go[yaegi] 文件
-	path := internalscript.FindFunctionsPath(themeDir)
-	if path == "" {
-		return nil, nil
-	}
-	// 读取文件内容
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "读取主题函数文件失败: %s", path)
-	}
-	// 编译
-	return compileFunctionsSource(path, string(data), api, log)
-}
-
-func compileFunctionsSource(path, source string, api *API, log *slog.Logger) (*FunctionsScript, error) {
-	hash := hashString(source)
-	var rootAPI *root.API
+	var rootAPI *hook.API
 	if api != nil {
 		rootAPI = api.API
 	}
-
-	if _, err := internalscript.CompileAndRegister(source, internalscript.CompileOptions{
+	_, source, err := internalscript.CompileFromDir(themeDir, internalscript.CompileOptions{
 		Subject:      "主题",
 		PackageName:  "theme",
 		Exports:      internalscript.HookAPIExports(),
 		RegisterArgs: []any{rootAPI},
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
+	if source == "" {
+		return nil, nil
+	}
+	return newFunctionsScript(source, api, log), nil
+}
 
+func newFunctionsScript(source string, api *API, log *slog.Logger) *FunctionsScript {
+	hash := hashString(source)
 	if log != nil {
 		log.Info("主题函数functions.go编译执行成功",
-			"path", path,
 			"funcs", api.FuncNames(),
 		)
 	}
-
 	return &FunctionsScript{
-		sourcePath: path,
 		source:     source,
 		sourceHash: hash,
 		api:        api,
 		funcs:      snapshotFuncs(api),
-	}, nil
+	}
 }
 
 func snapshotFuncs(api *API) map[string]ThemeFunc {
@@ -133,7 +118,19 @@ func (script *FunctionsScript) acquireRunner(baseAPI *API, loader *store.DataLoa
 	}
 	requestAPI := NewAPI(loader)
 	requestAPI.SetThemeOptions(baseAPI.themeOptions)
-	return compileFunctionsSource(script.sourcePath, script.source, requestAPI, nil)
+	var rootAPI *hook.API
+	if requestAPI != nil {
+		rootAPI = requestAPI.API
+	}
+	if _, err := internalscript.CompileAndRegister(script.source, internalscript.CompileOptions{
+		Subject:      "主题",
+		PackageName:  "theme",
+		Exports:      internalscript.HookAPIExports(),
+		RegisterArgs: []any{rootAPI},
+	}); err != nil {
+		return nil, err
+	}
+	return newFunctionsScript(script.source, requestAPI, nil), nil
 }
 
 func (script *FunctionsScript) releaseRunner(runner *FunctionsScript) {
@@ -168,7 +165,7 @@ func callThemeFuncWithTimeout(script *FunctionsScript, baseAPI *API, loader *sto
 	}
 }
 
-func safeCallThemeFunc(themeFunc ThemeFunc, api *root.API, args map[string]any) (result any) {
+func safeCallThemeFunc(themeFunc ThemeFunc, api *hook.API, args map[string]any) (result any) {
 	defer func() {
 		if recover() != nil {
 			result = nil

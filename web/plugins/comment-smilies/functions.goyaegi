@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"context"
 	"net/url"
 	"strings"
 
@@ -34,48 +33,40 @@ var smileyNames = []string{
 
 // Register 注册评论表情插件的 hook。
 func Register(api *hook.API) {
-	api.AddAction(hook.HookHeadEnd, func(ctx context.Context, args ...any) {
-		renderAssets(api.WithContext(ctx), args...)
+	api.AddAction(hook.HookHeadEnd, func(api *hook.API, data hook.HeadEndData) {
+		renderAssets(api)
 	})
-	api.AddAction(hook.HookCommentFormAfterTextarea, func(ctx context.Context, args ...any) {
-		renderSmileyPanel(api.WithContext(ctx), args...)
+	api.AddAction(hook.HookCommentFormAfterTextarea, func(api *hook.API, data hook.CommentFormAfterTextareaData) {
+		renderSmileyPanel(api)
 	})
-	api.AddFilter(hook.HookCommentContentHTML, func(ctx context.Context, value any, args ...any) any {
-		return renderCommentSmilies(api.WithContext(ctx), value, args...)
+	api.AddFilter(hook.HookCommentContentHTML, func(api *hook.API, value any, args ...any) any {
+		return renderCommentSmilies(api, value, args...)
 	})
 }
 
-func renderAssets(api *hook.API, args ...any) {
-	out := writerArg(args)
-	if out == nil {
-		return
-	}
+func renderAssets(api *hook.API) {
 	if !enabled(api) {
 		return
 	}
-	api.WriteString(out, `<link rel="stylesheet" href="/plugin-assets/comment-smilies/comment-smilies.css">`)
+	api.Printf(`<link rel="stylesheet" href="/plugin-assets/comment-smilies/comment-smilies.css">`)
 }
 
-func renderSmileyPanel(api *hook.API, args ...any) {
-	out := writerArg(args)
-	if out == nil {
-		return
-	}
+func renderSmileyPanel(api *hook.API) {
 	if !enabled(api) {
 		return
 	}
-	api.WriteString(out, `<div class="comment-smilies" data-smilies>`)
-	api.WriteString(out, `<div class="comment-smilies-label sr-only">`+api.EscapeHTML(api.T("表情"))+`</div>`)
-	api.WriteString(out, `<div class="comment-smilies-list">`)
+	api.Printf(`<div class="comment-smilies" data-smilies>`)
+	api.Printf(`<div class="comment-smilies-label sr-only">%s</div>`, api.EscapeHTML(api.T("表情")))
+	api.Printf(`<div class="comment-smilies-list">`)
 	for _, name := range smileyNames {
 		code := "[/" + name + "]"
 		escapedName := api.EscapeHTML(name)
 		escapedCode := api.EscapeHTML(code)
-		api.WriteString(out, `<button type="button" class="comment-smiley-btn" data-smiley-code="`+escapedCode+`" title="`+escapedName+`" aria-label="`+escapedName+`">`)
-		api.WriteString(out, `<img src="`+smileySrc(name)+`" alt="`+escapedName+`" width="24" height="24">`)
-		api.WriteString(out, `</button>`)
+		api.Printf(`<button type="button" class="comment-smiley-btn" data-smiley-code="%s" title="%s" aria-label="%s">`, escapedCode, escapedName, escapedName)
+		api.Printf(`<img src="%s" alt="%s" width="24" height="24">`, smileySrc(name), escapedName)
+		api.Printf(`</button>`)
 	}
-	api.WriteString(out, `</div></div>`)
+	api.Printf(`</div></div>`)
 }
 
 func renderCommentSmilies(api *hook.API, value any, args ...any) any {
@@ -100,14 +91,4 @@ func enabled(api *hook.API) bool {
 
 func smileySrc(name string) string {
 	return "/plugin-assets/comment-smilies/smilies/" + url.PathEscape(name) + ".gif"
-}
-
-func writerArg(args []any) any {
-	if len(args) == 0 {
-		return nil
-	}
-	if nested, ok := args[0].([]any); ok {
-		return writerArg(nested)
-	}
-	return args[0]
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/script"
 	"gopkg.in/yaml.v3"
@@ -27,7 +28,7 @@ type Plugin struct {
 	Dir            string       `yaml:"-" json:"-"`
 	Hooks          HookDecl     `yaml:"hooks" json:"hooks"`
 	Widgets        []WidgetDecl `yaml:"widgets" json:"widgets"`
-	Settings       []OptionDecl `yaml:"settings" json:"settings"`
+	Options []hook.OptionDecl `yaml:"options" json:"options"`
 	Assets         AssetDecl    `yaml:"assets" json:"assets"`
 }
 
@@ -39,31 +40,12 @@ type HookDecl struct {
 	Slots   []string `yaml:"slots" json:"slots"`
 }
 
-// WidgetDecl 描述插件提供的一类组件。
-type WidgetDecl struct {
-	ID      string       `yaml:"id" json:"id"`
-	Label   string       `yaml:"label" json:"label"`
-	Options []OptionDecl `yaml:"options" json:"options"`
-	Source  string       `yaml:"-" json:"source"`
-}
+// WidgetDecl 是 hook.WidgetDecl 的别名，描述插件提供的一类组件。
+type WidgetDecl = hook.WidgetDecl
 
-// OptionDecl 描述插件全局选项或组件实例选项。
-type OptionDecl struct {
-	ID          string      `yaml:"id" json:"id"`
-	Type        string      `yaml:"type" json:"type"`
-	Label       string      `yaml:"label" json:"label"`
-	Description string      `yaml:"description" json:"description"`
-	Default     string      `yaml:"default" json:"default"`
-	Min         *float64    `yaml:"min" json:"min,omitempty"`
-	Max         *float64    `yaml:"max" json:"max,omitempty"`
-	Options     []SelectOpt `yaml:"options" json:"options,omitempty"`
-}
-
-// SelectOpt 是 select 类型选项的一个可选项。
-type SelectOpt struct {
-	Value string `yaml:"value" json:"value"`
-	Label string `yaml:"label" json:"label"`
-}
+// 以下类型别名指向 hook 包，避免各包重复定义。
+type OptionDecl = hook.OptionDecl
+type SelectOpt = hook.SelectOpt
 
 // AssetDecl 描述插件静态资源目录。
 type AssetDecl struct {
@@ -86,7 +68,8 @@ func LoadPlugin(dir string) (*Plugin, error) {
 	}
 	p.Dir = dir
 	for i := range p.Widgets {
-		p.Widgets[i].Source = "plugin:" + p.ID
+		p.Widgets[i].Source = "plugin"
+		p.Widgets[i].PluginID = p.ID
 	}
 	return &p, nil
 }
@@ -146,26 +129,6 @@ func (p *Plugin) PluginDomain() string {
 // OptionKey 返回插件全局 option 在 Setting 表中的 key。
 func OptionKey(pluginID, optionID string) string {
 	return fmt.Sprintf("plugin_%s_%s", pluginID, optionID)
-}
-
-// GetOption 从 Setting 表读取插件 option 值，未配置时返回 default 值。
-func GetOption(getSetting func(key string) (string, error), pluginID string, opt OptionDecl) string {
-	key := OptionKey(pluginID, opt.ID)
-	val, err := getSetting(key)
-	if err != nil || val == "" {
-		return opt.Default
-	}
-	return val
-}
-
-// GetOptionByID 从插件选项声明列表中查找指定 option 并读取其配置值。
-func GetOptionByID(getSetting func(key string) (string, error), pluginID string, options []OptionDecl, optionID string) string {
-	for _, opt := range options {
-		if opt.ID == optionID {
-			return GetOption(getSetting, pluginID, opt)
-		}
-	}
-	return ""
 }
 
 // LoadTranslations 把插件 i18n 目录绑定到插件 ID 对应的文本域。

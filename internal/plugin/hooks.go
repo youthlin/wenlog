@@ -3,10 +3,13 @@ package plugin
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"reflect"
 	"sort"
 	"sync"
+
+	"github.com/youthlin/blog/hook"
 )
 
 const (
@@ -25,11 +28,8 @@ const (
 	PriorityLate = 20
 )
 
-// Source 记录一个 hook 处理器来自核心、主题还是插件。
-type Source struct {
-	Type string // core / theme / plugin
-	ID   string // default / twentytwenty / saying
-}
+// Source 是 hook.Source 的别名，记录一个 hook 处理器来自核心、主题还是插件。
+type Source = hook.Source
 
 // Handler 是注册到某个 action/filter 上的处理器。
 type Handler struct {
@@ -51,19 +51,21 @@ type FilterFunc = func(ctx context.Context, value any, args ...any) any
 
 // Registry 保存所有 action/filter 处理器。
 type Registry struct {
-	mu      sync.RWMutex
-	actions map[string][]Handler
-	filters map[string][]Handler
-	next    int64
-	log     *slog.Logger
+	mu         sync.RWMutex
+	actions    map[string][]Handler
+	filters    map[string][]Handler
+	didActions map[string]int
+	next       int64
+	log        *slog.Logger
 }
 
 // NewRegistry 创建一个空 Hook Registry。
 func NewRegistry() *Registry {
 	return &Registry{
-		actions: make(map[string][]Handler),
-		filters: make(map[string][]Handler),
-		log:     slog.Default().With("component", "plugin-hooks"),
+		actions:    make(map[string][]Handler),
+		filters:    make(map[string][]Handler),
+		didActions: make(map[string]int),
+		log:        slog.Default().With("component", "plugin-hooks"),
 	}
 }
 
@@ -91,6 +93,51 @@ func (r *Registry) AddFilter(name string, fn any, source Source, priority ...int
 		return
 	}
 	r.add(&r.filters, name, fn, source, firstPriority(priority))
+}
+
+// RemoveAction 移除指定 source 注册的所有同名 action 处理器。
+// 返回实际移除的数量。
+func (r *Registry) RemoveAction(name string, source Source) int {
+	if r == nil || name == "" {
+		return 0
+	}
+	return r.remove(&r.actions, name, source)
+}
+
+// RemoveFilter 移除指定 source 注册的所有同名 filter 处理器。
+// 返回实际移除的数量。
+func (r *Registry) RemoveFilter(name string, source Source) int {
+	if r == nil || name == "" {
+		return 0
+	}
+	return r.remove(&r.filters, name, source)
+}
+
+func (r *Registry) remove(target *map[string][]Handler, name string, source Source) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	items := (*target)[name]
+	if len(items) == 0 {
+		return 0
+	}
+	kept := items[:0]
+	removed := 0
+	for _, h := range items {
+		if h.Source.Type == source.Type && h.Source.ID == source.ID {
+			removed++
+		} else {
+			kept = append(kept, h)
+		}
+	}
+	if removed == 0 {
+		return 0
+	}
+	if len(kept) == 0 {
+		delete(*target, name)
+	} else {
+		(*target)[name] = kept
+	}
+	return removed
 }
 
 func (r *Registry) add(target *map[string][]Handler, name string, fn any, source Source, priority int) {
@@ -145,7 +192,23 @@ func cloneHandlers(in []Handler) []Handler {
 }
 
 // DoAction 执行一个 action。单个处理器 panic 不会中断后续处理器。
+// 如果 args[0] 是 io.StringWriter，会自动注入 context 供 api.Printf 使用。
 func (r *Registry) DoAction(ctx context.Context, name string, args ...any) {
+	if r == nil {
+		return
+	}
+	// 注入 writer 到 context
+	if len(args) > 0 {
+		if w, ok := args[0].(io.StringWriter); ok {
+			ctx = hook.WithActionWriter(ctx, w)
+		}
+	}
+	// 注入当前 hook 名到 context
+	ctx = hook.WithCurrentHook(ctx, name)
+	// 递增 didAction 计数
+	r.mu.Lock()
+	r.didActions[name]++
+	r.mu.Unlock()
 	for _, h := range r.Actions(name) {
 		r.safeDoAction(ctx, h, args...)
 	}
@@ -175,6 +238,21 @@ func (r *Registry) ApplyFilters(ctx context.Context, name string, value any, arg
 		current = r.safeApplyFilter(ctx, h, current, args...)
 	}
 	return current
+}
+
+// DidAction 返回指定 action 已被触发的次数。
+func (r *Registry) DidAction(name string) int {
+	if r == nil {
+		return 0
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.didActions[name]
+}
+
+// DoingAction 返回指定 action 当前是否正在执行中。
+func (r *Registry) DoingAction(ctx context.Context, name string) bool {
+	return hook.CurrentHook(ctx) == name
 }
 
 func (r *Registry) safeApplyFilter(ctx context.Context, h Handler, value any, args ...any) (out any) {

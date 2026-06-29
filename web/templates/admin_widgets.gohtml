@@ -38,6 +38,7 @@
       <div class="widget-config-item" data-widget-id="{{$w.ID}}" data-index="{{$w.Index}}">
         <input type="hidden" name="widgets_{{$areaKey}}" value="{{$w.ID}}">
         <input type="hidden" name="widget_source_{{$areaKey}}_{{$w.Index}}" value="{{$w.ConfigSource}}">
+        <input type="hidden" name="widget_instance_{{$areaKey}}_{{$w.Index}}" value="{{$w.InstanceID}}">
 
         <div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">
           <span class="widget-config-handle" aria-label="{{$.t.T "拖拽排序"}}">⠿</span>
@@ -149,7 +150,7 @@
       div.className = 'widget-config-item';
       div.setAttribute('data-widget-id', widgetId);
       div.setAttribute('data-index', index);
-      div.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source, configSource);
+      div.innerHTML = buildWidgetItemHTML(widgetId, label, areaKey, index, source, configSource, '', null);
       list.appendChild(div);
 
       reindexList(list);
@@ -158,13 +159,15 @@
     });
   });
 
-  function buildWidgetItemHTML(widgetId, label, areaKey, index, source, configSource) {
+  function buildWidgetItemHTML(widgetId, label, areaKey, index, source, configSource, instanceId, savedOpts) {
     var sourceLabel = source === 'builtin' ? t('内置') : (source === 'plugin' ? t('插件') : t('主题'));
     var decl = widgetDecls[widgetId];
     var hasOpts = decl && decl.options && decl.options.length > 0;
+    instanceId = instanceId || '';
 
     var html = '<input type="hidden" name="widgets_' + areaKey + '" value="' + widgetId + '">';
     html += '<input type="hidden" name="widget_source_' + areaKey + '_' + index + '" value="' + escapeHTML(configSource || source) + '">';
+    html += '<input type="hidden" name="widget_instance_' + areaKey + '_' + index + '" value="' + escapeHTML(instanceId) + '">';
     html += '<div class="widget-config-header" tabindex="0" role="button" aria-expanded="false">';
     html += '<span class="widget-config-handle" aria-label="' + t('拖拽排序') + '">⠿</span>';
     html += '<span class="widget-config-name">' + (hasOpts ? '<span class="widget-options-caret" aria-hidden="true">▸</span>' : '') + escapeHTML(label) + ' <span class="widget-source-badge widget-source-' + source + '">' + sourceLabel + '</span></span>';
@@ -179,17 +182,17 @@
       for (var i = 0; i < decl.options.length; i++) {
         var opt = decl.options[i];
         var fieldId = 'opts_' + areaKey + '_' + index + '_' + opt.id;
+        var val = (savedOpts && savedOpts[opt.id] !== undefined) ? savedOpts[opt.id] : (opt.default || '');
         html += '<div class="widget-option-field">';
         html += '<label for="' + fieldId + '"><strong>' + escapeHTML(opt.label) + '</strong></label>';
         if (opt.description) html += '<p class="tip">' + escapeHTML(opt.description) + '</p>';
 
-        var defVal = opt.default || '';
         switch (opt.type) {
           case 'textarea':
-            html += '<textarea id="' + fieldId + '" name="' + fieldId + '" rows="3">' + escapeHTML(defVal) + '</textarea>';
+            html += '<textarea id="' + fieldId + '" name="' + fieldId + '" rows="3">' + escapeHTML(val) + '</textarea>';
             break;
           case 'number':
-            html += '<input type="number" id="' + fieldId + '" name="' + fieldId + '" value="' + escapeHTML(defVal) + '"';
+            html += '<input type="number" id="' + fieldId + '" name="' + fieldId + '" value="' + escapeHTML(val) + '"';
             if (opt.min != null) html += ' min="' + opt.min + '"';
             if (opt.max != null) html += ' max="' + opt.max + '"';
             html += '>';
@@ -199,19 +202,19 @@
             if (opt.options) {
               for (var j = 0; j < opt.options.length; j++) {
                 var sel = opt.options[j];
-                html += '<option value="' + escapeHTML(sel.value) + '"' + (sel.value === defVal ? ' selected' : '') + '>' + escapeHTML(sel.label) + '</option>';
+                html += '<option value="' + escapeHTML(sel.value) + '"' + (sel.value === val ? ' selected' : '') + '>' + escapeHTML(sel.label) + '</option>';
               }
             }
             html += '</select>';
             break;
           case 'bool':
             html += '<label class="checkbox-label">';
-            html += '<input type="checkbox" id="' + fieldId + '" name="' + fieldId + '" value="true"' + (defVal === 'true' ? ' checked' : '') + '>';
+            html += '<input type="checkbox" id="' + fieldId + '" name="' + fieldId + '" value="true"' + (val === 'true' ? ' checked' : '') + '>';
             html += '<span>' + t('启用') + '</span>';
             html += '</label>';
             break;
           default:
-            html += '<input type="text" id="' + fieldId + '" name="' + fieldId + '" value="' + escapeHTML(defVal) + '">';
+            html += '<input type="text" id="' + fieldId + '" name="' + fieldId + '" value="' + escapeHTML(val) + '">';
         }
         if (opt.default) html += '<p class="option-default-hint">' + t('默认值：') + escapeHTML(opt.default) + '</p>';
         html += '</div>';
@@ -265,13 +268,7 @@
         var list = item.parentNode;
         item.remove();
         reindexList(list);
-        if (list.children.length === 0) {
-          var panel = list.closest('.widget-area-panel');
-          var tip = document.createElement('p');
-          tip.className = 'tip widget-area-empty';
-          tip.textContent = '此区域暂无组件，请从右侧选择组件添加。';
-          list.replaceWith(tip);
-        }
+        ensureAreaEmptyState(list);
       });
     }
 
@@ -303,6 +300,8 @@
       if (input) input.name = 'widgets_' + areaKey;
       var sourceInput = item.querySelector('input[name^="widget_source_"]');
       if (sourceInput) sourceInput.name = 'widget_source_' + areaKey + '_' + i;
+      var instanceInput = item.querySelector('input[name^="widget_instance_"]');
+      if (instanceInput) instanceInput.name = 'widget_instance_' + areaKey + '_' + i;
       item.querySelectorAll('[name^="opts_"]').forEach(function(field) {
         field.name = reindexOptionFieldName(field.name, areaKey, i);
         if (field.id) field.id = reindexOptionFieldName(field.id, areaKey, i);
@@ -321,23 +320,24 @@
     return prefix + index + '_' + optID;
   }
 
-  // ---- 拖拽排序 ----
-  function initDragSort(list) {
-    var dragEl = null, placeholder = null;
+  // ---- 拖拽排序（支持跨区域） ----
+  function initDragSort() {
+    var dragEl = null, placeholder = null, sourceList = null;
 
     function onStart(e, item) {
       if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
       dragEl = item;
+      sourceList = item.parentNode;
       var pos = getPos(e);
       dragEl.classList.add('is-dragging');
       placeholder = document.createElement('div');
       placeholder.className = 'widget-config-placeholder';
       placeholder.style.height = dragEl.offsetHeight + 'px';
-      list.insertBefore(placeholder, dragEl.nextSibling);
+      sourceList.insertBefore(placeholder, dragEl.nextSibling);
       dragEl.style.position = 'fixed';
       dragEl.style.zIndex = '1000';
-      dragEl.style.width = list.offsetWidth + 'px';
-      dragEl.style.left = list.getBoundingClientRect().left + 'px';
+      dragEl.style.width = sourceList.offsetWidth + 'px';
+      dragEl.style.left = sourceList.getBoundingClientRect().left + 'px';
       dragEl.style.top = (pos.y - 10) + 'px';
       dragEl.style.pointerEvents = 'none';
     }
@@ -347,9 +347,14 @@
       e.preventDefault();
       var pos = getPos(e);
       dragEl.style.top = (pos.y - 10) + 'px';
-      var after = getDropTarget(list, pos.y);
-      if (after && after !== placeholder) list.insertBefore(placeholder, after);
-      else if (!after && placeholder.nextSibling) list.appendChild(placeholder);
+
+      // 找到鼠标下方的区域列表
+      var targetList = getTargetList(pos.x, pos.y);
+      if (targetList) {
+        var after = getDropTarget(targetList, pos.y);
+        if (after && after !== placeholder) targetList.insertBefore(placeholder, after);
+        else if (!after && placeholder.nextSibling) targetList.appendChild(placeholder);
+      }
     }
 
     function onEnd() {
@@ -364,10 +369,42 @@
       if (placeholder && placeholder.parentNode) {
         placeholder.parentNode.insertBefore(dragEl, placeholder);
         placeholder.parentNode.removeChild(placeholder);
+        // 跨区域移动时，重新索引源列表和目标列表
+        if (sourceList && sourceList !== dragEl.parentNode) {
+          reindexList(sourceList);
+          ensureAreaEmptyState(sourceList);
+        }
+        reindexList(dragEl.parentNode);
       }
       dragEl = null;
       placeholder = null;
-      reindexList(list);
+      sourceList = null;
+    }
+
+    function getTargetList(x, y) {
+      var lists = document.querySelectorAll('.widget-config-list');
+      for (var i = 0; i < lists.length; i++) {
+        var rect = lists[i].getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          return lists[i];
+        }
+      }
+      // 检查是否在某个空区域面板上（没有 .widget-config-list 但有 .widget-area-empty）
+      var panels = document.querySelectorAll('.widget-area-panel');
+      for (var j = 0; j < panels.length; j++) {
+        var r = panels[j].getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          var empty = panels[j].querySelector('.widget-area-empty');
+          if (empty) {
+            var list = document.createElement('div');
+            list.className = 'widget-config-list';
+            list.setAttribute('data-area', panels[j].getAttribute('data-area'));
+            empty.replaceWith(list);
+            return list;
+          }
+        }
+      }
+      return null;
     }
 
     function getPos(e) {
@@ -385,12 +422,12 @@
       return null;
     }
 
-    list.addEventListener('mousedown', function(e) {
+    document.addEventListener('mousedown', function(e) {
       var item = e.target.closest('.widget-config-item');
       if (!item) return;
       if (e.target.closest('.widget-config-handle')) onStart(e, item);
     });
-    list.addEventListener('touchstart', function(e) {
+    document.addEventListener('touchstart', function(e) {
       var item = e.target.closest('.widget-config-item');
       if (!item) return;
       if (e.target.closest('.widget-config-handle')) onStart(e, item);
@@ -402,9 +439,20 @@
     document.addEventListener('touchend', onEnd);
   }
 
+  function ensureAreaEmptyState(list) {
+    if (list.children.length === 0) {
+      var panel = list.closest('.widget-area-panel');
+      if (!panel) return;
+      var tip = document.createElement('p');
+      tip.className = 'tip widget-area-empty';
+      tip.textContent = '此区域暂无组件，请从右侧选择组件添加。';
+      list.replaceWith(tip);
+    }
+  }
+
   // ---- 初始化 ----
+  initDragSort();
   document.querySelectorAll('.widget-config-list').forEach(function(list) {
-    initDragSort(list);
     list.querySelectorAll('.widget-config-item').forEach(bindItemEvents);
   });
 })();

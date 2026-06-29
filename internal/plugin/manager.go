@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/errors"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/i18n"
 )
 
@@ -21,16 +22,10 @@ const (
 	LifecycleUninstall  = "Uninstall"
 )
 
-// settingStore 是 Manager 需要的设置存储接口。
-type settingStore interface {
-	GetSetting(ctx context.Context, key string) (string, error)
-	SetSetting(ctx context.Context, key, value string) error
-}
-
 // Manager 管理插件扫描、启用列表和共享 Hook Registry。
 type Manager struct {
 	pluginsDir string
-	store      settingStore
+	store      hook.SettingStore
 	plugins    map[string]*Plugin
 	hooks      *Registry
 	scripts    map[string]*FunctionsScript
@@ -40,7 +35,7 @@ type Manager struct {
 }
 
 // NewManager 创建插件管理器。pluginsDir 是插件存放目录（如 "plugins"）。
-func NewManager(pluginsDir string, store settingStore) (*Manager, error) {
+func NewManager(pluginsDir string, store hook.SettingStore) (*Manager, error) {
 	m := &Manager{
 		pluginsDir: pluginsDir,
 		store:      store,
@@ -118,7 +113,8 @@ func (m *Manager) EnabledWidgetDecls(ctx context.Context) []WidgetDecl {
 			if w.ID == "" {
 				continue
 			}
-			w.Source = "plugin:" + p.ID
+			w.Source = "plugin"
+			w.PluginID = p.ID
 			result = append(result, w)
 		}
 	}
@@ -158,12 +154,7 @@ func (m *Manager) LoadTranslations() error {
 	if m == nil {
 		return nil
 	}
-	for _, p := range m.List() {
-		if err := p.LoadTranslations(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return hook.LoadTranslations(m.List())
 }
 
 // RebuildTranslations 重新构建应用域和所有插件域的翻译映射。

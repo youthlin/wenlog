@@ -2,8 +2,6 @@ package theme
 
 import (
 	"testing"
-
-	"github.com/youthlin/blog/internal/plugin"
 )
 
 func TestResolveWidgetsRequiresWidgetArea(t *testing.T) {
@@ -14,7 +12,10 @@ func TestResolveWidgetsRequiresWidgetArea(t *testing.T) {
 		t.Fatalf("theme without widget areas rendered widgets: %+v", got)
 	}
 
-	themeWithSearch := &Theme{Widgets: []WidgetDecl{{ID: "search", Area: "sidebar"}}}
+	themeWithSearch := &Theme{
+		WidgetAreas: map[string]WidgetArea{"sidebar": {Name: "侧栏"}},
+		Widgets:     []WidgetDecl{{ID: "search"}},
+	}
 	got := ResolveWidgets(`[{
   "id": "search",
   "source": "theme"
@@ -22,8 +23,8 @@ func TestResolveWidgetsRequiresWidgetArea(t *testing.T) {
   "id": "recent_comments",
   "source": "builtin"
 }]`, themeWithSearch, "sidebar")
-	if len(got) != 1 || got[0].ID != "search" {
-		t.Fatalf("ResolveWidgets()=%+v, want only declared search widget", got)
+	if len(got) != 2 || got[0].ID != "search" || got[1].ID != "recent_comments" {
+		t.Fatalf("ResolveWidgets()=%+v, want search and recent_comments", got)
 	}
 }
 
@@ -47,8 +48,8 @@ func TestResolveWidgetsAllowsBuiltinsInDeclaredArea(t *testing.T) {
 
 func TestResolveWidgetsEmptyConfigRendersNoWidgets(t *testing.T) {
 	theme := &Theme{Widgets: []WidgetDecl{
-		{ID: "search", Area: "sidebar"},
-		{ID: "recent_posts", Area: "footer"},
+		{ID: "search"},
+		{ID: "recent_posts"},
 	}}
 	got := ResolveWidgets("", theme, "sidebar")
 	if len(got) != 0 {
@@ -59,7 +60,7 @@ func TestResolveWidgetsEmptyConfigRendersNoWidgets(t *testing.T) {
 func TestWidgetDeclsWithPluginsAllowsPluginWidget(t *testing.T) {
 	theme := &Theme{WidgetAreas: map[string]WidgetArea{"sidebar": {Name: "侧栏"}}}
 
-	decls := WidgetDeclsWithPlugins(theme, []plugin.WidgetDecl{{ID: "saying", Label: "博主动态", Source: "plugin:saying"}})
+	decls := WidgetDeclsWithPlugins(theme, []WidgetDecl{{ID: "saying", Label: "博主动态", Source: "plugin", PluginID: "saying"}})
 	widgets := ResolveWidgetsWithDecls(`[{
   "id": "saying",
   "source": "plugin:saying",
@@ -98,8 +99,8 @@ func TestResolveWidgetsExplicitSourceDoesNotFallback(t *testing.T) {
 func TestResolveWidgetsKeepsSameIDPluginWidgetsDistinct(t *testing.T) {
 	theme := &Theme{WidgetAreas: map[string]WidgetArea{"sidebar": {Name: "侧栏"}}}
 	decls := []WidgetDecl{
-		{ID: "weather", Label: "天气 A", Source: "plugin:a"},
-		{ID: "weather", Label: "天气 B", Source: "plugin:b"},
+		{ID: "weather", Label: "天气 A", Source: "plugin", PluginID: "a"},
+		{ID: "weather", Label: "天气 B", Source: "plugin", PluginID: "b"},
 	}
 
 	widgets := ResolveWidgetsWithDecls(`[

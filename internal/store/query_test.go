@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/model"
 )
 
@@ -257,23 +256,6 @@ func TestApprovedCommentCounts(t *testing.T) {
 	}
 	if counts[2] != 0 {
 		t.Errorf("count post2 = %d, want 0", counts[2])
-	}
-}
-
-func TestSayingComments(t *testing.T) {
-	st := newTestStore(t)
-	db := st.DB(context.Background())
-	sayingPostID := uint(789)
-	authorID := uint(1)
-	db.Create(&model.User{ID: authorID, Username: "youthlin", Email: "me@example.com"})
-	db.Create(&model.Post{ID: sayingPostID, AuthorID: authorID, PostType: model.PostTypePage, Status: model.StatusPublished})
-	db.Create(&model.Comment{ID: 1, PostID: sayingPostID, UserID: &authorID, Status: model.CommentApproved, Content: "动态1", CreatedAt: time.Now()})
-	db.Create(&model.Comment{ID: 2, PostID: sayingPostID, Email: "guest@x.com", Status: model.CommentApproved, Content: "访客", CreatedAt: time.Now()})
-	db.Create(&model.Comment{ID: 3, PostID: uint(consts.SettingsSayingPageIDDefault), UserID: &authorID, Status: model.CommentApproved, Content: "旧配置", CreatedAt: time.Now()})
-
-	got := st.SayingComments(context.Background(), sayingPostID, 5)
-	if len(got) != 1 || got[0].ID != 1 {
-		t.Errorf("SayingComments returned %d, want only blogger's id=1", len(got))
 	}
 }
 

@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/traefik/yaegi/interp"
-	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/hook"
 )
 
 // HookAPIExports 返回主题和插件脚本共用的 hook API yaegi 导出表。
@@ -14,32 +14,35 @@ import (
 func HookAPIExports() interp.Exports {
 	return interp.Exports{
 		"hook/hook": {
-			"API":                          reflect.ValueOf((*root.API)(nil)),
-			"Args":                         reflect.ValueOf((*root.Args)(nil)),
-			"ActionFunc":                   reflect.ValueOf((*root.ActionFunc)(nil)),
-			"FilterFunc":                   reflect.ValueOf((*root.FilterFunc)(nil)),
-			"Func":                         reflect.ValueOf((*root.Func)(nil)),
-			"PostView":                     reflect.ValueOf((*root.PostView)(nil)),
-			"CategoryView":                 reflect.ValueOf((*root.CategoryView)(nil)),
-			"TagView":                      reflect.ValueOf((*root.TagView)(nil)),
-			"CommentView":                  reflect.ValueOf((*root.CommentView)(nil)),
-			"UserView":                     reflect.ValueOf((*root.UserView)(nil)),
-			"ArchiveMonthView":             reflect.ValueOf((*root.ArchiveMonthView)(nil)),
-			"SelectOpt":                    reflect.ValueOf((*root.SelectOpt)(nil)),
-			"OptionDecl":                   reflect.ValueOf((*root.OptionDecl)(nil)),
-			"WidgetRenderContext":          reflect.ValueOf((*root.WidgetRenderContext)(nil)),
-			"PriorityEarly":                reflect.ValueOf(root.PriorityEarly),
-			"PriorityDefault":              reflect.ValueOf(root.PriorityDefault),
-			"PriorityLate":                 reflect.ValueOf(root.PriorityLate),
-			"HookHeadEnd":                  reflect.ValueOf(root.HookHeadEnd),
-			"HookBodyEnd":                  reflect.ValueOf(root.HookBodyEnd),
-			"HookCommentFormAfterTextarea": reflect.ValueOf(root.HookCommentFormAfterTextarea),
-			"HookWidgetRender":             reflect.ValueOf(root.HookWidgetRender),
-			"HookPostTitle":                reflect.ValueOf(root.HookPostTitle),
-			"HookPostExcerptHTML":          reflect.ValueOf(root.HookPostExcerptHTML),
-			"HookPostContentHTML":          reflect.ValueOf(root.HookPostContentHTML),
-			"HookCommentContentHTML":       reflect.ValueOf(root.HookCommentContentHTML),
-			"HookWidgetRenderHTML":         reflect.ValueOf(root.HookWidgetRenderHTML),
+			"API":                          reflect.ValueOf((*hook.API)(nil)),
+			"Args":                         reflect.ValueOf((*hook.Args)(nil)),
+			"ActionFunc":                   reflect.ValueOf((*hook.ActionFunc)(nil)),
+			"FilterFunc":                   reflect.ValueOf((*hook.FilterFunc)(nil)),
+			"Func":                         reflect.ValueOf((*hook.Func)(nil)),
+			"PostView":                     reflect.ValueOf((*hook.PostView)(nil)),
+			"CategoryView":                 reflect.ValueOf((*hook.CategoryView)(nil)),
+			"TagView":                      reflect.ValueOf((*hook.TagView)(nil)),
+			"CommentView":                  reflect.ValueOf((*hook.CommentView)(nil)),
+			"UserView":                     reflect.ValueOf((*hook.UserView)(nil)),
+			"ArchiveMonthView":             reflect.ValueOf((*hook.ArchiveMonthView)(nil)),
+			"SelectOpt":                    reflect.ValueOf((*hook.SelectOpt)(nil)),
+			"OptionDecl":                   reflect.ValueOf((*hook.OptionDecl)(nil)),
+			"WidgetRenderContext":          reflect.ValueOf((*hook.WidgetRenderContext)(nil)),
+			"HeadEndData":                  reflect.ValueOf((*hook.HeadEndData)(nil)),
+			"BodyEndData":                  reflect.ValueOf((*hook.BodyEndData)(nil)),
+			"CommentFormAfterTextareaData": reflect.ValueOf((*hook.CommentFormAfterTextareaData)(nil)),
+			"PriorityEarly":                reflect.ValueOf(hook.PriorityEarly),
+			"PriorityDefault":              reflect.ValueOf(hook.PriorityDefault),
+			"PriorityLate":                 reflect.ValueOf(hook.PriorityLate),
+			"HookHeadEnd":                  reflect.ValueOf(hook.HookHeadEnd),
+			"HookBodyEnd":                  reflect.ValueOf(hook.HookBodyEnd),
+			"HookCommentFormAfterTextarea": reflect.ValueOf(hook.HookCommentFormAfterTextarea),
+			"HookWidgetRender":             reflect.ValueOf(hook.HookWidgetRender),
+			"HookPostTitle":                reflect.ValueOf(hook.HookPostTitle),
+			"HookPostExcerptHTML":          reflect.ValueOf(hook.HookPostExcerptHTML),
+			"HookPostContentHTML":          reflect.ValueOf(hook.HookPostContentHTML),
+			"HookCommentContentHTML":       reflect.ValueOf(hook.HookCommentContentHTML),
+			"HookWidgetRenderHTML":         reflect.ValueOf(hook.HookWidgetRenderHTML),
 		},
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/hook"
 )
 
 type testSettingStore struct{}
@@ -47,7 +47,7 @@ func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
 	if len(widgets) != 1 {
 		t.Fatalf("widgets count = %d, want 1", len(widgets))
 	}
-	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin:saying" {
+	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin" || got.PluginID != "saying" {
 		t.Fatalf("registered widget = %+v", got)
 	}
 }
@@ -55,8 +55,8 @@ func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
 func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	// 主题模板里直接用这个 slot 名称调用 slot；常量必须和模板/manifest 保持一致，
 	// 否则插件虽然成功注册 hook，但评论表单不会渲染表情面板。
-	if root.HookCommentFormAfterTextarea != "comment.form.after_textarea" {
-		t.Fatalf("HookCommentFormAfterTextarea = %q, want comment.form.after_textarea", root.HookCommentFormAfterTextarea)
+	if hook.HookCommentFormAfterTextarea != "comment.form.after_textarea" {
+		t.Fatalf("HookCommentFormAfterTextarea = %q, want comment.form.after_textarea", hook.HookCommentFormAfterTextarea)
 	}
 
 	p, err := LoadPlugin(filepath.Join("..", "..", "web", "plugins", "comment-smilies"))
@@ -69,12 +69,12 @@ func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	}
 
 	var panel strings.Builder
-	hooks.DoAction(context.Background(), root.HookCommentFormAfterTextarea, &panel, nil)
+	hooks.DoAction(context.Background(), hook.HookCommentFormAfterTextarea, &panel, nil)
 	if got := panel.String(); !strings.Contains(got, `class="comment-smilies"`) || !strings.Contains(got, `class="comment-smilies-label sr-only"`) || !strings.Contains(got, `data-smiley-code="[/微笑]"`) {
 		t.Fatalf("smiley panel not rendered: %s", got)
 	}
 
-	filtered := hooks.ApplyFilters(context.Background(), root.HookCommentContentHTML, "hello [/微笑]", nil)
+	filtered := hooks.ApplyFilters(context.Background(), hook.HookCommentContentHTML, "hello [/微笑]", nil)
 	got, ok := filtered.(string)
 	if !ok {
 		t.Fatalf("filtered content type = %T", filtered)

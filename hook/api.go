@@ -7,6 +7,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html"
+	"html/template"
+	"io"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,6 +49,61 @@ const (
 	// HookWidgetRenderHTML 过滤单个组件渲染后的 HTML。
 	HookWidgetRenderHTML = "widget.render_html"
 )
+
+// actionWriterKey 用于在 context 中存储当前 action 的输出 writer。
+type actionWriterKey struct{}
+
+// withActionWriter 把输出 writer 注入 context，供 api.Printf 使用。
+func withActionWriter(ctx context.Context, w io.StringWriter) context.Context {
+	return context.WithValue(ctx, actionWriterKey{}, w)
+}
+
+// getActionWriter 从 context 中取出当前 action 的输出 writer。
+func getActionWriter(ctx context.Context) io.StringWriter {
+	if w, ok := ctx.Value(actionWriterKey{}).(io.StringWriter); ok {
+		return w
+	}
+	return nil
+}
+
+// WithActionWriter 把输出 writer 注入 context，供 Registry.DoAction 内部使用。
+func WithActionWriter(ctx context.Context, w io.StringWriter) context.Context {
+	return withActionWriter(ctx, w)
+}
+
+// currentHookKey 用于在 context 中存储当前正在执行的 hook 名称。
+type currentHookKey struct{}
+
+// WithCurrentHook 把当前 hook 名注入 context。
+func WithCurrentHook(ctx context.Context, name string) context.Context {
+	return context.WithValue(ctx, currentHookKey{}, name)
+}
+
+// CurrentHook 从 context 中读取当前正在执行的 hook 名称。
+func CurrentHook(ctx context.Context) string {
+	if s, ok := ctx.Value(currentHookKey{}).(string); ok {
+		return s
+	}
+	return ""
+}
+
+// ---- 各 hook 点的结构化参数类型 ----
+// 插件 handler 可以直接用这些类型作为第二个参数，无需按位置从 args 中取。
+
+// HeadEndData 是 head.end action 的参数。
+type HeadEndData struct {
+	Data any // 模板数据（. dot）
+}
+
+// BodyEndData 是 body.end action 的参数。
+type BodyEndData struct {
+	Data any
+}
+
+// CommentFormAfterTextareaData 是 comment.form.after_textarea action 的参数。
+type CommentFormAfterTextareaData struct {
+	Data any
+}
 
 // ActionFunc 是插件注册 action 时推荐使用的函数签名。
 type ActionFunc = func(api *API, args ...any)
@@ -140,6 +198,61 @@ type SelectOpt struct {
 	Label string `yaml:"label" json:"label"`
 }
 
+// Source 记录一个 hook 处理器来自核心、主题还是插件。
+type Source struct {
+	Type string // core / theme / plugin
+	ID   string // default / twentytwenty / saying
+}
+
+// WidgetDecl 描述主题或插件声明的一个可用组件。
+type WidgetDecl struct {
+	ID       string       `yaml:"id" json:"id"`
+	Label    string       `yaml:"label" json:"label"`
+	Options  []OptionDecl `yaml:"options,omitempty" json:"options,omitempty"`
+	Source   string       `yaml:"-" json:"source,omitempty"`
+	PluginID string       `yaml:"-" json:"plugin_id,omitempty"`
+}
+
+// WidgetInstance 表示一个组件实例的运行时状态，包含实例 ID 和配置值。
+// 同一组件类型可以在同一区域添加多次，每次有独立的 InstanceID 和 Settings。
+type WidgetInstance struct {
+	InstanceID string            // 实例唯一 ID
+	WidgetID   string            // 组件类型 ID
+	Settings   map[string]string // 实例级配置值
+}
+
+// Widget 是所有组件（内置/主题/插件）的统一接口。
+// 参照 WordPress WP_Widget 的模板方法模式：核心管理生命周期和存储，
+// 组件实现者只需提供元数据和渲染逻辑。
+type Widget interface {
+	// Meta 返回组件声明元数据（ID、标签、可配置选项等）。
+	Meta() WidgetDecl
+	// Render 渲染组件为 HTML。tpl 是当前请求的主题模板实例，模板型组件用它执行模板；
+	// action 型组件可忽略 tpl 参数。
+	Render(ctx context.Context, tpl *template.Template, instance WidgetInstance, data any) (template.HTML, error)
+}
+
+// SettingStore 是主题/插件管理器需要的设置存储接口。
+type SettingStore interface {
+	GetSetting(ctx context.Context, key string) (string, error)
+	SetSetting(ctx context.Context, key, value string) error
+}
+
+// Translatable 表示可加载翻译的资源（主题或插件）。
+type Translatable interface {
+	LoadTranslations() error
+}
+
+// LoadTranslations 遍历列表加载所有资源的翻译。
+func LoadTranslations[T Translatable](items []T) error {
+	for _, item := range items {
+		if err := item.LoadTranslations(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // OptionDecl 描述主题或扩展声明的一个可配置选项。
 type OptionDecl struct {
 	ID          string      `yaml:"id" json:"id"`
@@ -152,28 +265,17 @@ type OptionDecl struct {
 	Options     []SelectOpt `yaml:"options" json:"options,omitempty"`
 }
 
-type loaderContextKey struct{}
-
-// WithDataLoader 把当前请求的只读数据加载器绑定到 context，供插件 API 读取。
-func WithDataLoader(ctx context.Context, loader *store.DataLoader) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if loader == nil {
-		return ctx
-	}
-	return context.WithValue(ctx, loaderContextKey{}, loader)
-}
-
 // API 是暴露给插件脚本的宿主能力。
 type API struct {
-	addAction  func(name string, fn any, priority ...int)
-	addFilter  func(name string, fn any, priority ...int)
-	funcs      map[string]Func
-	ctx        context.Context
-	domain     string
-	dataLoader *store.DataLoader
-	options    []OptionDecl
+	addAction    func(name string, fn any, priority ...int)
+	addFilter    func(name string, fn any, priority ...int)
+	removeAction func(name string)
+	removeFilter func(name string)
+	funcs        map[string]Func
+	ctx          context.Context
+	domain       string
+	dataLoader   *store.DataLoader
+	options      []OptionDecl
 }
 
 // New 创建插件 API。
@@ -201,6 +303,15 @@ func (api *API) SetHookRegistrars(addAction, addFilter func(name string, fn any,
 	}
 	api.addAction = addAction
 	api.addFilter = addFilter
+}
+
+// SetRemoveHooks 设置当前扩展 hook 移除函数，由宿主在加载插件或主题时注入。
+func (api *API) SetRemoveHooks(removeAction, removeFilter func(name string)) {
+	if api == nil {
+		return
+	}
+	api.removeAction = removeAction
+	api.removeFilter = removeFilter
 }
 
 // WithContext 返回绑定到当前请求 context 的 API 副本。
@@ -310,7 +421,41 @@ func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
 	case func(*API):
 		return func(ctx context.Context, _ ...any) { f(api.WithContext(ctx)) }, true
 	}
+	// 支持 func(*API, SomeTypedData) 签名，通过反射在注册时生成高效包装。
+	if wrapped, ok := api.wrapTypedAction(fn); ok {
+		return wrapped, true
+	}
 	return nil, false
+}
+
+// wrapTypedAction 将 func(*API, T) 包装为 func(context.Context, ...any)。
+// T 是各 hook 的结构化参数类型（如 HeadEndData）。
+func (api *API) wrapTypedAction(fn any) (func(context.Context, ...any), bool) {
+	rv := reflect.ValueOf(fn)
+	if !rv.IsValid() || rv.Kind() != reflect.Func {
+		return nil, false
+	}
+	rt := rv.Type()
+	if rt.NumIn() != 2 || rt.NumOut() != 0 {
+		return nil, false
+	}
+	if rt.In(0) != reflect.TypeOf((*API)(nil)) {
+		return nil, false
+	}
+	dataType := rt.In(1)
+	return func(ctx context.Context, args ...any) {
+		var data reflect.Value
+		if len(args) > 0 && args[0] != nil {
+			rvArg := reflect.ValueOf(args[0])
+			if rvArg.Type().AssignableTo(dataType) {
+				data = rvArg
+			}
+		}
+		if !data.IsValid() {
+			data = reflect.Zero(dataType)
+		}
+		rv.Call([]reflect.Value{reflect.ValueOf(api.WithContext(ctx)), data})
+	}, true
 }
 
 // AddFilter 注册 filter。插件可以使用 FilterFunc，也可以使用 func(any, ...any) any / func(any) any。
@@ -335,6 +480,47 @@ func (api *API) wrapFilter(fn any) (func(context.Context, any, ...any) any, bool
 		return func(ctx context.Context, _ any, _ ...any) any { return f(api.WithContext(ctx)) }, true
 	}
 	return nil, false
+}
+
+// Printf 向当前 action 的输出 writer 写入格式化字符串。
+// 仅在 action handler 内部调用有效；filter 中无 writer 注入。
+func (api *API) Printf(format string, args ...any) {
+	if api == nil || api.ctx == nil {
+		return
+	}
+	w := getActionWriter(api.ctx)
+	if w == nil {
+		return
+	}
+	w.WriteString(fmt.Sprintf(format, args...))
+}
+
+// Print 向当前 action 的输出 writer 写入原始字符串。
+func (api *API) Print(s string) {
+	if api == nil || api.ctx == nil {
+		return
+	}
+	w := getActionWriter(api.ctx)
+	if w == nil {
+		return
+	}
+	w.WriteString(s)
+}
+
+// RemoveAction 移除当前扩展注册的所有同名 action。
+func (api *API) RemoveAction(name string) {
+	if api == nil || api.removeAction == nil || name == "" {
+		return
+	}
+	api.removeAction(name)
+}
+
+// RemoveFilter 移除当前扩展注册的所有同名 filter。
+func (api *API) RemoveFilter(name string) {
+	if api == nil || api.removeFilter == nil || name == "" {
+		return
+	}
+	api.removeFilter(name)
 }
 
 // T 翻译普通消息。
@@ -435,21 +621,6 @@ func (api *API) GetOption(themeName, optionID string) string {
 		return ""
 	}
 	return GetOptionByID(func(key string) (string, error) { return loader.GetSetting(key), nil }, themeName, api.options, optionID)
-}
-
-// SayingComments 返回指定文章下博主本人的评论，插件可基于这些基础数据自行构造模板视图。
-func (api *API) SayingComments(postID any, n int) []CommentView {
-	loader := api.loader()
-	id := toUint(postID)
-	if id == 0 || loader == nil {
-		return nil
-	}
-	comments := loader.SayingComments(id, n)
-	result := make([]CommentView, 0, len(comments))
-	for i := range comments {
-		result = append(result, toCommentView(&comments[i]))
-	}
-	return result
 }
 
 // Posts 返回全部已发布文章（按发布时间倒序）。
@@ -794,7 +965,23 @@ func toCommentView(c *model.Comment) CommentView {
 	if c == nil {
 		return CommentView{}
 	}
-	return CommentView{ID: c.ID, PostID: c.PostID, ParentID: c.ParentID, Author: c.Author, Email: c.Email, URL: c.URL, Content: c.Content, Status: c.Status, CreatedAt: c.CreatedAt}
+	return CommentView{
+		ID:            c.ID,
+		PostID:        c.PostID,
+		ParentID:      c.ParentID,
+		ReplyToID:     c.ReplyToID,
+		UserID:        c.UserID,
+		Author:        c.Author,
+		Email:         c.Email,
+		URL:           c.URL,
+		IP:            c.IP,
+		Content:       c.Content,
+		Status:        c.Status,
+		NotifyOnReply: c.NotifyOnReply,
+		CreatedAt:     c.CreatedAt,
+		ReplyToAuthor: c.ReplyToAuthor,
+		CommenterRole: c.CommenterRole,
+	}
 }
 
 func toUserView(u *model.User) *UserView {
@@ -877,14 +1064,6 @@ func GetOptionByID(getSetting func(key string) (string, error), themeName string
 		}
 	}
 	return ""
-}
-
-func commentSnippet(content string) string {
-	runes := []rune(content)
-	if len(runes) <= 36 {
-		return content
-	}
-	return string(runes[:36]) + "…"
 }
 
 func (api *API) loader() *store.DataLoader {

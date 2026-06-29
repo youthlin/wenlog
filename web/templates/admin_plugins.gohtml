@@ -48,8 +48,8 @@
           {{if .FilterNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Filters"}}</strong>: {{range .FilterNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .SlotNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Slots"}}</strong>: {{range .SlotNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .WidgetNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Widgets"}}</strong>: {{range .WidgetNames}}<code>{{.}}</code> {{end}}</div>{{end}}
-          {{if .SettingNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Settings"}}</strong>: {{range .SettingNames}}<code>{{.}}</code> {{end}}</div>{{end}}
-          {{if and (not .ActionNames) (not .FilterNames) (not .SlotNames) (not .WidgetNames) (not .SettingNames)}}—{{end}}
+          {{if .OptionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Options"}}</strong>: {{range .OptionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if and (not .ActionNames) (not .FilterNames) (not .SlotNames) (not .WidgetNames) (not .OptionNames)}}—{{end}}
         </td>
         <td class="actions plugin-actions-cell" data-label="{{$.t.T "操作"}}">
           <a class="btn-secondary btn-sm theme-action-link" href="/admin/theme/files?kind=plugin&plugin={{.ID}}">{{$.t.T "编辑"}}</a>
@@ -58,7 +58,7 @@
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "停用"}}</button>
           </form>
-          {{if .SettingNames}}<a class="btn-secondary btn-sm theme-action-link" href="/admin/plugin/{{.ID}}/settings">{{$.t.T "设置"}}</a>{{end}}
+          {{if .OptionNames}}<a class="btn-secondary btn-sm theme-action-link" href="/admin/plugin/{{.ID}}/settings">{{$.t.T "设置"}}</a>{{end}}
           <form class="inline" method="post" action="/admin/plugin/{{.ID}}/reload">
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm">{{$.t.T "重载"}}</button>

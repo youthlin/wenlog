@@ -10,11 +10,8 @@ __debug*
 
 # 运行时数据
 /data/
-
-# 主题运行时目录（内嵌主题在 web/themes/ 中，启动时释放到此）
 /themes/
-
-# 历史图片(体积大,单独迁移,不入库)
+/plugins/
 /public/
 
 # WordPress 导出原始数据

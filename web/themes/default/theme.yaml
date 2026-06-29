@@ -21,7 +21,6 @@ menu_locations:
 widgets:
   - id: popular_posts
     label: "热门文章"
-    area: sidebar
     options:
       - id: title
         type: text

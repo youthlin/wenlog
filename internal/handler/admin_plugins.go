@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/plugin"
 )
@@ -24,7 +26,7 @@ type pluginView struct {
 	FilterNames  []string
 	SlotNames    []string
 	WidgetNames  []string
-	SettingNames []string
+	OptionNames []string
 	Source       string
 }
 
@@ -163,13 +165,13 @@ func (h *Admin) PluginSettingsPage(c *gin.Context) {
 	data["PluginID"] = p.ID
 	data["PluginName"] = tr.D(p.PluginDomain()).T(p.Name)
 	data["tp"] = tr.D(p.PluginDomain())
-	if len(p.Settings) == 0 {
+	if len(p.Options) == 0 {
 		data["NoOptions"] = true
 		c.HTML(http.StatusOK, "admin_plugin_settings.gohtml", data)
 		return
 	}
-	options := make([]pluginOptionData, 0, len(p.Settings))
-	for _, opt := range p.Settings {
+	options := make([]pluginOptionData, 0, len(p.Options))
+	for _, opt := range p.Options {
 		val, _ := h.st.GetSetting(c, plugin.OptionKey(p.ID, opt.ID))
 		if val == "" {
 			val = opt.Default
@@ -190,7 +192,7 @@ func (h *Admin) SavePluginSettings(c *gin.Context) {
 	if !ok {
 		return
 	}
-	for _, opt := range p.Settings {
+	for _, opt := range p.Options {
 		val := c.PostForm("option_" + opt.ID)
 		if opt.Type == "bool" && val == "" {
 			val = "false"
@@ -221,11 +223,12 @@ func (h *Admin) reloadPluginRuntime(c *gin.Context) error {
 	if err := h.pluginManager.LoadEnabledFunctions(c); err != nil {
 		return err
 	}
+	hookAdapter := &pluginHookAdapter{registry: h.pluginManager.Hooks()}
 	if h.renderer != nil {
-		h.renderer.SetHookProvider(h.pluginManager.Hooks())
+		h.renderer.SetHookProvider(hookAdapter)
 	}
 	if h.themeManager != nil {
-		h.themeManager.SetHookRegistry(h.pluginManager.Hooks())
+		h.themeManager.SetHookRegistry(hookAdapter)
 		if err := h.themeManager.LoadTheme(c, ""); err != nil {
 			return err
 		}
@@ -298,7 +301,7 @@ func toPluginView(tr *gettext.Translations, p *plugin.Plugin, enabled bool, load
 		FilterNames:  append([]string(nil), p.Hooks.Filters...),
 		SlotNames:    append([]string(nil), p.Hooks.Slots...),
 		WidgetNames:  pluginWidgetNames(p.Widgets),
-		SettingNames: pluginSettingNames(p.Settings),
+		OptionNames: pluginOptionNames(p.Options),
 		Source:       "plugin:" + p.ID,
 	}
 }
@@ -313,9 +316,9 @@ func pluginWidgetNames(widgets []plugin.WidgetDecl) []string {
 	return out
 }
 
-func pluginSettingNames(settings []plugin.OptionDecl) []string {
-	out := make([]string, 0, len(settings))
-	for _, opt := range settings {
+func pluginOptionNames(options []plugin.OptionDecl) []string {
+	out := make([]string, 0, len(options))
+	for _, opt := range options {
 		if opt.ID != "" {
 			out = append(out, opt.ID)
 		}
@@ -340,4 +343,41 @@ func (h *Admin) redirectPlugins(c *gin.Context, message, errMsg string) {
 
 func pluginActionWantsJSON(c *gin.Context) bool {
 	return strings.Contains(c.GetHeader("Accept"), "application/json") || c.GetHeader("X-Requested-With") == "fetch"
+}
+
+// pluginHookAdapter 将 *plugin.Registry 适配为 theme.HookRegistry 接口。
+type pluginHookAdapter struct {
+	registry *plugin.Registry
+}
+
+func (a *pluginHookAdapter) AddAction(name string, fn any, source hook.Source, priority ...int) {
+	a.registry.AddAction(name, fn, source, priority...)
+}
+
+func (a *pluginHookAdapter) AddFilter(name string, fn any, source hook.Source, priority ...int) {
+	a.registry.AddFilter(name, fn, source, priority...)
+}
+
+func (a *pluginHookAdapter) RemoveAction(name string, source hook.Source) int {
+	return a.registry.RemoveAction(name, source)
+}
+
+func (a *pluginHookAdapter) RemoveFilter(name string, source hook.Source) int {
+	return a.registry.RemoveFilter(name, source)
+}
+
+func (a *pluginHookAdapter) DoAction(ctx context.Context, name string, args ...any) {
+	a.registry.DoAction(ctx, name, args...)
+}
+
+func (a *pluginHookAdapter) ApplyFilters(ctx context.Context, name string, value any, args ...any) any {
+	return a.registry.ApplyFilters(ctx, name, value, args...)
+}
+
+func (a *pluginHookAdapter) DidAction(name string) int {
+	return a.registry.DidAction(name)
+}
+
+func (a *pluginHookAdapter) DoingAction(ctx context.Context, name string) bool {
+	return a.registry.DoingAction(ctx, name)
 }

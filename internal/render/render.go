@@ -79,14 +79,15 @@ const (
 )
 
 const (
+	// hookInvoke: 调用 functions.go 中通过 [RegisterFunc] 注册的函数
+	// {{hookInvoke "<funcName>" "<argName>" argValue ["<argName2>" argValue2]}}
 	tplFuncHookInvoke     = "hookInvoke"
-	tplFuncThemeData      = "themeData"
-	tplFuncThemeOption    = "themeOption"
 	tplFuncOption         = "option"
+	tplFuncThemeOption    = "themeOption"
+	tplFuncWidgetOption   = "widgetOption"
 	tplFuncRenderWidgets  = "renderWidgets"
 	tplFuncWidgets        = "widgets"
 	tplFuncRenderMenu     = "renderMenu"
-	tplFuncWidgetOption   = "widgetOption"
 	tplFuncSlot           = "slot"
 	tplFuncPostTitle      = "postTitle"
 	tplFuncPostExcerpt    = "postExcerpt"
@@ -138,15 +139,14 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 	if err != nil {
 		return nil, err
 	}
+	// 添加实际函数的实现
 	cloned.Funcs(template.FuncMap{
 		tplFuncHookInvoke:     func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
-		tplFuncThemeData:      func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
 		tplFuncThemeOption:    func(optionID string) string { return themeOption(runtime, ctx, optionID) },
-		tplFuncOption:         func(optionID string) string { return themeOption(runtime, ctx, optionID) },
+		tplFuncWidgetOption:   func(key string) string { return widgetOption(ctx, key) },
 		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
 		tplFuncWidgets:        func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
 		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
-		tplFuncWidgetOption:   func(key string) string { return widgetOption(ctx, key) },
 		tplFuncSlot:           func(name string, data any) template.HTML { return slot(runtime, ctx, name, data) },
 		tplFuncPostTitle:      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
 		tplFuncPostExcerpt:    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
@@ -159,4 +159,29 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		tplFuncCommentContent: func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
 	})
 	return cloned, nil
+}
+
+// markTplFuncMap 模板占位函数
+// 扩展函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
+// 这里提供占位函数，仅用于模板解析阶段识别函数名。
+func markTplFuncMap() template.FuncMap {
+	return template.FuncMap{
+		tplFuncHookInvoke:     func(name string, args ...any) any { return nil },
+		tplFuncThemeOption:    func(optionID string) string { return "" },
+		tplFuncOption:         func(optionID string) string { return "" },
+		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return "" },
+		tplFuncWidgets:        func(area string, data any) template.HTML { return "" },
+		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return "" },
+		tplFuncWidgetOption:   func(key string) string { return "" },
+		tplFuncSlot:           func(name string, data any) template.HTML { return "" },
+		tplFuncPostTitle:      func(data any) template.HTML { return "" },
+		tplFuncPostExcerpt:    func(post any) template.HTML { return "" },
+		tplFuncPostContent:    func(post any) template.HTML { return "" },
+		tplFuncPostTags:       func(post any) template.HTML { return "" },
+		tplFuncPostNavigation: func(data any, classes ...string) template.HTML { return "" },
+		tplFuncBodyClass:      func(data any) string { return "" },
+		tplFuncPostClass:      func(post any, extra ...string) string { return "" },
+		tplFuncCommentClass:   func(comment any, extra ...string) string { return "" },
+		tplFuncCommentContent: func(comment any) template.HTML { return "" },
+	}
 }

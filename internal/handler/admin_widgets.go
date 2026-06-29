@@ -53,7 +53,6 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 	type availWidget struct {
 		ID           string
 		Label        string
-		Area         string // 默认区域
 		Source       string // builtin / theme / plugin
 		ConfigSource string // 保存到配置里的来源，如 plugin:saying
 	}
@@ -70,7 +69,6 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		availableWidgets = append(availableWidgets, availWidget{
 			ID:           w.ID,
 			Label:        label,
-			Area:         w.Area,
 			Source:       source,
 			ConfigSource: widgetConfigSource(w),
 		})

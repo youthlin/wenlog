@@ -1,13 +1,16 @@
 package theme
 
 import (
+	"context"
 	"encoding/json"
+	"html/template"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
-	"github.com/youthlin/blog/internal/plugin"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/render"
 	gettext "github.com/youthlin/t"
 )
@@ -61,6 +64,92 @@ func IsBuiltinWidget(id string) bool {
 	return slices.Contains(BuiltinWidgetIDs, id)
 }
 
+// TemplateWidget 是基于模板渲染的组件适配器，内置组件和主题组件使用此实现。
+type TemplateWidget struct {
+	decl hook.WidgetDecl
+}
+
+// NewTemplateWidget 创建模板型组件。
+func NewTemplateWidget(decl hook.WidgetDecl) *TemplateWidget {
+	return &TemplateWidget{decl: decl}
+}
+
+func (w *TemplateWidget) Meta() hook.WidgetDecl { return w.decl }
+
+func (w *TemplateWidget) Render(ctx context.Context, tpl *template.Template, instance hook.WidgetInstance, data any) (template.HTML, error) {
+	if tpl == nil {
+		return "", nil
+	}
+	var buf strings.Builder
+	name := "widget_" + w.decl.ID
+	if err := tpl.ExecuteTemplate(&buf, name, data); err != nil {
+		return "", err
+	}
+	return template.HTML(buf.String()), nil
+}
+
+// WidgetRegistry 管理所有已注册的组件实现，按 source:id 或 plugin:pluginID:id 索引。
+type WidgetRegistry struct {
+	mu      sync.RWMutex
+	widgets map[string]hook.Widget
+}
+
+// NewWidgetRegistry 创建组件注册表。
+func NewWidgetRegistry() *WidgetRegistry {
+	return &WidgetRegistry{widgets: make(map[string]hook.Widget)}
+}
+
+// Register 注册一个组件实现。
+func (r *WidgetRegistry) Register(w hook.Widget) {
+	if r == nil || w == nil {
+		return
+	}
+	decl := w.Meta()
+	key := widgetDeclKey(decl)
+	r.mu.Lock()
+	r.widgets[key] = w
+	r.mu.Unlock()
+}
+
+// Get 按来源和 ID 查找组件实现。
+func (r *WidgetRegistry) Get(source, id, pluginID string) hook.Widget {
+	if r == nil {
+		return nil
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if source == WidgetSourcePlugin && pluginID != "" {
+		if w, ok := r.widgets[WidgetSourcePlugin+":"+pluginID+":"+id]; ok {
+			return w
+		}
+	}
+	return r.widgets[source+":"+id]
+}
+
+// RegisterBuiltins 注册所有内置组件到注册表。
+func (r *WidgetRegistry) RegisterBuiltins() {
+	for _, decl := range BuiltinWidgetDecls {
+		d := decl
+		d.Source = WidgetSourceBuiltin
+		r.Register(NewTemplateWidget(d))
+	}
+}
+
+// RegisterThemeWidgets 注册主题声明的组件到注册表。
+func (r *WidgetRegistry) RegisterThemeWidgets(t *Theme) {
+	if t == nil {
+		return
+	}
+	for _, decl := range t.Widgets {
+		if decl.ID == "" {
+			continue
+		}
+		d := decl
+		d.Source = WidgetSourceTheme
+		r.Register(NewTemplateWidget(d))
+	}
+}
+
 // WidgetDeclsWithBuiltins 返回主题组件声明与内置组件声明的合并结果。
 func WidgetDeclsWithBuiltins(t *Theme) []WidgetDecl {
 	seen := make(map[string]bool)
@@ -87,53 +176,16 @@ func WidgetDeclsWithBuiltins(t *Theme) []WidgetDecl {
 }
 
 // WidgetDeclsWithPlugins 返回主题、内置和当前启用插件的组件声明列表。
-func WidgetDeclsWithPlugins(t *Theme, pluginWidgets []plugin.WidgetDecl) []WidgetDecl {
+func WidgetDeclsWithPlugins(t *Theme, pluginWidgets []WidgetDecl) []WidgetDecl {
 	decls := WidgetDeclsWithBuiltins(t)
 	for _, w := range pluginWidgets {
 		if w.ID == "" {
 			continue
 		}
-		pluginID := pluginIDFromSource(w.Source)
-		decls = append(decls, WidgetDecl{
-			ID:       w.ID,
-			Label:    w.Label,
-			Options:  pluginOptionsToThemeOptions(w.Options),
-			Source:   WidgetSourcePlugin,
-			PluginID: pluginID,
-		})
+		w.Source = WidgetSourcePlugin
+		decls = append(decls, w)
 	}
 	return normalizeWidgetDecls(decls)
-}
-
-func pluginOptionsToThemeOptions(options []plugin.OptionDecl) []OptionDecl {
-	if len(options) == 0 {
-		return nil
-	}
-	out := make([]OptionDecl, 0, len(options))
-	for _, opt := range options {
-		out = append(out, OptionDecl{
-			ID:          opt.ID,
-			Type:        opt.Type,
-			Label:       opt.Label,
-			Description: opt.Description,
-			Default:     opt.Default,
-			Min:         opt.Min,
-			Max:         opt.Max,
-			Options:     pluginSelectOptionsToThemeOptions(opt.Options),
-		})
-	}
-	return out
-}
-
-func pluginSelectOptionsToThemeOptions(options []plugin.SelectOpt) []SelectOpt {
-	if len(options) == 0 {
-		return nil
-	}
-	out := make([]SelectOpt, 0, len(options))
-	for _, opt := range options {
-		out = append(out, SelectOpt{Value: opt.Value, Label: opt.Label})
-	}
-	return out
 }
 
 // WidgetInfo 渲染时使用的组件信息。
@@ -204,24 +256,14 @@ func widgetsInAreaFromDecls(t *Theme, area string, decls []WidgetDecl) map[strin
 		return nil
 	}
 	available := make(map[string]WidgetDecl)
-	areaDeclared := false
-	if _, ok := t.WidgetAreas[area]; ok || area == "" {
-		areaDeclared = true
+	if _, ok := t.WidgetAreas[area]; !ok && area != "" {
+		return available
 	}
 	for _, w := range decls {
 		if w.ID == "" {
 			continue
 		}
-		switch w.Source {
-		case WidgetSourceTheme:
-			if w.Area == area {
-				available[widgetDeclKey(w)] = w
-			}
-		case WidgetSourceBuiltin, WidgetSourcePlugin:
-			if areaDeclared {
-				available[widgetDeclKey(w)] = w
-			}
-		}
+		available[widgetDeclKey(w)] = w
 	}
 	return available
 }
@@ -300,11 +342,7 @@ func normalizeWidgetDecls(decls []WidgetDecl) []WidgetDecl {
 		if w.ID == "" {
 			continue
 		}
-		rawSource := w.Source
 		w.Source = normalizeWidgetSource(w.Source)
-		if w.Source == WidgetSourcePlugin && w.PluginID == "" {
-			w.PluginID = pluginIDFromSource(rawSource)
-		}
 		key := widgetDeclKey(w)
 		if seen[key] {
 			continue
@@ -349,13 +387,6 @@ func widgetConfigKey(source, id string) string {
 		}
 	}
 	return normalizeWidgetSource(source) + ":" + id
-}
-
-func widgetConfigSource(w WidgetDecl) string {
-	if w.Source == WidgetSourcePlugin && w.PluginID != "" {
-		return "plugin:" + w.PluginID
-	}
-	return w.Source
 }
 
 func floatPtr(v float64) *float64 {

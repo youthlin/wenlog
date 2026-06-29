@@ -35,6 +35,25 @@ type CompileOptions struct {
 	RegisterArgs []any
 }
 
+// CompileFromDir 从目录中查找并编译 functions 脚本，返回解释器实例和源码内容。
+// 如果目录中没有 functions 文件，返回 nil, "", nil。
+func CompileFromDir(dir string, options CompileOptions) (*interp.Interpreter, string, error) {
+	path := FindFunctionsPath(dir)
+	if path == "" {
+		return nil, "", nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, "", errors.Wrapf(err, "读取%s函数文件失败: %s", options.Subject, path)
+	}
+	source := string(data)
+	i, err := CompileAndRegister(source, options)
+	if err != nil {
+		return nil, "", err
+	}
+	return i, source, nil
+}
+
 // CompileAndRegister 编译脚本源码，并调用脚本包中的 Register 函数。
 func CompileAndRegister(source string, options CompileOptions) (*interp.Interpreter, error) {
 	subject := options.Subject

@@ -27,12 +27,16 @@ func sayingItems(api *hook.API, args hook.Args) any {
 	if author == nil {
 		return nil
 	}
-	comments := api.SayingComments(postID, count)
+	comments := api.CommentsByPost(postID)
 	if len(comments) == 0 {
 		return nil
 	}
+	// 只取博主本人的评论（参照 SayingComments 逻辑）
 	items := make([]SayingItem, 0, len(comments))
 	for _, c := range comments {
+		if c.UserID == nil || *c.UserID != post.AuthorID {
+			continue
+		}
 		items = append(items, SayingItem{
 			CommentURL:  api.CommentURL(post, c),
 			AuthorURL:   c.URL,
@@ -40,6 +44,9 @@ func sayingItems(api *hook.API, args hook.Args) any {
 			AuthorName:  author.DisplayName,
 			AuthorEmail: author.Email,
 		})
+		if len(items) >= count {
+			break
+		}
 	}
 	return items
 }

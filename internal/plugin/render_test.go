@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	root "github.com/youthlin/blog/hook"
+	"github.com/youthlin/blog/hook"
 )
 
 func TestRenderWidgetUsesActionFirst(t *testing.T) {
@@ -18,7 +18,7 @@ func TestRenderWidgetUsesActionFirst(t *testing.T) {
 			return
 		}
 		out, _ := args[0].(*strings.Builder)
-		renderCtx, _ := args[1].(root.WidgetRenderContext)
+		renderCtx, _ := args[1].(hook.WidgetRenderContext)
 		if out == nil || renderCtx.PluginID != "demo" || renderCtx.WidgetID != "hello" {
 			return
 		}
@@ -61,11 +61,12 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(`{{define "widget_hello"}}<section>{{pluginData "greeting" "name" (option "name")}}</section>{{end}}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(
+		`{{define "widget_hello"}}<section>{{hookInvoke "greeting" "name" (pluginOption "name")}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	api := root.New(nil, nil, "plugin_demo")
-	api.RegisterFunc("greeting", func(args root.Args) any {
+	api := hook.New(nil, nil, "plugin_demo")
+	api.RegisterFunc("greeting", func(args hook.Args) any {
 		return "Hello, " + args.String("name", "")
 	})
 	m := &Manager{
@@ -76,15 +77,15 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 
 	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"name": "Plugin"}, nil)
 	if !ok || html != template.HTML("<section>Hello, Plugin</section>") {
-		t.Fatalf("RenderWidget(pluginData)=(%q,%v), want invoked html", html, ok)
+		t.Fatalf("RenderWidget=(%q,%v), want invoked html", html, ok)
 	}
 }
 
 func TestRegisterFuncSupportsCommonSignatures(t *testing.T) {
-	api := root.New(nil, nil, "plugin_demo")
-	api.RegisterFunc("args", func(args root.Args) any { return args.Int("n", 0) + 1 })
-	api.RegisterFunc("api_args", func(api *root.API, args root.Args) any { return api.Snippet(args.String("text", ""), 2) })
-	api.RegisterFunc("legacy", func(api *root.API, args map[string]any) any { return args["name"] })
+	api := hook.New(nil, nil, "plugin_demo")
+	api.RegisterFunc("args", func(args hook.Args) any { return args.Int("n", 0) + 1 })
+	api.RegisterFunc("api_args", func(api *hook.API, args hook.Args) any { return api.Snippet(args.String("text", ""), 2) })
+	api.RegisterFunc("legacy", func(api *hook.API, args map[string]any) any { return args["name"] })
 
 	ctx := context.Background()
 	if got := api.InvokeFunc(ctx, "args", map[string]any{"n": "2"}); got != 3 {

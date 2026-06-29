@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/internal/plugin"
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/render"
 	"github.com/youthlin/blog/internal/store"
 )
@@ -49,7 +49,7 @@ func (m *Manager) templateOption(ctx *render.RequestContext, optionID string) st
 	if t == nil {
 		return ""
 	}
-	return GetOptionByID(func(key string) (string, error) {
+	return hook.GetOptionByID(func(key string) (string, error) {
 		return m.renderSetting(ctx, key), nil
 	}, t.Name, t.Options, optionID)
 }
@@ -62,7 +62,7 @@ func (m *Manager) WidgetDecls(ctx context.Context, t *Theme, area string) []Widg
 	return WidgetDeclsWithPlugins(t, m.pluginWidgetDecls(ctx))
 }
 
-func (m *Manager) pluginWidgetDecls(ctx context.Context) []plugin.WidgetDecl {
+func (m *Manager) pluginWidgetDecls(ctx context.Context) []WidgetDecl {
 	if m == nil {
 		return nil
 	}
@@ -75,7 +75,7 @@ func (m *Manager) pluginWidgetDecls(ctx context.Context) []plugin.WidgetDecl {
 	return provider(ctx)
 }
 
-func (m *Manager) hookRegistry() *plugin.Registry {
+func (m *Manager) hookRegistry() HookRegistry {
 	if m == nil {
 		return nil
 	}
@@ -152,7 +152,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 2. 编译 functions.go（如果存在）
 	api := NewAPI(nil)             // loader 在模板渲染时按请求注入
 	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
-	api.SetHookRegistry(m.hooks, plugin.Source{Type: plugin.SourceTheme, ID: t.Name})
+	api.SetHookRegistry(m.hooks, HookSource{Type: "theme", ID: t.Name})
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")

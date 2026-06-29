@@ -429,15 +429,3 @@ func (s *Store) RecentCommentItems(ctx context.Context, n, pageSize int) []Comme
 	comments := s.RecentComments(ctx, n)
 	return s.buildCommentWidgetItems(ctx, comments, pageSize)
 }
-func (s *Store) SayingComments(ctx context.Context, postID uint, n int) []model.Comment {
-	var cs []model.Comment
-	s.DB(ctx).Where("post_id = ? AND status = ? AND user_id = (?)",
-		postID, model.CommentApproved,
-		s.DB(ctx).Model(&model.Post{}).Select("author_id").Where("id = ?", postID)).
-		Order("created_at DESC").Limit(n).Find(&cs)
-	return cs
-}
-func (s *Store) SayingCommentItems(ctx context.Context, postID uint, n, pageSize int) []CommentWidgetItem {
-	comments := s.SayingComments(ctx, postID, n)
-	return s.buildCommentWidgetItems(ctx, comments, pageSize)
-}

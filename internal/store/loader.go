@@ -181,6 +181,8 @@ func (s *Store) LoadAll(ctx context.Context) (*DataLoader, error) {
 	// 构建预计算数据
 	l.buildMenuPages()
 	l.buildArchiveMonths()
+	l.populateReplyToAuthors()
+	l.populateCommenterRoles()
 
 	return l, nil
 }
@@ -220,6 +222,39 @@ func (l *DataLoader) buildArchiveMonths() {
 		return result[i].Month > result[j].Month
 	})
 	l.archiveMonths = result
+}
+
+// populateReplyToAuthors 从内存填充评论的 ReplyToAuthor 字段。
+func (l *DataLoader) populateReplyToAuthors() {
+	for _, c := range l.Comments {
+		if c.ReplyToID == 0 || c.ReplyToID == c.ParentID {
+			continue
+		}
+		if target, ok := l.Comments[c.ReplyToID]; ok && target != nil {
+			c.ReplyToAuthor = target.Author
+		}
+	}
+}
+
+// populateCommenterRoles 从内存填充评论的 CommenterRole 字段。
+func (l *DataLoader) populateCommenterRoles() {
+	for _, c := range l.Comments {
+		if c.UserID == nil {
+			continue
+		}
+		uid := *c.UserID
+		p := l.Posts[c.PostID]
+		if p == nil {
+			continue
+		}
+		if uid == p.AuthorID {
+			c.CommenterRole = "author"
+		} else if u, ok := l.Users[uid]; ok && u != nil && u.Role == model.RoleAdmin {
+			c.CommenterRole = "admin"
+		} else {
+			c.CommenterRole = "user"
+		}
+	}
 }
 
 // InvalidateCache 使缓存失效。写操作（发布/编辑/删除文章、审核评论、修改设置等）后调用。
@@ -367,31 +402,6 @@ func (l *DataLoader) approvedCommentsSorted() []*model.Comment {
 		return result[i].CreatedAt.After(result[j].CreatedAt)
 	})
 	return result
-}
-
-// SayingComments 返回指定文章下博主本人的评论。
-func (l *DataLoader) SayingComments(postID uint, n int) []model.Comment {
-	p, ok := l.Posts[postID]
-	if !ok {
-		return nil
-	}
-	authorID := p.AuthorID
-	commentIDs := l.commentsByPost[postID]
-	var result []model.Comment
-	for _, cid := range commentIDs {
-		c := l.Comments[cid]
-		if c == nil || c.UserID == nil || *c.UserID != authorID {
-			continue
-		}
-		result = append(result, *c)
-	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].CreatedAt.After(result[j].CreatedAt)
-	})
-	if n > len(result) {
-		n = len(result)
-	}
-	return result[:n]
 }
 
 // AllCategories 返回全部分类（按名称排序）。

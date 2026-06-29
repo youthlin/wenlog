@@ -7,6 +7,7 @@ import (
 	"html"
 	"html/template"
 	"io/fs"
+	"maps"
 	"reflect"
 	"strconv"
 	"strings"
@@ -23,8 +24,21 @@ import (
 const pattern = "*.gohtml"
 
 func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
-	// 注入到模板中的函数
-	funcs := template.FuncMap{
+	funcs := CommonFuncMap()
+	maps.Copy(funcs, markTplFuncMap())
+	tpl, err := template.New("").
+		Funcs(funcs).
+		ParseFS(fsys, pattern)
+	if err != nil {
+		return nil, errors.Wrap(err, "模板解析失败")
+	}
+	return tpl, nil
+}
+
+// CommonFuncMap 返回主题和插件模板共用的基础模板函数。
+// 插件模板解析时复用此函数集，确保插件模板也能使用 postURL、categoryURL 等函数。
+func CommonFuncMap() template.FuncMap {
+	return template.FuncMap{
 		"postURL":          postURL,
 		"categoryURL":      permalink.Category,
 		"tagURL":           permalink.Tag,
@@ -44,41 +58,13 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 		"sub":              func(a, b int) int { return a - b },
 		"seq":              seq,
 		"toInt":            func(s string) int { n, _ := strconv.Atoi(s); return n },
-		// default 与内置 or 接近，但语义更明确：仅在值为空时使用默认值。
 		"default": func(def, val any) any {
 			if ok, _ := template.IsTrue(val); !ok {
 				return def
 			}
 			return val
 		},
-		// 扩展函数在每次 Renderer.Render 时会绑定到请求级 RequestContext。
-		// 这里提供占位函数，仅用于模板解析阶段识别函数名。
-		tplFuncHookInvoke:     func(name string, args ...any) any { return nil },
-		tplFuncThemeData:      func(name string, args ...any) any { return nil },
-		tplFuncThemeOption:    func(optionID string) string { return "" },
-		tplFuncOption:         func(optionID string) string { return "" },
-		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return "" },
-		tplFuncWidgets:        func(area string, data any) template.HTML { return "" },
-		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return "" },
-		tplFuncWidgetOption:   func(key string) string { return "" },
-		tplFuncSlot:           func(name string, data any) template.HTML { return "" },
-		tplFuncPostTitle:      func(data any) template.HTML { return "" },
-		tplFuncPostExcerpt:    func(post any) template.HTML { return "" },
-		tplFuncPostContent:    func(post any) template.HTML { return "" },
-		tplFuncPostTags:       func(post any) template.HTML { return "" },
-		tplFuncPostNavigation: func(data any, classes ...string) template.HTML { return "" },
-		tplFuncBodyClass:      func(data any) string { return "" },
-		tplFuncPostClass:      func(post any, extra ...string) string { return "" },
-		tplFuncCommentClass:   func(comment any, extra ...string) string { return "" },
-		tplFuncCommentContent: func(comment any) template.HTML { return "" },
 	}
-	tpl, err := template.New("").
-		Funcs(funcs).
-		ParseFS(fsys, pattern)
-	if err != nil {
-		return nil, errors.Wrap(err, "模板解析失败")
-	}
-	return tpl, nil
 }
 
 // postURL 返回固定链接

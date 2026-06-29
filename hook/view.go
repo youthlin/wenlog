@@ -72,12 +72,19 @@ type CommentView struct {
 	ID        uint
 	PostID    uint
 	ParentID  uint
+	ReplyToID uint
+	UserID    *uint
 	Author    string
 	Email     string
 	URL       string
+	IP        string
 	Content   string
-	Status    string
-	CreatedAt time.Time
+	// Status: approved / pending / spam / deleted。
+	Status        string
+	NotifyOnReply bool
+	CreatedAt     time.Time
+	ReplyToAuthor string
+	CommenterRole string
 }
 
 // UserView 是扩展 API 暴露的用户只读视图。
