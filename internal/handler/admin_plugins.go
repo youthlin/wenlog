@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -9,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/plugin"
 )
@@ -223,12 +221,8 @@ func (h *Admin) reloadPluginRuntime(c *gin.Context) error {
 	if err := h.pluginManager.LoadEnabledFunctions(c); err != nil {
 		return err
 	}
-	hookAdapter := &pluginHookAdapter{registry: h.pluginManager.Hooks()}
-	if h.renderer != nil {
-		h.renderer.SetHookProvider(hookAdapter)
-	}
+	// SetHookRegistry 已在 init 时传入了 getter，LoadTheme 内部会通过 getter 拿到新 Registry。
 	if h.themeManager != nil {
-		h.themeManager.SetHookRegistry(hookAdapter)
 		if err := h.themeManager.LoadTheme(c, ""); err != nil {
 			return err
 		}
@@ -343,41 +337,4 @@ func (h *Admin) redirectPlugins(c *gin.Context, message, errMsg string) {
 
 func pluginActionWantsJSON(c *gin.Context) bool {
 	return strings.Contains(c.GetHeader("Accept"), "application/json") || c.GetHeader("X-Requested-With") == "fetch"
-}
-
-// pluginHookAdapter 将 *plugin.Registry 适配为 theme.HookRegistry 接口。
-type pluginHookAdapter struct {
-	registry *plugin.Registry
-}
-
-func (a *pluginHookAdapter) AddAction(name string, fn any, source hook.Source, priority ...int) {
-	a.registry.AddAction(name, fn, source, priority...)
-}
-
-func (a *pluginHookAdapter) AddFilter(name string, fn any, source hook.Source, priority ...int) {
-	a.registry.AddFilter(name, fn, source, priority...)
-}
-
-func (a *pluginHookAdapter) RemoveAction(name string, source hook.Source) int {
-	return a.registry.RemoveAction(name, source)
-}
-
-func (a *pluginHookAdapter) RemoveFilter(name string, source hook.Source) int {
-	return a.registry.RemoveFilter(name, source)
-}
-
-func (a *pluginHookAdapter) DoAction(ctx context.Context, name string, args ...any) {
-	a.registry.DoAction(ctx, name, args...)
-}
-
-func (a *pluginHookAdapter) ApplyFilters(ctx context.Context, name string, value any, args ...any) any {
-	return a.registry.ApplyFilters(ctx, name, value, args...)
-}
-
-func (a *pluginHookAdapter) DidAction(name string) int {
-	return a.registry.DidAction(name)
-}
-
-func (a *pluginHookAdapter) DoingAction(ctx context.Context, name string) bool {
-	return a.registry.DoingAction(ctx, name)
 }

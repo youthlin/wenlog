@@ -53,8 +53,8 @@ func (w *pluginWidget) Render(ctx context.Context, tpl *template.Template, insta
 }
 
 // RegisterPluginWidgets 将已启用插件的组件注册到组件注册表。
-func (m *Manager) RegisterPluginWidgets(ctx context.Context, registry interface{ Register(hook.Widget) }) {
-	if m == nil || registry == nil {
+func (m *Manager) RegisterPluginWidgets(ctx context.Context, widgetRegistry *hook.WidgetRegistry) {
+	if m == nil || widgetRegistry == nil {
 		return
 	}
 	for _, p := range m.Enabled(ctx) {
@@ -65,13 +65,14 @@ func (m *Manager) RegisterPluginWidgets(ctx context.Context, registry interface{
 			d := decl
 			d.Source = "plugin"
 			d.PluginID = p.ID
-			registry.Register(&pluginWidget{m: m, decl: d, pluginID: p.ID})
+			w := &pluginWidget{m: m, decl: d, pluginID: p.ID}
+			widgetRegistry.Register(w)
 		}
 	}
 }
 
 func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
-	hooks := m.Hooks()
+	hooks := m.GetRegistry()
 	if hooks == nil {
 		return "", false
 	}

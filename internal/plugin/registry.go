@@ -49,6 +49,8 @@ type ActionFunc = func(ctx context.Context, args ...any)
 // filter 接收当前值并返回修改后的新值。
 type FilterFunc = func(ctx context.Context, value any, args ...any) any
 
+var _ hook.Registry = (*Registry)(nil)
+
 // Registry 保存所有 action/filter 处理器。
 type Registry struct {
 	mu         sync.RWMutex
@@ -67,16 +69,6 @@ func NewRegistry() *Registry {
 		didActions: make(map[string]int),
 		log:        slog.Default().With("component", "plugin-hooks"),
 	}
-}
-
-// SetLogger 设置 hook 执行异常时使用的日志器。
-func (r *Registry) SetLogger(log *slog.Logger) {
-	if r == nil || log == nil {
-		return
-	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.log = log
 }
 
 // AddAction 注册 action 处理器。

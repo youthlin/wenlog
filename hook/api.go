@@ -212,6 +212,7 @@ type WidgetDecl struct {
 	Source   string       `yaml:"-" json:"source,omitempty"`
 	PluginID string       `yaml:"-" json:"plugin_id,omitempty"`
 }
+type WidgetDeclProvider = func(ctx context.Context) []WidgetDecl
 
 // WidgetInstance 表示一个组件实例的运行时状态，包含实例 ID 和配置值。
 // 同一组件类型可以在同一区域添加多次，每次有独立的 InstanceID 和 Settings。
@@ -220,6 +221,10 @@ type WidgetInstance struct {
 	WidgetID   string            // 组件类型 ID
 	Settings   map[string]string // 实例级配置值
 }
+
+// WidgetResolver 根据来源和 ID 查找组件实现。
+// source 为 "builtin" / "theme" / "plugin"，pluginID 仅在 source="plugin" 时有值
+type WidgetResolver = func(source, id, pluginID string) Widget
 
 // Widget 是所有组件（内置/主题/插件）的统一接口。
 // 参照 WordPress WP_Widget 的模板方法模式：核心管理生命周期和存储，

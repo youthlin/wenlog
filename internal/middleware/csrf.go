@@ -129,7 +129,8 @@ func sameOriginRequest(r *http.Request) bool {
 	if err != nil || u.Host == "" {
 		return false
 	}
-	return strings.EqualFold(RequestScheme(r), u.Scheme) && strings.EqualFold(RequestHost(r), u.Host)
+	return strings.EqualFold(RequestScheme(r), u.Scheme) &&
+		strings.EqualFold(RequestHost(r), u.Host)
 }
 
 func RequestScheme(r *http.Request) string {

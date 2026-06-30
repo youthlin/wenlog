@@ -1,7 +1,6 @@
 package render
 
 import (
-	"context"
 	"html/template"
 	"strings"
 	"sync"
@@ -25,24 +24,8 @@ type TemplateProviders struct {
 	HookInvoke     func(ctx *RequestContext, name string, args ...any) any
 	ThemeOption    func(ctx *RequestContext, optionID string) string
 	ThemeWidgets   func(ctx *RequestContext, area string) []WidgetInfo
-	Hooks          hookProvider
-	PluginWidget   PluginWidgetRenderer // Deprecated: 使用 WidgetResolver
-	WidgetResolver WidgetResolver
-}
-
-// WidgetResolver 根据来源和 ID 查找组件实现。
-// source 为 "builtin" / "theme" / "plugin"，pluginID 仅在 source="plugin" 时有值。
-type WidgetResolver func(source, id, pluginID string) hook.Widget
-
-type hookProvider interface {
-	DoAction(ctx context.Context, name string, args ...any)
-	ApplyFilters(ctx context.Context, name string, value any, args ...any) any
-}
-
-// PluginWidgetRenderer 是插件组件渲染能力的接口（已废弃，保留用于兼容）。
-// 新代码应使用 WidgetResolver。
-type PluginWidgetRenderer interface {
-	RenderWidget(ctx context.Context, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool)
+	Hooks          hook.ProviderGetter
+	WidgetResolver hook.WidgetResolver
 }
 
 func (tr *TemplateRuntime) current() TemplateProviders {
@@ -88,48 +71,15 @@ func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area str
 	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.ThemeWidgets = fn })
 }
 
-// SetHookProvider 设置 Hook Registry，用于 slot/postContent/commentContent 等模板函数。
-func (r *Renderer) SetHookProvider(provider hookProvider) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.Hooks = provider })
-}
-
-// SetPluginWidgetProvider 设置插件组件渲染器（兼容旧接口，同时设置 WidgetResolver）。
-func (r *Renderer) SetPluginWidgetProvider(renderer PluginWidgetRenderer) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) {
-		providers.PluginWidget = renderer
-		if renderer != nil {
-			providers.WidgetResolver = func(source, id, pluginID string) hook.Widget {
-				if source != "plugin" {
-					return nil
-				}
-				return &pluginWidgetAdapter{renderer: renderer, pluginID: pluginID, widgetID: id}
-			}
-		}
-	})
+// SetHookProvider 设置 Hook Registry getter，用于 slot/postContent/commentContent 等模板函数。
+// 传 getter 而非指针，确保插件重载后自动拿到最新 Registry。
+func (r *Renderer) SetHookProvider(getter hook.ProviderGetter) {
+	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.Hooks = getter })
 }
 
 // SetWidgetResolver 设置统一的组件查找器。
-func (r *Renderer) SetWidgetResolver(resolver WidgetResolver) {
+func (r *Renderer) SetWidgetResolver(resolver hook.WidgetResolver) {
 	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.WidgetResolver = resolver })
-}
-
-// pluginWidgetAdapter 将旧的 PluginWidgetRenderer 适配为 hook.Widget 接口。
-type pluginWidgetAdapter struct {
-	renderer PluginWidgetRenderer
-	pluginID string
-	widgetID string
-}
-
-func (a *pluginWidgetAdapter) Meta() hook.WidgetDecl {
-	return hook.WidgetDecl{ID: a.widgetID, Source: "plugin", PluginID: a.pluginID}
-}
-
-func (a *pluginWidgetAdapter) Render(ctx context.Context, tpl *template.Template, instance hook.WidgetInstance, data any) (template.HTML, error) {
-	html, ok := a.renderer.RenderWidget(ctx, a.pluginID, a.widgetID, instance.Settings, data)
-	if !ok {
-		return "", nil
-	}
-	return html, nil
 }
 
 // slot 触发一个模板 slot action，并收集主题/插件写入的 HTML。
@@ -157,6 +107,10 @@ func hookDataForSlot(name string, data any) any {
 	}
 }
 
-func hooks(runtime *TemplateRuntime) hookProvider {
-	return runtime.current().Hooks
+func hooks(runtime *TemplateRuntime) hook.Provider {
+	getter := runtime.current().Hooks
+	if getter == nil {
+		return nil
+	}
+	return getter()
 }

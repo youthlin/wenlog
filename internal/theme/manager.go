@@ -30,12 +30,12 @@ type Manager struct {
 	themeOpMu     sync.Mutex
 	mu            sync.RWMutex
 	renderer      *render.Renderer
-	hooks         HookRegistry
+	hooks         func() hook.Registry
 	log           *slog.Logger
 	currentScript *FunctionsScript
 	currentAPI    *API
 	recoveryInfo  *RecoveryInfo
-	pluginWidgets func(ctx context.Context) []WidgetDecl
+	pluginWidgets hook.WidgetDeclProvider
 }
 
 // NewManager 创建主题管理器。themesDir 是主题存放目录（如 "themes"）。
@@ -53,24 +53,25 @@ func NewManager(themesDir string, store hook.SettingStore, renderer *render.Rend
 	return m, nil
 }
 
-// SetHookRegistry 设置当前主题 functions.goyaegi 注册 AddAction/AddFilter 使用的 registry。
-func (m *Manager) SetHookRegistry(hooks HookRegistry) {
+// SetHookRegistry 设置 Hook Registry 的获取函数。
+// 传入 getter 而非指针，确保插件重载后总能拿到当前 Registry。
+func (m *Manager) SetHookRegistry(getter func() hook.Registry) {
 	if m == nil {
 		return
 	}
 	m.runtimeMu.Lock()
 	defer m.runtimeMu.Unlock()
-	m.hooks = hooks
+	m.hooks = getter
 }
 
 // SetPluginWidgetsProvider 设置插件小组件声明提供者。
-func (m *Manager) SetPluginWidgetsProvider(fn func(ctx context.Context) []WidgetDecl) {
+func (m *Manager) SetPluginWidgetsProvider(provider hook.WidgetDeclProvider) {
 	if m == nil {
 		return
 	}
 	m.runtimeMu.Lock()
 	defer m.runtimeMu.Unlock()
-	m.pluginWidgets = fn
+	m.pluginWidgets = provider
 }
 
 // scan 扫描 themesDir 下所有子目录，加载 theme.yaml。

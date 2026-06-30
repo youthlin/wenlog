@@ -31,7 +31,7 @@ func (m *Manager) BindTemplateFunctions() {
 	m.renderer.ConfigureTemplateRuntime(render.TemplateProviders{
 		ThemeWidgets: m.templateWidgets,
 		ThemeOption:  m.templateOption,
-		Hooks:        m.hookRegistry(),
+		Hooks:        m.getHookProvider,
 	})
 }
 
@@ -75,13 +75,13 @@ func (m *Manager) pluginWidgetDecls(ctx context.Context) []WidgetDecl {
 	return provider(ctx)
 }
 
-func (m *Manager) hookRegistry() HookRegistry {
+func (m *Manager) getHookProvider() hook.Provider {
 	if m == nil {
 		return nil
 	}
 	m.runtimeMu.Lock()
 	defer m.runtimeMu.Unlock()
-	return m.hooks
+	return m.hooks()
 }
 
 func renderContext(ctx *render.RequestContext) context.Context {
@@ -152,7 +152,12 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 2. 编译 functions.go（如果存在）
 	api := NewAPI(nil)             // loader 在模板渲染时按请求注入
 	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
-	api.SetHookRegistry(m.hooks, HookSource{Type: "theme", ID: t.Name})
+	// 直接读取 m.hooks 而非调用 hookRegistry()，因为 LoadTheme 已持有 runtimeMu。
+	var reg hook.Registry
+	if m.hooks != nil {
+		reg = m.hooks()
+	}
+	api.SetHookRegistry(reg, hook.Source{Type: "theme", ID: t.Name})
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")
@@ -169,7 +174,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 注册 hookInvoke 模板函数
 	if m.renderer != nil {
 		m.renderer.SetHookInvokeProvider(hookInvokeFunc(script, api))
-		m.renderer.SetHookProvider(m.hooks)
+		m.renderer.SetHookProvider(m.getHookProvider)
 	}
 
 	if m.log != nil {

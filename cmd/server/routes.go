@@ -8,7 +8,6 @@ import (
 	"github.com/youthlin/blog/internal/handler"
 	"github.com/youthlin/blog/internal/middleware"
 	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/store"
 )
 
 // registerPublicRoutes 注册前台路由。
@@ -38,7 +37,8 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 }
 
 // registerAuthRoutes 注册认证路由(/auth/*),无需登录。
-func registerAuthRoutes(r *gin.Engine, auth *handler.Auth, limiter middleware.RateLimiter) {
+func registerAuthRoutes(r *gin.Engine, auth *handler.Auth) {
+	limiter := middleware.NewMemoryRateLimiter()
 	loginLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
 		Window:  15 * time.Minute,
 		Max:     5,
@@ -57,39 +57,41 @@ func registerAuthRoutes(r *gin.Engine, auth *handler.Auth, limiter middleware.Ra
 
 	r.GET("/auth/login", auth.LoginForm)
 	r.POST("/auth/login", loginLimiter, auth.Login)
+
 	r.GET("/auth/register", auth.RegisterForm)
 	r.POST("/auth/register", registerLimiter, auth.Register)
 	r.GET("/auth/register/verify", auth.RegisterVerifyForm)
 	r.POST("/auth/register/verify", auth.RegisterVerify)
+
 	r.GET("/auth/forgot-password", auth.ForgotPasswordForm)
 	r.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
+
 	r.GET("/auth/reset-password", auth.ResetPasswordForm)
 	r.POST("/auth/reset-password", auth.ResetPassword)
+
+	r.POST("/auth/logout", middleware.AuthRequired(auth.Store()), middleware.CSRFMiddleware(), auth.Logout)
+
 }
 
 // registerAdminRoutes 注册后台路由(/admin/*),除登录页外均需认证。
-func registerAdminRoutes(r *gin.Engine, adm *handler.Admin, auth *handler.Auth, st *store.Store) {
-	// 所有角色可访问(仅需登录)。
+func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
+	st := adm.Store()
+
+	// 所有角色可访问(仅需登录): 欢迎页 + 个人资料
 	g := r.Group("/admin")
 	g.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
-	g.GET("/", adm.Dashboard) // 欢迎页
-
-	r.POST("/auth/logout", middleware.AuthRequired(st), middleware.CSRFMiddleware(), auth.Logout)
-
-	// 个人资料(所有角色可访问)。
-	profileGroup := r.Group("/admin")
-	profileGroup.Use(middleware.AuthRequired(st), middleware.CSRFMiddleware())
-	profileGroup.GET("/profile", adm.ProfilePage)
-	profileGroup.POST("/profile", adm.SaveProfileSettings)
-	profileGroup.GET("/profile/email/verify", adm.VerifyProfileEmail)
-	profileGroup.POST("/profile/password", adm.SavePasswordSettings)
-	profileGroup.GET("/my-comments", adm.ListComments)
-	profileGroup.POST("/my-comments/:id/edit", adm.EditMyComment)
-	profileGroup.POST("/my-comments/:id/delete", adm.DeleteMyComment)
-	profileGroup.GET("/export-data", adm.ExportDataPage)
-	profileGroup.POST("/export-data", adm.ExportData)
-	profileGroup.GET("/delete-account", adm.DeleteAccountPage)
-	profileGroup.POST("/delete-account", adm.DeleteAccount)
+	g.GET("/", adm.Dashboard)
+	g.GET("/profile", adm.ProfilePage)
+	g.POST("/profile", adm.SaveProfileSettings)
+	g.GET("/profile/email/verify", adm.VerifyProfileEmail)
+	g.POST("/profile/password", adm.SavePasswordSettings)
+	g.GET("/my-comments", adm.ListComments)
+	g.POST("/my-comments/:id/edit", adm.EditMyComment)
+	g.POST("/my-comments/:id/delete", adm.DeleteMyComment)
+	g.GET("/export-data", adm.ExportDataPage)
+	g.POST("/export-data", adm.ExportData)
+	g.GET("/delete-account", adm.DeleteAccountPage)
+	g.POST("/delete-account", adm.DeleteAccount)
 
 	// admin + author: 内容管理。
 	contentGroup := r.Group("/admin")

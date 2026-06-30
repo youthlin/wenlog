@@ -45,15 +45,42 @@ func NewManager(pluginsDir string, store hook.SettingStore) (*Manager, error) {
 		loadErrors: make(map[string]string),
 		log:        slog.Default().With("component", "plugin-manager"),
 	}
-	m.hooks.SetLogger(m.log)
 	if err := m.scan(); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-// Hooks 返回插件系统共享的 Hook Registry。
-func (m *Manager) Hooks() *Registry {
+// scan 扫描 pluginsDir 下所有子目录，加载 plugin.yaml。
+func (m *Manager) scan() error {
+	entries, err := os.ReadDir(m.pluginsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return errors.Wrap(err, "读取插件目录失败")
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		dir := filepath.Join(m.pluginsDir, entry.Name())
+		p, err := LoadPlugin(dir)
+		if err != nil {
+			m.log.Warn("无效插件",
+				slog.String("dir", dir),
+				slog.Any("err", err),
+			)
+			continue
+		}
+		m.plugins[p.ID] = p
+		_ = p.LoadTranslations()
+	}
+	return nil
+}
+
+// GetRegistry 返回插件系统共享的 Hook Registry。
+func (m *Manager) GetRegistry() hook.Registry {
 	if m == nil {
 		return nil
 	}
@@ -72,7 +99,6 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 	defer m.mu.Unlock()
 
 	hooks := NewRegistry()
-	hooks.SetLogger(m.log)
 	scripts := make(map[string]*FunctionsScript)
 	loadErrors := make(map[string]string)
 	ids := m.enabledIDsLocked(ctx)
@@ -119,34 +145,6 @@ func (m *Manager) EnabledWidgetDecls(ctx context.Context) []WidgetDecl {
 		}
 	}
 	return result
-}
-
-// scan 扫描 pluginsDir 下所有子目录，加载 plugin.yaml。
-func (m *Manager) scan() error {
-	entries, err := os.ReadDir(m.pluginsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return errors.Wrap(err, "读取插件目录失败")
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		dir := filepath.Join(m.pluginsDir, entry.Name())
-		p, err := LoadPlugin(dir)
-		if err != nil {
-			m.log.Warn("无效插件",
-				slog.String("dir", dir),
-				slog.Any("err", err),
-			)
-			continue
-		}
-		m.plugins[p.ID] = p
-		_ = p.LoadTranslations()
-	}
-	return nil
 }
 
 // LoadTranslations 加载所有已安装插件自带的翻译文件。
@@ -226,7 +224,6 @@ func (m *Manager) CallLifecycle(ctx context.Context, id, name string) error {
 	}
 
 	hooks := NewRegistry()
-	hooks.SetLogger(m.log)
 	tmp, err := CompileFunctions(p, hooks, m.log)
 	if err != nil {
 		return errors.Wrapf(err, "加载插件[%s]生命周期运行时失败", id)

@@ -35,6 +35,7 @@ func NewAuth(st *store.Store) *Auth {
 		log: slog.Default().With("component", "auth-handler"),
 	}
 }
+func (h *Auth) Store() *store.Store { return h.st }
 
 // base 返回认证页面通用数据。
 func (h *Auth) base(c *gin.Context, title string) gin.H {

@@ -485,35 +485,22 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 }
 
 func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
-	// 优先使用统一的 Widget 接口
-	if resolver := runtime.current().WidgetResolver; resolver != nil {
-		if w := resolver(item.Source, item.ID, item.PluginID); w != nil {
-			instance := hook.WidgetInstance{
-				InstanceID: item.InstanceID,
-				WidgetID:   item.ID,
-				Settings:   ctx.WidgetOptions,
-			}
-			html, err := w.Render(requestContext(ctx), ctx.Template, instance, data)
-			if err == nil && html != "" {
-				return html, true
-			}
-			return "", false
-		}
-	}
-	// 兼容旧路径：插件组件走 PluginWidgetRenderer
-	if item.Source == "plugin" {
-		if renderer := runtime.current().PluginWidget; renderer != nil {
-			return renderer.RenderWidget(requestContext(ctx), item.PluginID, item.ID, ctx.WidgetOptions, data)
-		}
+	resolver := runtime.current().WidgetResolver
+	if resolver == nil {
 		return "", false
 	}
-	// 兼容旧路径：内置/主题组件走模板渲染
-	if item.TemplateName == "" {
+	w := resolver(item.Source, item.ID, item.PluginID)
+	if w == nil {
 		return "", false
 	}
-	var itemHTML strings.Builder
-	if err := ctx.Template.ExecuteTemplate(&itemHTML, item.TemplateName, data); err != nil {
+	instance := hook.WidgetInstance{
+		InstanceID: item.InstanceID,
+		WidgetID:   item.ID,
+		Settings:   ctx.WidgetOptions,
+	}
+	html, err := w.Render(requestContext(ctx), ctx.Template, instance, data)
+	if err != nil || html == "" {
 		return "", false
 	}
-	return template.HTML(itemHTML.String()), true
+	return html, true
 }

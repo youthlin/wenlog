@@ -2,6 +2,8 @@ package render
 
 import (
 	"bytes"
+	"context"
+	"html/template"
 	"io"
 	"io/fs"
 	"net/http/httptest"
@@ -11,6 +13,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/web"
 )
@@ -163,7 +166,18 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	r.SetThemeWidgetsProvider(func(ctx *RequestContext, area string) []WidgetInfo {
 		loader, _ := ctx.ThemeLoader.(string)
 		theme, _ := ctx.Theme.(string)
-		return []WidgetInfo{{TemplateName: "widget_alpha", Options: map[string]string{"name": loader + "/" + theme}}}
+		return []WidgetInfo{{
+			Source:       "theme",
+			ID:           "alpha",
+			TemplateName: "widget_alpha",
+			Options:      map[string]string{"name": loader + "/" + theme},
+		}}
+	})
+	r.SetWidgetResolver(func(source, id, pluginID string) hook.Widget {
+		if source == "theme" && id == "alpha" {
+			return &testTemplateWidget{id: id}
+		}
+		return nil
 	})
 	t.Cleanup(func() {
 		r.SetHookInvokeProvider(nil)
@@ -282,6 +296,24 @@ func TestRenderMenuRendersChildrenAndCustomURL(t *testing.T) {
 type testTranslator struct{}
 
 func (testTranslator) T(message string, args ...any) string { return message }
+
+// testTemplateWidget 是测试用的模板型组件，实现 hook.Widget 接口。
+type testTemplateWidget struct {
+	id string
+}
+
+func (w *testTemplateWidget) Meta() hook.WidgetDecl {
+	return hook.WidgetDecl{ID: w.id, Source: "theme"}
+}
+
+func (w *testTemplateWidget) Render(ctx context.Context, tpl *template.Template, instance hook.WidgetInstance, data any) (template.HTML, error) {
+	var buf strings.Builder
+	name := "widget_" + w.id
+	if err := tpl.ExecuteTemplate(&buf, name, data); err != nil {
+		return "", err
+	}
+	return template.HTML(buf.String()), nil
+}
 
 func execTemplate(t *testing.T, tpl interface {
 	ExecuteTemplate(wr io.Writer, name string, data any) error

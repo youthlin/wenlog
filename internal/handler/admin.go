@@ -68,6 +68,8 @@ func parseUintParam(s string) (uint, error) {
 	return uint(id), nil
 }
 
+func (h *Admin) Store() *store.Store { return h.st }
+
 func (h *Admin) base(c *gin.Context, title string) gin.H {
 	currentPostPermalink := syncPostPermalink(c, h.st)
 	// 批量查询设置，避免多次 GetSetting

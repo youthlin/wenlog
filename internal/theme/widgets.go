@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/render"
@@ -88,55 +87,16 @@ func (w *TemplateWidget) Render(ctx context.Context, tpl *template.Template, ins
 	return template.HTML(buf.String()), nil
 }
 
-// WidgetRegistry 管理所有已注册的组件实现，按 source:id 或 plugin:pluginID:id 索引。
-type WidgetRegistry struct {
-	mu      sync.RWMutex
-	widgets map[string]hook.Widget
-}
-
-// NewWidgetRegistry 创建组件注册表。
-func NewWidgetRegistry() *WidgetRegistry {
-	return &WidgetRegistry{widgets: make(map[string]hook.Widget)}
-}
-
-// Register 注册一个组件实现。
-func (r *WidgetRegistry) Register(w hook.Widget) {
-	if r == nil || w == nil {
-		return
-	}
-	decl := w.Meta()
-	key := widgetDeclKey(decl)
-	r.mu.Lock()
-	r.widgets[key] = w
-	r.mu.Unlock()
-}
-
-// Get 按来源和 ID 查找组件实现。
-func (r *WidgetRegistry) Get(source, id, pluginID string) hook.Widget {
-	if r == nil {
-		return nil
-	}
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	if source == WidgetSourcePlugin && pluginID != "" {
-		if w, ok := r.widgets[WidgetSourcePlugin+":"+pluginID+":"+id]; ok {
-			return w
-		}
-	}
-	return r.widgets[source+":"+id]
-}
-
 // RegisterBuiltins 注册所有内置组件到注册表。
-func (r *WidgetRegistry) RegisterBuiltins() {
+func RegisterBuiltins(r *hook.WidgetRegistry) {
 	for _, decl := range BuiltinWidgetDecls {
-		d := decl
-		d.Source = WidgetSourceBuiltin
-		r.Register(NewTemplateWidget(d))
+		decl.Source = WidgetSourceBuiltin
+		r.Register(NewTemplateWidget(decl))
 	}
 }
 
 // RegisterThemeWidgets 注册主题声明的组件到注册表。
-func (r *WidgetRegistry) RegisterThemeWidgets(t *Theme) {
+func RegisterThemeWidgets(widgetRegistry *hook.WidgetRegistry, t *Theme) {
 	if t == nil {
 		return
 	}
@@ -144,9 +104,9 @@ func (r *WidgetRegistry) RegisterThemeWidgets(t *Theme) {
 		if decl.ID == "" {
 			continue
 		}
-		d := decl
-		d.Source = WidgetSourceTheme
-		r.Register(NewTemplateWidget(d))
+		decl.Source = WidgetSourceTheme
+		w := NewTemplateWidget(decl)
+		widgetRegistry.Register(w)
 	}
 }
 
