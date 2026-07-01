@@ -31,65 +31,21 @@ func (c Config) Configured() bool {
 
 // Send 发送纯文本邮件。
 func (c Config) Send(to, subject, body string) error {
-	if !c.Configured() {
-		return fmt.Errorf("SMTP 未配置")
-	}
-
-	msg := buildMessage(c.From, to, subject, body)
-	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)
-	client, conn, err := c.newClient(addr)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	defer client.Quit()
-	_ = conn.SetDeadline(time.Now().Add(smtpTimeout))
-
-	if !c.implicitTLS() {
-		tlsConfig := &tls.Config{ServerName: c.Host}
-		if ok, _ := client.Extension("STARTTLS"); ok {
-			if err := client.StartTLS(tlsConfig); err != nil {
-				return fmt.Errorf("STARTTLS 失败: %w", err)
-			}
-		}
-	}
-
-	if auth := c.auth(); auth != nil {
-		if err := client.Auth(auth); err != nil {
-			return fmt.Errorf("SMTP 认证失败: %w", err)
-		}
-	}
-
-	if err := client.Mail(c.From); err != nil {
-		return fmt.Errorf("设置发件人失败: %w", err)
-	}
-	if err := client.Rcpt(to); err != nil {
-		return fmt.Errorf("设置收件人失败: %w", err)
-	}
-
-	w, err := client.Data()
-	if err != nil {
-		return fmt.Errorf("开始发送数据失败: %w", err)
-	}
-	_, err = w.Write([]byte(msg))
-	if err != nil {
-		return fmt.Errorf("写入邮件内容失败: %w", err)
-	}
-	if err := w.Close(); err != nil {
-		return fmt.Errorf("关闭邮件数据失败: %w", err)
-	}
-
-	return nil
+	return c.send(to, buildMessage(c.From, to, subject, body))
 }
 
 // SendWithAttachment 发送带附件的邮件。
 // filename 是附件显示名称，data 是附件内容。
 func (c Config) SendWithAttachment(to, subject, body, filename string, data []byte) error {
+	return c.send(to, buildMultipartMessage(c.From, to, subject, body, filename, data))
+}
+
+// send 执行 SMTP 发送流程：连接、STARTTLS、认证、发送邮件内容。
+func (c Config) send(to, msg string) error {
 	if !c.Configured() {
 		return fmt.Errorf("SMTP 未配置")
 	}
 
-	msg := buildMultipartMessage(c.From, to, subject, body, filename, data)
 	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)
 	client, conn, err := c.newClient(addr)
 	if err != nil {
@@ -171,10 +127,7 @@ func (c Config) auth() smtp.Auth {
 
 func buildMessage(from, to, subject, body string) string {
 	var sb strings.Builder
-	sb.WriteString("From: " + from + "\r\n")
-	sb.WriteString("To: " + to + "\r\n")
-	sb.WriteString("Subject: " + subject + "\r\n")
-	sb.WriteString("MIME-Version: 1.0\r\n")
+	writeHeaders(&sb, from, to, subject)
 	sb.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
 	sb.WriteString("\r\n")
 	sb.WriteString(body)
@@ -190,31 +143,54 @@ func buildMultipartMessage(from, to, subject, body, filename string, data []byte
 	}
 
 	var sb strings.Builder
-	sb.WriteString("From: " + from + "\r\n")
-	sb.WriteString("To: " + to + "\r\n")
-	sb.WriteString("Subject: " + subject + "\r\n")
-	sb.WriteString("MIME-Version: 1.0\r\n")
-	sb.WriteString("Content-Type: multipart/mixed; boundary=\"" + boundary + "\"\r\n")
+	writeHeaders(&sb, from, to, subject)
+	sb.WriteString("Content-Type: multipart/mixed; boundary=\"")
+	sb.WriteString(boundary)
+	sb.WriteString("\"\r\n")
 	sb.WriteString("\r\n")
 
 	// 正文部分
-	sb.WriteString("--" + boundary + "\r\n")
+	sb.WriteString("--")
+	sb.WriteString(boundary)
+	sb.WriteString("\r\n")
 	sb.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
 	sb.WriteString("\r\n")
 	sb.WriteString(body)
 	sb.WriteString("\r\n")
 
 	// 附件部分
-	sb.WriteString("--" + boundary + "\r\n")
-	sb.WriteString("Content-Type: " + contentType + "\r\n")
-	sb.WriteString("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n")
+	sb.WriteString("--")
+	sb.WriteString(boundary)
+	sb.WriteString("\r\n")
+	sb.WriteString("Content-Type: ")
+	sb.WriteString(contentType)
+	sb.WriteString("\r\n")
+	sb.WriteString("Content-Disposition: attachment; filename=\"")
+	sb.WriteString(filename)
+	sb.WriteString("\"\r\n")
 	sb.WriteString("Content-Transfer-Encoding: base64\r\n")
 	sb.WriteString("\r\n")
 	sb.WriteString(base64.StdEncoding.EncodeToString(data))
 	sb.WriteString("\r\n")
 
-	sb.WriteString("--" + boundary + "--\r\n")
+	sb.WriteString("--")
+	sb.WriteString(boundary)
+	sb.WriteString("--\r\n")
 	return sb.String()
+}
+
+// writeHeaders 写入邮件公共头：From、To、Subject、MIME-Version。
+func writeHeaders(sb *strings.Builder, from, to, subject string) {
+	sb.WriteString("From: ")
+	sb.WriteString(from)
+	sb.WriteString("\r\n")
+	sb.WriteString("To: ")
+	sb.WriteString(to)
+	sb.WriteString("\r\n")
+	sb.WriteString("Subject: ")
+	sb.WriteString(subject)
+	sb.WriteString("\r\n")
+	sb.WriteString("MIME-Version: 1.0\r\n")
 }
 
 func randomBoundary() string {

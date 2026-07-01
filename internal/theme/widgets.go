@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"log/slog"
 	"slices"
 	"sort"
 	"strconv"
@@ -178,11 +179,14 @@ func ResolveWidgetsWithDecls(userConfigJSON string, t *Theme, area string, decls
 	for i, item := range items {
 		decl, ok := resolveWidgetDecl(available, item)
 		if !ok {
+			slog.Info("widget resolve failed", "area", area, "item_id", item.ID, "item_source", item.Source)
 			continue
 		}
 		if decl.Source != WidgetSourcePlugin && !widgetTemplateExists(t, decl.ID) && !IsBuiltinWidget(decl.ID) {
+			slog.Info("widget template missing", "area", area, "id", decl.ID, "source", decl.Source)
 			continue
 		}
+		slog.Info("widget resolved", "area", area, "id", decl.ID, "source", decl.Source, "plugin_id", decl.PluginID)
 		result = append(result, WidgetInfo{
 			InstanceID:   widgetInstanceID(item, i),
 			ID:           decl.ID,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -460,19 +461,22 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 	if runtime == nil || ctx == nil || ctx.Template == nil {
 		return ""
 	}
-	provider := runtime.current().ThemeWidgets
+	provider := runtime.current().WidgetsProvider
 	if provider == nil {
 		return ""
 	}
 	widgets := provider(ctx, area)
 	if len(widgets) == 0 {
+		slog.Info("renderWidgets: no widgets for area", "area", area)
 		return ""
 	}
+	slog.Info("renderWidgets: rendering widgets", "area", area, "count", len(widgets))
 	var result strings.Builder
 	for _, item := range widgets {
 		ctx.WidgetOptions = item.Options
 		html, ok := renderWidgetItem(runtime, ctx, item, data)
 		if !ok {
+			slog.Info("renderWidgets: widget render failed", "area", area, "id", item.ID, "source", item.Source, "plugin_id", item.PluginID)
 			continue
 		}
 		if h := hooks(runtime); h != nil {
@@ -487,12 +491,15 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
 	resolver := runtime.current().WidgetResolver
 	if resolver == nil {
+		slog.Info("renderWidgetItem: no resolver")
 		return "", false
 	}
 	w := resolver(item.Source, item.ID, item.PluginID)
 	if w == nil {
+		slog.Info("renderWidgetItem: widget not found in registry", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
 		return "", false
 	}
+	slog.Info("renderWidgetItem: widget found, rendering", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
 	instance := hook.WidgetInstance{
 		InstanceID: item.InstanceID,
 		WidgetID:   item.ID,
@@ -500,6 +507,7 @@ func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, item Widget
 	}
 	html, err := w.Render(requestContext(ctx), ctx.Template, instance, data)
 	if err != nil || html == "" {
+		slog.Info("renderWidgetItem: render returned empty/error", "id", item.ID, "error", err)
 		return "", false
 	}
 	return html, true

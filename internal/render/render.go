@@ -3,12 +3,14 @@ package render
 
 import (
 	"context"
+	"html"
 	"html/template"
 	"net/http"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
 	ginrender "github.com/gin-gonic/gin/render"
+	"github.com/youthlin/t/f"
 )
 
 // themeHTMLRender 为单次响应创建独立的模板函数闭包，避免请求间共享渲染状态。
@@ -55,6 +57,21 @@ type RequestContext struct {
 	WidgetOptions map[string]string
 }
 
+// T 从当前请求上下文获取 translator 并翻译，自动 HTML 转义。
+// 用法: ctx.T("msg") 或 ctx.T("msg", args...)
+// xgettext 通过 T:1 关键字自动提取翻译字符串。
+func (ctx *RequestContext) T(msg string, args ...any) string {
+	if ctx != nil {
+		if tr, ok := dataValue(ctx.Data, "th").(interface{ T(string, ...any) string }); ok && tr != nil {
+			return html.EscapeString(tr.T(msg, args...))
+		}
+	}
+	if len(args) > 0 {
+		return html.EscapeString(f.Format(msg, args...))
+	}
+	return html.EscapeString(msg)
+}
+
 // WidgetInfo 是模板渲染阶段需要的组件信息。
 // 放在 render 包里，避免 renderWidgets 为了读取 theme.WidgetInfo 而使用反射。
 type WidgetInfo struct {
@@ -99,6 +116,8 @@ const (
 	tplFuncCommentClass   = "commentClass"
 	tplFuncCommentContent = "commentContent"
 	tplFuncHeadMeta       = "headMeta"
+	tplFuncListComments   = "listComments"
+	tplFuncCommentForm    = "commentForm"
 )
 
 // dataContext 从前台页面的 Data 中通过 [ContextDataKey] 拿到 [context.Context]
@@ -159,6 +178,8 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		tplFuncCommentClass:   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
 		tplFuncCommentContent: func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
 		tplFuncHeadMeta:       func(data any) template.HTML { return headMeta(runtime, ctx, data) },
+		tplFuncListComments:   func(args ...any) template.HTML { return listComments(runtime, ctx, args...) },
+		tplFuncCommentForm:    func(data any) template.HTML { return commentForm(runtime, ctx, data) },
 	})
 	return cloned, nil
 }
@@ -186,5 +207,7 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncCommentClass:   func(comment any, extra ...string) string { return "" },
 		tplFuncCommentContent: func(comment any) template.HTML { return "" },
 		tplFuncHeadMeta:       func(data any) template.HTML { return "" },
+		tplFuncListComments:   func(args ...any) template.HTML { return "" },
+		tplFuncCommentForm:    func(data any) template.HTML { return "" },
 	}
 }

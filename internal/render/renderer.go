@@ -20,20 +20,27 @@ var _ render.HTMLRender = (*Renderer)(nil)
 //   - c.HTML(code, name, obj) 时, 会通过 [Renderer.Instance] 生成一个 [Render] 实例
 //   - 也可以直接获取到 [Render] 后调用 c.Render(code, render)
 type Renderer struct {
-	mu             sync.RWMutex
-	tpl            *template.Template
-	fsys           fs.FS
-	pattern        string
-	hot            bool
-	defaultFS      fs.FS // admin/auth 模板（embed 或 hot disk）
-	defaultHot     bool
-	defaultThemeFS fs.FS // 默认主题模板（embed），用于 ResetToDefault 时从 embed 加载
-	themeDir       string
+	mu         sync.RWMutex
+	tpl        *template.Template
+	fsys       fs.FS
+	pattern    string
+	hot        bool
+	defaultFS  fs.FS // admin/auth 模板（embed 或 hot disk）
+	defaultHot bool
+
+	// 默认主题模板（embed），用于 ResetToDefault 时从 embed 加载
+	// [initThemeManager] 时设置
+	defaultThemeFS fs.FS
+	// loadTheme 时设置
+	themeDir string
 
 	// 主题预览：单独缓存预览主题的模板，不影响主模板
+	// 后台预览时设置 admin.ThemePreview -> tm.LoadPreviewTheme -> [Renderer.LoadPreviewTheme]
 	previewTpl       *template.Template
 	previewThemeName string
 
+	// 通过 [Renderer.ConfigureTemplateRuntime], [Renderer.SetHookInvokeProvider],
+	// [Renderer.SetThemeWidgetsProvider], [Renderer.SetWidgetResolver] 设置
 	themeRuntime TemplateRuntime
 }
 

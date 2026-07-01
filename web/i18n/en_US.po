@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 00:11+0800\n"
+"POT-Creation-Date: 2026-07-01 14:20+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -91,9 +91,9 @@ msgstr "Time"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:64
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:80
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:33
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:134
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:54
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:45
@@ -238,8 +238,8 @@ msgstr "Posts"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:67
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:94
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:43
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:128
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
 msgid "页面"
 msgstr "Pages"
 
@@ -267,7 +267,7 @@ msgstr "Categories"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:84
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:25
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:45
 msgid "主题"
 msgstr "Themes"
 
@@ -486,17 +486,6 @@ msgstr "Author"
 msgid "选择"
 msgstr "Select"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:42
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:51
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:18
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:19
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:38
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:40
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:49
-msgid "邮箱"
-msgstr "Email"
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:43
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:52
 msgid "网址"
@@ -509,7 +498,7 @@ msgstr "Website"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:90
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:63
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:31
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:101
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:102
 msgid "保存"
 msgstr "Save"
 
@@ -550,22 +539,6 @@ msgid "共 %d 条评论"
 msgid_plural "共 %d 条评论"
 msgstr[0] "%d comment"
 msgstr[1] "%d comments"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:108
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:133
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:129
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:44
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:52
-msgid "上一页"
-msgstr "Previous page"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:110
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:135
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:131
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:46
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:54
-msgid "下一页"
-msgstr "Next page"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:4
 msgid "%s, 欢迎回来"
@@ -957,87 +930,87 @@ msgid ""
 "菜单位置由当前主题声明；菜单项可以来自页面，也可以是自定义链接。父级选择非空"
 "时会渲染为次级菜单。"
 msgstr ""
-"Menu locations are declared by the current theme. Menu items can come from"
-"pages or custom links. When a parent is selected, it will render as a"
-"submenu."
+"Menu locations are declared by the current theme. Menu items can come "
+"frompages or custom links. When a parent is selected, it will render as "
+"asubmenu."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:28
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:40
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:128
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
 msgid "类型"
 msgstr "Type"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:29
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:47
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:130
 msgid "页面/标题"
 msgstr "Page / Title"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:54
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:130
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:29
-msgid "链接"
-msgstr "Link"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:31
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:55
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:131
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:29
+msgid "链接"
+msgstr "Link"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:56
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
 msgid "父级"
 msgstr "Parent"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:32
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:61
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
 msgid "新窗口"
 msgstr "New window"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:44
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:128
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
 msgid "自定义链接"
 msgstr "Custom link"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:49
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:83
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:50
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:84
 msgid "选择页面"
 msgstr "Select page"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:53
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:130
 msgid "菜单标题"
 msgstr "Menu title"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:57
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:99
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:58
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:100
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:74
 msgid "无"
 msgstr "None"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:61
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
 msgid "否"
 msgstr "No"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:61
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
 msgid "是"
 msgstr "Yes"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:134
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:49
 msgid "移除"
 msgstr "Remove"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:69
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:70
 msgid "添加页面"
 msgstr "Add page"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:71
 msgid "添加自定义链接"
 msgstr "Add custom link"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:75
 msgid "保存菜单"
 msgstr "Save menu"
 
@@ -1052,13 +1025,13 @@ msgstr "The current plugin does not declare any configurable options."
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:42
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:80
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:81
 msgid "启用"
 msgstr "Enable"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:49
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:59
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:88
 msgid "默认值：%s"
 msgstr "Default: %s"
 
@@ -1072,8 +1045,8 @@ msgid ""
 "时和当前主题 hooks。"
 msgstr ""
 "Plugins can extend site capabilities through actions, filters, and slots."
-"Enabling or disabling a plugin immediately reloads the plugin runtime and"
-"the current theme hooks."
+"Enabling or disabling a plugin immediately reloads the plugin runtime andthe "
+"current theme hooks."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:13
 msgid "当前启用"
@@ -1131,8 +1104,9 @@ msgid "Widgets"
 msgstr "Widgets"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:51
-msgid "Settings"
-msgstr "Settings"
+#, fuzzy
+msgid "Options"
+msgstr "Actions"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:57
 msgid "确定要停用插件「%s」吗？"
@@ -1149,8 +1123,8 @@ msgstr "Reload"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:66
 msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。"
 msgstr ""
-"Are you sure you want to uninstall plugin \"%s\"? Deactivation and uninstall"
-"lifecycle hooks will run first."
+"Are you sure you want to uninstall plugin \"%s\"? Deactivation and "
+"uninstalllifecycle hooks will run first."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:68
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:77
@@ -1160,8 +1134,8 @@ msgstr "Uninstall"
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:75
 msgid "确定要卸载插件「%s」吗？会执行卸载生命周期。"
 msgstr ""
-"Are you sure you want to uninstall plugin \"%s\"? The uninstall lifecycle hook"
-"will run."
+"Are you sure you want to uninstall plugin \"%s\"? The uninstall lifecycle "
+"hookwill run."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:83
 msgid "暂无已安装插件。"
@@ -1382,7 +1356,7 @@ msgid "定时"
 msgstr "Scheduled"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:110
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:47
 msgid "上移"
 msgstr "Move up"
 
@@ -1391,7 +1365,7 @@ msgid "回车保存"
 msgstr "Press Enter to save"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:112
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:48
 msgid "下移"
 msgstr "Move down"
 
@@ -1725,8 +1699,8 @@ msgid ""
 "翻译绑定，并刷新当前主题 hooks。"
 msgstr ""
 "Multiple plugins can be enabled at the same time. This reloads functions,"
-"hooks, widgets, and translation bindings for all enabled plugins, and"
-"refreshes the current theme hooks."
+"hooks, widgets, and translation bindings for all enabled plugins, "
+"andrefreshes the current theme hooks."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:99
 msgid "重载插件资源"
@@ -2242,11 +2216,6 @@ msgstr "Password"
 msgid "角色"
 msgstr "Role"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:24
-msgid "管理员"
-msgstr "Administrator"
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:25
 msgid "协作者"
@@ -2304,7 +2273,7 @@ msgid "— 选择组件 —"
 msgstr "— Select a widget —"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:45
 msgid "内置"
 msgstr "Built-in"
 
@@ -2312,15 +2281,15 @@ msgstr "Built-in"
 msgid "添加"
 msgstr "Add"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:43
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:44
 msgid "拖拽排序"
 msgstr "Drag to reorder"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:96
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:97
 msgid "此区域暂无组件，请从右侧选择组件添加。"
 msgstr "No widgets in this area yet. Choose one from the right to add it."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:104
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:105
 msgid "当前主题未声明任何组件区域。"
 msgstr "The current theme does not declare any widget areas."
 
@@ -2526,19 +2495,19 @@ msgstr "Current administrators:\n"
 msgid "未分类"
 msgstr "Uncategorized"
 
-#: internal/handler/admin.go:283
+#: internal/handler/admin.go:285
 msgid "未找到"
 msgstr "Not found"
 
-#: internal/handler/admin.go:292
+#: internal/handler/admin.go:294
 msgid "服务器错误"
 msgstr "Server error"
 
-#: internal/handler/admin.go:301
+#: internal/handler/admin.go:303
 msgid "用户名不能为空"
 msgstr "Username cannot be empty."
 
-#: internal/handler/admin.go:304
+#: internal/handler/admin.go:306
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
 msgstr ""
 "Username must be 2-32 characters, using only letters, digits, underscores, "
@@ -2735,93 +2704,93 @@ msgstr "Menu"
 msgid "菜单已保存"
 msgstr "Menu saved"
 
-#: internal/handler/admin_plugins.go:39
+#: internal/handler/admin_plugins.go:42
 msgid "插件"
 msgstr "Plugin"
 
-#: internal/handler/admin_plugins.go:58 internal/handler/admin_plugins.go:238
+#: internal/handler/admin_plugins.go:61 internal/handler/admin_plugins.go:259
 msgid "插件管理器未初始化"
 msgstr "Plugin manager is not initialized"
 
-#: internal/handler/admin_plugins.go:64 internal/handler/admin_plugins.go:243
+#: internal/handler/admin_plugins.go:67 internal/handler/admin_plugins.go:264
 msgid "未指定插件"
 msgstr "No plugin specified"
 
-#: internal/handler/admin_plugins.go:68 internal/handler/admin_plugins.go:248
+#: internal/handler/admin_plugins.go:71 internal/handler/admin_plugins.go:269
 #, c-format
 msgid "插件不存在: %s"
 msgstr "Plugin does not exist: %s"
 
-#: internal/handler/admin_plugins.go:77 internal/handler/admin_plugins.go:85
+#: internal/handler/admin_plugins.go:80 internal/handler/admin_plugins.go:88
 #, c-format
 msgid "启用插件失败: %s"
 msgstr "Failed to enable plugin: %s"
 
-#: internal/handler/admin_plugins.go:94
+#: internal/handler/admin_plugins.go:97
 #, c-format
 msgid "启用插件失败，已回滚: %s"
 msgstr "Failed to enable plugin; rolled back: %s"
 
-#: internal/handler/admin_plugins.go:97
+#: internal/handler/admin_plugins.go:100
 #, c-format
 msgid "插件「%s」已启用"
 msgstr "Plugin \"%s\" enabled"
 
-#: internal/handler/admin_plugins.go:102 internal/handler/admin_plugins.go:107
+#: internal/handler/admin_plugins.go:105 internal/handler/admin_plugins.go:110
 #, c-format
 msgid "停用插件失败: %s"
 msgstr "Failed to disable plugin: %s"
 
-#: internal/handler/admin_plugins.go:116
+#: internal/handler/admin_plugins.go:119
 #, c-format
 msgid "停用插件失败，已回滚: %s"
 msgstr "Failed to disable plugin; rolled back: %s"
 
-#: internal/handler/admin_plugins.go:119
+#: internal/handler/admin_plugins.go:122
 #, c-format
 msgid "插件「%s」已停用"
 msgstr "Plugin \"%s\" disabled"
 
-#: internal/handler/admin_plugins.go:123 internal/handler/admin_plugins.go:126
+#: internal/handler/admin_plugins.go:126 internal/handler/admin_plugins.go:129
 #, c-format
 msgid "重载插件失败: %s"
 msgstr "Failed to reload plugin: %s"
 
-#: internal/handler/admin_plugins.go:133
+#: internal/handler/admin_plugins.go:136
 #, c-format
 msgid "插件「%s」已重载"
 msgstr "Plugin \"%s\" reloaded"
 
-#: internal/handler/admin_plugins.go:136
+#: internal/handler/admin_plugins.go:139
 #, c-format
 msgid "卸载插件失败: %s"
 msgstr "Failed to uninstall plugin: %s"
 
-#: internal/handler/admin_plugins.go:140
+#: internal/handler/admin_plugins.go:143
 #, c-format
 msgid "卸载插件后重载失败: %s"
 msgstr "Failed to reload after uninstalling plugin: %s"
 
-#: internal/handler/admin_plugins.go:143
+#: internal/handler/admin_plugins.go:146
 #, c-format
 msgid "插件「%s」已卸载"
 msgstr "Plugin \"%s\" uninstalled"
 
-#: internal/handler/admin_plugins.go:145
+#: internal/handler/admin_plugins.go:148
 #, c-format
 msgid "未知插件操作: %s"
 msgstr "Unknown plugin action: %s"
 
-#: internal/handler/admin_plugins.go:156
+#: internal/handler/admin_plugins.go:159
 msgid "插件设置"
 msgstr "Plugin settings"
 
-#: internal/handler/admin_plugins.go:210
+#: internal/handler/admin_plugins.go:213
 #, c-format
 msgid "插件设置已保存，但重载失败: %s"
 msgstr "Plugin settings saved, but reload failed: %s"
 
-#: internal/handler/admin_plugins.go:214
+#: internal/handler/admin_plugins.go:217
 msgid "插件设置已保存"
 msgstr "Plugin settings saved"
 
@@ -2940,7 +2909,7 @@ msgid "个人网址格式不正确。"
 msgstr "Invalid personal website URL."
 
 #: internal/handler/admin_profile.go:103 internal/handler/admin_user.go:133
-#: internal/handler/admin_user.go:223 internal/handler/auth_handler.go:151
+#: internal/handler/admin_user.go:223 internal/handler/auth_handler.go:152
 msgid "用户名已被占用。"
 msgstr "Username is already taken."
 
@@ -2958,11 +2927,11 @@ msgstr ""
 "SMTP settings must be configured before changing the email address so a "
 "verification email can be sent."
 
-#: internal/handler/admin_profile.go:144 internal/handler/auth_handler.go:161
+#: internal/handler/admin_profile.go:144 internal/handler/auth_handler.go:162
 msgid "邮箱已被注册。"
 msgstr "Email address is already registered."
 
-#: internal/handler/admin_profile.go:160 internal/handler/auth_handler.go:178
+#: internal/handler/admin_profile.go:160 internal/handler/auth_handler.go:179
 msgid "站点 URL 未配置，无法发送安全验证链接，请联系管理员。"
 msgstr ""
 "Site URL is not configured, so a secure verification link cannot be sent. "
@@ -3013,17 +2982,17 @@ msgstr "Your email has been verified and updated. Please sign in again."
 msgid "原密码不正确。"
 msgstr "Current password is incorrect."
 
-#: internal/handler/admin_profile.go:238 internal/handler/auth_handler.go:268
-#: internal/handler/auth_handler.go:407
+#: internal/handler/admin_profile.go:238 internal/handler/auth_handler.go:269
+#: internal/handler/auth_handler.go:408
 msgid "两次输入的密码不一致。"
 msgstr "The two passwords do not match."
 
 #: internal/handler/admin_profile.go:244 internal/handler/admin_user.go:116
-#: internal/handler/auth_handler.go:263 internal/handler/auth_handler.go:399
+#: internal/handler/auth_handler.go:264 internal/handler/auth_handler.go:400
 msgid "密码长度不能少于 8 个字符。"
 msgstr "Password must be at least 8 characters long."
 
-#: internal/handler/admin_profile.go:258 internal/handler/auth_handler.go:435
+#: internal/handler/admin_profile.go:258 internal/handler/auth_handler.go:436
 #, c-format
 msgid "[%s] 密码已变更"
 msgstr "[%s] Password Changed"
@@ -3610,50 +3579,50 @@ msgstr "Username, password, and email are required."
 msgid "编辑用户"
 msgstr "Edit user"
 
-#: internal/handler/admin_user.go:188 internal/handler/auth_handler.go:120
+#: internal/handler/admin_user.go:188 internal/handler/auth_handler.go:121
 msgid "用户名和邮箱不能为空。"
 msgstr "Username and email are required."
 
-#: internal/handler/admin_widgets.go:133
+#: internal/handler/admin_widgets.go:131
 msgid "组件管理"
 msgstr "Widget management"
 
-#: internal/handler/admin_widgets.go:195
+#: internal/handler/admin_widgets.go:193
 msgid "组件配置已保存"
 msgstr "Widget settings saved"
 
-#: internal/handler/auth_handler.go:58 internal/handler/auth_handler.go:79
+#: internal/handler/auth_handler.go:59 internal/handler/auth_handler.go:80
 msgid "登录"
 msgstr "Log in"
 
-#: internal/handler/auth_handler.go:60
+#: internal/handler/auth_handler.go:61
 msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
 msgstr "Session secret updated. All logged-in users must sign in again."
 
-#: internal/handler/auth_handler.go:80
+#: internal/handler/auth_handler.go:81
 msgid "用户名或密码错误。"
 msgstr "Invalid username or password."
 
-#: internal/handler/auth_handler.go:101 internal/handler/auth_handler.go:115
+#: internal/handler/auth_handler.go:102 internal/handler/auth_handler.go:116
 msgid "注册"
 msgstr "Register"
 
-#: internal/handler/auth_handler.go:131 internal/handler/comment.go:175
+#: internal/handler/auth_handler.go:132 internal/handler/comment.go:175
 msgid "邮箱格式不正确。"
 msgstr "Invalid email address."
 
-#: internal/handler/auth_handler.go:140
+#: internal/handler/auth_handler.go:141
 msgid "站点尚未配置 SMTP，暂时无法发送验证邮件。"
 msgstr ""
 "SMTP is not configured on this site, so verification emails cannot be sent "
 "right now."
 
-#: internal/handler/auth_handler.go:184
+#: internal/handler/auth_handler.go:185
 #, c-format
 msgid "[%s] 注册邮箱验证"
 msgstr "[%s] Registration Email Verification"
 
-#: internal/handler/auth_handler.go:185
+#: internal/handler/auth_handler.go:186
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3673,61 +3642,61 @@ msgstr ""
 "\n"
 "If you did not request registration, please ignore this email.\n"
 
-#: internal/handler/auth_handler.go:190
+#: internal/handler/auth_handler.go:191
 msgid "验证邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 "Failed to send the verification email. Please try again later or contact the "
 "administrator."
 
-#: internal/handler/auth_handler.go:197
+#: internal/handler/auth_handler.go:198
 msgid "验证邮件已发送，请检查邮箱并在 24 小时内完成注册。"
 msgstr ""
 "Verification email sent. Please check your inbox and complete registration "
 "within 24 hours."
 
-#: internal/handler/auth_handler.go:209 internal/handler/auth_handler.go:254
+#: internal/handler/auth_handler.go:210 internal/handler/auth_handler.go:255
 msgid "完成注册"
 msgstr "Complete registration"
 
-#: internal/handler/auth_handler.go:213 internal/handler/auth_handler.go:219
-#: internal/handler/auth_handler.go:279
+#: internal/handler/auth_handler.go:214 internal/handler/auth_handler.go:220
+#: internal/handler/auth_handler.go:280
 msgid "注册链接无效或已过期，请重新注册。"
 msgstr ""
 "The registration link is invalid or has expired. Please register again."
 
-#: internal/handler/auth_handler.go:227
+#: internal/handler/auth_handler.go:228
 msgid "用户名已被占用，请重新注册。"
 msgstr "Username is already taken."
 
-#: internal/handler/auth_handler.go:235
+#: internal/handler/auth_handler.go:236
 msgid "邮箱已被注册，请重新注册。"
 msgstr "This email address is already registered. Please register again."
 
-#: internal/handler/auth_handler.go:258
+#: internal/handler/auth_handler.go:259
 msgid "注册链接无效或密码不能为空。"
 msgstr "The registration link is invalid, or the password cannot be empty."
 
-#: internal/handler/auth_handler.go:290 internal/handler/auth_handler.go:300
-#: internal/handler/auth_handler.go:309 internal/handler/auth_handler.go:334
-#: internal/handler/auth_handler.go:349 internal/handler/auth_handler.go:355
+#: internal/handler/auth_handler.go:291 internal/handler/auth_handler.go:301
+#: internal/handler/auth_handler.go:310 internal/handler/auth_handler.go:335
+#: internal/handler/auth_handler.go:350 internal/handler/auth_handler.go:356
 msgid "忘记密码"
 msgstr "Forgot password"
 
-#: internal/handler/auth_handler.go:301
+#: internal/handler/auth_handler.go:302
 msgid "请输入邮箱地址。"
 msgstr "Please enter your email address."
 
-#: internal/handler/auth_handler.go:310 internal/handler/auth_handler.go:356
+#: internal/handler/auth_handler.go:311 internal/handler/auth_handler.go:357
 msgid "如果该邮箱已注册，重置密码链接已发送。"
 msgstr "If this email address is registered, a reset link has been sent."
 
-#: internal/handler/auth_handler.go:335
+#: internal/handler/auth_handler.go:336
 msgid "站点 URL 未配置，无法发送安全重置链接，请联系管理员。"
 msgstr ""
 "Site URL is not configured, so a secure reset link cannot be sent. Please "
 "contact the administrator."
 
-#: internal/handler/auth_handler.go:341
+#: internal/handler/auth_handler.go:342
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3746,28 +3715,28 @@ msgstr ""
 "\n"
 "If you did not request a password reset, please ignore this email.\n"
 
-#: internal/handler/auth_handler.go:342
+#: internal/handler/auth_handler.go:343
 #, c-format
 msgid "[%s] 密码重置"
 msgstr "[%s] Password Reset"
 
-#: internal/handler/auth_handler.go:350
+#: internal/handler/auth_handler.go:351
 msgid "邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 "Failed to send the email. Please try again later or contact the "
 "administrator."
 
-#: internal/handler/auth_handler.go:372 internal/handler/auth_handler.go:378
-#: internal/handler/auth_handler.go:397 internal/handler/auth_handler.go:405
-#: internal/handler/auth_handler.go:414 internal/handler/auth_handler.go:439
+#: internal/handler/auth_handler.go:373 internal/handler/auth_handler.go:379
+#: internal/handler/auth_handler.go:398 internal/handler/auth_handler.go:406
+#: internal/handler/auth_handler.go:415 internal/handler/auth_handler.go:440
 msgid "重置密码"
 msgstr "Reset password"
 
-#: internal/handler/auth_handler.go:373 internal/handler/auth_handler.go:415
+#: internal/handler/auth_handler.go:374 internal/handler/auth_handler.go:416
 msgid "重置链接无效或已过期，请重新请求。"
 msgstr "The reset link is invalid or has expired. Please request a new one."
 
-#: internal/handler/auth_handler.go:436
+#: internal/handler/auth_handler.go:437
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3780,7 +3749,7 @@ msgstr ""
 "Your account password was just changed through a reset link. If this was not "
 "you, please contact the site administrator immediately.\n"
 
-#: internal/handler/auth_handler.go:440
+#: internal/handler/auth_handler.go:441
 msgid "密码已重置，请使用新密码登录。"
 msgstr "Password has been reset. Please sign in with your new password."
 
@@ -3873,80 +3842,185 @@ msgstr "Search: %s"
 msgid "搜索「%s」"
 msgstr "Search “%s”"
 
-#: internal/handler/public.go:230 internal/theme/widgets.go:50
-#: internal/theme/widgets.go:51
+#: internal/handler/public.go:229 internal/theme/widgets.go:53
+#: internal/theme/widgets.go:54
 msgid "归档"
 msgstr "Archive"
 
-#: internal/handler/public.go:323 internal/handler/public.go:324
+#: internal/handler/public.go:291 internal/handler/public.go:292
 #, c-format
 msgid "分类：%s"
 msgstr "Category: %s"
 
-#: internal/handler/public.go:343 internal/handler/public.go:344
+#: internal/handler/public.go:311 internal/handler/public.go:312
 #, c-format
 msgid "标签：%s"
 msgstr "Tag: %s"
 
-#: internal/handler/public.go:628
+#: internal/handler/public.go:606
 msgid "页面不存在"
 msgstr "Page not found"
 
-#: internal/handler/public.go:630
+#: internal/handler/public.go:608
 msgid "你访问的页面不存在或已被删除。"
 msgstr "The page you requested does not exist or has been removed."
 
-#: internal/theme/widgets.go:30
+#: internal/render/funcs.go:62
+msgid "草稿预览"
+msgstr ""
+
+#: internal/render/funcs.go:681
+#, fuzzy
+msgid "评论已关闭"
+msgstr "Comments are closed for this post."
+
+#: internal/render/funcs.go:769
+msgid "文章作者"
+msgstr ""
+
+#: internal/render/funcs.go:771
+msgid "管理员"
+msgstr "Administrator"
+
+#: internal/render/funcs.go:773
+msgid "登录用户"
+msgstr ""
+
+#: internal/render/funcs.go:783
+msgid "回复时邮件通知"
+msgstr ""
+
+#: internal/render/funcs.go:795
+msgid "评论审核中,当前仅自己可见"
+msgstr ""
+
+#: internal/render/funcs.go:806
+#, c-format
+msgid "回复 @%s"
+msgstr ""
+
+#: internal/render/funcs.go:818
+msgid "回复"
+msgstr ""
+
+#: internal/render/funcs.go:885
+msgid "上一页"
+msgstr "Previous page"
+
+#: internal/render/funcs.go:901
+msgid "下一页"
+msgstr "Next page"
+
+#: internal/render/funcs.go:927
+#, c-format
+msgid "以 <strong>%s</strong> 的身份发表评论，"
+msgstr ""
+
+#: internal/render/funcs.go:937
+#, fuzzy
+msgid "登出"
+msgstr "Log in"
+
+#: internal/render/funcs.go:969
+msgid "昵称"
+msgstr ""
+
+#: internal/render/funcs.go:973
+msgid "昵称 *"
+msgstr ""
+
+#: internal/render/funcs.go:977
+msgid "邮箱"
+msgstr "Email"
+
+#: internal/render/funcs.go:981
+msgid "邮箱 *(不公开)"
+msgstr ""
+
+#: internal/render/funcs.go:985
+msgid "网站"
+msgstr ""
+
+#: internal/render/funcs.go:989
+#, fuzzy
+msgid "网站(可选)"
+msgstr "Excerpt (optional)"
+
+#: internal/render/funcs.go:995
+msgid "评论内容"
+msgstr ""
+
+#: internal/render/funcs.go:997
+msgid "说点什么吧…… *"
+msgstr ""
+
+#: internal/render/funcs.go:1010
+msgid "有回复时邮件通知我"
+msgstr ""
+
+#: internal/render/funcs.go:1015
+msgid "提交评论"
+msgstr ""
+
+#: internal/render/funcs.go:1017
+msgid "取消回复"
+msgstr ""
+
+#: internal/render/funcs.go:1020
+msgid "评论提交后需经审核才会显示。"
+msgstr ""
+
+#: internal/theme/widgets.go:33
 msgid "用户信息"
 msgstr "User info"
 
-#: internal/theme/widgets.go:31 internal/theme/widgets.go:34
-#: internal/theme/widgets.go:37 internal/theme/widgets.go:41
-#: internal/theme/widgets.go:45 internal/theme/widgets.go:48
-#: internal/theme/widgets.go:51 internal/theme/widgets.go:54
+#: internal/theme/widgets.go:34 internal/theme/widgets.go:37
+#: internal/theme/widgets.go:40 internal/theme/widgets.go:44
+#: internal/theme/widgets.go:48 internal/theme/widgets.go:51
+#: internal/theme/widgets.go:54 internal/theme/widgets.go:57
 msgid "标题"
 msgstr "Title"
 
-#: internal/theme/widgets.go:31
+#: internal/theme/widgets.go:34
 msgid "留空时根据登录状态显示欢迎语"
 msgstr "Leave blank to show a greeting based on login status"
 
-#: internal/theme/widgets.go:33 internal/theme/widgets.go:34
+#: internal/theme/widgets.go:36 internal/theme/widgets.go:37
 msgid "搜索"
 msgstr "Search"
 
-#: internal/theme/widgets.go:36 internal/theme/widgets.go:37
+#: internal/theme/widgets.go:39 internal/theme/widgets.go:40
 msgid "近期文章"
 msgstr "Recent posts"
 
-#: internal/theme/widgets.go:38 internal/theme/widgets.go:42
+#: internal/theme/widgets.go:41 internal/theme/widgets.go:45
 msgid "显示数量"
 msgstr "Number to show"
 
-#: internal/theme/widgets.go:40 internal/theme/widgets.go:41
+#: internal/theme/widgets.go:43 internal/theme/widgets.go:44
 msgid "近期评论"
 msgstr "Recent comments"
 
-#: internal/theme/widgets.go:44 internal/theme/widgets.go:45
+#: internal/theme/widgets.go:47 internal/theme/widgets.go:48
 msgid "分类目录"
 msgstr "Categories"
 
-#: internal/theme/widgets.go:47
+#: internal/theme/widgets.go:50
 msgid "标签云"
 msgstr "Tag cloud"
 
-#: internal/theme/widgets.go:48
+#: internal/theme/widgets.go:51
 msgid "标签"
 msgstr "Tags"
 
-#: internal/theme/widgets.go:53
+#: internal/theme/widgets.go:56
 msgid "自定义 HTML"
 msgstr "Custom HTML"
 
-#: internal/theme/widgets.go:55
+#: internal/theme/widgets.go:58
 msgid "HTML 内容"
 msgstr "HTML content"
 
-#: internal/theme/widgets.go:55
+#: internal/theme/widgets.go:58
 msgid "任意 HTML 代码，会原样输出到页面中"
 msgstr "Any HTML code will be output to the page as-is"

@@ -13,7 +13,6 @@ widgets:
         type: text
         label: "标题"
         default: "博主动态"
-
       - id: post_id
         type: number
         label: "文章 ID"
@@ -28,7 +27,6 @@ widgets:
         type: text
         label: "标题"
         default: "最热文章"
-
       - id: count
         type: number
         label: "显示数量"

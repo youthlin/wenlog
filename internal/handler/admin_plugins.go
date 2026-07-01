@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -8,8 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
+	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/i18n"
 	"github.com/youthlin/blog/internal/plugin"
+	"github.com/youthlin/blog/internal/theme"
 )
 
 // pluginView 是后台插件列表页的展示模型。
@@ -221,6 +224,8 @@ func (h *Admin) reloadPluginRuntime(c *gin.Context) error {
 	if err := h.pluginManager.LoadEnabledFunctions(c); err != nil {
 		return err
 	}
+	// 重建组件注册表：插件启用/停用后，可用组件列表发生变化。
+	h.rebuildWidgetRegistry(c)
 	// SetHookRegistry 已在 init 时传入了 getter，LoadTheme 内部会通过 getter 拿到新 Registry。
 	if h.themeManager != nil {
 		if err := h.themeManager.LoadTheme(c, ""); err != nil {
@@ -228,6 +233,25 @@ func (h *Admin) reloadPluginRuntime(c *gin.Context) error {
 		}
 	}
 	return nil
+}
+
+// rebuildWidgetRegistry 重建统一组件注册表并注入 renderer。
+// 插件启用/停用后需要调用，确保组件注册表与当前启用插件列表一致。
+func (h *Admin) rebuildWidgetRegistry(ctx context.Context) {
+	if h.renderer == nil {
+		return
+	}
+	widgetRegistry := hook.NewWidgetRegistry()
+	theme.RegisterBuiltins(widgetRegistry)
+	if h.themeManager != nil {
+		if t := h.themeManager.Current(ctx); t != nil {
+			theme.RegisterThemeWidgets(widgetRegistry, t)
+		}
+	}
+	if h.pluginManager != nil {
+		h.pluginManager.RegisterPluginWidgets(ctx, widgetRegistry)
+	}
+	h.renderer.SetWidgetResolver(widgetRegistry.Get)
 }
 
 func (h *Admin) pluginForRequest(c *gin.Context, tr *gettext.Translations) (*plugin.Plugin, bool) {

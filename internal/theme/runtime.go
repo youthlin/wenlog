@@ -29,9 +29,9 @@ func (m *Manager) BindTemplateFunctions() {
 		return
 	}
 	m.renderer.ConfigureTemplateRuntime(render.TemplateProviders{
-		ThemeWidgets: m.templateWidgets,
-		ThemeOption:  m.templateOption,
-		Hooks:        m.hooks,
+		WidgetsProvider: m.templateWidgets,
+		ThemeOption:     m.templateOption,
+		Hooks:           m.hooks,
 	})
 }
 

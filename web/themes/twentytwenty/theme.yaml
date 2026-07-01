@@ -1,6 +1,6 @@
 # Twenty Twenty 风格主题 — 复刻 WordPress Twenty Twenty 子主题
 name: "twentytwenty"
-version: "1.2"
+version: "1.1.0"
 description: "Twenty Twenty 风格，居中单栏布局，暖米色背景，Inter 字体，支持暗色模式"
 author: "youthlin"
 author_uri: "https://youthlin.com"

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"log/slog"
 	"io"
 	"reflect"
 	"sort"
@@ -382,10 +383,13 @@ func (api *API) InvokeFunc(ctx context.Context, name string, args map[string]any
 	}
 	fn := api.funcs[name]
 	if fn == nil {
+		slog.Info("InvokeFunc: function not found", "name", name, "available", api.FuncNames())
 		return nil
 	}
 	defer func() { _ = recover() }()
-	return fn(api.WithContext(ctx), Args(args))
+	result := fn(api.WithContext(ctx), Args(args))
+	slog.Info("InvokeFunc: done", "name", name, "result_nil", result == nil)
+	return result
 }
 
 func wrapTemplateFunc(fn any) Func {

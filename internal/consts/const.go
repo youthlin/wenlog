@@ -23,9 +23,6 @@ const (
 	// 标签前缀
 	SettingsTagPrefix        = "tag_prefix"
 	SettingsTagPrefixDefault = "tag"
-	// 博主动态用哪个postid
-	SettingsSayingPageID        = "saying_page_id"
-	SettingsSayingPageIDDefault = 456
 	// Cravatar 默认头像类型
 	SettingsDefaultAvatar        = "default_avatar"
 	SettingsDefaultAvatarDefault = "mp"

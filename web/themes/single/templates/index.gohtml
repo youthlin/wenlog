@@ -1,4 +1,5 @@
-{{define "header"}}<!DOCTYPE html>
+{{- define "header" -}}
+<!DOCTYPE html>
 <html lang="{{.htmlLang}}"
       data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
       data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
@@ -43,7 +44,7 @@
 </header>
 <div class="container layout">
 <main class="main-col" id="main-content">
-{{end}}
+{{end}}{{/* header */}}
 
 {{define "footer"}}
 </main>
@@ -91,7 +92,7 @@
 {{slot "body.end" .}}
 </body>
 </html>
-{{end}}
+{{end}}{{/* footer */}}
 
 {{define "pagination"}}
 {{with .Pager}}
@@ -103,7 +104,7 @@
 </nav>
 {{end}}
 {{end}}
-{{end}}
+{{end}}{{/* pagination */}}
 
 {{define "comments"}}
 <section class="comments" id="comments">
@@ -176,11 +177,11 @@
   <p class="comment-closed">{{.th.T "评论已关闭"}}</p>
   {{end}}
 </section>
-{{end}}
+{{end}}{{/* comment */}}
 
 {{/* index.gohtml — 兜底页面模板，用数据特征区分页面类型 */}}
 {{define "index.gohtml"}}
-{{template "header" .}}
+{{- template "header" . -}}
 
 {{if .Code}}
   {{/* 错误页 */}}

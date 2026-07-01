@@ -7,9 +7,11 @@ import (
 
 func Go(fn func()) {
 	go func() {
-		if x := recover(); x != nil {
-			slog.Error("发生了panic!", slog.String("stack", string(debug.Stack())))
-		}
+		defer func() {
+			if x := recover(); x != nil {
+				slog.Error("发生了panic!", slog.String("stack", string(debug.Stack())))
+			}
+		}()
 		fn()
 	}()
 }

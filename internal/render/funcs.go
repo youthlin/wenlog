@@ -5,7 +5,9 @@ import (
 	"html"
 	"html/template"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/model"
@@ -551,4 +553,554 @@ func isDraft(ctx *RequestContext) bool {
 	}
 	value, _ := dataValue(ctx.Data, "IsDraft").(bool)
 	return value
+}
+
+// ========== listComments 模板函数 ==========
+
+// listComments 渲染评论列表和分页。
+// 模板调用: {{listComments .}} 或 {{listComments . "ol" 44 "my_comment"}}
+// 参数: args[0]=data(必填), args[1]=style(默认"ul"), args[2]=avatarSize(默认40), args[3]=callback模板名(默认"comment_item")
+func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) template.HTML {
+	if len(args) == 0 {
+		return ""
+	}
+	data := args[0]
+	if data == nil && ctx != nil {
+		data = ctx.Data
+	}
+	if data == nil {
+		return ""
+	}
+
+	// 解析可选参数
+	style := "ul"
+	avatarSize := 40
+	callbackTpl := "comment_item"
+	if len(args) > 1 {
+		if s, ok := args[1].(string); ok && s != "" {
+			style = s
+		}
+	}
+	if len(args) > 2 {
+		switch v := args[2].(type) {
+		case int:
+			if v > 0 {
+				avatarSize = v
+			}
+		case int64:
+			if v > 0 {
+				avatarSize = int(v)
+			}
+		case float64:
+			if v > 0 {
+				avatarSize = int(v)
+			}
+		}
+	}
+	if len(args) > 3 {
+		if s, ok := args[3].(string); ok && s != "" {
+			callbackTpl = s
+		}
+	}
+
+	// 提取模板数据字段
+	commentsAny := dataValue(data, "Comments")
+	defaultAvatar, _ := dataValue(data, "DefaultAvatar").(string)
+
+	// 评论列表
+	var comments []any
+	switch c := commentsAny.(type) {
+	case []model.Comment:
+		comments = make([]any, len(c))
+		for i := range c {
+			comments[i] = c[i]
+		}
+	case []any:
+		comments = c
+	default:
+		comments = reflectSliceField(data, "Comments")
+	}
+
+	// 检查主题是否定义了自定义评论模板
+	hasCustomTpl := ctx != nil && ctx.Template != nil && ctx.Template.Lookup(callbackTpl) != nil
+
+	var out strings.Builder
+
+	// 列表标签
+	listTag := style
+	if listTag != "ol" && listTag != "ul" && listTag != "div" {
+		listTag = "ul"
+	}
+	out.WriteString("<")
+	out.WriteString(listTag)
+	out.WriteString(` class="comment-list">`)
+
+	for _, c := range comments {
+		parentID := reflectUintField(c, "ParentID")
+		if parentID != 0 {
+			continue
+		}
+		writeCommentItem(&out, runtime, ctx, data, c, comments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
+	}
+
+	out.WriteString("</")
+	out.WriteString(listTag)
+	out.WriteString(">")
+
+	// 分页
+	writeCommentPagination(&out, ctx, data)
+
+	return template.HTML(out.String())
+}
+
+// commentForm 渲染登录提示和评论表单（或"评论已关闭"提示）。
+// 模板调用: {{commentForm .}}
+func commentForm(runtime *TemplateRuntime, ctx *RequestContext, data any) template.HTML {
+	if data == nil && ctx != nil {
+		data = ctx.Data
+	}
+	if data == nil {
+		return ""
+	}
+
+	commentOpen, _ := dataValue(data, "CommentOpen").(bool)
+	mailEnabled, _ := dataValue(data, "MailEnabled").(bool)
+	csrfToken, _ := dataValue(data, "CSRFToken").(string)
+	postID := reflectUintField(dataValue(data, "Post"), "ID")
+
+	var out strings.Builder
+
+	// 登录提示
+	writeCommentLoginTip(&out, ctx, data, csrfToken)
+
+	// 评论表单或关闭提示
+	if commentOpen {
+		writeCommentForm(&out, runtime, ctx, data, postID, csrfToken, mailEnabled)
+	} else {
+		out.WriteString(`<p class="comment-closed">`)
+		out.WriteString(ctx.T("评论已关闭"))
+		out.WriteString(`</p>`)
+	}
+
+	return template.HTML(out.String())
+}
+
+// writeCommentItem 渲染单条评论（含 <li> 包裹）及其子回复。
+func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+	data any, comment any, allComments []any, callbackTpl string, hasCustomTpl bool,
+	avatarSize int, defaultAvatar string, listTag string) {
+
+	id := reflectUintField(comment, "ID")
+	status := reflectStringField(comment, "Status")
+
+	classes := "comment"
+	if status == "pending" {
+		classes += " comment-pending"
+	}
+
+	out.WriteString(`<li class="`)
+	out.WriteString(html.EscapeString(classes))
+	out.WriteString(`" id="comment-`)
+	out.WriteString(strconv.FormatUint(uint64(id), 10))
+	out.WriteString(`">`)
+
+	if hasCustomTpl {
+		itemData := commentToMap(comment)
+		itemData["DefaultAvatar"] = defaultAvatar
+		if th := dataValue(data, "th"); th != nil {
+			itemData["th"] = th
+		}
+		var buf strings.Builder
+		if err := ctx.Template.ExecuteTemplate(&buf, callbackTpl, itemData); err == nil {
+			out.WriteString(buf.String())
+		}
+	} else {
+		writeDefaultCommentItem(out, runtime, ctx, data, comment, avatarSize, defaultAvatar)
+	}
+
+	// 子回复
+	writeCommentChildren(out, runtime, ctx, data, comment, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
+
+	out.WriteString(`</li>`)
+}
+
+// writeDefaultCommentItem 生成默认评论 HTML（与 default 主题结构一致）。
+func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+	data any, comment any, avatarSize int, defaultAvatar string) {
+
+	id := reflectUintField(comment, "ID")
+	author := html.EscapeString(reflectStringField(comment, "Author"))
+	email := reflectStringField(comment, "Email")
+	status := reflectStringField(comment, "Status")
+	commenterRole := reflectStringField(comment, "CommenterRole")
+	notifyOnReply := reflectBoolField(comment, "NotifyOnReply")
+	createdAt := reflectTimeField(comment, "CreatedAt")
+	parentID := reflectUintField(comment, "ParentID")
+	replyToAuthor := reflectStringField(comment, "ReplyToAuthor")
+	replyToID := reflectUintField(comment, "ReplyToID")
+
+	sizeStr := strconv.Itoa(avatarSize)
+
+	// comment-head
+	out.WriteString(`<div class="comment-head">`)
+	// avatar
+	out.WriteString(`<img class="avatar" src="`)
+	out.WriteString(html.EscapeString(avatarURL(email, defaultAvatar)))
+	out.WriteString(`" alt="" width="`)
+	out.WriteString(sizeStr)
+	out.WriteString(`" height="`)
+	out.WriteString(sizeStr)
+	out.WriteString(`">`)
+	// comment-id
+	out.WriteString(`<a class="comment-id" href="#comment-`)
+	out.WriteString(strconv.FormatUint(uint64(id), 10))
+	out.WriteString(`">#`)
+	out.WriteString(strconv.FormatUint(uint64(id), 10))
+	out.WriteString(`</a>`)
+	// author
+	out.WriteString(`<span class="comment-author">`)
+	out.WriteString(author)
+	out.WriteString(`</span>`)
+	// badges
+	if commenterRole != "" {
+		roleTitle := ""
+		switch commenterRole {
+		case "author":
+			roleTitle = ctx.T("文章作者")
+		case "admin":
+			roleTitle = ctx.T("管理员")
+		default:
+			roleTitle = ctx.T("登录用户")
+		}
+		out.WriteString(`<span class="comment-badge comment-badge-`)
+		out.WriteString(html.EscapeString(commenterRole))
+		out.WriteString(`" title="`)
+		out.WriteString(roleTitle)
+		out.WriteString(`"></span>`)
+	}
+	if notifyOnReply {
+		out.WriteString(`<span class="comment-badge comment-badge-notify" title="`)
+		out.WriteString(ctx.T("回复时邮件通知"))
+		out.WriteString(`"></span>`)
+	}
+	// time
+	out.WriteString(`<time>`)
+	if !createdAt.IsZero() {
+		out.WriteString(html.EscapeString(createdAt.Format("2006-01-02 15:04")))
+	}
+	out.WriteString(`</time>`)
+	// pending badge
+	if status == "pending" {
+		out.WriteString(`<span class="comment-pending-badge">`)
+		out.WriteString(ctx.T("评论审核中,当前仅自己可见"))
+		out.WriteString(`</span>`)
+	}
+	out.WriteString(`</div>`)
+
+	// comment-body
+	out.WriteString(`<div class="comment-body">`)
+	if parentID != 0 && replyToAuthor != "" && replyToID > 0 {
+		out.WriteString(`<a class="comment-reply-to" href="#comment-`)
+		out.WriteString(strconv.FormatUint(uint64(replyToID), 10))
+		out.WriteString(`">`)
+		out.WriteString(html.EscapeString(ctx.T("回复 @%s", replyToAuthor)))
+		out.WriteString(`</a>`)
+	}
+	out.WriteString(string(commentContent(runtime, ctx, comment)))
+	out.WriteString(`</div>`)
+
+	// reply button
+	out.WriteString(`<button class="comment-reply" type="button" data-reply="`)
+	out.WriteString(strconv.FormatUint(uint64(id), 10))
+	out.WriteString(`" data-reply-target="comment-`)
+	out.WriteString(strconv.FormatUint(uint64(id), 10))
+	out.WriteString(`">`)
+	out.WriteString(ctx.T("回复"))
+	out.WriteString(`</button>`)
+}
+
+// writeCommentChildren 渲染评论的子回复列表。
+func writeCommentChildren(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+	data any, parent any, allComments []any, callbackTpl string, hasCustomTpl bool,
+	avatarSize int, defaultAvatar string, listTag string) {
+
+	parentID := reflectUintField(parent, "ID")
+	var children []any
+	for _, c := range allComments {
+		if reflectUintField(c, "ParentID") == parentID {
+			children = append(children, c)
+		}
+	}
+	if len(children) == 0 {
+		return
+	}
+
+	childrenTag := "ul"
+	switch listTag {
+case "ol":
+		childrenTag = "ol"
+	case "div":
+		childrenTag = "div"
+	}
+
+	out.WriteString("<")
+	out.WriteString(childrenTag)
+	out.WriteString(` class="comment-children">`)
+
+	for _, child := range children {
+		writeCommentItem(out, runtime, ctx, data, child, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
+	}
+
+	out.WriteString("</")
+	out.WriteString(childrenTag)
+	out.WriteString(">")
+}
+
+// writeCommentPagination 渲染评论分页导航。
+func writeCommentPagination(out *strings.Builder, ctx *RequestContext, data any) {
+	pagerAny := dataValue(data, "CommentPager")
+	if pagerAny == nil {
+		return
+	}
+	pager, ok := pagerAny.(map[string]any)
+	if !ok {
+		return
+	}
+	pages, _ := toInt(pager["Pages"])
+	if pages <= 1 {
+		return
+	}
+	page, _ := toInt(pager["Page"])
+	baseURL, _ := pager["BaseURL"].(string)
+
+	out.WriteString(`<nav class="pagination comment-pagination">`)
+	if page > 1 {
+		out.WriteString(`<a href="`)
+		out.WriteString(html.EscapeString(baseURL))
+		out.WriteString(`?cpage=`)
+		out.WriteString(strconv.Itoa(page - 1))
+		out.WriteString(`#comments" data-cpage="`)
+		out.WriteString(strconv.Itoa(page - 1))
+		out.WriteString(`">`)
+		out.WriteString(ctx.T("上一页"))
+		out.WriteString(`</a>`)
+	}
+	out.WriteString(`<span class="page-info">`)
+	out.WriteString(strconv.Itoa(page))
+	out.WriteString(` / `)
+	out.WriteString(strconv.Itoa(pages))
+	out.WriteString(`</span>`)
+	if page < pages {
+		out.WriteString(`<a href="`)
+		out.WriteString(html.EscapeString(baseURL))
+		out.WriteString(`?cpage=`)
+		out.WriteString(strconv.Itoa(page + 1))
+		out.WriteString(`#comments" data-cpage="`)
+		out.WriteString(strconv.Itoa(page + 1))
+		out.WriteString(`">`)
+		out.WriteString(ctx.T("下一页"))
+		out.WriteString(`</a>`)
+	}
+	out.WriteString(`</nav>`)
+}
+
+// writeCommentLoginTip 渲染已登录用户的身份提示。
+func writeCommentLoginTip(out *strings.Builder, ctx *RequestContext, data any, csrfToken string) {
+	currentUser := dataValue(data, "CurrentUser")
+	if isNilAny(currentUser) {
+		return
+	}
+	displayName := reflectStringField(currentUser, "DisplayName")
+	username := reflectStringField(currentUser, "Username")
+	name := displayName
+	if name == "" {
+		name = username
+	}
+	if name == "" {
+		return
+	}
+
+	out.WriteString(`<div class="comment-login-tip">`)
+	// 使用 th.T 格式化（含 HTML 标签）
+	if th := dataValue(data, "th"); th != nil {
+		if tr, ok := th.(interface{ T(string, ...any) string }); ok {
+			out.WriteString(tr.T("以 <strong>%s</strong> 的身份发表评论，", html.EscapeString(name)))
+		}
+	}
+	out.WriteString(`<form class="inline" method="post" action="/auth/logout">`)
+	if csrfToken != "" {
+		out.WriteString(`<input type="hidden" name="_csrf" value="`)
+		out.WriteString(html.EscapeString(csrfToken))
+		out.WriteString(`">`)
+	}
+	out.WriteString(`<button type="submit">`)
+	out.WriteString(ctx.T("登出"))
+	out.WriteString(`</button></form>`)
+	out.WriteString(`</div>`)
+}
+
+// writeCommentForm 渲染评论表单。
+func writeCommentForm(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+	data any, postID uint, csrfToken string, mailEnabled bool) {
+
+	rememberedCommenter := dataValue(data, "RememberedCommenter")
+	currentUser := dataValue(data, "CurrentUser")
+	hasCurrentUser := !isNilAny(currentUser)
+
+	out.WriteString(`<div id="comment-form-home"></div>`)
+	out.WriteString(`<form class="comment-form" id="comment-form" method="post" action="/comment">`)
+	out.WriteString(`<input type="hidden" name="post_id" value="`)
+	out.WriteString(strconv.FormatUint(uint64(postID), 10))
+	out.WriteString(`">`)
+	out.WriteString(`<input type="hidden" name="parent_id" value="0">`)
+	out.WriteString(`<input type="hidden" name="reply_to_id" value="0">`)
+	if csrfToken != "" {
+		out.WriteString(`<input type="hidden" name="_csrf" value="`)
+		out.WriteString(html.EscapeString(csrfToken))
+		out.WriteString(`">`)
+	}
+
+	if !hasCurrentUser {
+		remAuthor, _ := dataValue(rememberedCommenter, "Author").(string)
+		remEmail, _ := dataValue(rememberedCommenter, "Email").(string)
+		remURL, _ := dataValue(rememberedCommenter, "URL").(string)
+
+		out.WriteString(`<p><label class="sr-only" for="comment-author">`)
+		out.WriteString(ctx.T("昵称"))
+		out.WriteString(`</label><input id="comment-author" type="text" name="author" value="`)
+		out.WriteString(html.EscapeString(remAuthor))
+		out.WriteString(`" placeholder="`)
+		out.WriteString(ctx.T("昵称 *"))
+		out.WriteString(`" autocomplete="name" required></p>`)
+
+		out.WriteString(`<p><label class="sr-only" for="comment-email">`)
+		out.WriteString(ctx.T("邮箱"))
+		out.WriteString(`</label><input id="comment-email" type="email" name="email" value="`)
+		out.WriteString(html.EscapeString(remEmail))
+		out.WriteString(`" placeholder="`)
+		out.WriteString(ctx.T("邮箱 *(不公开)"))
+		out.WriteString(`" autocomplete="email" required></p>`)
+
+		out.WriteString(`<p><label class="sr-only" for="comment-url">`)
+		out.WriteString(ctx.T("网站"))
+		out.WriteString(`</label><input id="comment-url" type="url" name="url" value="`)
+		out.WriteString(html.EscapeString(remURL))
+		out.WriteString(`" placeholder="`)
+		out.WriteString(ctx.T("网站(可选)"))
+		out.WriteString(`" autocomplete="url"></p>`)
+	}
+
+	out.WriteString(`<p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>`)
+	out.WriteString(`<p><label class="sr-only" for="comment-content">`)
+	out.WriteString(ctx.T("评论内容"))
+	out.WriteString(`</label><textarea id="comment-content" name="content" rows="5" placeholder="`)
+	out.WriteString(ctx.T("说点什么吧…… *"))
+	out.WriteString(`" required></textarea></p>`)
+
+	// slot: comment.form.after_textarea
+	if h := hooks(runtime); h != nil {
+		var slotBuf strings.Builder
+		h.DoAction(requestContext(ctx), hook.HookCommentFormAfterTextarea, &slotBuf,
+			hook.CommentFormAfterTextareaData{Data: data})
+		out.WriteString(slotBuf.String())
+	}
+
+	if mailEnabled {
+		out.WriteString(`<p><label><input type="checkbox" name="notify"> `)
+		out.WriteString(ctx.T("有回复时邮件通知我"))
+		out.WriteString(`</label></p>`)
+	}
+
+	out.WriteString(`<p class="comment-form-actions"><button type="submit">`)
+	out.WriteString(ctx.T("提交评论"))
+	out.WriteString(`</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>`)
+	out.WriteString(ctx.T("取消回复"))
+	out.WriteString(`</button></p>`)
+	out.WriteString(`<p class="comment-tip">`)
+	out.WriteString(ctx.T("评论提交后需经审核才会显示。"))
+	out.WriteString(`</p>`)
+	out.WriteString(`</form>`)
+}
+
+// ========== 辅助函数 ==========
+
+// commentToMap 将评论(struct 或 map)转换为 map[string]any，供自定义模板使用。
+func commentToMap(v any) map[string]any {
+	result := make(map[string]any)
+	if m, ok := v.(map[string]any); ok {
+		for k, val := range m {
+			result[k] = val
+		}
+		return result
+	}
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return result
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return result
+	}
+	t := rv.Type()
+	for i := 0; i < rv.NumField(); i++ {
+		field := t.Field(i)
+		if field.IsExported() {
+			result[field.Name] = rv.Field(i).Interface()
+		}
+	}
+	return result
+}
+
+// reflectBoolField 通过反射获取 bool 字段值。
+func reflectBoolField(v any, name string) bool {
+	if m, ok := v.(map[string]any); ok {
+		b, _ := m[name].(bool)
+		return b
+	}
+	rv := indirectValue(v)
+	if !rv.IsValid() || rv.Kind() != reflect.Struct {
+		return false
+	}
+	f := rv.FieldByName(name)
+	if f.IsValid() && f.Kind() == reflect.Bool {
+		return f.Bool()
+	}
+	return false
+}
+
+// reflectTimeField 通过反射获取 time.Time 字段值。
+func reflectTimeField(v any, name string) time.Time {
+	if m, ok := v.(map[string]any); ok {
+		if t, ok := m[name].(time.Time); ok {
+			return t
+		}
+		return time.Time{}
+	}
+	rv := indirectValue(v)
+	if !rv.IsValid() || rv.Kind() != reflect.Struct {
+		return time.Time{}
+	}
+	f := rv.FieldByName(name)
+	if f.IsValid() && f.Type() == reflect.TypeOf(time.Time{}) {
+		return f.Interface().(time.Time)
+	}
+	return time.Time{}
+}
+
+// toInt 将 any 转换为 int（处理 int, int64, float64 等常见类型）。
+func toInt(v any) (int, bool) {
+	switch n := v.(type) {
+	case int:
+		return n, true
+	case int64:
+		return int(n), true
+	case float64:
+		return int(n), true
+	case uint:
+		return int(n), true
+	default:
+		return 0, false
+	}
 }

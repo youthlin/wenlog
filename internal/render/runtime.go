@@ -21,11 +21,11 @@ type TemplateRuntime struct {
 // “哪个 Manager 给 Renderer 注入哪个函数”。集中成一个对象后，cmd/server/manager 只需要
 // 读成“把模板运行时能力挂到 Renderer 上”，主题作者面对的模板函数也更容易对应到底层能力。
 type TemplateProviders struct {
-	HookInvoke     func(ctx *RequestContext, name string, args ...any) any
-	ThemeOption    func(ctx *RequestContext, optionID string) string
-	ThemeWidgets   func(ctx *RequestContext, area string) []WidgetInfo
-	Hooks          hook.Executor
-	WidgetResolver hook.WidgetResolver
+	WidgetsProvider func(ctx *RequestContext, area string) []WidgetInfo
+	ThemeOption     func(ctx *RequestContext, optionID string) string
+	Hooks           hook.Executor
+	HookInvoke      func(ctx *RequestContext, name string, args ...any) any
+	WidgetResolver  hook.WidgetResolver
 }
 
 func (tr *TemplateRuntime) current() TemplateProviders {
@@ -63,7 +63,7 @@ func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area str
 		return
 	}
 	r.themeRuntime.mu.Lock()
-	r.themeRuntime.providers.ThemeWidgets = fn
+	r.themeRuntime.providers.WidgetsProvider = fn
 	r.themeRuntime.mu.Unlock()
 }
 
