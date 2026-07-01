@@ -105,4 +105,26 @@
 
     setNavState(navPanel.classList.contains("is-open"));
   }
+
+  // 导航组折叠：默认全部折叠，仅当前活跃组展开。
+  (function () {
+    var navGroups = document.querySelectorAll(".admin-nav .nav-group");
+    if (!navGroups.length) return;
+
+    // 找到包含 is-active 链接的组并展开。
+    navGroups.forEach(function (group) {
+      if (group.querySelector(".admin-nav-link.is-active")) {
+        group.classList.add("is-expanded");
+      }
+    });
+
+    // 点击组标题切换展开/折叠。
+    navGroups.forEach(function (group) {
+      var title = group.querySelector(".nav-group-title");
+      if (!title) return;
+      title.addEventListener("click", function () {
+        group.classList.toggle("is-expanded");
+      });
+    });
+  })();
 })();

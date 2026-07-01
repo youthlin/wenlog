@@ -472,7 +472,7 @@ func pathWithinDir(dir, target string) bool {
 func isAllowedThemeFile(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
 	switch ext {
-	case ".gohtml", ".html", ".css", ".js", ".json", ".yaml", ".yml", ".po", ".mo",
+	case ".go", ".goyaegi", ".gohtml", ".html", ".css", ".js", ".json", ".yaml", ".yml", ".po", ".mo",
 		".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico",
 		".woff", ".woff2", ".ttf", ".eot":
 		return true

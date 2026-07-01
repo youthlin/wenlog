@@ -71,3 +71,91 @@ func (h *Public) Feed(c *gin.Context) {
 		h.log.Error("feed xml encode", "error", err)
 	}
 }
+
+// atomFeed 是 Atom 1.0 文档结构(RFC 4287)。
+type atomFeed struct {
+	XMLName xml.Name   `xml:"http://www.w3.org/2005/Atom feed"`
+	Title   string     `xml:"title"`
+	Subtitle string    `xml:"subtitle,omitempty"`
+	ID      string     `xml:"id"`
+	Updated string     `xml:"updated"`
+	Link    []atomLink `xml:"link"`
+	Entries []atomEntry `xml:"entry"`
+}
+
+type atomLink struct {
+	Href string `xml:"href,attr"`
+	Rel  string `xml:"rel,attr,omitempty"`
+}
+
+type atomEntry struct {
+	Title   string    `xml:"title"`
+	ID      string    `xml:"id"`
+	Updated string    `xml:"updated"`
+	Link    atomLink  `xml:"link"`
+	Summary string    `xml:"summary,omitempty"`
+	Author  atomAuthor `xml:"author"`
+}
+
+type atomAuthor struct {
+	Name string `xml:"name"`
+}
+
+// AtomFeed 输出 Atom 1.0 feed。
+func (h *Public) AtomFeed(c *gin.Context) {
+	syncPostPermalink(c, h.st)
+	s := h.loadSettings(c)
+	res, err := h.st.ListPosts(c, 1, s.FeedSize, "", "")
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	baseURL := requestBaseURL(c)
+	atomURL := baseURL + "/atom"
+
+	feed := atomFeed{
+		Title:    s.SiteName,
+		Subtitle: s.SiteDescription,
+		ID:       baseURL + "/",
+		Link: []atomLink{
+			{Href: atomURL, Rel: "self"},
+			{Href: baseURL + "/", Rel: "alternate"},
+		},
+	}
+
+	for i := range res.Posts {
+		p := &res.Posts[i]
+		link := baseURL + permalink.Post(p)
+		summary := p.Excerpt
+		if summary == "" {
+			summary = p.Title
+		}
+		authorName := ""
+		if p.Author.DisplayName != "" {
+			authorName = p.Author.DisplayName
+		} else if p.Author.Username != "" {
+			authorName = p.Author.Username
+		}
+		feed.Entries = append(feed.Entries, atomEntry{
+			Title:   p.Title,
+			ID:      link,
+			Updated: p.PublishedAt.Format(time.RFC3339),
+			Link:    atomLink{Href: link, Rel: "alternate"},
+			Summary: summary,
+			Author:  atomAuthor{Name: authorName},
+		})
+	}
+
+	// 用最新文章的发布时间作为 feed 的 updated。
+	if len(res.Posts) > 0 {
+		feed.Updated = res.Posts[0].PublishedAt.Format(time.RFC3339)
+	}
+
+	c.Header("Content-Type", "application/atom+xml; charset=utf-8")
+	c.String(http.StatusOK, xml.Header)
+	enc := xml.NewEncoder(c.Writer)
+	enc.Indent("", "  ")
+	if err := enc.Encode(feed); err != nil {
+		h.log.Error("atom feed xml encode", "error", err)
+	}
+}

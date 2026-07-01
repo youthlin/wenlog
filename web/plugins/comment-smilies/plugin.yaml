@@ -17,7 +17,7 @@ hooks:
   slots:
     - comment.form.after_textarea
 
-settings:
+options:
   - id: enabled
     type: bool
     label: "启用表情"

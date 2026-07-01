@@ -31,6 +31,7 @@ func registerPublicRoutes(r *gin.Engine, pub *handler.Public) {
 	r.GET("/sitemap.xml", pub.Sitemap)
 	r.POST("/comment", pub.SubmitComment)
 	r.GET("/feed", pub.Feed)
+	r.GET("/atom", pub.AtomFeed)
 
 	// 兜底动态路由: 页面 slug + 任意层级文章永久链接 + 旧链接兼容。
 	r.NoRoute(pub.DynamicOrLegacy)
@@ -192,6 +193,8 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 
 	// 插件管理
 	adminGroup.GET("/plugins", adm.PluginsPage)
+	adminGroup.POST("/plugin/upload", adm.PluginUpload)
+	adminGroup.GET("/plugin/download", adm.PluginDownload)
 	adminGroup.POST("/plugin/:id/:action", adm.PluginAction)
 	adminGroup.GET("/plugin/:id/settings", adm.PluginSettingsPage)
 	adminGroup.POST("/plugin/:id/settings", adm.SavePluginSettings)
