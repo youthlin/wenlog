@@ -60,16 +60,16 @@ func TestResolveWidgetsEmptyConfigRendersNoWidgets(t *testing.T) {
 func TestWidgetDeclsWithPluginsAllowsPluginWidget(t *testing.T) {
 	theme := &Theme{WidgetAreas: map[string]WidgetArea{"sidebar": {Name: "侧栏"}}}
 
-	decls := WidgetDeclsWithPlugins(theme, []WidgetDecl{{ID: "saying", Label: "博主动态", Source: "plugin", PluginID: "saying"}})
+	decls := WidgetDeclsWithPlugins(theme, []WidgetDecl{{ID: "saying", Label: "博主动态", Source: "plugin", PluginID: "common-widgets"}})
 	widgets := ResolveWidgetsWithDecls(`[{
   "id": "saying",
-  "source": "plugin:saying",
+  "source": "plugin:common-widgets",
   "opts": {"count": "5"}
 }]`, theme, "sidebar", decls)
 	if len(widgets) != 1 {
 		t.Fatalf("ResolveWidgetsWithDecls(plugin)=%+v, want one plugin widget", widgets)
 	}
-	if widgets[0].ID != "saying" || widgets[0].Source != WidgetSourcePlugin || widgets[0].PluginID != "saying" || widgets[0].Options["count"] != "5" {
+	if widgets[0].ID != "saying" || widgets[0].Source != WidgetSourcePlugin || widgets[0].PluginID != "common-widgets" || widgets[0].Options["count"] != "5" {
 		t.Fatalf("plugin widget=%+v, want saying plugin widget with options", widgets[0])
 	}
 }

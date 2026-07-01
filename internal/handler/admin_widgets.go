@@ -23,7 +23,7 @@ type configuredWidget struct {
 	Opts         map[string]string // 当前选项值
 	Index        int               // 在区域内的序号
 	Source       string            // builtin / theme / plugin
-	ConfigSource string            // 保存到配置里的来源，如 plugin:saying
+	ConfigSource string            // 保存到配置里的来源，如 plugin:common-widgets
 }
 
 // areaPanel 是模板中一个区域面板的展示数据。
@@ -54,7 +54,7 @@ func (h *Admin) WidgetsPage(c *gin.Context) {
 		ID           string
 		Label        string
 		Source       string // builtin / theme / plugin
-		ConfigSource string // 保存到配置里的来源，如 plugin:saying
+		ConfigSource string // 保存到配置里的来源，如 plugin:common-widgets
 	}
 	var availableWidgets []availWidget
 	for _, w := range widgetDecls {

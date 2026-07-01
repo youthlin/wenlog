@@ -1,0 +1,37 @@
+id: common-widgets
+name: "常用小组件"
+version: "1.0.0"
+description: "提供博主动态和热门文章两个可跨主题复用的小组件，可分别启用/禁用。"
+author: "youthlin"
+default_enabled: true
+
+widgets:
+  - id: saying
+    label: "博主动态"
+    options:
+      - id: title
+        type: text
+        label: "标题"
+        default: "博主动态"
+
+      - id: post_id
+        type: number
+        label: "文章 ID"
+        description: "用于读取博主评论的文章/页面 ID"
+        default: "456"
+        min: 1
+
+  - id: popular_posts
+    label: "热门文章"
+    options:
+      - id: title
+        type: text
+        label: "标题"
+        default: "最热文章"
+
+      - id: count
+        type: number
+        label: "显示数量"
+        default: "5"
+        min: 1
+        max: 20

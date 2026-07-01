@@ -233,11 +233,11 @@ func TestEnsurePluginsOnDiskReleasesBundledPlugins(t *testing.T) {
 		t.Fatalf("plugin yaml not released: got %q want %q", gotYAML, wantYAML)
 	}
 
-	wantWidget, err := fs.ReadFile(bundledplugins.Plugins, "saying/widgets/saying.gohtml")
+	wantWidget, err := fs.ReadFile(bundledplugins.Plugins, "common-widgets/widgets/saying.gohtml")
 	if err != nil {
 		t.Fatalf("read bundled plugin widget: %v", err)
 	}
-	gotWidget, err := os.ReadFile(filepath.Join("plugins", "saying", "widgets", "saying.gohtml"))
+	gotWidget, err := os.ReadFile(filepath.Join("plugins", "common-widgets", "widgets", "saying.gohtml"))
 	if err != nil {
 		t.Fatalf("read released plugin widget: %v", err)
 	}
@@ -257,11 +257,11 @@ func TestEnsurePluginsOnDiskKeepsExistingPlugin(t *testing.T) {
 	}
 	defer func() { _ = os.Chdir(wd) }()
 
-	pluginDir := filepath.Join("plugins", "saying")
+	pluginDir := filepath.Join("plugins", "common-widgets")
 	if err := os.MkdirAll(pluginDir, 0o755); err != nil {
 		t.Fatalf("mkdir plugin dir: %v", err)
 	}
-	customYAML := []byte("id: saying\nname: 本地修改\nversion: 0.0.0\n")
+	customYAML := []byte("id: common-widgets\nname: 本地修改\nversion: 0.0.0\n")
 	if err := os.WriteFile(filepath.Join(pluginDir, "plugin.yaml"), customYAML, 0o644); err != nil {
 		t.Fatalf("write custom plugin yaml: %v", err)
 	}

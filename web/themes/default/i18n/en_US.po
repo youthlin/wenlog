@@ -245,10 +245,6 @@ msgstr "Read more →"
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/default/widgets/popular_posts.gohtml:2
-msgid "最热文章"
-msgstr "Popular posts"
-
 #: theme.yaml:description
 msgid "默认主题，内容+边栏双栏设计，带多种颜色外观"
 msgstr ""

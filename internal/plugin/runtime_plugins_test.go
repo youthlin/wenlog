@@ -15,7 +15,7 @@ func (testSettingStore) GetSetting(context.Context, string) (string, error) { re
 func (testSettingStore) SetSetting(context.Context, string, string) error   { return nil }
 
 func TestBundledPluginFunctionsCompile(t *testing.T) {
-	for _, id := range []string{"saying", "comment-smilies"} {
+	for _, id := range []string{"common-widgets", "comment-smilies"} {
 		id := id
 		t.Run(id, func(t *testing.T) {
 			p, err := LoadPlugin(filepath.Join("..", "..", "web", "plugins", id))
@@ -35,19 +35,19 @@ func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := m.Get("saying")
+	p := m.Get("common-widgets")
 	if p == nil {
-		t.Fatal("saying plugin not loaded")
+		t.Fatal("common-widgets plugin not loaded")
 	}
 	if len(p.Hooks.Filters) != 0 {
 		t.Fatalf("plugin manifest should not need to declare widget filter, got %v", p.Hooks.Filters)
 	}
 
 	widgets := m.EnabledWidgetDecls(context.Background())
-	if len(widgets) != 1 {
-		t.Fatalf("widgets count = %d, want 1", len(widgets))
+	if len(widgets) != 2 {
+		t.Fatalf("widgets count = %d, want 2", len(widgets))
 	}
-	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin" || got.PluginID != "saying" {
+	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin" || got.PluginID != "common-widgets" {
 		t.Fatalf("registered widget = %+v", got)
 	}
 }

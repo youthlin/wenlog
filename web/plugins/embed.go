@@ -4,7 +4,7 @@ package plugins
 import "embed"
 
 // Plugins 是所有内置插件的完整内容（plugin.yaml + functions + widgets + assets）。
-// 每个插件一个子目录，如 comment-smilies/、saying/。
+// 每个插件一个子目录，如 comment-smilies/、common-widgets/。
 //
-//go:embed comment-smilies saying
+//go:embed comment-smilies common-widgets
 var Plugins embed.FS

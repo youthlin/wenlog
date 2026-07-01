@@ -1,6 +1,9 @@
 package plugin
 
-import "hook"
+import (
+	"hook"
+	"sort"
+)
 
 type SayingItem struct {
 	CommentURL  string
@@ -10,10 +13,10 @@ type SayingItem struct {
 	AuthorEmail string
 }
 
-// Register 保留插件运行时入口。
-// saying 组件由 plugin.yaml 声明，宿主会把启用插件的组件声明加入 widgets.available。
+// Register 注册插件函数。
 func Register(api *hook.API) {
 	api.RegisterFunc("sayingItems", sayingItems)
+	api.RegisterFunc("popularPosts", popularPosts)
 }
 
 func sayingItems(api *hook.API, args hook.Args) any {
@@ -50,4 +53,16 @@ func sayingItems(api *hook.API, args hook.Args) any {
 		}
 	}
 	return items
+}
+
+func popularPosts(api *hook.API, args hook.Args) any {
+	n := args.PositiveInt("n", 5)
+	posts := api.Posts()
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].Views > posts[j].Views
+	})
+	if n > len(posts) {
+		n = len(posts)
+	}
+	return posts[:n]
 }

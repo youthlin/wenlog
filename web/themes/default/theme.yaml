@@ -18,21 +18,7 @@ menu_locations:
     name: "主导航"
     description: "站点顶部导航菜单"
 
-widgets:
-  - id: popular_posts
-    label: "热门文章"
-    options:
-      - id: title
-        type: text
-        label: "标题"
-        default: "最热文章"
-
-      - id: count
-        type: number
-        label: "显示数量"
-        default: "5"
-        min: 1
-        max: 20
+widgets: []
 
 options:
   - id: custom_css
