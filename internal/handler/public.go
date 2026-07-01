@@ -225,7 +225,6 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 		return
 	}
 	if slug == "archive" {
-		// 归档页特殊识别
 		tr := i18n.Get(c)
 		h.renderArchive(c, h.specialPageFromLoader(loader, "archive", tr.T("归档")), loader)
 		return
@@ -241,38 +240,7 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 		}
 		p.Views++
 	}
-
-	commentPage := atoiDefault(c.Query("cpage"), 1)
-	var comments *store.CommentPageResult
-	uid := currentUserID(c)
-	pendingIDs := pendingCommentIDs(c)
-	if uid != 0 {
-		// 登录用户：从内存取评论（含自己的待审评论）
-		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, uid)
-	} else if len(pendingIDs) == 0 {
-		// 匿名访客无待审：从内存取已批准评论
-		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, 0)
-	} else {
-		var err error
-		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-	}
-	s := h.loadSettingsFromLoader(loader)
-	data := h.base(c, p.Title, p.Excerpt, s, loader)
-	data["Post"] = p
-	data["Comments"] = comments.Comments
-	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Page(p), "Sep": "?"}
-	data["CommentCount"] = comments.TotalComments
-	data["CommentOpen"] = p.CommentStatus != "closed"
-	data["RememberedCommenter"] = rememberedCommenter(c)
-	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
-		h.renderHTML(c, http.StatusOK, fragName, data)
-		return
-	}
-	h.renderPageHTML(c, http.StatusOK, "page", data)
+	h.renderContentPost(c, p, loader, "page", permalink.Page(p), nil)
 }
 
 func (h *Public) specialPageFromLoader(loader *store.DataLoader, slug, fallbackTitle string) *model.Post {
@@ -350,7 +318,6 @@ func (h *Public) tagWithLoader(c *gin.Context, loader *store.DataLoader) {
 }
 
 // renderResolvedPostWithLoader 处理文章
-// TODO 逻辑和 [pageWithLoader] 有雷同, 是否提出公共逻辑
 func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match *permalink.PostPathMatch, loader *store.DataLoader) bool {
 	p, err := loader.ResolvePostByPath(path, match)
 	if err != nil {
@@ -372,9 +339,18 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 		}
 		p.Views++
 	}
-	// 从内存填充关联数据
 	loader.FillPost(p)
+	extra := gin.H{
+		"PrevPost": loader.PrevPost(p.PublishedAt),
+		"NextPost": loader.NextPost(p.PublishedAt),
+	}
+	h.renderContentPost(c, p, loader, "post", permalink.Post(p), extra)
+	return true
+}
 
+// renderContentPost 加载评论、拼装模板数据并渲染文章/页面。
+// extra 中的字段会合并到模板数据中（如 PrevPost/NextPost）。
+func (h *Public) renderContentPost(c *gin.Context, p *model.Post, loader *store.DataLoader, templateName, baseURL string, extra gin.H) {
 	commentPage := atoiDefault(c.Query("cpage"), 1)
 	var comments *store.CommentPageResult
 	uid := currentUserID(c)
@@ -384,29 +360,29 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 	} else if len(pendingIDs) == 0 {
 		comments = loader.CommentPage(p.ID, commentPage, commentPageSize, 0)
 	} else {
-		var cerr error
-		comments, cerr = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
-		if cerr != nil {
-			h.serverError(c, cerr)
-			return true
+		var err error
+		comments, err = h.st.VisibleCommentsPageForViewer(c, p.ID, commentPage, commentPageSize, uid, pendingIDs)
+		if err != nil {
+			h.serverError(c, err)
+			return
 		}
 	}
 	s := h.loadSettingsFromLoader(loader)
 	data := h.base(c, p.Title, p.Excerpt, s, loader)
 	data["Post"] = p
-	data["PrevPost"] = loader.PrevPost(p.PublishedAt)
-	data["NextPost"] = loader.NextPost(p.PublishedAt)
 	data["Comments"] = comments.Comments
-	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": permalink.Post(p), "Sep": "?"}
+	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": baseURL, "Sep": "?"}
 	data["CommentCount"] = comments.TotalComments
 	data["CommentOpen"] = p.CommentStatus != "closed"
 	data["RememberedCommenter"] = rememberedCommenter(c)
+	for k, v := range extra {
+		data[k] = v
+	}
 	if fragName, ok := h.renderer.ResolveFragment(c.Query("fragment")); ok {
 		h.renderHTML(c, http.StatusOK, fragName, data)
-		return true
+		return
 	}
-	h.renderPageHTML(c, http.StatusOK, "post", data)
-	return true
+	h.renderPageHTML(c, http.StatusOK, templateName, data)
 }
 
 // base 返回模板通用数据(站点名、菜单、当前年份、当前登录用户)。
