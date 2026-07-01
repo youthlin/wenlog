@@ -54,6 +54,23 @@
 - 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `renderWidgets "area" .` 渲染区域，用 `widgetOption "key"` 读取当前组件实例选项。
 - 主题静态资源通过 `/theme-assets/...` 引用，当前/预览主题会自动解析到对应 `assets/` 目录。不要在主题模板里硬编码 `/web/themes/...`。
 
+**主题与插件设计文档：**
+- `docs/template-data-reference.md` — 模板数据字段、模板函数、数据模型、theme.yaml 配置参考（主题开发必读）
+- `docs/theme-system-optimization-plan.md` — 主题系统当前实现梳理与优化计划
+- `docs/plugin-system-design.md` — 插件系统设计（hook/Registry、组件注册、插件生命周期）
+- `docs/outdated/` — 历史设计稿（v1~v6），仅供参考演进背景
+
+> **维护约定**：迭代插件或主题系统时，若变更影响模板数据字段、模板函数签名、theme.yaml 配置格式或插件 API，需同步更新 `docs/` 下对应文档。
+
+### 插件系统当前模型
+
+- 插件位于 `web/plugins/{id}/`，包含 `plugin.yaml`（元数据）、`functions.goyaegi`（业务逻辑）、可选 `widgets/`（组件模板）和 `assets/`（静态资源）。
+- `internal/plugin.Manager` 负责扫描、启用/禁用、编译插件脚本；插件 hook 注册到共享的 `hook.Registry`。
+- 插件通过 `hook.Registry` 注册 action/filter，与主题 `functions.goyaegi` 共享同一套 hook 机制。
+- 插件可声明组件（widget），组件注册到统一 `WidgetRegistry`，优先级：内置 < 主题 < 插件（后注册覆盖先注册）。
+- 插件静态资源通过 `/plugin-assets/{plugin_id}/...` 访问。
+- 初始化流程集中在 `cmd/server/hook.go` 的 `initHook`：创建 Registry → 注入 theme.Manager → 配置 renderer → 加载主题 → 构建组件注册表 → 注册资源路由。
+
 ### 路由设计的关键点
 
 - 前台根路径下只有一个 `/:seg` 单段路由，同时承载：
@@ -178,7 +195,7 @@ go build -o blog ./cmd/server
 
 ### 后台表格规范
 
-后台管理页面（文章、评论、分类、标签、附件、用户、主题等）的数据表格统一使用以下模式：
+后台管理页面（文章、评论、分类、标签、附件、用户、主题、菜单等）的数据表格统一使用以下模式，通过 CSS 实现桌面端/平板/移动端三档响应式。
 
 **HTML 结构：**
 ```gohtml
@@ -218,6 +235,34 @@ go build -o blog ./cmd/server
 - 操作列使用 `class="actions"`，内嵌 `<form class="inline">` + CSRF token
 - 空状态用 `{{else}}` 分支显示 "暂无内容"
 - 分页使用 `{{if gt .Pages 1}}` 包裹的 prev/next 链接 + `page-info`
+
+**响应式 CSS 三阶段（定义在 `web/assets/admin.css`）：**
+
+1. **桌面端（默认）**：标准 `<table>` 布局，`data-table` 类提供宽度 100%、边框折叠、圆角卡片背景。操作列 `white-space: nowrap` 防止换行。
+
+2. **平板过渡（`@media (max-width: 760px)`）**：每种表格类型设置 `min-width`，在卡片布局触发前先启用横向滚动，避免表格过早变形：
+   ```css
+   .table-scroll .posts-table { min-width: 700px; }
+   .table-scroll .comments-table { min-width: 860px; }
+   .table-scroll .menu-items-table { min-width: 760px; }
+   /* ... 其他表格类似 */
+   ```
+
+3. **移动端卡片布局（`@media (max-width: 760px)`）**：表格转为卡片流式布局，核心变换：
+   - `thead { display: none }` — 隐藏表头
+   - 所有表格元素 `display: block; width: 100%` — 从表格模型转为块模型
+   - `tbody { display: grid; gap: 14px }` — 每行变成独立卡片
+   - `tbody tr` 添加 `border + border-radius + box-shadow` — 卡片外观
+   - `td[data-label]::before { content: attr(data-label) }` — 用 `data-label` 生成每列标签
+   - `.actions` 改为 `display: grid; gap: 8px` — 操作按钮纵向排列
+   - `.table-scroll:has(.{entity}-table) { overflow: visible }` — 取消横向滚动，让卡片自然流动
+
+**新增表格类型的 checklist：**
+
+1. 模板中：`<table class="data-table {entity}-table">`，每个 `<td>` 带 `data-label`
+2. `admin.css` 桌面端：无需额外样式（`data-table` 已覆盖通用样式）
+3. `admin.css` 平板过渡：在 `@media (max-width: 760px)` 中添加 `.table-scroll .{entity}-table { min-width: Npx }`
+4. `admin.css` 移动端卡片：在 `@media (max-width: 760px)` 中按现有表格模式复制一份，将选择器替换为 `{entity}-table`，调整 `colspan` 和特殊列的 `display`/`order`
 
 ### i18n / 翻译字符串约定
 

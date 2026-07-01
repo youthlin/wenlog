@@ -12,7 +12,9 @@
 | `SiteLogo` | `string` | 站点 Logo URL（后台设置，可为空） |
 | `Title` | `string` | 页面标题（`<title>` 标签） |
 | `Description` | `string` | 页面描述（`<meta name="description">`） |
-| `Menu` | `[]model.Post` | 导航菜单页面列表 |
+| `Menu` | `[]model.Post` | 导航菜单页面列表（兜底数据，当 `Menus` 中无对应位置配置时使用） |
+| `Menus` | `map[string][]theme.MenuItem` | 按菜单位置分组的菜单项（如 `"primary"` → 主导航菜单），由后台菜单配置 + 页面列表解析生成 |
+| `ThemeName` | `string` | 当前主题名称（如 `"default"`） |
 | `CurrentYear` | `int` | 当前年份 |
 | `CurrentUserID` | `uint` | 当前登录用户 ID，0 表示未登录 |
 | `CurrentUser` | `*model.User` | 当前登录用户，未登录为 nil |
@@ -85,6 +87,7 @@
 | `themeWidgets` | `func(string) any` | 返回某个组件区域的组件配置，通常由 `renderWidgets` 间接使用 |
 | `renderWidgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{renderWidgets "sidebar" .}}` |
 | `widgetOption` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
+| `renderMenu` | `func(string, ...any) template.HTML` | 渲染指定位置的导航菜单，如 `{{renderMenu "primary" .}}`；支持多级下拉子菜单，自动从 `.Menus` 或 `.Menu` 取数据 |
 
 ## 数据模型
 
@@ -275,9 +278,23 @@ type CommenterInfo struct {
 }
 ```
 
+### theme.MenuItem（菜单项）
+
+`renderMenu` 渲染的菜单项结构，由后台菜单配置解析生成：
+
+```go
+type MenuItem struct {
+    ID       string     // 唯一标识
+    Title    string     // 菜单标题
+    URL      string     // 链接地址
+    Target   string     // 链接目标（_blank 等）
+    Children []MenuItem // 子菜单项
+}
+```
+
 ## 主题配置（theme.yaml）
 
-当前主题配置以 v6 格式为准：`theme.yaml` 包含主题元数据、组件区域、可用组件、组件级选项与主题全局选项。早期 `pages.data/widgets` 配置已经废弃，前台通用数据由 Go 代码统一注入，页面模板由文件名和模板层级决定。
+当前主题配置以 v6 格式为准：`theme.yaml` 包含主题元数据、组件区域、可用组件、组件级选项、菜单位置与主题全局选项。早期 `pages.data/widgets` 配置已经废弃，前台通用数据由 Go 代码统一注入，页面模板由文件名和模板层级决定。
 
 ```yaml
 name: "my-theme"
@@ -293,6 +310,14 @@ widget_areas:
   sidebar:
     name: "侧边栏"
     description: "文章页侧边栏区域"
+
+menu_locations:
+  primary:
+    name: "主导航"
+    description: "站点顶部导航菜单"
+  footer:
+    name: "页脚导航"
+    description: "站点页脚链接"
 
 widgets:
   - id: recent_posts
@@ -355,7 +380,8 @@ themes/my-theme/
 | `ArchiveMonths` | 归档月份 | `.ArchiveMonths` (`[]store.ArchiveMonth`) |
 | `Categories` | 分类列表 | `.Categories` (`[]model.Category`) |
 | `Tags` | 标签列表 | `.Tags` (`[]model.Tag`) |
-| `Menu` | 导航页面 | `.Menu` (`[]model.Post`) |
+| `Menu` | 导航页面（兜底） | `.Menu` (`[]model.Post`) |
+| `Menus` | 按位置分组的菜单 | `.Menus` (`map[string][]theme.MenuItem`) |
 
 ### 内置 widget
 
