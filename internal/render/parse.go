@@ -44,7 +44,6 @@ func CommonFuncMap() template.FuncMap {
 		"tagURL":           permalink.Tag,
 		"safeHTML":         func(s string) template.HTML { return template.HTML(s) },
 		"escapeHTML":       html.EscapeString,
-		"postExcerptHTML":  postExcerptHTML,
 		"detailHTML":       detailHTML,
 		"hasMore":          func(content string) bool { _, m := wxr.SplitMore(content); return m },
 		"avatarURL":        avatarURL,

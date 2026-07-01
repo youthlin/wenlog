@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
@@ -647,9 +649,6 @@ func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) te
 	out.WriteString(listTag)
 	out.WriteString(">")
 
-	// 分页
-	writeCommentPagination(&out, ctx, data)
-
 	return template.HTML(out.String())
 }
 
@@ -856,6 +855,14 @@ case "ol":
 	out.WriteString(">")
 }
 
+// commentsPagination 渲染评论分页导航。
+// 模板调用: {{the_comments_pagination .}}
+func commentsPagination(ctx *RequestContext, data any) template.HTML {
+	var out strings.Builder
+	writeCommentPagination(&out, ctx, data)
+	return template.HTML(out.String())
+}
+
 // writeCommentPagination 渲染评论分页导航。
 func writeCommentPagination(out *strings.Builder, ctx *RequestContext, data any) {
 	pagerAny := dataValue(data, "CommentPager")
@@ -864,7 +871,11 @@ func writeCommentPagination(out *strings.Builder, ctx *RequestContext, data any)
 	}
 	pager, ok := pagerAny.(map[string]any)
 	if !ok {
-		return
+		if gh, ok2 := pagerAny.(gin.H); ok2 {
+			pager = map[string]any(gh)
+		} else {
+			return
+		}
 	}
 	pages, _ := toInt(pager["Pages"])
 	if pages <= 1 {

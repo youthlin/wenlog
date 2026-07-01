@@ -146,8 +146,8 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 
 func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	dir := t.TempDir()
-	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{hookInvoke "loader"}}/{{hookInvoke "theme"}}|{{widgets "sidebar" .}}{{end}}`)
-	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}{{widgetOption "name"}}{{end}}`)
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{hook_invoke "loader"}}/{{hook_invoke "theme"}}|{{widgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}{{widget_option "name"}}{{end}}`)
 	r, err := NewHot(dir)
 	if err != nil {
 		t.Fatalf("new hot renderer: %v", err)
@@ -259,7 +259,7 @@ func TestResolveTemplateUsesSpecificFallbacks(t *testing.T) {
 
 func TestRenderMenuRendersPrimaryLocation(t *testing.T) {
 	dir := t.TempDir()
-	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}{{renderMenu "primary" .}}{{end}}`)
+	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}{{render_menu "primary" .}}{{end}}`)
 	r, err := NewHot(dir)
 	if err != nil {
 		t.Fatalf("new hot renderer: %v", err)
@@ -277,7 +277,7 @@ func TestRenderMenuRendersPrimaryLocation(t *testing.T) {
 
 func TestRenderMenuRendersChildrenAndCustomURL(t *testing.T) {
 	dir := t.TempDir()
-	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}{{renderMenu "primary" .}}{{end}}`)
+	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}{{render_menu "primary" .}}{{end}}`)
 	r, err := NewHot(dir)
 	if err != nil {
 		t.Fatalf("new hot renderer: %v", err)

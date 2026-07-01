@@ -9,6 +9,7 @@
 {{end}}
 
 {{- define "fragment_comments.gohtml" -}}
-{{listComments .}}
-{{commentForm .}}
+{{list_comments .}}
+{{comments_pagination .}}
+{{comment_form .}}
 {{end}}

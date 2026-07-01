@@ -10,9 +10,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
-{{headMeta .}}
+{{head_meta .}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
-{{$customCSS := themeOption "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
+{{$customCSS := theme_option "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
 {{slot "head.end" .}}
@@ -25,7 +25,7 @@
     <nav id="site-nav-menu" class="site-nav" data-nav-panel>
       <div class="site-nav-links">
         <a href="/">{{.th.T "首页"}}</a>
-        {{renderMenu "primary" .}}
+        {{render_menu "primary" .}}
       </div>
       <label class="lang-select-wrap">
         <span class="sr-only">{{.th.T "语言"}}</span>

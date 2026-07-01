@@ -23,7 +23,7 @@
       </div>
       <div class="post-summary-copy">
         <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
-        <div class="post-content">{{postExcerptHTML .}}</div>
+        <div class="post-content">{{post_excerpt .}}</div>
         <div class="post-actions">
           <a class="read-more" href="{{postURL .}}{{if hasMore .Content}}#more-{{.ID}}{{end}}">{{$.th.T "阅读全文"}}</a>
         </div>

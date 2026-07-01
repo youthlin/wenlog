@@ -1,5 +1,5 @@
 {{define "widget_user_info"}}
-{{$title := widgetOption "title"}}
+{{$title := widget_option "title"}}
 <section class="widget widget-user">
   {{if .CurrentUserID}}
   <h3>{{if $title}}{{$title}}{{else}}{{.t.T "%s, 你好" .CurrentUserName}}{{end}}</h3>

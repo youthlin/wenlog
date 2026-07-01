@@ -4,10 +4,10 @@
   <div class="wide-shell footer-shell">
     <div class="footer-brand">
       <p class="footer-title">{{.SiteName}}</p>
-      <p class="footer-text">{{themeOption "footer_text" | default "Published with Blog"}}</p>
-      {{renderMenu "footer" .}}
+      <p class="footer-text">{{theme_option "footer_text" | default "Published with Blog"}}</p>
+      {{render_menu "footer" .}}
     </div>
-    <div class="footer-widgets">{{renderWidgets "footer" .}}</div>
+    <div class="footer-widgets">{{render_widgets "footer" .}}</div>
   </div>
 </footer>
 <div class="scroll-tools">

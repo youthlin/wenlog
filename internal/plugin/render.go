@@ -150,7 +150,7 @@ func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *ho
 	funcs := render.CommonFuncMap()
 	maps.Copy(funcs, template.FuncMap{
 		"pluginOption": func(key string) string { return options[key] },
-		"hookInvoke": func(name string, args ...any) any {
+		"hook_invoke": func(name string, args ...any) any {
 			if api == nil {
 				slog.Info("hookInvoke: api is nil", "name", name)
 				return nil

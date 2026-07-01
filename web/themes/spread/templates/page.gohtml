@@ -10,7 +10,7 @@
         <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
         {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
       </div>
-      {{postTitle .Post}}
+      {{post_title .Post}}
     </div>
   </header>
   <div class="article-layout wide-shell">
@@ -19,7 +19,7 @@
       <nav class="toc-list" data-toc-list></nav>
     </aside>
     <div class="article-body">
-      <div class="post-content">{{postContent .Post}}</div>
+      <div class="post-content">{{post_content .Post}}</div>
     </div>
   </div>
 </article>

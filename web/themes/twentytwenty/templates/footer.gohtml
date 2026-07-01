@@ -7,10 +7,10 @@
 </div>
 <footer class="site-footer">
   <div class="footer-widgets">
-      {{renderWidgets "footer" .}}
+      {{render_widgets "footer" .}}
   </div>
   <div class="container">
-    <p>{{themeOption "footer_text" | default "Powered by Blog"}}</p>
+    <p>{{theme_option "footer_text" | default "Powered by Blog"}}</p>
   </div>
 </footer>
 {{if .SQLDetails}}

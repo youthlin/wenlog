@@ -1,5 +1,5 @@
 {{define "widget_tag_cloud"}}
-{{$title := widgetOption "title" | default (.t.T "标签")}}
+{{$title := widget_option "title" | default (.t.T "标签")}}
 <section class="widget widget-tags">
   <h3>{{$title}}</h3>
   <select onchange="if(this.value)location=this.value" data-searchable-select data-searchable-full-width data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">

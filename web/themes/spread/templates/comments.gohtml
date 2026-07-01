@@ -12,6 +12,7 @@
 {{end}}
 
 {{define "fragment_comments.gohtml"}}
-{{listComments . "ul" 44}}
-{{commentForm .}}
+{{list_comments . "ul" 44}}
+{{comments_pagination .}}
+{{comment_form .}}
 {{end}}

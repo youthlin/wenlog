@@ -98,26 +98,27 @@ const (
 const (
 	// hookInvoke: 调用 functions.go 中通过 [RegisterFunc] 注册的函数
 	// {{hookInvoke "<funcName>" "<argName>" argValue ["<argName2>" argValue2]}}
-	tplFuncHookInvoke     = "hookInvoke"
-	tplFuncOption         = "option"
-	tplFuncThemeOption    = "themeOption"
-	tplFuncWidgetOption   = "widgetOption"
-	tplFuncRenderWidgets  = "renderWidgets"
-	tplFuncWidgets        = "widgets"
-	tplFuncRenderMenu     = "renderMenu"
-	tplFuncSlot           = "slot"
-	tplFuncPostTitle      = "postTitle"
-	tplFuncPostExcerpt    = "postExcerpt"
-	tplFuncPostContent    = "postContent"
-	tplFuncPostTags       = "postTags"
-	tplFuncPostNavigation = "postNavigation"
-	tplFuncBodyClass      = "bodyClass"
-	tplFuncPostClass      = "postClass"
-	tplFuncCommentClass   = "commentClass"
-	tplFuncCommentContent = "commentContent"
-	tplFuncHeadMeta       = "headMeta"
-	tplFuncListComments   = "listComments"
-	tplFuncCommentForm    = "commentForm"
+	tplFuncHookInvoke         = "hook_invoke"
+	tplFuncOption             = "option"
+	tplFuncThemeOption        = "theme_option"
+	tplFuncWidgetOption       = "widget_option"
+	tplFuncRenderWidgets      = "render_widgets"
+	tplFuncWidgets            = "widgets"
+	tplFuncRenderMenu         = "render_menu"
+	tplFuncSlot               = "slot"
+	tplFuncPostTitle          = "post_title"
+	tplFuncPostExcerpt        = "post_excerpt"
+	tplFuncPostContent        = "post_content"
+	tplFuncPostTags           = "post_tags"
+	tplFuncPostNavigation     = "post_navigation"
+	tplFuncBodyClass          = "body_class"
+	tplFuncPostClass          = "post_class"
+	tplFuncCommentClass       = "comment_class"
+	tplFuncCommentContent     = "comment_content"
+	tplFuncHeadMeta           = "head_meta"
+	tplFuncListComments       = "list_comments"
+	tplFuncCommentForm        = "comment_form"
+	tplFuncCommentsPagination = "comments_pagination"
 )
 
 // dataContext 从前台页面的 Data 中通过 [ContextDataKey] 拿到 [context.Context]
@@ -178,8 +179,9 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		tplFuncCommentClass:   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
 		tplFuncCommentContent: func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
 		tplFuncHeadMeta:       func(data any) template.HTML { return headMeta(runtime, ctx, data) },
-		tplFuncListComments:   func(args ...any) template.HTML { return listComments(runtime, ctx, args...) },
-		tplFuncCommentForm:    func(data any) template.HTML { return commentForm(runtime, ctx, data) },
+		tplFuncListComments:       func(args ...any) template.HTML { return listComments(runtime, ctx, args...) },
+		tplFuncCommentForm:        func(data any) template.HTML { return commentForm(runtime, ctx, data) },
+		tplFuncCommentsPagination: func(data any) template.HTML { return commentsPagination(ctx, data) },
 	})
 	return cloned, nil
 }
@@ -209,5 +211,6 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncHeadMeta:       func(data any) template.HTML { return "" },
 		tplFuncListComments:   func(args ...any) template.HTML { return "" },
 		tplFuncCommentForm:    func(data any) template.HTML { return "" },
+		tplFuncCommentsPagination: func(data any) template.HTML { return "" },
 	}
 }
