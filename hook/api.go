@@ -48,6 +48,9 @@ const (
 	HookCommentContentHTML = "comment.content_html"
 	// HookWidgetRenderHTML 过滤单个组件渲染后的 HTML。
 	HookWidgetRenderHTML = "widget.render_html"
+	// HookHeadMeta 过滤 OpenGraph / Twitter Card meta 标签 HTML，运行于 headMeta 模板函数内部。
+	// 插件可改写、追加或清空 meta 标签（返回空字符串即清除）。
+	HookHeadMeta = "head.meta"
 )
 
 // actionWriterKey 用于在 context 中存储当前 action 的输出 writer。

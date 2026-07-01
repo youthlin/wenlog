@@ -369,6 +369,7 @@ func (h *Public) renderContentPost(c *gin.Context, p *model.Post, loader *store.
 	}
 	s := h.loadSettingsFromLoader(loader)
 	data := h.base(c, p.Title, p.Excerpt, s, loader)
+	data["CanonicalURL"] = requestBaseURL(c) + baseURL
 	data["Post"] = p
 	data["Comments"] = comments.Comments
 	data["CommentPager"] = gin.H{"Page": comments.Page, "Pages": comments.Pages, "BaseURL": baseURL, "Sep": "?"}
@@ -410,6 +411,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 		"SiteLogo":         s.SiteLogo,
 		"Title":            title,
 		"Description":      desc,
+		"CanonicalURL":     requestBaseURL(c) + c.Request.URL.String(),
 		"Menu":             menu,
 		"Menus":            menus,
 		"CurrentYear":      time.Now().Year(),

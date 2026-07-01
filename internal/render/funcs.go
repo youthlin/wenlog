@@ -462,6 +462,89 @@ func uniqueClasses(classes []string) []string {
 	return out
 }
 
+// headMeta 生成 OpenGraph / Twitter Card meta 标签。
+// 在模板 <head> 中使用 {{headMeta .}} 调用。
+// 生成的 HTML 会经过 head.meta filter，插件可改写、追加或清空 meta 标签。
+func headMeta(runtime *TemplateRuntime, ctx *RequestContext, data any) template.HTML {
+	title := stringValue(data, "Title")
+	desc := stringValue(data, "Description")
+	url := stringValue(data, "CanonicalURL")
+	siteName := stringValue(data, "SiteName")
+	siteLogo := stringValue(data, "SiteLogo")
+
+	if title == "" {
+		return ""
+	}
+
+	var b strings.Builder
+	writeMeta(&b, "og:title", title)
+	if desc != "" {
+		writeMeta(&b, "og:description", desc)
+	}
+	if url != "" {
+		writeMeta(&b, "og:url", url)
+	}
+	ogType := "website"
+	if dataValue(data, "Post") != nil {
+		ogType = "article"
+	}
+	writeMeta(&b, "og:type", ogType)
+	if siteName != "" {
+		writeMeta(&b, "og:site_name", siteName)
+	}
+	if siteLogo != "" {
+		writeMeta(&b, "og:image", siteLogo)
+	}
+
+	card := "summary"
+	if siteLogo != "" {
+		card = "summary_large_image"
+	}
+	writeMetaName(&b, "twitter:card", card)
+	writeMetaName(&b, "twitter:title", title)
+	if desc != "" {
+		writeMetaName(&b, "twitter:description", desc)
+	}
+	if siteLogo != "" {
+		writeMetaName(&b, "twitter:image", siteLogo)
+	}
+
+	html := template.HTML(b.String())
+	if h := hooks(runtime); h != nil {
+		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookHeadMeta, string(html), data))
+	}
+	return html
+}
+
+func writeMeta(b *strings.Builder, property, content string) {
+	b.WriteString(`<meta property="`)
+	b.WriteString(html.EscapeString(property))
+	b.WriteString(`" content="`)
+	b.WriteString(html.EscapeString(content))
+	b.WriteString(`">`)
+	b.WriteByte('\n')
+}
+
+func writeMetaName(b *strings.Builder, name, content string) {
+	b.WriteString(`<meta name="`)
+	b.WriteString(html.EscapeString(name))
+	b.WriteString(`" content="`)
+	b.WriteString(html.EscapeString(content))
+	b.WriteString(`">`)
+	b.WriteByte('\n')
+}
+
+func stringValue(data any, key string) string {
+	v := dataValue(data, key)
+	if v == nil {
+		return ""
+	}
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
+}
+
 func isDraft(ctx *RequestContext) bool {
 	if ctx == nil {
 		return false

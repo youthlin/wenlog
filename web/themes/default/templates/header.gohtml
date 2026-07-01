@@ -10,6 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
 {{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
+{{headMeta .}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 {{$customCSS := themeOption "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">

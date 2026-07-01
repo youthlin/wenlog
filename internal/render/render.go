@@ -98,6 +98,7 @@ const (
 	tplFuncPostClass      = "postClass"
 	tplFuncCommentClass   = "commentClass"
 	tplFuncCommentContent = "commentContent"
+	tplFuncHeadMeta       = "headMeta"
 )
 
 // dataContext 从前台页面的 Data 中通过 [ContextDataKey] 拿到 [context.Context]
@@ -157,6 +158,7 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 		tplFuncPostClass:      func(post any, extra ...string) string { return postClass(post, extra...) },
 		tplFuncCommentClass:   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
 		tplFuncCommentContent: func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
+		tplFuncHeadMeta:       func(data any) template.HTML { return headMeta(runtime, ctx, data) },
 	})
 	return cloned, nil
 }
@@ -183,5 +185,6 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncPostClass:      func(post any, extra ...string) string { return "" },
 		tplFuncCommentClass:   func(comment any, extra ...string) string { return "" },
 		tplFuncCommentContent: func(comment any) template.HTML { return "" },
+		tplFuncHeadMeta:       func(data any) template.HTML { return "" },
 	}
 }
