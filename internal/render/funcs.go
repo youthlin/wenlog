@@ -335,10 +335,6 @@ func menuItemsForLocation(data any, location string) []any {
 				return items
 			}
 		}
-		key := "Menu" + strings.ToUpper(location[:1]) + location[1:]
-		if items := anySlice(dataValue(data, key)); len(items) > 0 {
-			return items
-		}
 	}
 	return anySlice(dataValue(data, "Menu"))
 }

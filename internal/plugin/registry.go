@@ -247,6 +247,19 @@ func (r *Registry) DoingAction(ctx context.Context, name string) bool {
 	return hook.CurrentHook(ctx) == name
 }
 
+// ReplaceAll 原子替换所有 hook 处理器，用于插件重载场景。
+// 编译到临时 Registry 成功后调用此方法，避免替换 Registry 实例本身。
+func (r *Registry) ReplaceAll(actions, filters map[string][]Handler, didActions map[string]int) {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.actions = actions
+	r.filters = filters
+	r.didActions = didActions
+}
+
 func (r *Registry) safeApplyFilter(ctx context.Context, h Handler, value any, args ...any) (out any) {
 	out = value
 	defer func() {

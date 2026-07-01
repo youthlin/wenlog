@@ -211,6 +211,14 @@ img { max-width: 100%; }
 .site-nav-utility { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .site-nav a { margin-right: 10px; color: var(--fg); font-size: 15px; padding: 8px 12px; border-radius: 999px; }
 .site-nav a:hover { text-decoration: none; background: var(--nav-hover-bg); }
+/* 主导航菜单（renderMenu 生成）内联到 site-nav 中 */
+.site-nav-links .menu-primary { display: contents; }
+.site-nav-links .menu-primary .menu-items { display: flex; flex-wrap: wrap; gap: 0; list-style: none; margin: 0; padding: 0; }
+.site-nav-links .menu-primary .menu-item { position: relative; }
+.site-nav-links .menu-primary .sub-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 10; min-width: 160px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 4px; list-style: none; margin: 4px 0 0; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.site-nav-links .menu-primary .menu-item:hover > .sub-menu { display: block; }
+.site-nav-links .menu-primary .sub-menu .menu-item { display: block; }
+.site-nav-links .menu-primary .sub-menu a { display: block; margin: 0; border-radius: 6px; }
 
 /* 导航内搜索框 */
 .nav-search input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font-size: 14px; }
@@ -233,6 +241,9 @@ img { max-width: 100%; }
   .site-nav { grid-column: 1 / -1; grid-row: 2; width: 100%; display: none; flex-direction: column; gap: 0; margin-top: 2px; padding: 14px 0 8px; border-top: 1px solid var(--border); }
   .site-nav.is-open { display: flex; }
   .site-nav-links { display: grid; gap: 8px; width: 100%; }
+  .site-nav-links .menu-primary .menu-items { display: grid; gap: 8px; }
+  .site-nav-links .menu-primary .sub-menu { position: static; display: block; box-shadow: none; border: none; background: transparent; padding: 4px 0 0 12px; margin: 0; }
+  .site-nav-links .menu-primary .sub-menu a { border: 1px solid var(--border); }
   .site-nav a { display: block; width: 100%; margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); text-align: left; }
   .site-nav-utility { width: 100%; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; }
   .site-nav-utility .lang-select-wrap,

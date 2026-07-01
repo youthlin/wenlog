@@ -996,17 +996,26 @@ func toUserView(u *model.User) *UserView {
 	return &UserView{ID: u.ID, Username: u.Username, DisplayName: u.DisplayName, Email: u.Email, Website: u.Website, Role: u.Role}
 }
 
-// CommentURL 生成评论锚点链接。
+// CommentURL 生成评论锚点链接，评论不在第一页时自动拼接 cpage 参数。
 func (api *API) CommentURL(post any, comment any) string {
 	base := ""
-	if p := postModel(post); p != nil {
-		if p.PostType == model.PostTypePage {
-			base = api.PageURL(p)
+	var pv *PostView
+	if pv = postModel(post); pv != nil {
+		if pv.PostType == model.PostTypePage {
+			base = api.PageURL(pv)
 		} else {
-			base = api.PostURL(p)
+			base = api.PostURL(pv)
 		}
 	}
-	return base + "#comment-" + strconv.Itoa(int(commentID(comment)))
+	cid := commentID(comment)
+	if pv != nil {
+		if loader := api.loader(); loader != nil {
+			if page := loader.CommentPageForID(pv.ID, cid, 20); page > 1 {
+				return base + "?cpage=" + strconv.Itoa(page) + "#comment-" + strconv.Itoa(int(cid))
+			}
+		}
+	}
+	return base + "#comment-" + strconv.Itoa(int(cid))
 }
 
 // CategoryURL 生成分类永久链接。

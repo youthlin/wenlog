@@ -34,9 +34,9 @@ func (h *Admin) MenusPage(c *gin.Context) {
 		return
 	}
 	panels := make([]menuLocationPanel, 0, len(locations))
-	for key, location := range locations {
-		raw, _ := h.st.GetSetting(c, theme.MenuSettingKey(key))
-		panels = append(panels, menuLocationPanel{Location: location, Key: key, Items: theme.ParseMenuConfig(raw)})
+	for _, entry := range locations {
+		raw, _ := h.st.GetSetting(c, theme.MenuSettingKey(entry.Key))
+		panels = append(panels, menuLocationPanel{Location: entry.MenuLocation, Key: entry.Key, Items: theme.ParseMenuConfig(raw)})
 	}
 	data := h.base(c, tr.T("菜单"))
 	data["CurrentAdminNav"] = "menus"
@@ -56,14 +56,14 @@ func (h *Admin) SaveMenus(c *gin.Context) {
 		h.serverError(c, nil)
 		return
 	}
-	for key := range menuLocations(t) {
-		items := h.parseMenuForm(c, key)
+	for _, entry := range menuLocations(t) {
+		items := h.parseMenuForm(c, entry.Key)
 		raw, err := theme.MarshalMenuConfig(items)
 		if err != nil {
 			h.serverError(c, err)
 			return
 		}
-		if err := h.st.SaveSetting(c, theme.MenuSettingKey(key), raw); err != nil {
+		if err := h.st.SaveSetting(c, theme.MenuSettingKey(entry.Key), raw); err != nil {
 			h.serverError(c, err)
 			return
 		}
@@ -105,11 +105,11 @@ func (h *Admin) parseMenuForm(c *gin.Context, location string) []theme.MenuConfi
 	return items
 }
 
-func menuLocations(t *theme.Theme) map[string]theme.MenuLocation {
+func menuLocations(t *theme.Theme) theme.MenuLocationEntries {
 	if t != nil && len(t.MenuLocations) > 0 {
 		return t.MenuLocations
 	}
-	return map[string]theme.MenuLocation{"primary": {Name: "主导航", Description: "站点顶部导航菜单"}}
+	return theme.MenuLocationEntries{{Key: "primary", MenuLocation: theme.MenuLocation{Name: "主导航", Description: "站点顶部导航菜单"}}}
 }
 
 func formArrayValue(c *gin.Context, key string, index int) string {

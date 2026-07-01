@@ -136,6 +136,15 @@ button, input, textarea, select { font: inherit; }
   color: var(--ink);
 }
 .lang-select { appearance: none; cursor: pointer; }
+/* 主导航菜单（renderMenu 生成）内联到 site-nav 中 */
+.site-nav-links .menu-primary { display: contents; }
+.site-nav-links .menu-primary .menu-items { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; list-style: none; margin: 0; padding: 0; }
+.site-nav-links .menu-primary .menu-item { position: relative; }
+.site-nav-links .menu-primary .sub-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 10; min-width: 160px; background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; padding: 6px; list-style: none; margin: 4px 0 0; box-shadow: 4px 4px 0 var(--ink); }
+.site-nav-links .menu-primary .menu-item:hover > .sub-menu { display: block; }
+.site-nav-links .menu-primary .sub-menu .menu-item { display: block; }
+.site-nav-links .menu-primary .sub-menu a { display: block; border: none; box-shadow: none; border-radius: 8px; padding: 8px 12px; min-height: auto; font-weight: 600; }
+.site-nav-links .menu-primary .sub-menu a:hover { transform: none; box-shadow: none; background: var(--yellow); }
 .nav-toggle {
   display: none;
   min-width: 48px;
@@ -960,6 +969,9 @@ body.nav-is-open::before {
   }
   .site-nav.is-open { display: flex; }
   .site-nav-links { display: grid; }
+  .site-nav-links .menu-primary .menu-items { display: grid; gap: 8px; }
+  .site-nav-links .menu-primary .sub-menu { position: static; display: block; box-shadow: none; border: none; background: transparent; padding: 4px 0 0 12px; margin: 0; }
+  .site-nav-links .menu-primary .sub-menu a { border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
   .site-nav a,
   .lang-select { width: 100%; box-shadow: none; }
   .nav-toggle { display: inline-flex; align-items: center; justify-content: center; }

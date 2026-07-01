@@ -23,7 +23,7 @@
     <nav id="site-nav-menu" class="site-nav" data-nav-panel>
       <div class="site-nav-links">
         <a href="/">{{.th.T "首页"}}</a>
-        {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
+        {{renderMenu "primary" .}}
       </div>
       <label class="lang-select-wrap">
         <span class="sr-only">{{.th.T "语言"}}</span>

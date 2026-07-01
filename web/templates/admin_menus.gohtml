@@ -14,6 +14,7 @@
     {{template "csrf_field" .}}
     {{range .MenuLocations}}
     {{$loc := .Key}}
+    {{$panelItems := .Items}}
     <section class="card widget-area-card menu-location-card">
       <div class="widget-area-head">
         <div>
@@ -55,7 +56,7 @@
             <td data-label="{{$.t.T "父级"}}">
               <select name="menu_parent_{{$loc}}">
                 <option value="">{{$.t.T "无"}}</option>
-                {{range $.Items}}{{if ne .ID $item.ID}}{{$parent := .}}{{$parentPageTitle := ""}}{{if .PostID}}{{range $.Pages}}{{if eq .ID $parent.PostID}}{{$parentPageTitle = .Title}}{{end}}{{end}}{{end}}<option value="{{.ID}}" {{if eq .ID $item.ParentID}}selected{{end}}>{{if .Title}}{{.Title}}{{else if $parentPageTitle}}{{$parentPageTitle}}{{else}}{{.ID}}{{end}}</option>{{end}}{{end}}
+                {{range $panelItems}}{{if ne .ID $item.ID}}{{$parent := .}}{{$parentPageTitle := ""}}{{if .PostID}}{{range $.Pages}}{{if eq .ID $parent.PostID}}{{$parentPageTitle = .Title}}{{end}}{{end}}{{end}}<option value="{{.ID}}" {{if eq .ID $item.ParentID}}selected{{end}}>{{if .Title}}{{.Title}}{{else if $parentPageTitle}}{{$parentPageTitle}}{{else}}{{.ID}}{{end}}</option>{{end}}{{end}}
               </select>
             </td>
             <td data-label="{{$.t.T "新窗口"}}"><select name="menu_target_{{$loc}}"><option value="">{{$.t.T "否"}}</option><option value="_blank" {{if eq .Target "_blank"}}selected{{end}}>{{$.t.T "是"}}</option></select></td>

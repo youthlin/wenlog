@@ -31,7 +31,7 @@ func (m *Manager) BindTemplateFunctions() {
 	m.renderer.ConfigureTemplateRuntime(render.TemplateProviders{
 		ThemeWidgets: m.templateWidgets,
 		ThemeOption:  m.templateOption,
-		Hooks:        m.getHookProvider,
+		Hooks:        m.hooks,
 	})
 }
 
@@ -63,25 +63,10 @@ func (m *Manager) WidgetDecls(ctx context.Context, t *Theme, area string) []Widg
 }
 
 func (m *Manager) pluginWidgetDecls(ctx context.Context) []WidgetDecl {
-	if m == nil {
+	if m == nil || m.pluginWidgets == nil {
 		return nil
 	}
-	m.runtimeMu.Lock()
-	provider := m.pluginWidgets
-	m.runtimeMu.Unlock()
-	if provider == nil {
-		return nil
-	}
-	return provider(ctx)
-}
-
-func (m *Manager) getHookProvider() hook.Provider {
-	if m == nil {
-		return nil
-	}
-	m.runtimeMu.Lock()
-	defer m.runtimeMu.Unlock()
-	return m.hooks()
+	return m.pluginWidgets(ctx)
 }
 
 func renderContext(ctx *render.RequestContext) context.Context {
@@ -121,8 +106,8 @@ func (m *Manager) renderTheme(ctx *render.RequestContext) *Theme {
 // name 为空时加载当前激活的主题。
 // 返回 nil 表示加载成功；返回 error 表示已回退到默认主题。
 func (m *Manager) LoadTheme(ctx context.Context, name string) error {
-	m.runtimeMu.Lock()
-	defer m.runtimeMu.Unlock()
+	m.loadMu.Lock()
+	defer m.loadMu.Unlock()
 
 	if name == "" {
 		var err error
@@ -152,11 +137,8 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 2. 编译 functions.go（如果存在）
 	api := NewAPI(nil)             // loader 在模板渲染时按请求注入
 	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
-	// 直接读取 m.hooks 而非调用 hookRegistry()，因为 LoadTheme 已持有 runtimeMu。
-	var reg hook.Registry
-	if m.hooks != nil {
-		reg = m.hooks()
-	}
+	// 直接使用 m.hooks，Registry 实例稳定，插件重载时内部替换。
+	var reg hook.Registry = m.hooks
 	api.SetHookRegistry(reg, hook.Source{Type: "theme", ID: t.Name})
 	script, err := CompileFunctions(t.Dir, api, m.log)
 	if err != nil {
@@ -171,10 +153,9 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	m.recoveryInfo = nil
 	m.mu.Unlock()
 
-	// 注册 hookInvoke 模板函数
+	// 注册 hookInvoke 模板函数（主题重载时更新）
 	if m.renderer != nil {
 		m.renderer.SetHookInvokeProvider(hookInvokeFunc(script, api))
-		m.renderer.SetHookProvider(m.getHookProvider)
 	}
 
 	if m.log != nil {

@@ -26,11 +26,11 @@ type Manager struct {
 	themes    map[string]*Theme // name → Theme
 
 	// 运行时状态：模板渲染器、functions 脚本、恢复信息。
-	runtimeMu     sync.Mutex
+	loadMu        sync.Mutex // 串行化 LoadTheme 调用
 	themeOpMu     sync.Mutex
 	mu            sync.RWMutex
 	renderer      *render.Renderer
-	hooks         func() hook.Registry
+	hooks         hook.Registry
 	log           *slog.Logger
 	currentScript *FunctionsScript
 	currentAPI    *API
@@ -53,24 +53,19 @@ func NewManager(themesDir string, store hook.SettingStore, renderer *render.Rend
 	return m, nil
 }
 
-// SetHookRegistry 设置 Hook Registry 的获取函数。
-// 传入 getter 而非指针，确保插件重载后总能拿到当前 Registry。
-func (m *Manager) SetHookRegistry(getter func() hook.Registry) {
+// SetHookRegistry 设置共享 Hook Registry（启动时调用一次，之后只读）。
+func (m *Manager) SetHookRegistry(reg hook.Registry) {
 	if m == nil {
 		return
 	}
-	m.runtimeMu.Lock()
-	defer m.runtimeMu.Unlock()
-	m.hooks = getter
+	m.hooks = reg
 }
 
-// SetPluginWidgetsProvider 设置插件小组件声明提供者。
+// SetPluginWidgetsProvider 设置插件小组件声明提供者（启动时调用一次，之后只读）。
 func (m *Manager) SetPluginWidgetsProvider(provider hook.WidgetDeclProvider) {
 	if m == nil {
 		return
 	}
-	m.runtimeMu.Lock()
-	defer m.runtimeMu.Unlock()
 	m.pluginWidgets = provider
 }
 

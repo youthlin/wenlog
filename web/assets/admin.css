@@ -1571,6 +1571,7 @@ body.admin.nav-open { overflow: hidden; }
   .table-scroll .uploads-table { min-width: 760px; }
   .table-scroll .themes-table { min-width: 1120px; }
   .table-scroll .backup-table { min-width: 720px; }
+  .table-scroll .menu-items-table { min-width: 760px; }
 }
 
 @media (max-width: 760px) {
@@ -1581,6 +1582,7 @@ body.admin.nav-open { overflow: hidden; }
   .table-scroll:has(.uploads-table) { overflow: visible; }
   .table-scroll:has(.themes-table) { overflow: visible; }
   .table-scroll:has(.backup-table) { overflow: visible; }
+  .table-scroll:has(.menu-items-table) { overflow: visible; }
   .comments-table,
   .comments-table thead,
   .comments-table tbody,
@@ -1773,6 +1775,24 @@ body.admin.nav-open { overflow: hidden; }
   .backup-table .actions::before { content: attr(data-label); color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
   .backup-table .actions .inline { margin: 0; }
   .backup-table .actions .inline button { width: 100%; }
+
+  .menu-items-table,
+  .menu-items-table thead,
+  .menu-items-table tbody,
+  .menu-items-table tr,
+  .menu-items-table th,
+  .menu-items-table td { display: block; width: 100%; }
+  .menu-items-table { min-width: 0 !important; background: transparent; border-spacing: 0; }
+  .menu-items-table thead { display: none; }
+  .menu-items-table tbody { display: grid; gap: 14px; }
+  .menu-items-table tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--surface-shadow); overflow: hidden; }
+  .menu-items-table tbody tr td { border-bottom: 0; padding: 12px 14px; }
+  .menu-items-table tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .menu-items-table .actions { display: grid !important; gap: 8px; }
+  .menu-items-table .actions::before { content: attr(data-label); color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .menu-items-table .actions button { width: 100%; }
+  .menu-items-table select,
+  .menu-items-table input[type="text"] { width: 100%; box-sizing: border-box; }
 
   /* 主题编辑器 — 平板: 文件树变窄 */
   .theme-editor-sidebar { width: 200px; }

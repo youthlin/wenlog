@@ -23,7 +23,7 @@
     <a class="site-title" href="/">{{if .SiteLogo}}<img class="site-logo" src="{{.SiteLogo}}" alt="{{.SiteName}}">{{else}}{{.SiteName}}{{end}}</a>
     <nav id="site-nav-menu" class="site-nav" data-nav-panel>
       <div class="site-nav-links">
-        {{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}
+        {{renderMenu "primary" .}}
       </div>
       <div class="site-nav-utility" aria-label="{{.th.T "界面设置"}}">
         <label class="lang-select-wrap">

@@ -35,8 +35,8 @@ type Theme struct {
 	Dir string `yaml:"-" json:"-"`
 	// WidgetAreas 是主题声明的组件区域。
 	WidgetAreas map[string]WidgetArea `yaml:"widget_areas" json:"widget_areas"`
-	// MenuLocations 是主题声明的菜单位置，如 primary/footer。
-	MenuLocations map[string]MenuLocation `yaml:"menu_locations" json:"menu_locations"`
+	// MenuLocations 是主题声明的菜单位置，如 primary/footer，顺序与 theme.yaml 声明一致。
+	MenuLocations MenuLocationEntries `yaml:"menu_locations" json:"menu_locations"`
 	// Widgets 是主题声明的可用组件列表。
 	Widgets []WidgetDecl `yaml:"widgets" json:"widgets"`
 	// Options 是主题声明的全局可配置选项。
@@ -55,6 +55,30 @@ type WidgetArea struct {
 type MenuLocation struct {
 	Name        string `yaml:"name" json:"name"`
 	Description string `yaml:"description" json:"description"`
+}
+
+// MenuLocationEntry 是带 key 的菜单位置条目，用于保留主题声明的顺序。
+type MenuLocationEntry struct {
+	Key string
+	MenuLocation
+}
+
+// MenuLocationEntries 是有序的菜单位置列表，UnmarshalYAML 保留 YAML mapping 的 key 顺序。
+type MenuLocationEntries []MenuLocationEntry
+
+func (e *MenuLocationEntries) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return errors.New("menu_locations must be a mapping")
+	}
+	for i := 0; i < len(value.Content); i += 2 {
+		key := value.Content[i].Value
+		var loc MenuLocation
+		if err := value.Content[i+1].Decode(&loc); err != nil {
+			return errors.Wrapf(err, "解析菜单位置 %s 失败", key)
+		}
+		*e = append(*e, MenuLocationEntry{Key: key, MenuLocation: loc})
+	}
+	return nil
 }
 
 // WidgetDecl 是 hook.WidgetDecl 的别名，描述主题声明的一个可用组件。

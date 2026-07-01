@@ -79,18 +79,16 @@ func (m *Manager) scan() error {
 	return nil
 }
 
-// GetRegistry 返回插件系统共享的 Hook Registry。
+// GetRegistry 返回插件系统共享的 Hook Registry（实例稳定，不会因重载而替换）。
 func (m *Manager) GetRegistry() hook.Registry {
 	if m == nil {
 		return nil
 	}
-	m.mu.RLock()
-	defer m.mu.RUnlock()
 	return m.hooks
 }
 
-// LoadEnabledFunctions 重新创建 Hook Registry，并按启用顺序编译执行插件 functions。
-// 调用方可在启动时或插件启停后调用它；失败的插件会返回错误，避免半加载状态被静默忽略。
+// LoadEnabledFunctions 按启用顺序编译插件 functions，成功后原子替换到共享 Registry。
+// 编译到临时 Registry 中，失败时不影响当前已加载的处理器。
 func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 	if m == nil {
 		return nil
@@ -98,7 +96,7 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	hooks := NewRegistry()
+	tmp := NewRegistry()
 	scripts := make(map[string]*FunctionsScript)
 	loadErrors := make(map[string]string)
 	ids := m.enabledIDsLocked(ctx)
@@ -107,7 +105,7 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 		if p == nil {
 			continue
 		}
-		script, err := CompileFunctions(p, hooks, m.log)
+		script, err := CompileFunctions(p, tmp, m.log)
 		if err != nil {
 			loadErrors[id] = err.Error()
 			m.loadErrors = loadErrors
@@ -117,7 +115,7 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 			scripts[id] = script
 		}
 	}
-	m.hooks = hooks
+	m.hooks.ReplaceAll(tmp.actions, tmp.filters, tmp.didActions)
 	m.scripts = scripts
 	m.loadErrors = loadErrors
 	return nil

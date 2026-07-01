@@ -31,12 +31,10 @@ import (
 //  2. 将插件 Hook Registry 注入 theme.Manager
 //     —— 此后主题 functions.goyaegi 注册的 action/filter 会写入插件 Registry
 //  3. 集中配置 renderer 模板运行时（BindTemplateFunctions → ThemeWidgets / ThemeOption / Hooks）
-//  4. 创建统一组件注册表（WidgetRegistry），先注册内置组件
-//  5. 加载当前主题（模板 + functions.goyaegi）
+//  4. 加载当前主题（模板 + functions.goyaegi）
 //     —— 此时 Hook Registry 已就绪，主题脚本可正常注册 hook
-//  6. 主题加载完成后注册主题组件、插件组件到统一注册表
-//  7. 将统一组件查找器注入 renderer，模板中 renderWidgets 通过它查找组件实现
-//  8. 注册主题/插件静态资源路由
+//  5. 构建统一组件注册表（内置 → 主题 → 插件），注入 renderer
+//  6. 注册主题/插件静态资源路由
 func initHook(r *gin.Engine, st *store.Store, renderer *render.Renderer) (
 	tm *theme.Manager,
 	pm *plugin.Manager,
@@ -56,37 +54,41 @@ func initHook(r *gin.Engine, st *store.Store, renderer *render.Renderer) (
 		os.Exit(1)
 	}
 
-	// 2. 将插件 Hook Registry 注入 theme.Manager（传 getter 而非指针，插件重载后自动拿到新 Registry）
-	tm.SetHookRegistry(pm.GetRegistry)
+	// 2. 将插件 Hook Registry 注入 theme.Manager（Registry 实例稳定，直接持有）
+	tm.SetHookRegistry(pm.GetRegistry())
 	// 插件组件声明供主题管理器合并到可用组件列表
 	tm.SetPluginWidgetsProvider(pm.EnabledWidgetDecls)
 
 	// 3. 集中配置 renderer 模板运行时（ThemeWidgets / ThemeOption / Hooks）
 	tm.BindTemplateFunctions()
 
-	// 4. 创建统一组件注册表，先注册内置组件（如 RecentPosts、Categories 等）
-	widgetRegistry := hook.NewWidgetRegistry()
-	theme.RegisterBuiltins(widgetRegistry)
-
-	// 5. 加载当前主题的模板和 functions.goyaegi
+	// 4. 加载当前主题的模板和 functions.goyaegi
 	//    必须在 Hook Registry 注入之后执行，否则主题脚本注册 hook 会失败
 	if err := tm.LoadTheme(ctx, ""); err != nil {
 		slog.Error("加载主题 hook 失败", slog.Any("error", err))
 	}
 
-	// 6. 注册主题组件和插件组件到统一注册表
+	// 5. 构建统一组件注册表：内置 → 主题 → 插件，注入 renderer
+	populateWidgetRegistry(ctx, tm, pm, renderer)
+
+	// 6. 注册主题和插件静态资源路由
+	registerThemeAssetsRoute(r, tm)
+	registerPluginAssetsRoute(r, pm)
+	return
+}
+
+// populateWidgetRegistry 构建统一组件注册表并注入 renderer。
+// 注册顺序：内置组件 → 主题组件 → 插件组件（后注册的覆盖先注册的同名组件）。
+func populateWidgetRegistry(ctx context.Context, tm *theme.Manager, pm *plugin.Manager, renderer *render.Renderer) {
+	widgetRegistry := hook.NewWidgetRegistry()
+	theme.RegisterBuiltins(widgetRegistry)
+
 	if t := tm.Current(ctx); t != nil {
 		theme.RegisterThemeWidgets(widgetRegistry, t)
 	}
 	pm.RegisterPluginWidgets(ctx, widgetRegistry)
 
-	// 7. 将统一组件查找器注入 renderer，模板中 renderWidgets 通过它查找组件实现
 	renderer.SetWidgetResolver(widgetRegistry.Get)
-
-	// 8. 注册主题和插件静态资源路由
-	registerThemeAssetsRoute(r, tm)
-	registerPluginAssetsRoute(r, pm)
-	return
 }
 
 func initThemeManager(st *store.Store, tplRenderer *render.Renderer) (*theme.Manager, error) {

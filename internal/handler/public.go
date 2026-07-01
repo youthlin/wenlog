@@ -484,14 +484,14 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 }
 
 func (h *Public) resolveMenus(c *gin.Context, currentTheme *theme.Theme, fallback []model.Post, loader *store.DataLoader) map[string][]theme.MenuItem {
-	locations := map[string]theme.MenuLocation{"primary": {Name: "主导航"}}
+	locations := theme.MenuLocationEntries{{Key: "primary", MenuLocation: theme.MenuLocation{Name: "主导航"}}}
 	if currentTheme != nil && len(currentTheme.MenuLocations) > 0 {
 		locations = currentTheme.MenuLocations
 	}
 	menus := make(map[string][]theme.MenuItem, len(locations))
-	for location := range locations {
-		raw := loader.GetSetting(theme.MenuSettingKey(location))
-		menus[location] = theme.ResolveMenuItems(raw, fallback)
+	for _, entry := range locations {
+		raw := loader.GetSetting(theme.MenuSettingKey(entry.Key))
+		menus[entry.Key] = theme.ResolveMenuItems(raw, fallback)
 	}
 	return menus
 }

@@ -31,9 +31,10 @@ func sayingItems(api *hook.API, args hook.Args) any {
 	if len(comments) == 0 {
 		return nil
 	}
-	// 只取博主本人的评论（参照 SayingComments 逻辑）
-	items := make([]SayingItem, 0, len(comments))
-	for _, c := range comments {
+	// 只取博主本人的评论，倒序遍历取最新几条。
+	items := make([]SayingItem, 0, count)
+	for i := len(comments) - 1; i >= 0; i-- {
+		c := comments[i]
 		if c.UserID == nil || *c.UserID != post.AuthorID {
 			continue
 		}

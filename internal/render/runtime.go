@@ -24,7 +24,7 @@ type TemplateProviders struct {
 	HookInvoke     func(ctx *RequestContext, name string, args ...any) any
 	ThemeOption    func(ctx *RequestContext, optionID string) string
 	ThemeWidgets   func(ctx *RequestContext, area string) []WidgetInfo
-	Hooks          hook.ProviderGetter
+	Hooks          hook.Executor
 	WidgetResolver hook.WidgetResolver
 }
 
@@ -37,7 +37,7 @@ func (tr *TemplateRuntime) current() TemplateProviders {
 	return tr.providers
 }
 
-// ConfigureTemplateRuntime 一次性配置主题模板运行时回调。
+// ConfigureTemplateRuntime 一次性配置主题模板运行时回调（启动时由 BindTemplateFunctions 调用）。
 func (r *Renderer) ConfigureTemplateRuntime(providers TemplateProviders) {
 	if r == nil {
 		return
@@ -47,39 +47,34 @@ func (r *Renderer) ConfigureTemplateRuntime(providers TemplateProviders) {
 	r.themeRuntime.mu.Unlock()
 }
 
-func (r *Renderer) patchTemplateRuntime(patch func(*TemplateProviders)) {
-	if r == nil || patch == nil {
+// SetHookInvokeProvider 更新 hookInvoke 模板函数（主题重载时调用）。
+func (r *Renderer) SetHookInvokeProvider(fn func(ctx *RequestContext, name string, args ...any) any) {
+	if r == nil {
 		return
 	}
-	providers := r.themeRuntime.current()
-	patch(&providers)
-	r.ConfigureTemplateRuntime(providers)
+	r.themeRuntime.mu.Lock()
+	r.themeRuntime.providers.HookInvoke = fn
+	r.themeRuntime.mu.Unlock()
 }
 
-// SetHookInvokeProvider 设置 hookInvoke 模板函数的实现（由 theme.Manager 注入）。
-func (r *Renderer) SetHookInvokeProvider(fn func(ctx *RequestContext, name string, args ...any) any) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.HookInvoke = fn })
-}
-
-// SetOptionProvider 设置 option 读取函数。
-func (r *Renderer) SetOptionProvider(fn func(ctx *RequestContext, optionID string) string) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.ThemeOption = fn })
-}
-
-// SetThemeWidgetsProvider 设置 renderWidgets 获取区域组件列表的实现。
+// SetThemeWidgetsProvider 更新 renderWidgets 获取区域组件列表的实现。
 func (r *Renderer) SetThemeWidgetsProvider(fn func(ctx *RequestContext, area string) []WidgetInfo) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.ThemeWidgets = fn })
+	if r == nil {
+		return
+	}
+	r.themeRuntime.mu.Lock()
+	r.themeRuntime.providers.ThemeWidgets = fn
+	r.themeRuntime.mu.Unlock()
 }
 
-// SetHookProvider 设置 Hook Registry getter，用于 slot/postContent/commentContent 等模板函数。
-// 传 getter 而非指针，确保插件重载后自动拿到最新 Registry。
-func (r *Renderer) SetHookProvider(getter hook.ProviderGetter) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.Hooks = getter })
-}
-
-// SetWidgetResolver 设置统一的组件查找器。
+// SetWidgetResolver 设置统一的组件查找器（启动时由 populateWidgetRegistry 调用）。
 func (r *Renderer) SetWidgetResolver(resolver hook.WidgetResolver) {
-	r.patchTemplateRuntime(func(providers *TemplateProviders) { providers.WidgetResolver = resolver })
+	if r == nil {
+		return
+	}
+	r.themeRuntime.mu.Lock()
+	r.themeRuntime.providers.WidgetResolver = resolver
+	r.themeRuntime.mu.Unlock()
 }
 
 // slot 触发一个模板 slot action，并收集主题/插件写入的 HTML。
@@ -107,10 +102,6 @@ func hookDataForSlot(name string, data any) any {
 	}
 }
 
-func hooks(runtime *TemplateRuntime) hook.Provider {
-	getter := runtime.current().Hooks
-	if getter == nil {
-		return nil
-	}
-	return getter()
+func hooks(runtime *TemplateRuntime) hook.Executor {
+	return runtime.current().Hooks
 }

@@ -660,10 +660,14 @@ func (l *DataLoader) CommentWidgetItems(comments []model.Comment) []CommentWidge
 		} else {
 			base = permalink.Post(p)
 		}
+		url := base + "#comment-" + strconv.Itoa(int(c.ID))
+		if page := l.CommentPageForID(p.ID, c.ID, 20); page > 1 {
+			url = base + "?cpage=" + strconv.Itoa(page) + "#comment-" + strconv.Itoa(int(c.ID))
+		}
 		items = append(items, CommentWidgetItem{
 			Comment:    *c,
 			Post:       *p,
-			CommentURL: base + "#comment-" + strconv.Itoa(int(c.ID)),
+			CommentURL: url,
 			AuthorURL:  strings.TrimSpace(c.URL),
 			Snippet:    commentSnippet(c.Content, 100),
 		})
@@ -786,6 +790,53 @@ func (l *DataLoader) CommentPage(postID uint, page, pageSize int, currentUserID 
 		Page:          page,
 		Pages:         pages,
 	}
+}
+
+// CommentPageForID 计算指定评论所在的页码（纯内存计算，无 SQL）。
+// pageSize 为每页顶层评论数；返回从 1 开始的页码。
+func (l *DataLoader) CommentPageForID(postID, commentID uint, pageSize int) int {
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	c := l.Comments[commentID]
+	if c == nil {
+		return 1
+	}
+	// 找到顶层根评论
+	rootID := c.ID
+	rootCreatedAt := c.CreatedAt
+	for c.ParentID != 0 {
+		parent := l.Comments[c.ParentID]
+		if parent == nil {
+			break
+		}
+		rootID = parent.ID
+		rootCreatedAt = parent.CreatedAt
+		c = parent
+	}
+	// 收集该文章所有已批准的顶层评论
+	commentIDs := l.commentsByPost[postID]
+	tops := make([]*model.Comment, 0)
+	for _, cid := range commentIDs {
+		cc := l.Comments[cid]
+		if cc != nil && cc.ParentID == 0 {
+			tops = append(tops, cc)
+		}
+	}
+	// 按时间倒序（与 CommentPage 一致）
+	sort.Slice(tops, func(i, j int) bool {
+		return tops[i].CreatedAt.After(tops[j].CreatedAt)
+	})
+	// 计算有多少条顶层评论比当前评论更新
+	newer := 0
+	for _, t := range tops {
+		if t.CreatedAt.After(rootCreatedAt) || (t.CreatedAt.Equal(rootCreatedAt) && t.ID > rootID) {
+			newer++
+		} else {
+			break
+		}
+	}
+	return newer/pageSize + 1
 }
 
 // ResolvePostByPath 从内存解析文章路径，替代 store.ResolvePostByPath 的 DB 查询。
