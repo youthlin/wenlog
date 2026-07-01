@@ -1,6 +1,6 @@
 {{define "widget_saying"}}
-{{$title := pluginOption "title" | default (.tp.T "博主动态")}}
-{{$postID := pluginOption "post_id" | toInt}}
+{{$title := plugin_option "title" | default (.tp.T "博主动态")}}
+{{$postID := plugin_option "post_id" | toInt}}
 {{$saying := hook_invoke "sayingItems" "post_id" $postID "count" 5}}
 {{if $saying}}
 <section class="widget widget-saying">

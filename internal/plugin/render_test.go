@@ -41,7 +41,7 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(`{{define "widget_hello"}}<section>{{pluginOption "title"}}</section>{{end}}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(`{{define "widget_hello"}}<section>{{plugin_option "title"}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	m := &Manager{
@@ -62,7 +62,7 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(
-		`{{define "widget_hello"}}<section>{{hook_invoke "greeting" "name" (pluginOption "name")}}</section>{{end}}`), 0o644); err != nil {
+		`{{define "widget_hello"}}<section>{{hook_invoke "greeting" "name" (plugin_option "name")}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	api := hook.New(nil, nil, "plugin_demo")
