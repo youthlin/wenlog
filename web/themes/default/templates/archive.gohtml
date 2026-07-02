@@ -1,6 +1,6 @@
 {{- define "archive.gohtml" -}}
 {{template "header" .}}
-<article class="page-detail">
+<article class="{{post_class .Post "page-detail"}}">
   <h1 class="post-title">{{.Post.Title}}</h1>
   {{if .Post.Content}}<div class="post-content">{{safeHTML .Post.Content}}</div>{{end}}
   <div class="archive-groups">

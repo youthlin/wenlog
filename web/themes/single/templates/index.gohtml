@@ -17,7 +17,7 @@
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
 {{slot "head.end" .}}
 </head>
-<body>
+<body class="{{body_class .}}">
 <a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
 <header class="site-header">
   <div class="container header-inner">
@@ -130,7 +130,7 @@
 
 {{else if .Groups}}
   {{/* 归档页 */}}
-  <article class="page-detail">
+  <article class="{{post_class .Post "page-detail"}}">
     <h1 class="post-title">{{.Post.Title}}</h1>
     {{if .Post.Content}}<div class="post-content">{{safeHTML .Post.Content}}</div>{{end}}
     <div class="archive-groups">
@@ -147,7 +147,7 @@
 
 {{else if .Post}}
   {{/* 文章/页面详情 */}}
-  <article class="post-detail">
+  <article class="{{post_class .Post "post-detail"}}">
     <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">{{.th.T "草稿预览"}}</span>{{end}}</h1>
     <div class="post-meta">
       <a class="post-date-link" href="{{postURL .Post}}"><time datetime="{{fmtDateTime .Post.PublishedAt}}">{{fmtDate .Post.PublishedAt}}</time></a>
@@ -178,7 +178,7 @@
   {{if .Heading}}<h1 class="archive-title">{{.Heading}}</h1>{{end}}
   <div class="post-list">
     {{range .List.Posts}}
-    <article class="post-summary">
+    <article class="{{post_class . "post-summary"}}">
       <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
       <div class="post-meta">
         <time>{{fmtDate .PublishedAt}}</time>

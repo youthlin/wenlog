@@ -19,7 +19,7 @@
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 {{slot "head.end" .}}
 </head>
-<body>
+<body class="{{body_class .}}">
 <a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
 <header class="site-header">
   <div class="container header-inner">

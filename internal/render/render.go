@@ -96,28 +96,80 @@ const (
 )
 
 const (
-	// hookInvoke: 调用 functions.go 中通过 [RegisterFunc] 注册的函数
-	// {{hookInvoke "<funcName>" "<argName>" argValue ["<argName2>" argValue2]}}
-	tplFuncHookInvoke         = "hook_invoke"
-	tplFuncOption             = "option"
-	tplFuncThemeOption        = "theme_option"
-	tplFuncWidgetOption       = "widget_option"
-	tplFuncRenderWidgets      = "render_widgets"
-	tplFuncWidgets            = "widgets"
-	tplFuncRenderMenu         = "render_menu"
-	tplFuncSlot               = "slot"
-	tplFuncPostTitle          = "post_title"
-	tplFuncPostExcerpt        = "post_excerpt"
-	tplFuncPostContent        = "post_content"
-	tplFuncPostTags           = "post_tags"
-	tplFuncPostNavigation     = "post_navigation"
-	tplFuncBodyClass          = "body_class"
-	tplFuncPostClass          = "post_class"
-	tplFuncCommentClass       = "comment_class"
-	tplFuncCommentContent     = "comment_content"
-	tplFuncHeadMeta           = "head_meta"
-	tplFuncListComments       = "list_comments"
-	tplFuncCommentForm        = "comment_form"
+	// tplFuncHookInvoke 调用插件通过 RegisterFunc 注册的导出函数（大写开头）。
+	// 用法: {{hook_invoke "FuncName" "arg1" value1 "arg2" value2 ...}}
+	tplFuncHookInvoke = "hook_invoke"
+
+	// tplFuncThemeOption 读取当前主题的选项值。
+	// 用法: {{theme_option "option_id"}}
+	tplFuncThemeOption = "theme_option"
+
+	// tplFuncWidgetOption 读取当前渲染组件的选项值。
+	// 用法: {{widget_option "key"}}
+	tplFuncWidgetOption = "widget_option"
+
+	// tplFuncRenderWidgets 渲染指定区域的组件。
+	// 用法: {{render_widgets "area_name" .}}
+	tplFuncRenderWidgets = "render_widgets"
+
+	// tplFuncRenderMenu 渲染指定位置的导航菜单。
+	// 用法: {{render_menu "location"}} 或 {{render_menu "location" .}}
+	tplFuncRenderMenu = "render_menu"
+
+	// tplFuncSlot 渲染指定名称的插槽（hook 注入点）。
+	// 用法: {{slot "slot_name" .}}
+	tplFuncSlot = "slot"
+
+	// tplFuncPostTitle 输出文章标题（含草稿标记），应用 post.title filter。
+	// 用法: {{post_title .Post}}
+	tplFuncPostTitle = "post_title"
+
+	// tplFuncPostExcerpt 输出文章摘要，应用 post.excerpt_html filter。
+	// 用法: {{post_excerpt .Post}}
+	tplFuncPostExcerpt = "post_excerpt"
+
+	// tplFuncPostContent 输出文章正文，应用 post.content_html filter。
+	// 用法: {{post_content .Post}}
+	tplFuncPostContent = "post_content"
+
+	// tplFuncPostTags 输出文章标签链接列表。
+	// 用法: {{post_tags .Post}}
+	tplFuncPostTags = "post_tags"
+
+	// tplFuncPostNavigation 输出上一篇/下一篇文章导航链接。
+	// 用法: {{post_navigation .}} 或 {{post_navigation . "custom-class"}}
+	tplFuncPostNavigation = "post_navigation"
+
+	// tplFuncBodyClass 生成 <body> 标签的 CSS class 属性值。
+	// 用法: <body class="{{body_class .}}">
+	tplFuncBodyClass = "body_class"
+
+	// tplFuncPostClass 生成文章容器的 CSS class 属性值。
+	// 用法: <article class="{{post_class .Post "extra-class"}}">
+	tplFuncPostClass = "post_class"
+
+	// tplFuncCommentClass 生成评论 <li> 的 CSS class 属性值。
+	// 用法: <li class="{{comment_class . "extra-class"}}">
+	tplFuncCommentClass = "comment_class"
+
+	// tplFuncCommentContent 输出评论正文，应用 comment.render_html filter。
+	// 用法: {{comment_content .}}（用于自定义评论模板 comment_item）
+	tplFuncCommentContent = "comment_content"
+
+	// tplFuncHeadMeta 生成 OpenGraph / Twitter Card meta 标签，应用 head.meta filter。
+	// 用法: {{head_meta .}}
+	tplFuncHeadMeta = "head_meta"
+
+	// tplFuncListComments 渲染评论列表（仅顶层评论，不含分页）。
+	// 用法: {{list_comments .}} 或 {{list_comments . "ol" 44 "my_comment"}}
+	tplFuncListComments = "list_comments"
+
+	// tplFuncCommentForm 渲染评论表单（含登录提示）或"评论已关闭"提示。
+	// 用法: {{comment_form .}}
+	tplFuncCommentForm = "comment_form"
+
+	// tplFuncCommentsPagination 渲染评论分页导航。
+	// 用法: {{comments_pagination .}}
 	tplFuncCommentsPagination = "comments_pagination"
 )
 
@@ -162,23 +214,22 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 	}
 	// 添加实际函数的实现
 	cloned.Funcs(template.FuncMap{
-		tplFuncHookInvoke:     func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
-		tplFuncThemeOption:    func(optionID string) string { return themeOption(runtime, ctx, optionID) },
-		tplFuncWidgetOption:   func(key string) string { return widgetOption(ctx, key) },
-		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
-		tplFuncWidgets:        func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
-		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
-		tplFuncSlot:           func(name string, data any) template.HTML { return slot(runtime, ctx, name, data) },
-		tplFuncPostTitle:      func(post any) template.HTML { return postTitle(runtime, ctx, post) },
-		tplFuncPostExcerpt:    func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
-		tplFuncPostContent:    func(post any) template.HTML { return postContent(runtime, ctx, post) },
-		tplFuncPostTags:       func(post any) template.HTML { return postTags(post) },
-		tplFuncPostNavigation: func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
-		tplFuncBodyClass:      func(data any) string { return bodyClass(data) },
-		tplFuncPostClass:      func(post any, extra ...string) string { return postClass(post, extra...) },
-		tplFuncCommentClass:   func(comment any, extra ...string) string { return commentClass(comment, extra...) },
-		tplFuncCommentContent: func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
-		tplFuncHeadMeta:       func(data any) template.HTML { return headMeta(runtime, ctx, data) },
+		tplFuncHookInvoke:         func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
+		tplFuncThemeOption:        func(optionID string) string { return themeOption(runtime, ctx, optionID) },
+		tplFuncWidgetOption:       func(key string) string { return widgetOption(ctx, key) },
+		tplFuncRenderWidgets:      func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
+		tplFuncRenderMenu:         func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
+		tplFuncSlot:               func(name string, data any) template.HTML { return slot(runtime, ctx, name, data) },
+		tplFuncPostTitle:          func(post any) template.HTML { return postTitle(runtime, ctx, post) },
+		tplFuncPostExcerpt:        func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
+		tplFuncPostContent:        func(post any) template.HTML { return postContent(runtime, ctx, post) },
+		tplFuncPostTags:           func(post any) template.HTML { return postTags(post) },
+		tplFuncPostNavigation:     func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
+		tplFuncBodyClass:          func(data any) string { return bodyClass(data) },
+		tplFuncPostClass:          func(post any, extra ...string) string { return postClass(post, extra...) },
+		tplFuncCommentClass:       func(comment any, extra ...string) string { return commentClass(comment, extra...) },
+		tplFuncCommentContent:     func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
+		tplFuncHeadMeta:           func(data any) template.HTML { return headMeta(runtime, ctx, data) },
 		tplFuncListComments:       func(args ...any) template.HTML { return listComments(runtime, ctx, args...) },
 		tplFuncCommentForm:        func(data any) template.HTML { return commentForm(runtime, ctx, data) },
 		tplFuncCommentsPagination: func(data any) template.HTML { return commentsPagination(ctx, data) },
@@ -191,26 +242,24 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 // 这里提供占位函数，仅用于模板解析阶段识别函数名。
 func markTplFuncMap() template.FuncMap {
 	return template.FuncMap{
-		tplFuncHookInvoke:     func(name string, args ...any) any { return nil },
-		tplFuncThemeOption:    func(optionID string) string { return "" },
-		tplFuncOption:         func(optionID string) string { return "" },
-		tplFuncRenderWidgets:  func(area string, data any) template.HTML { return "" },
-		tplFuncWidgets:        func(area string, data any) template.HTML { return "" },
-		tplFuncRenderMenu:     func(location string, data ...any) template.HTML { return "" },
-		tplFuncWidgetOption:   func(key string) string { return "" },
-		tplFuncSlot:           func(name string, data any) template.HTML { return "" },
-		tplFuncPostTitle:      func(data any) template.HTML { return "" },
-		tplFuncPostExcerpt:    func(post any) template.HTML { return "" },
-		tplFuncPostContent:    func(post any) template.HTML { return "" },
-		tplFuncPostTags:       func(post any) template.HTML { return "" },
-		tplFuncPostNavigation: func(data any, classes ...string) template.HTML { return "" },
-		tplFuncBodyClass:      func(data any) string { return "" },
-		tplFuncPostClass:      func(post any, extra ...string) string { return "" },
-		tplFuncCommentClass:   func(comment any, extra ...string) string { return "" },
-		tplFuncCommentContent: func(comment any) template.HTML { return "" },
-		tplFuncHeadMeta:       func(data any) template.HTML { return "" },
-		tplFuncListComments:   func(args ...any) template.HTML { return "" },
-		tplFuncCommentForm:    func(data any) template.HTML { return "" },
+		tplFuncHookInvoke:         func(name string, args ...any) any { return nil },
+		tplFuncThemeOption:        func(optionID string) string { return "" },
+		tplFuncRenderWidgets:      func(area string, data any) template.HTML { return "" },
+		tplFuncRenderMenu:         func(location string, data ...any) template.HTML { return "" },
+		tplFuncWidgetOption:       func(key string) string { return "" },
+		tplFuncSlot:               func(name string, data any) template.HTML { return "" },
+		tplFuncPostTitle:          func(data any) template.HTML { return "" },
+		tplFuncPostExcerpt:        func(post any) template.HTML { return "" },
+		tplFuncPostContent:        func(post any) template.HTML { return "" },
+		tplFuncPostTags:           func(post any) template.HTML { return "" },
+		tplFuncPostNavigation:     func(data any, classes ...string) template.HTML { return "" },
+		tplFuncBodyClass:          func(data any) string { return "" },
+		tplFuncPostClass:          func(post any, extra ...string) string { return "" },
+		tplFuncCommentClass:       func(comment any, extra ...string) string { return "" },
+		tplFuncCommentContent:     func(comment any) template.HTML { return "" },
+		tplFuncHeadMeta:           func(data any) template.HTML { return "" },
+		tplFuncListComments:       func(args ...any) template.HTML { return "" },
+		tplFuncCommentForm:        func(data any) template.HTML { return "" },
 		tplFuncCommentsPagination: func(data any) template.HTML { return "" },
 	}
 }

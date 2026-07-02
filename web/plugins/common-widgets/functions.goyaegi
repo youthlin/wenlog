@@ -15,11 +15,11 @@ type SayingItem struct {
 
 // Register 注册插件函数。
 func Register(api *hook.API) {
-	api.RegisterFunc("sayingItems", sayingItems)
-	api.RegisterFunc("popularPosts", popularPosts)
+	api.RegisterFunc("SayingItems", SayingItems)
+	api.RegisterFunc("PopularPosts", PopularPosts)
 }
 
-func sayingItems(api *hook.API, args hook.Args) any {
+func SayingItems(api *hook.API, args hook.Args) any {
 	postID := args.Any("post_id")
 	count := args.PositiveInt("count", 5)
 	post := api.Post(postID)
@@ -55,7 +55,7 @@ func sayingItems(api *hook.API, args hook.Args) any {
 	return items
 }
 
-func popularPosts(api *hook.API, args hook.Args) any {
+func PopularPosts(api *hook.API, args hook.Args) any {
 	n := args.PositiveInt("n", 5)
 	posts := api.Posts()
 	sort.Slice(posts, func(i, j int) bool {

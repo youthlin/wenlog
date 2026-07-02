@@ -14,11 +14,12 @@ import (
 	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/internal/wxr"
 )
 
-// hookInvoke 在模板中使用 {{hookInvoke "funcName" "argName" argValue}}
-// 其中 funcName 是在 functions.go 中通过 [RegisterFunc] 注册的函数
+// hookInvoke 在模板中使用 {{hook_invoke "FuncName" "argName" argValue ...}}
+// 其中 FuncName 是在 functions.goyaegi 中通过 RegisterFunc 注册的导出函数（大写开头）。
 func hookInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
 	if runtime == nil {
 		return nil
@@ -178,20 +179,20 @@ func postTags(post any) template.HTML {
 		return ""
 	}
 	var out strings.Builder
-	out.WriteString(`<div class="post-tags">`)
+	util.WriteString(&out, `<div class="post-tags">`)
 	for _, tag := range tags {
 		name := html.EscapeString(reflectStringField(tag, "Name"))
 		slug := reflectStringField(tag, "Slug")
 		if name == "" || slug == "" {
 			continue
 		}
-		out.WriteString(`<a class="tag" href="`)
-		out.WriteString(html.EscapeString(permalink.Tag(slug)))
-		out.WriteString(`">#`)
-		out.WriteString(name)
-		out.WriteString(`</a>`)
+		util.WriteString(&out, `<a class="tag" href="`)
+		util.WriteString(&out, html.EscapeString(permalink.Tag(slug)))
+		util.WriteString(&out, `">#`)
+		util.WriteString(&out, name)
+		util.WriteString(&out, `</a>`)
 	}
-	out.WriteString(`</div>`)
+	util.WriteString(&out, `</div>`)
 	return template.HTML(out.String())
 }
 
@@ -209,26 +210,26 @@ func postNavigation(ctx *RequestContext, data any, classes ...string) template.H
 		class = strings.TrimSpace(classes[0])
 	}
 	var out strings.Builder
-	out.WriteString(`<nav class="`)
-	out.WriteString(html.EscapeString(class))
-	out.WriteString(`">`)
-	out.WriteString(`<span class="prev">`)
+	util.WriteString(&out, `<nav class="`)
+	util.WriteString(&out, html.EscapeString(class))
+	util.WriteString(&out, `">`)
+	util.WriteString(&out, `<span class="prev">`)
 	if !isNilAny(prev) {
-		out.WriteString(`<a href="`)
-		out.WriteString(html.EscapeString(postURL(prev)))
-		out.WriteString(`">← `)
-		out.WriteString(html.EscapeString(reflectStringField(prev, "Title")))
-		out.WriteString(`</a>`)
+		util.WriteString(&out, `<a href="`)
+		util.WriteString(&out, html.EscapeString(postURL(prev)))
+		util.WriteString(&out, `">← `)
+		util.WriteString(&out, html.EscapeString(reflectStringField(prev, "Title")))
+		util.WriteString(&out, `</a>`)
 	}
-	out.WriteString(`</span><span class="next">`)
+	util.WriteString(&out, `</span><span class="next">`)
 	if !isNilAny(next) {
-		out.WriteString(`<a href="`)
-		out.WriteString(html.EscapeString(postURL(next)))
-		out.WriteString(`">`)
-		out.WriteString(html.EscapeString(reflectStringField(next, "Title")))
-		out.WriteString(` →</a>`)
+		util.WriteString(&out, `<a href="`)
+		util.WriteString(&out, html.EscapeString(postURL(next)))
+		util.WriteString(&out, `">`)
+		util.WriteString(&out, html.EscapeString(reflectStringField(next, "Title")))
+		util.WriteString(&out, ` →</a>`)
 	}
-	out.WriteString(`</span></nav>`)
+	util.WriteString(&out, `</span></nav>`)
 	return template.HTML(out.String())
 }
 
@@ -264,10 +265,10 @@ func renderMenu(ctx *RequestContext, location string, data ...any) template.HTML
 		class += " menu-" + slugClass(location)
 	}
 	var out strings.Builder
-	out.WriteString(`<nav class="`)
-	out.WriteString(html.EscapeString(class))
-	out.WriteString(`">`)
-	out.WriteString(`<ul class="menu-items">`)
+	util.WriteString(&out, `<nav class="`)
+	util.WriteString(&out, html.EscapeString(class))
+	util.WriteString(&out, `">`)
+	util.WriteString(&out, `<ul class="menu-items">`)
 	for _, item := range items {
 		title := html.EscapeString(reflectStringField(item, "Title"))
 		url := reflectStringField(item, "URL")
@@ -278,28 +279,28 @@ func renderMenu(ctx *RequestContext, location string, data ...any) template.HTML
 			continue
 		}
 		target := reflectStringField(item, "Target")
-		out.WriteString(`<li class="menu-item"><a href="`)
-		out.WriteString(html.EscapeString(url))
-		out.WriteString(`"`)
+		util.WriteString(&out, `<li class="menu-item"><a href="`)
+		util.WriteString(&out, html.EscapeString(url))
+		util.WriteString(&out, `"`)
 		if target != "" {
-			out.WriteString(` target="`)
-			out.WriteString(html.EscapeString(target))
-			out.WriteString(`" rel="noreferrer"`)
+			util.WriteString(&out, ` target="`)
+			util.WriteString(&out, html.EscapeString(target))
+			util.WriteString(&out, `" rel="noreferrer"`)
 		}
-		out.WriteString(`>`)
-		out.WriteString(title)
-		out.WriteString(`</a>`)
+		util.WriteString(&out, `>`)
+		util.WriteString(&out, title)
+		util.WriteString(&out, `</a>`)
 		children := reflectSliceField(item, "Children")
 		if len(children) > 0 {
-			out.WriteString(`<ul class="sub-menu">`)
+			util.WriteString(&out, `<ul class="sub-menu">`)
 			for _, child := range children {
 				writeMenuItem(&out, child)
 			}
-			out.WriteString(`</ul>`)
+			util.WriteString(&out, `</ul>`)
 		}
-		out.WriteString(`</li>`)
+		util.WriteString(&out, `</li>`)
 	}
-	out.WriteString(`</ul></nav>`)
+	util.WriteString(&out, `</ul></nav>`)
 	return template.HTML(out.String())
 }
 
@@ -310,26 +311,26 @@ func writeMenuItem(out *strings.Builder, item any) {
 		return
 	}
 	target := reflectStringField(item, "Target")
-	out.WriteString(`<li class="menu-item"><a href="`)
-	out.WriteString(html.EscapeString(url))
-	out.WriteString(`"`)
+	util.WriteString(out, `<li class="menu-item"><a href="`)
+	util.WriteString(out, html.EscapeString(url))
+	util.WriteString(out, `"`)
 	if target != "" {
-		out.WriteString(` target="`)
-		out.WriteString(html.EscapeString(target))
-		out.WriteString(`" rel="noreferrer"`)
+		util.WriteString(out, ` target="`)
+		util.WriteString(out, html.EscapeString(target))
+		util.WriteString(out, `" rel="noreferrer"`)
 	}
-	out.WriteString(`>`)
-	out.WriteString(title)
-	out.WriteString(`</a>`)
+	util.WriteString(out, `>`)
+	util.WriteString(out, title)
+	util.WriteString(out, `</a>`)
 	children := reflectSliceField(item, "Children")
 	if len(children) > 0 {
-		out.WriteString(`<ul class="sub-menu">`)
+		util.WriteString(out, `<ul class="sub-menu">`)
 		for _, child := range children {
 			writeMenuItem(out, child)
 		}
-		out.WriteString(`</ul>`)
+		util.WriteString(out, `</ul>`)
 	}
-	out.WriteString(`</li>`)
+	util.WriteString(out, `</li>`)
 }
 
 func menuItemsForLocation(data any, location string) []any {
@@ -433,6 +434,20 @@ func commentClass(comment any, extra ...string) string {
 	return strings.Join(uniqueClasses(classes), " ")
 }
 
+func uniqueClasses(classes []string) []string {
+	seen := make(map[string]bool, len(classes))
+	out := make([]string, 0, len(classes))
+	for _, class := range classes {
+		class = strings.TrimSpace(class)
+		if class == "" || seen[class] {
+			continue
+		}
+		seen[class] = true
+		out = append(out, class)
+	}
+	return out
+}
+
 func slugClass(s string) string {
 	s = strings.ToLower(strings.TrimSpace(s))
 	var b strings.Builder
@@ -450,20 +465,6 @@ func slugClass(s string) string {
 		}
 	}
 	return strings.Trim(b.String(), "-")
-}
-
-func uniqueClasses(classes []string) []string {
-	seen := make(map[string]bool, len(classes))
-	out := make([]string, 0, len(classes))
-	for _, class := range classes {
-		class = strings.TrimSpace(class)
-		if class == "" || seen[class] {
-			continue
-		}
-		seen[class] = true
-		out = append(out, class)
-	}
-	return out
 }
 
 // headMeta 生成 OpenGraph / Twitter Card meta 标签。
@@ -521,21 +522,21 @@ func headMeta(runtime *TemplateRuntime, ctx *RequestContext, data any) template.
 }
 
 func writeMeta(b *strings.Builder, property, content string) {
-	b.WriteString(`<meta property="`)
-	b.WriteString(html.EscapeString(property))
-	b.WriteString(`" content="`)
-	b.WriteString(html.EscapeString(content))
-	b.WriteString(`">`)
+	util.WriteString(b, `<meta property="`)
+	util.WriteString(b, html.EscapeString(property))
+	util.WriteString(b, `" content="`)
+	util.WriteString(b, html.EscapeString(content))
+	util.WriteString(b, `">`)
 	b.WriteByte('\n')
 }
 
 func writeMetaName(b *strings.Builder, name, content string) {
-	b.WriteString(`<meta name="`)
-	b.WriteString(html.EscapeString(name))
-	b.WriteString(`" content="`)
-	b.WriteString(html.EscapeString(content))
-	b.WriteString(`">`)
-	b.WriteByte('\n')
+	util.WriteString(b, `<meta name="`)
+	util.WriteString(b, html.EscapeString(name))
+	util.WriteString(b, `" content="`)
+	util.WriteString(b, html.EscapeString(content))
+	util.WriteString(b, `">`)
+	util.WriteString(b, "\n")
 }
 
 func stringValue(data any, key string) string {
@@ -633,9 +634,9 @@ func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) te
 	if listTag != "ol" && listTag != "ul" && listTag != "div" {
 		listTag = "ul"
 	}
-	out.WriteString("<")
-	out.WriteString(listTag)
-	out.WriteString(` class="comment-list">`)
+	util.WriteString(&out, "<")
+	util.WriteString(&out, listTag)
+	util.WriteString(&out, ` class="comment-list">`)
 
 	for _, c := range comments {
 		parentID := reflectUintField(c, "ParentID")
@@ -645,9 +646,9 @@ func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) te
 		writeCommentItem(&out, runtime, ctx, data, c, comments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
 	}
 
-	out.WriteString("</")
-	out.WriteString(listTag)
-	out.WriteString(">")
+	util.WriteString(&out, "</")
+	util.WriteString(&out, listTag)
+	util.WriteString(&out, ">")
 
 	return template.HTML(out.String())
 }
@@ -676,9 +677,9 @@ func commentForm(runtime *TemplateRuntime, ctx *RequestContext, data any) templa
 	if commentOpen {
 		writeCommentForm(&out, runtime, ctx, data, postID, csrfToken, mailEnabled)
 	} else {
-		out.WriteString(`<p class="comment-closed">`)
-		out.WriteString(ctx.T("评论已关闭"))
-		out.WriteString(`</p>`)
+		util.WriteString(&out, `<p class="comment-closed">`)
+		util.WriteString(&out, ctx.T("评论已关闭"))
+		util.WriteString(&out, `</p>`)
 	}
 
 	return template.HTML(out.String())
@@ -692,16 +693,16 @@ func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 	id := reflectUintField(comment, "ID")
 	status := reflectStringField(comment, "Status")
 
-	classes := "comment"
+	classes := commentClass(comment)
 	if status == "pending" {
 		classes += " comment-pending"
 	}
 
-	out.WriteString(`<li class="`)
-	out.WriteString(html.EscapeString(classes))
-	out.WriteString(`" id="comment-`)
-	out.WriteString(strconv.FormatUint(uint64(id), 10))
-	out.WriteString(`">`)
+	util.WriteString(out, `<li class="`)
+	util.WriteString(out, html.EscapeString(classes))
+	util.WriteString(out, `" id="comment-`)
+	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
+	util.WriteString(out, `">`)
 
 	if hasCustomTpl {
 		itemData := commentToMap(comment)
@@ -711,7 +712,7 @@ func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 		}
 		var buf strings.Builder
 		if err := ctx.Template.ExecuteTemplate(&buf, callbackTpl, itemData); err == nil {
-			out.WriteString(buf.String())
+			util.WriteString(out, buf.String())
 		}
 	} else {
 		writeDefaultCommentItem(out, runtime, ctx, data, comment, avatarSize, defaultAvatar)
@@ -720,7 +721,7 @@ func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 	// 子回复
 	writeCommentChildren(out, runtime, ctx, data, comment, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
 
-	out.WriteString(`</li>`)
+	util.WriteString(out, `</li>`)
 }
 
 // writeDefaultCommentItem 生成默认评论 HTML（与 default 主题结构一致）。
@@ -741,25 +742,25 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 	sizeStr := strconv.Itoa(avatarSize)
 
 	// comment-head
-	out.WriteString(`<div class="comment-head">`)
+	util.WriteString(out, `<div class="comment-head">`)
 	// avatar
-	out.WriteString(`<img class="avatar" src="`)
-	out.WriteString(html.EscapeString(avatarURL(email, defaultAvatar)))
-	out.WriteString(`" alt="" width="`)
-	out.WriteString(sizeStr)
-	out.WriteString(`" height="`)
-	out.WriteString(sizeStr)
-	out.WriteString(`">`)
+	util.WriteString(out, `<img class="avatar" src="`)
+	util.WriteString(out, html.EscapeString(avatarURL(email, defaultAvatar)))
+	util.WriteString(out, `" alt="" width="`)
+	util.WriteString(out, sizeStr)
+	util.WriteString(out, `" height="`)
+	util.WriteString(out, sizeStr)
+	util.WriteString(out, `">`)
 	// comment-id
-	out.WriteString(`<a class="comment-id" href="#comment-`)
-	out.WriteString(strconv.FormatUint(uint64(id), 10))
-	out.WriteString(`">#`)
-	out.WriteString(strconv.FormatUint(uint64(id), 10))
-	out.WriteString(`</a>`)
+	util.WriteString(out, `<a class="comment-id" href="#comment-`)
+	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
+	util.WriteString(out, `">#`)
+	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
+	util.WriteString(out, `</a>`)
 	// author
-	out.WriteString(`<span class="comment-author">`)
-	out.WriteString(author)
-	out.WriteString(`</span>`)
+	util.WriteString(out, `<span class="comment-author">`)
+	util.WriteString(out, author)
+	util.WriteString(out, `</span>`)
 	// badges
 	if commenterRole != "" {
 		roleTitle := ""
@@ -771,51 +772,51 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 		default:
 			roleTitle = ctx.T("登录用户")
 		}
-		out.WriteString(`<span class="comment-badge comment-badge-`)
-		out.WriteString(html.EscapeString(commenterRole))
-		out.WriteString(`" title="`)
-		out.WriteString(roleTitle)
-		out.WriteString(`"></span>`)
+		util.WriteString(out, `<span class="comment-badge comment-badge-`)
+		util.WriteString(out, html.EscapeString(commenterRole))
+		util.WriteString(out, `" title="`)
+		util.WriteString(out, roleTitle)
+		util.WriteString(out, `"></span>`)
 	}
 	if notifyOnReply {
-		out.WriteString(`<span class="comment-badge comment-badge-notify" title="`)
-		out.WriteString(ctx.T("回复时邮件通知"))
-		out.WriteString(`"></span>`)
+		util.WriteString(out, `<span class="comment-badge comment-badge-notify" title="`)
+		util.WriteString(out, ctx.T("回复时邮件通知"))
+		util.WriteString(out, `"></span>`)
 	}
 	// time
-	out.WriteString(`<time>`)
+	util.WriteString(out, `<time>`)
 	if !createdAt.IsZero() {
-		out.WriteString(html.EscapeString(createdAt.Format("2006-01-02 15:04")))
+		util.WriteString(out, html.EscapeString(createdAt.Format("2006-01-02 15:04")))
 	}
-	out.WriteString(`</time>`)
+	util.WriteString(out, `</time>`)
 	// pending badge
 	if status == "pending" {
-		out.WriteString(`<span class="comment-pending-badge">`)
-		out.WriteString(ctx.T("评论审核中,当前仅自己可见"))
-		out.WriteString(`</span>`)
+		util.WriteString(out, `<span class="comment-pending-badge">`)
+		util.WriteString(out, ctx.T("评论审核中,当前仅自己可见"))
+		util.WriteString(out, `</span>`)
 	}
-	out.WriteString(`</div>`)
+	util.WriteString(out, `</div>`)
 
 	// comment-body
-	out.WriteString(`<div class="comment-body">`)
+	util.WriteString(out, `<div class="comment-body">`)
 	if parentID != 0 && replyToAuthor != "" && replyToID > 0 {
-		out.WriteString(`<a class="comment-reply-to" href="#comment-`)
-		out.WriteString(strconv.FormatUint(uint64(replyToID), 10))
-		out.WriteString(`">`)
-		out.WriteString(html.EscapeString(ctx.T("回复 @%s", replyToAuthor)))
-		out.WriteString(`</a>`)
+		util.WriteString(out, `<a class="comment-reply-to" href="#comment-`)
+		util.WriteString(out, strconv.FormatUint(uint64(replyToID), 10))
+		util.WriteString(out, `">`)
+		util.WriteString(out, html.EscapeString(ctx.T("回复 @%s", replyToAuthor)))
+		util.WriteString(out, `</a>`)
 	}
-	out.WriteString(string(commentContent(runtime, ctx, comment)))
-	out.WriteString(`</div>`)
+	util.WriteString(out, string(commentContent(runtime, ctx, comment)))
+	util.WriteString(out, `</div>`)
 
 	// reply button
-	out.WriteString(`<button class="comment-reply" type="button" data-reply="`)
-	out.WriteString(strconv.FormatUint(uint64(id), 10))
-	out.WriteString(`" data-reply-target="comment-`)
-	out.WriteString(strconv.FormatUint(uint64(id), 10))
-	out.WriteString(`">`)
-	out.WriteString(ctx.T("回复"))
-	out.WriteString(`</button>`)
+	util.WriteString(out, `<button class="comment-reply" type="button" data-reply="`)
+	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
+	util.WriteString(out, `" data-reply-target="comment-`)
+	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
+	util.WriteString(out, `">`)
+	util.WriteString(out, ctx.T("回复"))
+	util.WriteString(out, `</button>`)
 }
 
 // writeCommentChildren 渲染评论的子回复列表。
@@ -836,23 +837,23 @@ func writeCommentChildren(out *strings.Builder, runtime *TemplateRuntime, ctx *R
 
 	childrenTag := "ul"
 	switch listTag {
-case "ol":
+	case "ol":
 		childrenTag = "ol"
 	case "div":
 		childrenTag = "div"
 	}
 
-	out.WriteString("<")
-	out.WriteString(childrenTag)
-	out.WriteString(` class="comment-children">`)
+	util.WriteString(out, "<")
+	util.WriteString(out, childrenTag)
+	util.WriteString(out, ` class="comment-children">`)
 
 	for _, child := range children {
 		writeCommentItem(out, runtime, ctx, data, child, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
 	}
 
-	out.WriteString("</")
-	out.WriteString(childrenTag)
-	out.WriteString(">")
+	util.WriteString(out, "</")
+	util.WriteString(out, childrenTag)
+	util.WriteString(out, ">")
 }
 
 // commentsPagination 渲染评论分页导航。
@@ -884,35 +885,35 @@ func writeCommentPagination(out *strings.Builder, ctx *RequestContext, data any)
 	page, _ := toInt(pager["Page"])
 	baseURL, _ := pager["BaseURL"].(string)
 
-	out.WriteString(`<nav class="pagination comment-pagination">`)
+	util.WriteString(out, `<nav class="pagination comment-pagination">`)
 	if page > 1 {
-		out.WriteString(`<a href="`)
-		out.WriteString(html.EscapeString(baseURL))
-		out.WriteString(`?cpage=`)
-		out.WriteString(strconv.Itoa(page - 1))
-		out.WriteString(`#comments" data-cpage="`)
-		out.WriteString(strconv.Itoa(page - 1))
-		out.WriteString(`">`)
-		out.WriteString(ctx.T("上一页"))
-		out.WriteString(`</a>`)
+		util.WriteString(out, `<a href="`)
+		util.WriteString(out, html.EscapeString(baseURL))
+		util.WriteString(out, `?cpage=`)
+		util.WriteString(out, strconv.Itoa(page-1))
+		util.WriteString(out, `#comments" data-cpage="`)
+		util.WriteString(out, strconv.Itoa(page-1))
+		util.WriteString(out, `">`)
+		util.WriteString(out, ctx.T("上一页"))
+		util.WriteString(out, `</a>`)
 	}
-	out.WriteString(`<span class="page-info">`)
-	out.WriteString(strconv.Itoa(page))
-	out.WriteString(` / `)
-	out.WriteString(strconv.Itoa(pages))
-	out.WriteString(`</span>`)
+	util.WriteString(out, `<span class="page-info">`)
+	util.WriteString(out, strconv.Itoa(page))
+	util.WriteString(out, ` / `)
+	util.WriteString(out, strconv.Itoa(pages))
+	util.WriteString(out, `</span>`)
 	if page < pages {
-		out.WriteString(`<a href="`)
-		out.WriteString(html.EscapeString(baseURL))
-		out.WriteString(`?cpage=`)
-		out.WriteString(strconv.Itoa(page + 1))
-		out.WriteString(`#comments" data-cpage="`)
-		out.WriteString(strconv.Itoa(page + 1))
-		out.WriteString(`">`)
-		out.WriteString(ctx.T("下一页"))
-		out.WriteString(`</a>`)
+		util.WriteString(out, `<a href="`)
+		util.WriteString(out, html.EscapeString(baseURL))
+		util.WriteString(out, `?cpage=`)
+		util.WriteString(out, strconv.Itoa(page+1))
+		util.WriteString(out, `#comments" data-cpage="`)
+		util.WriteString(out, strconv.Itoa(page+1))
+		util.WriteString(out, `">`)
+		util.WriteString(out, ctx.T("下一页"))
+		util.WriteString(out, `</a>`)
 	}
-	out.WriteString(`</nav>`)
+	util.WriteString(out, `</nav>`)
 }
 
 // writeCommentLoginTip 渲染已登录用户的身份提示。
@@ -931,23 +932,23 @@ func writeCommentLoginTip(out *strings.Builder, ctx *RequestContext, data any, c
 		return
 	}
 
-	out.WriteString(`<div class="comment-login-tip">`)
+	util.WriteString(out, `<div class="comment-login-tip">`)
 	// 使用 th.T 格式化（含 HTML 标签）
 	if th := dataValue(data, "th"); th != nil {
 		if tr, ok := th.(interface{ T(string, ...any) string }); ok {
-			out.WriteString(tr.T("以 <strong>%s</strong> 的身份发表评论，", html.EscapeString(name)))
+			util.WriteString(out, tr.T("以 <strong>%s</strong> 的身份发表评论，", html.EscapeString(name)))
 		}
 	}
-	out.WriteString(`<form class="inline" method="post" action="/auth/logout">`)
+	util.WriteString(out, `<form class="inline" method="post" action="/auth/logout">`)
 	if csrfToken != "" {
-		out.WriteString(`<input type="hidden" name="_csrf" value="`)
-		out.WriteString(html.EscapeString(csrfToken))
-		out.WriteString(`">`)
+		util.WriteString(out, `<input type="hidden" name="_csrf" value="`)
+		util.WriteString(out, html.EscapeString(csrfToken))
+		util.WriteString(out, `">`)
 	}
-	out.WriteString(`<button type="submit">`)
-	out.WriteString(ctx.T("登出"))
-	out.WriteString(`</button></form>`)
-	out.WriteString(`</div>`)
+	util.WriteString(out, `<button type="submit">`)
+	util.WriteString(out, ctx.T("登出"))
+	util.WriteString(out, `</button></form>`)
+	util.WriteString(out, `</div>`)
 }
 
 // writeCommentForm 渲染评论表单。
@@ -958,17 +959,17 @@ func writeCommentForm(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 	currentUser := dataValue(data, "CurrentUser")
 	hasCurrentUser := !isNilAny(currentUser)
 
-	out.WriteString(`<div id="comment-form-home"></div>`)
-	out.WriteString(`<form class="comment-form" id="comment-form" method="post" action="/comment">`)
-	out.WriteString(`<input type="hidden" name="post_id" value="`)
-	out.WriteString(strconv.FormatUint(uint64(postID), 10))
-	out.WriteString(`">`)
-	out.WriteString(`<input type="hidden" name="parent_id" value="0">`)
-	out.WriteString(`<input type="hidden" name="reply_to_id" value="0">`)
+	util.WriteString(out, `<div id="comment-form-home"></div>`)
+	util.WriteString(out, `<form class="comment-form" id="comment-form" method="post" action="/comment">`)
+	util.WriteString(out, `<input type="hidden" name="post_id" value="`)
+	util.WriteString(out, strconv.FormatUint(uint64(postID), 10))
+	util.WriteString(out, `">`)
+	util.WriteString(out, `<input type="hidden" name="parent_id" value="0">`)
+	util.WriteString(out, `<input type="hidden" name="reply_to_id" value="0">`)
 	if csrfToken != "" {
-		out.WriteString(`<input type="hidden" name="_csrf" value="`)
-		out.WriteString(html.EscapeString(csrfToken))
-		out.WriteString(`">`)
+		util.WriteString(out, `<input type="hidden" name="_csrf" value="`)
+		util.WriteString(out, html.EscapeString(csrfToken))
+		util.WriteString(out, `">`)
 	}
 
 	if !hasCurrentUser {
@@ -976,61 +977,61 @@ func writeCommentForm(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 		remEmail, _ := dataValue(rememberedCommenter, "Email").(string)
 		remURL, _ := dataValue(rememberedCommenter, "URL").(string)
 
-		out.WriteString(`<p><label class="sr-only" for="comment-author">`)
-		out.WriteString(ctx.T("昵称"))
-		out.WriteString(`</label><input id="comment-author" type="text" name="author" value="`)
-		out.WriteString(html.EscapeString(remAuthor))
-		out.WriteString(`" placeholder="`)
-		out.WriteString(ctx.T("昵称 *"))
-		out.WriteString(`" autocomplete="name" required></p>`)
+		util.WriteString(out, `<p><label class="sr-only" for="comment-author">`)
+		util.WriteString(out, ctx.T("昵称"))
+		util.WriteString(out, `</label><input id="comment-author" type="text" name="author" value="`)
+		util.WriteString(out, html.EscapeString(remAuthor))
+		util.WriteString(out, `" placeholder="`)
+		util.WriteString(out, ctx.T("昵称 *"))
+		util.WriteString(out, `" autocomplete="name" required></p>`)
 
-		out.WriteString(`<p><label class="sr-only" for="comment-email">`)
-		out.WriteString(ctx.T("邮箱"))
-		out.WriteString(`</label><input id="comment-email" type="email" name="email" value="`)
-		out.WriteString(html.EscapeString(remEmail))
-		out.WriteString(`" placeholder="`)
-		out.WriteString(ctx.T("邮箱 *(不公开)"))
-		out.WriteString(`" autocomplete="email" required></p>`)
+		util.WriteString(out, `<p><label class="sr-only" for="comment-email">`)
+		util.WriteString(out, ctx.T("邮箱"))
+		util.WriteString(out, `</label><input id="comment-email" type="email" name="email" value="`)
+		util.WriteString(out, html.EscapeString(remEmail))
+		util.WriteString(out, `" placeholder="`)
+		util.WriteString(out, ctx.T("邮箱 *(不公开)"))
+		util.WriteString(out, `" autocomplete="email" required></p>`)
 
-		out.WriteString(`<p><label class="sr-only" for="comment-url">`)
-		out.WriteString(ctx.T("网站"))
-		out.WriteString(`</label><input id="comment-url" type="url" name="url" value="`)
-		out.WriteString(html.EscapeString(remURL))
-		out.WriteString(`" placeholder="`)
-		out.WriteString(ctx.T("网站(可选)"))
-		out.WriteString(`" autocomplete="url"></p>`)
+		util.WriteString(out, `<p><label class="sr-only" for="comment-url">`)
+		util.WriteString(out, ctx.T("网站"))
+		util.WriteString(out, `</label><input id="comment-url" type="url" name="url" value="`)
+		util.WriteString(out, html.EscapeString(remURL))
+		util.WriteString(out, `" placeholder="`)
+		util.WriteString(out, ctx.T("网站(可选)"))
+		util.WriteString(out, `" autocomplete="url"></p>`)
 	}
 
-	out.WriteString(`<p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>`)
-	out.WriteString(`<p><label class="sr-only" for="comment-content">`)
-	out.WriteString(ctx.T("评论内容"))
-	out.WriteString(`</label><textarea id="comment-content" name="content" rows="5" placeholder="`)
-	out.WriteString(ctx.T("说点什么吧…… *"))
-	out.WriteString(`" required></textarea></p>`)
+	util.WriteString(out, `<p class="hp"><input type="text" name="website" tabindex="-1" autocomplete="off"></p>`)
+	util.WriteString(out, `<p><label class="sr-only" for="comment-content">`)
+	util.WriteString(out, ctx.T("评论内容"))
+	util.WriteString(out, `</label><textarea id="comment-content" name="content" rows="5" placeholder="`)
+	util.WriteString(out, ctx.T("说点什么吧…… *"))
+	util.WriteString(out, `" required></textarea></p>`)
 
 	// slot: comment.form.after_textarea
 	if h := hooks(runtime); h != nil {
 		var slotBuf strings.Builder
 		h.DoAction(requestContext(ctx), hook.HookCommentFormAfterTextarea, &slotBuf,
 			hook.CommentFormAfterTextareaData{Data: data})
-		out.WriteString(slotBuf.String())
+		util.WriteString(out, slotBuf.String())
 	}
 
 	if mailEnabled {
-		out.WriteString(`<p><label><input type="checkbox" name="notify"> `)
-		out.WriteString(ctx.T("有回复时邮件通知我"))
-		out.WriteString(`</label></p>`)
+		util.WriteString(out, `<p><label><input type="checkbox" name="notify"> `)
+		util.WriteString(out, ctx.T("有回复时邮件通知我"))
+		util.WriteString(out, `</label></p>`)
 	}
 
-	out.WriteString(`<p class="comment-form-actions"><button type="submit">`)
-	out.WriteString(ctx.T("提交评论"))
-	out.WriteString(`</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>`)
-	out.WriteString(ctx.T("取消回复"))
-	out.WriteString(`</button></p>`)
-	out.WriteString(`<p class="comment-tip">`)
-	out.WriteString(ctx.T("评论提交后需经审核才会显示。"))
-	out.WriteString(`</p>`)
-	out.WriteString(`</form>`)
+	util.WriteString(out, `<p class="comment-form-actions"><button type="submit">`)
+	util.WriteString(out, ctx.T("提交评论"))
+	util.WriteString(out, `</button><button type="button" class="comment-cancel-reply" data-cancel-reply hidden>`)
+	util.WriteString(out, ctx.T("取消回复"))
+	util.WriteString(out, `</button></p>`)
+	util.WriteString(out, `<p class="comment-tip">`)
+	util.WriteString(out, ctx.T("评论提交后需经审核才会显示。"))
+	util.WriteString(out, `</p>`)
+	util.WriteString(out, `</form>`)
 }
 
 // ========== 辅助函数 ==========

@@ -1,6 +1,6 @@
 {{define "page.gohtml"}}
 {{template "header" .}}
-<article class="page-detail">
+<article class="{{post_class .Post "page-detail"}}">
   {{post_title .Post}}
   <div class="post-meta">
     <a class="post-date-link" href="{{postURL .Post}}"><time datetime="{{fmtDateTime .Post.PublishedAt}}">{{fmtDate .Post.PublishedAt}}</time></a>

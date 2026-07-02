@@ -1,6 +1,6 @@
 {{define "post.gohtml"}}
 {{template "header" .}}
-<article class="post-detail">
+<article class="{{post_class .Post "post-detail"}}">
   <header class="post-hero wide-shell">
     <div class="issue-mark" aria-hidden="true">No. {{.Post.ID}}</div>
     <div class="post-hero-copy">

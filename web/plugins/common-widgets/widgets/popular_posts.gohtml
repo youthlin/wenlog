@@ -1,7 +1,7 @@
 {{define "widget_popular_posts"}}
 {{$title := plugin_option "title" | default (.tp.T "最热文章")}}
 {{$n := plugin_option "count" | toInt | default 5}}
-{{$popular := hook_invoke "popularPosts" "n" $n}}
+{{$popular := hook_invoke "PopularPosts" "n" $n}}
 <section class="widget widget-popular-posts">
   <h3>{{$title}}</h3>
   <ul>

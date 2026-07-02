@@ -1,6 +1,7 @@
 package util
 
 import (
+	"io"
 	"net/url"
 	"os"
 	"strings"
@@ -68,4 +69,12 @@ func URLSlugify(s string) string {
 		s = decoded
 	}
 	return strings.ToLower(url.PathEscape(Slugify(s)))
+}
+
+// WriteString 向 io.StringWriter 写入字符串，忽略错误。
+// 适用于 strings.Builder 等不会返回错误的写入场景，消除 linter 未处理 err 警告。
+func WriteString(w io.StringWriter, s string) {
+	if w != nil {
+		_, _ = w.WriteString(s)
+	}
 }

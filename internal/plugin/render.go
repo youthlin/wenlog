@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"html/template"
-	"io"
 	"log/slog"
 	"maps"
 	"os"
@@ -169,11 +168,4 @@ func (p *Plugin) WidgetsDir() string {
 		return ""
 	}
 	return filepath.Join(p.Dir, "widgets")
-}
-
-// WriteString 是插件 action 可选使用的 HTML 输出辅助。
-func WriteString(w io.StringWriter, s string) {
-	if w != nil {
-		_, _ = w.WriteString(s)
-	}
 }

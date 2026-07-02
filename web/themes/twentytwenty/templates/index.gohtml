@@ -2,7 +2,7 @@
 {{template "header" .}}
 <div class="post-list">
   {{range .List.Posts}}
-  <article class="post-summary">
+  <article class="{{post_class . "post-summary"}}">
     <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
     <div class="post-meta">
       <time>{{fmtDate .PublishedAt}}</time>

@@ -14,6 +14,7 @@ import (
 	ginrender "github.com/gin-gonic/gin/render"
 	"github.com/youthlin/blog/hook"
 	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/blog/internal/util"
 	"github.com/youthlin/blog/web"
 )
 
@@ -482,7 +483,7 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 		if h := hooks(runtime); h != nil {
 			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), item, area, data))
 		}
-		result.WriteString(string(html))
+		util.WriteString(&result, string(html))
 	}
 	ctx.WidgetOptions = nil
 	return template.HTML(result.String())

@@ -6,7 +6,7 @@
 </section>
 <div class="magazine-list">
   {{range .List.Posts}}
-  <article class="post-summary">
+  <article class="{{post_class . "post-summary"}}">
     <div class="post-summary-inner wide-shell">
       <div class="issue-stack">
         <div class="issue-mark" aria-hidden="true">No. {{.ID}}</div>
