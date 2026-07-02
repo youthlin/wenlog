@@ -776,6 +776,17 @@ func (l *DataLoader) CommentPage(postID uint, page, pageSize int, currentUserID 
 		}
 	}
 
+	// 填充 ReplyToAuthor（与 store 层 CommentPage 中的 populateReplyToAuthors 对应）。
+	// LoadAll 阶段的 populateReplyToAuthors 在 ReplyToID 被设置之前就已运行，
+	// 因此需要在此处对副本补填。
+	for i := range allDescendants {
+		if allDescendants[i].ReplyToID != 0 {
+			if target, ok := l.Comments[allDescendants[i].ReplyToID]; ok && target != nil {
+				allDescendants[i].ReplyToAuthor = target.Author
+			}
+		}
+	}
+
 	// 组装结果：顶层评论 + 子孙评论
 	result := make([]model.Comment, 0, len(pageTops)+len(allDescendants))
 	for _, top := range pageTops {
