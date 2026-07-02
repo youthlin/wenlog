@@ -424,9 +424,9 @@ func commentClass(comment any, extra ...string) string {
 		classes = append(classes, fmt.Sprintf("comment-%d", id))
 	}
 	if parentID := reflectUintField(comment, "ParentID"); parentID > 0 {
-		classes = append(classes, "comment-reply")
+		classes = append(classes, "is-reply")
 	} else {
-		classes = append(classes, "comment-root")
+		classes = append(classes, "is-root")
 	}
 	if status := reflectStringField(comment, "Status"); status != "" {
 		classes = append(classes, "status-"+slugClass(status))
@@ -560,6 +560,14 @@ func isDraft(ctx *RequestContext) bool {
 
 // ========== listComments 模板函数 ==========
 
+// indent 返回换行 + depth*2 个空格的缩进字符串。
+func indent(depth int) string {
+	if depth <= 0 {
+		return "\n"
+	}
+	return "\n" + strings.Repeat("  ", depth)
+}
+
 // listComments 渲染评论列表和分页。
 // 模板调用: {{listComments .}} 或 {{listComments . "ol" 44 "my_comment"}}
 // 参数: args[0]=data(必填), args[1]=style(默认"ul"), args[2]=avatarSize(默认40), args[3]=callback模板名(默认"comment_item")
@@ -643,9 +651,11 @@ func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) te
 		if parentID != 0 {
 			continue
 		}
-		writeCommentItem(&out, runtime, ctx, data, c, comments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
+		util.WriteString(&out, indent(1))
+		writeCommentItem(&out, runtime, ctx, data, c, comments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, 1)
 	}
 
+	util.WriteString(&out, indent(0))
 	util.WriteString(&out, "</")
 	util.WriteString(&out, listTag)
 	util.WriteString(&out, ">")
@@ -688,7 +698,7 @@ func commentForm(runtime *TemplateRuntime, ctx *RequestContext, data any) templa
 // writeCommentItem 渲染单条评论（含 <li> 包裹）及其子回复。
 func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
 	data any, comment any, allComments []any, callbackTpl string, hasCustomTpl bool,
-	avatarSize int, defaultAvatar string, listTag string) {
+	avatarSize int, defaultAvatar string, listTag string, depth int) {
 
 	id := reflectUintField(comment, "ID")
 	status := reflectStringField(comment, "Status")
@@ -715,18 +725,19 @@ func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 			util.WriteString(out, buf.String())
 		}
 	} else {
-		writeDefaultCommentItem(out, runtime, ctx, data, comment, avatarSize, defaultAvatar)
+		writeDefaultCommentItem(out, runtime, ctx, data, comment, avatarSize, defaultAvatar, depth)
 	}
 
 	// 子回复
-	writeCommentChildren(out, runtime, ctx, data, comment, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
+	writeCommentChildren(out, runtime, ctx, data, comment, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, depth)
 
+	util.WriteString(out, indent(depth))
 	util.WriteString(out, `</li>`)
 }
 
 // writeDefaultCommentItem 生成默认评论 HTML（与 default 主题结构一致）。
 func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
-	data any, comment any, avatarSize int, defaultAvatar string) {
+	data any, comment any, avatarSize int, defaultAvatar string, depth int) {
 
 	id := reflectUintField(comment, "ID")
 	author := html.EscapeString(reflectStringField(comment, "Author"))
@@ -742,6 +753,7 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 	sizeStr := strconv.Itoa(avatarSize)
 
 	// comment-head
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, `<div class="comment-head">`)
 	// avatar
 	util.WriteString(out, `<img class="avatar" src="`)
@@ -795,9 +807,11 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 		util.WriteString(out, ctx.T("评论审核中,当前仅自己可见"))
 		util.WriteString(out, `</span>`)
 	}
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, `</div>`)
 
 	// comment-body
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, `<div class="comment-body">`)
 	if parentID != 0 && replyToAuthor != "" && replyToID > 0 {
 		util.WriteString(out, `<a class="comment-reply-to" href="#comment-`)
@@ -807,9 +821,11 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 		util.WriteString(out, `</a>`)
 	}
 	util.WriteString(out, string(commentContent(runtime, ctx, comment)))
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, `</div>`)
 
 	// reply button
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, `<button class="comment-reply" type="button" data-reply="`)
 	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
 	util.WriteString(out, `" data-reply-target="comment-`)
@@ -822,7 +838,7 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 // writeCommentChildren 渲染评论的子回复列表。
 func writeCommentChildren(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
 	data any, parent any, allComments []any, callbackTpl string, hasCustomTpl bool,
-	avatarSize int, defaultAvatar string, listTag string) {
+	avatarSize int, defaultAvatar string, listTag string, depth int) {
 
 	parentID := reflectUintField(parent, "ID")
 	var children []any
@@ -843,14 +859,17 @@ func writeCommentChildren(out *strings.Builder, runtime *TemplateRuntime, ctx *R
 		childrenTag = "div"
 	}
 
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, "<")
 	util.WriteString(out, childrenTag)
 	util.WriteString(out, ` class="comment-children">`)
 
 	for _, child := range children {
-		writeCommentItem(out, runtime, ctx, data, child, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag)
+		util.WriteString(out, indent(depth+2))
+		writeCommentItem(out, runtime, ctx, data, child, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, depth+2)
 	}
 
+	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, "</")
 	util.WriteString(out, childrenTag)
 	util.WriteString(out, ">")
