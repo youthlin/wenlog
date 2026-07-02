@@ -1,12 +1,14 @@
-{{define "admin_widgets.gohtml"}}
+{{- define "admin_widgets.gohtml" -}}
 {{- template "admin_header" . -}}
 <div class="page-head">
   <h1>{{.t.T "组件管理"}}</h1>
 </div>
 
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
-{{if .Areas}}
+{{- if .Areas}}
 <form method="post" action="/admin/widgets" id="widgets-form">
   {{template "csrf_field" .}}
 
@@ -101,9 +103,9 @@
 
   <p><button type="submit" class="btn">{{.t.T "保存"}}</button></p>
 </form>
-{{else}}
+{{- else}}
 <p>{{.t.T "当前主题未声明任何组件区域。"}}</p>
-{{end}}
+{{- end}}
 
 {{/* 组件声明 JSON，供 JS 动态构建选项表单 */}}
 <script id="widget-decls-json" type="application/json">{{.WidgetDeclsJSON}}</script>
@@ -459,4 +461,4 @@
 </script>
 
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

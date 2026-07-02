@@ -1,9 +1,13 @@
-{{define "admin_backup.gohtml"}}
+{{- define "admin_backup.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{.t.T "数据库备份"}}</h1>
 
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
 <div class="cards settings-cards">
   <section class="card settings-card">
@@ -42,7 +46,7 @@
   </section>
 </div>
 
-{{if .Backups}}
+{{- if .Backups}}
 <section class="card settings-card backup-list-card">
   <h3>{{.t.T "备份列表"}} ({{len .Backups}})</h3>
   <div class="table-scroll">
@@ -79,7 +83,7 @@
     </table>
   </div>
 </section>
-{{end}}
+{{- end}}
 
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

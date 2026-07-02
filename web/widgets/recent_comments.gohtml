@@ -1,4 +1,4 @@
-{{define "widget_recent_comments"}}
+{{- define "widget_recent_comments" -}}
 {{$title := widget_option "title" | default (.t.T "近期评论")}}
 {{$n := widget_option "count" | toInt | default 5}}
 <section class="widget widget-recent-comments">
@@ -20,4 +20,4 @@
     {{end}}{{end}}
   </ul>
 </section>
-{{end}}
+{{- end}}

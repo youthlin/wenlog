@@ -1,8 +1,12 @@
-{{define "admin_terms.gohtml"}}
+{{- define "admin_terms.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{if eq .CurrentTermsSection "tag"}}{{.t.T "标签管理"}}{{else}}{{.t.T "分类管理"}}{{end}}</h1>
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
 <div class="terms-toolbar">
   <form class="terms-search-form" method="get" action="{{.CurrentTermsPageURL}}">
@@ -12,7 +16,7 @@
   </form>
 </div>
 
-{{if eq .CurrentTermsSection "tag"}}
+{{- if eq .CurrentTermsSection "tag"}}
 <div class="terms-main">
   <section class="card settings-card">
     <h3>{{if .EditingTag}}{{.t.T "编辑标签"}}{{else}}{{.t.T "新建标签"}}{{end}}</h3>
@@ -60,7 +64,7 @@
     </div>
   </section>
 </div>
-{{else}}
+{{- else}}
 <div class="terms-main">
   <section class="card settings-card">
     <h3>{{if .EditingCategory}}{{.t.T "编辑分类"}}{{else}}{{.t.T "新建分类"}}{{end}}</h3>
@@ -122,14 +126,14 @@
     </div>
   </section>
 </div>
-{{end}}
+{{- end}}
 <p class="total">{{if eq .CurrentTermsSection "tag"}}{{.t.N1_64 "共 %d 个标签" .Total .Total}}{{else}}{{.t.N1_64 "共 %d 个分类" .Total .Total}}{{end}}</p>
-{{if gt .Pages 1}}
+{{- if gt .Pages 1}}
 <nav class="pagination">
   {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
   {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
-{{end}}
+{{- end}}
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

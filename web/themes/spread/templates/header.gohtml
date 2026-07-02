@@ -1,4 +1,4 @@
-{{define "header"}}<!DOCTYPE html>
+{{- define "header" -}}<!DOCTYPE html>
 <html lang="{{.htmlLang}}"
       data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
       data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
@@ -9,10 +9,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
-{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
-{{head_meta .}}
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+{{head_meta . -}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
-{{$customCSS := theme_option "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
+{{$customCSS := theme_option "custom_css" -}}
+{{- if $customCSS}}
+<style>{{$customCSS | safeHTML}}</style>
+{{- end -}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
 {{slot "head.end" .}}
@@ -39,4 +44,4 @@
   </div>
 </header>
 <main id="main-content">
-{{end}}
+{{- end}}

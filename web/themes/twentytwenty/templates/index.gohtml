@@ -1,4 +1,4 @@
-{{define "index.gohtml"}}
+{{- define "index.gohtml" -}}
 {{template "header" .}}
 <div class="post-list">
   {{range .List.Posts}}
@@ -22,4 +22,4 @@
 </div>
 {{template "pagination" .}}
 {{template "footer" .}}
-{{end}}
+{{- end}}

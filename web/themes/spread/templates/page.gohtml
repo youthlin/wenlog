@@ -1,4 +1,4 @@
-{{define "page.gohtml"}}
+{{- define "page.gohtml" -}}
 {{template "header" .}}
 <article class="{{post_class .Post "post-detail" "page-detail"}}">
   <header class="post-hero wide-shell">
@@ -25,4 +25,4 @@
 </article>
 {{template "comments" .}}
 {{template "footer" .}}
-{{end}}
+{{- end}}

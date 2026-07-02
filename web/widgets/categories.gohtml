@@ -1,4 +1,4 @@
-{{define "widget_categories"}}
+{{- define "widget_categories" -}}
 {{$title := widget_option "title" | default (.t.T "分类目录")}}
 <section class="widget widget-categories">
   <h3>{{$title}}</h3>
@@ -7,4 +7,4 @@
     {{range .Categories}}<option value="{{categoryURL .Slug}}">{{.Name}}</option>{{end}}
   </select>
 </section>
-{{end}}
+{{- end}}

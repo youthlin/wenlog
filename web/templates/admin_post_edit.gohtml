@@ -1,7 +1,9 @@
-{{define "admin_post_edit.gohtml"}}
+{{- define "admin_post_edit.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{if .IsEdit}}{{if eq .PostType "page"}}{{.t.T "编辑%s" (.t.X "admin.post_type.singular" "页面")}}{{else}}{{.t.T "编辑%s" (.t.X "admin.post_type.singular" "文章")}}{{end}}{{else}}{{if eq .PostType "page"}}{{.t.T "新建%s" (.t.X "admin.post_type.singular" "页面")}}{{else}}{{.t.T "新建%s" (.t.X "admin.post_type.singular" "文章")}}{{end}}{{end}}</h1>
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
 <form class="edit-form" method="post" action="/admin/post">
   {{template "csrf_field" .}}
   {{if .Post}}<input type="hidden" name="id" value="{{.Post.ID}}">{{end}}
@@ -91,4 +93,4 @@
 </form>
 <script src="/assets/admin.js"></script>
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

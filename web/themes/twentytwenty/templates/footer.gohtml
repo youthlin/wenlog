@@ -1,4 +1,4 @@
-{{define "footer"}}
+{{- define "footer" -}}
 </main>
 </div>
 <div class="scroll-tools">
@@ -13,19 +13,19 @@
     <p>{{theme_option "footer_text" | default "Powered by Blog"}}</p>
   </div>
 </footer>
-{{if .SQLDetails}}
-{{if .SQLDetails.Count}}
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
 <footer class="sql-details-footer">
   <details>
     <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
     <pre class="sql-details-content">{{.SQLDetails}}</pre>
   </details>
 </footer>
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 <script src="/theme-assets/theme.js?theme={{.ThemeName}}&v={{.ThemeVersion}}"></script>
 <script src="/assets/common.js"></script>
-{{slot "body.end" .}}
+{{- slot "body.end" .}}
 </body>
 </html>
-{{end}}
+{{- end}}

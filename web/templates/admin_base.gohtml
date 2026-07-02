@@ -18,7 +18,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}} · {{.SiteName}}</title>
-{{if .CSRFToken}}<meta name="csrf-token" content="{{.CSRFToken}}">{{end}}
+{{- if .CSRFToken}}
+<meta name="csrf-token" content="{{.CSRFToken}}">
+{{- end}}
 <link rel="stylesheet" href="/assets/admin.css">
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
@@ -148,23 +150,23 @@
     </div>
   </aside>
   <main class="admin-main" id="main-content">
-{{end}}
+{{- end}}
 
-{{define "admin_footer"}}
+{{- define "admin_footer" -}}
   </main>
 </div><!-- .admin-shell -->
-{{if .SQLDetails}}
-{{if .SQLDetails.Count}}
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
 <footer class="sql-details-footer">
   <details>
     <summary>{{.t.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
     <pre class="sql-details-content">{{.SQLDetails}}</pre>
   </details>
 </footer>
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 <script src="/assets/theme.js"></script>
 <script src="/assets/common.js"></script>
 </body>
 </html>
-{{end}}
+{{- end}}

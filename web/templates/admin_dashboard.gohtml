@@ -1,4 +1,4 @@
-{{define "admin_dashboard.gohtml"}}
+{{- define "admin_dashboard.gohtml" -}}
 {{- template "admin_header" . -}}
 {{ if .User }}
 <h1>{{.t.T "%s, 欢迎回来" .User.DisplayName}}</h1>
@@ -6,7 +6,7 @@
 <h1>{{.t.T "欢迎回来"}}</h1>
 {{ end }}
 
-{{if .User}}
+{{- if .User}}
 <section class="card dashboard-welcome-card">
   <a class="dashboard-user-avatar" href="/admin/profile" aria-label="{{.t.T "查看个人资料"}}">
     <img class="avatar" src="{{avatarURL .User.Email .DefaultAvatar}}" alt="" width="72" height="72">
@@ -16,7 +16,7 @@
     <p>{{.t.T "欢迎来到后台。你可以在个人资料中维护名称和邮箱。"}}</p>
   </div>
 </section>
-{{end}}
+{{- end}}
 
 {{- if .Stats -}}
 <div class="dashboard-stats">
@@ -162,4 +162,4 @@
   </div>
 </div>
 {{- template "admin_footer" . -}}
-{{end}}
+{{- end}}

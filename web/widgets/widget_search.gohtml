@@ -1,4 +1,4 @@
-{{define "widget_search"}}
+{{- define "widget_search" -}}
 {{$title := widget_option "title" | default (.t.T "搜索")}}
 <section class="widget widget-search">
   <h3>{{$title}}</h3>
@@ -7,4 +7,4 @@
     <button type="submit">{{.t.T "搜索"}}</button>
   </form>
 </section>
-{{end}}
+{{- end}}

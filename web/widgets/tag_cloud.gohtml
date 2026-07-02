@@ -1,4 +1,4 @@
-{{define "widget_tag_cloud"}}
+{{- define "widget_tag_cloud" -}}
 {{$title := widget_option "title" | default (.t.T "标签")}}
 <section class="widget widget-tags">
   <h3>{{$title}}</h3>
@@ -7,4 +7,4 @@
     {{range .Tags}}<option value="{{tagURL .Slug}}">{{.Name}}</option>{{end}}
   </select>
 </section>
-{{end}}
+{{- end}}

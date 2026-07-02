@@ -1,10 +1,12 @@
-{{define "admin_menus.gohtml"}}
+{{- define "admin_menus.gohtml" -}}
 {{template "admin_header" .}}
 <div class="page-head">
   <h1>{{.t.T "菜单"}}</h1>
 </div>
 
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
 <section class="card settings-card">
   <h3>{{.t.T "导航菜单"}}</h3>
@@ -157,4 +159,4 @@
 })();
 </script>
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

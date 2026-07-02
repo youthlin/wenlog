@@ -1,14 +1,16 @@
-{{define "admin_theme_options.gohtml"}}
+{{- define "admin_theme_options.gohtml" -}}
 {{- template "admin_header" . -}}
 <div class="page-head">
   <h1>{{.t.T "主题选项"}} — {{.ThemeName}}</h1>
 </div>
 
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
-{{if .NoOptions}}
+{{- if .NoOptions}}
 <p class="tip">{{.t.T "当前主题未声明任何可配置选项。"}}</p>
-{{else}}
+{{- else}}
 <form method="post" action="/admin/theme-options" class="theme-options-form">
   {{template "csrf_field" .}}
   {{range .Options}}
@@ -62,7 +64,7 @@
 
   <p><button type="submit" class="btn">{{.t.T "保存"}}</button></p>
 </form>
-{{end}}
+{{- end}}
 
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

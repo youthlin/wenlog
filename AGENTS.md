@@ -193,6 +193,51 @@ go build -o blog ./cmd/server
   - `Content`：用于前台展示的 HTML
 - 评论分页是按"顶层评论"分页，不是按全部评论平铺分页；改评论相关逻辑时先理解这一点。
 
+### 模板空白符控制约定
+
+所有 `.gohtml` 模板文件统一使用 Go template 的空白符修剪语法，避免渲染输出中出现多余空行，同时保证需要换行的 HTML 标签不被挤到上一行。
+
+**规则：**
+
+1. **`{{define}}` / `{{end}}`（模板定义边界）**：始终使用 `{{- define "name" -}}` 和 `{{- end}}`，修剪模板首尾空白。
+2. **`{{if}}` / `{{with}}` / `{{range}}`（块级动作）**：独占一行时使用 `{{- if ...}}`、`{{- with ...}}`、`{{- range ...}}`，修剪前方空白避免条件为 false 时残留空行。
+3. **`{{else}}`**：独占一行时使用 `{{- else}}`。
+4. **`{{end}}`（块级结束）**：独占一行时使用 `{{- end}}`。
+5. **行内动作不修剪**：与 HTML 标签在同一行的 `{{if}}`/`{{range}}`/`{{end}}` 等保持原样，不加 `-`。
+6. **块级元素内容必须换行**：`{{- if}}` 的内容如果是块级标签（`<p>`、`<meta>`、`<div>` 等），必须拆成多行，不能挤在同一行。
+
+**示例：**
+
+```gohtml
+{{- define "header" -}}
+<!DOCTYPE html>
+<html>
+...
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+...
+{{- end}}
+```
+
+```gohtml
+{{- define "pagination" -}}
+{{- with .Pager}}
+{{- if gt .Pages 1}}
+<nav class="pagination">
+  ...
+</nav>
+{{- end}}
+{{- end}}
+{{- end}}
+```
+
+**行内动作（不加 `-`）：**
+```gohtml
+{{if .SiteLogo}}<img src="{{.SiteLogo}}">{{else}}<span>{{.SiteName}}</span>{{end}}
+{{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+```
+
 ### 后台表格规范
 
 后台管理页面（文章、评论、分类、标签、附件、用户、主题、菜单等）的数据表格统一使用以下模式，通过 CSS 实现桌面端/平板/移动端三档响应式。

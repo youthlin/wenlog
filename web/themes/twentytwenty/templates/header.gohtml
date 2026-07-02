@@ -9,10 +9,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
-{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
-{{head_meta .}}
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+{{head_meta . -}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
-{{$customCSS := theme_option "custom_css"}}{{if $customCSS}}<style>{{$customCSS | safeHTML}}</style>{{end}}
+{{$customCSS := theme_option "custom_css" -}}
+{{- if $customCSS}}
+<style>{{$customCSS | safeHTML}}</style>
+{{- end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
 <script>(function(){try{var themes=['light','dark'];var t=localStorage.getItem('theme');var theme=themes.indexOf(t)>=0?t:'light';document.documentElement.setAttribute('data-theme',theme);document.body&&document.body.setAttribute('data-theme',theme);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
@@ -43,4 +48,4 @@
 <div class="nav-backdrop" data-nav-backdrop hidden></div>
 <div class="container layout">
 <main class="main-col" id="main-content">
-{{end}}
+{{- end}}

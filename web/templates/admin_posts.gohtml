@@ -1,4 +1,4 @@
-{{define "admin_posts.gohtml"}}
+{{- define "admin_posts.gohtml" -}}
 {{- template "admin_header" . -}}
 <div class="page-head">
   <h1>{{.Title}}</h1>
@@ -128,14 +128,14 @@
   </table>
 </div>
 <p class="total">{{if eq .PostType "page"}}{{.t.N1_64 "共 %d 个页面" .Total .Total}}{{else}}{{.t.N1_64 "共 %d 篇文章" .Total .Total}}{{end}}</p>
-{{if gt .Pages 1}}
+{{- if gt .Pages 1}}
 <nav class="pagination">
   {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
   {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
-{{end}}
-{{if eq .PostType "page"}}
+{{- end}}
+{{- if eq .PostType "page"}}
 <script>
 (function(){
   var csrf = '{{.CSRFToken}}';
@@ -175,6 +175,6 @@
   });
 })();
 </script>
-{{end}}
+{{- end}}
 {{- template "admin_footer" . -}}
-{{end}}
+{{- end}}

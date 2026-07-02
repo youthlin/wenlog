@@ -1,8 +1,10 @@
-{{define "admin_comments.gohtml"}}
+{{- define "admin_comments.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{ .Title }}</h1>
-{{if .FilterPostID}}<p class="filter-info">{{.t.T "文章"}}：<a href="/admin/post/{{.FilterPostID}}">{{.FilterPostTitle}}</a> <a href="/admin/comments?status={{.FilterStatus}}" class="filter-clear">{{.t.T "清除"}}</a></p>{{end}}
-{{if not .Mine}}
+{{- if .FilterPostID}}
+<p class="filter-info">{{.t.T "文章"}}：<a href="/admin/post/{{.FilterPostID}}">{{.FilterPostTitle}}</a> <a href="/admin/comments?status={{.FilterStatus}}" class="filter-clear">{{.t.T "清除"}}</a></p>
+{{- end}}
+{{- if not .Mine}}
 <nav class="filter-tabs">
   <a href="/admin/comments?status=approved{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}" {{if eq .FilterStatus "approved"}}class="active"{{end}}>{{.t.T "已批准"}} ({{.Counts.Approved}})</a>
   <a href="/admin/comments?status=pending{{if .FilterPostID}}&post_id={{.FilterPostID}}{{end}}" {{if eq .FilterStatus "pending"}}class="active"{{end}}>{{.t.T "待审"}} ({{.Counts.Pending}})</a>
@@ -17,7 +19,7 @@
   {{if ne .FilterStatus "spam"}}<button name="action" value="spam">{{.t.T "垃圾"}}</button>{{end}}
   <button name="action" value="delete" class="link-danger" onclick="return confirm('{{.t.T "确认批量删除选中评论?"}}')">{{.t.T "删除"}}</button>
 </form>
-{{end}}
+{{- end}}
 
 <div class="table-scroll">
   <table class="data-table comments-table">
@@ -103,13 +105,13 @@
 </div>
 
 <p class="total">{{.t.N1_64 "共 %d 条评论" .Total .Total}}</p>
-{{if gt .Pages 1}}
+{{- if gt .Pages 1}}
 <nav class="pagination">
   {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
   {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
-{{end}}
+{{- end}}
 <script src="/assets/admin.js"></script>
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

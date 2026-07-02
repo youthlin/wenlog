@@ -1,4 +1,4 @@
-{{define "archive.gohtml"}}
+{{- define "archive.gohtml" -}}
 {{template "header" .}}
 <article class="{{post_class .Post "page-detail"}}">
   <h1 class="post-title">{{.Post.Title}}</h1>
@@ -15,4 +15,4 @@
   </div>
 </article>
 {{template "footer" .}}
-{{end}}
+{{- end}}

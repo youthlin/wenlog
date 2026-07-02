@@ -1,12 +1,14 @@
-{{define "admin_user_form.gohtml"}}
+{{- define "admin_user_form.gohtml" -}}
 {{template "admin_header" .}}
-{{if .EditUser}}
+{{- if .EditUser}}
 <h1>{{.t.T "编辑用户"}}</h1>
-{{else}}
+{{- else}}
 <h1>{{.t.T "新增用户"}}</h1>
-{{end}}
+{{- end}}
 
-{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+{{- if .Error}}
+<p class="error">{{.Error}}</p>
+{{- end}}
 
 <form class="edit-form" method="post" action="{{if .EditUser}}/admin/user/{{.EditUser.ID}}/edit{{else}}/admin/user/new{{end}}">
   {{template "csrf_field" .}}
@@ -33,4 +35,4 @@
   </p>
 </form>
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

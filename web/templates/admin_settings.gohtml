@@ -1,4 +1,4 @@
-{{define "admin_settings.gohtml"}}
+{{- define "admin_settings.gohtml" -}}
 {{template "admin_header" .}}
 <h1>
   {{if eq .CurrentSettingsSection "developer"}}
@@ -7,10 +7,14 @@
   {{.t.T "常规设置"}}
   {{end}}
 </h1>
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
-{{if eq .CurrentSettingsSection "developer"}}
+{{- if eq .CurrentSettingsSection "developer"}}
 <div class="settings-main developer-settings-main">
   <div class="settings-stack">
     <section class="card settings-card">
@@ -130,7 +134,7 @@
 
   </div>
 </div>
-{{else}}
+{{- else}}
 <div class="settings-main">
   <div class="settings-stack">
     <section class="card settings-card">
@@ -238,6 +242,6 @@
     </section>
   </div>
 </div>
-{{end}}
+{{- end}}
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

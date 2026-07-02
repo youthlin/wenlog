@@ -1,11 +1,13 @@
-{{define "index.gohtml"}}
+{{- define "index.gohtml" -}}
 {{template "header" .}}
 <section class="hero wide-shell" aria-labelledby="home-title">
   <h1 id="home-title">{{.SiteName}}</h1>
-  {{if .Description}}<p class="hero-description">{{.Description}}</p>{{end}}
+  {{- if .Description}}
+  <p class="hero-description">{{.Description}}</p>
+  {{- end}}
 </section>
 <div class="magazine-list">
-  {{range .List.Posts}}
+  {{- range .List.Posts}}
   <article class="{{post_class . "post-summary"}}">
     <div class="post-summary-inner wide-shell">
       <div class="issue-stack">
@@ -30,10 +32,10 @@
       </div>
     </div>
   </article>
-  {{else}}
+  {{- else}}
   <p class="empty wide-shell">{{.th.T "没有找到匹配的文章。"}}</p>
-  {{end}}
+  {{- end}}
 </div>
 {{template "pagination" .}}
 {{template "footer" .}}
-{{end}}
+{{- end}}

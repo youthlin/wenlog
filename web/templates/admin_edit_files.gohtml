@@ -1,15 +1,15 @@
-{{define "admin_edit_files.gohtml"}}
+{{- define "admin_edit_files.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{.t.T "编辑文件"}}</h1>
 
-{{if .RecoveryInfo}}
+{{- if .RecoveryInfo}}
 <div class="err-banner" style="display:flex;justify-content:space-between;align-items:center;">
   <span>{{.t.T "主题「%s」加载失败，已自动切换为默认主题。错误: %s" .RecoveryInfo.FailedTheme .RecoveryInfo.Error}}</span>
   <span>
     <button class="btn-secondary btn-sm" onclick="clearRecovery()">{{.t.T "关闭"}}</button>
   </span>
 </div>
-{{end}}
+{{- end}}
 
 <div class="settings-main">
   <div class="settings-stack">
@@ -302,4 +302,4 @@ function createFile() {
 }
 </script>
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

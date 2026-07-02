@@ -1,4 +1,4 @@
-{{define "error.gohtml"}}
+{{- define "error.gohtml" -}}
 {{template "header" .}}
 <div class="error-page">
   <h1>{{.Code}}</h1>
@@ -6,4 +6,4 @@
   <p><a href="/">{{.th.T "返回首页"}}</a></p>
 </div>
 {{template "footer" .}}
-{{end}}
+{{- end}}

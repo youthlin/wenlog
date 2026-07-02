@@ -10,8 +10,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
-{{if .Description}}<meta name="description" content="{{.Description}}">{{end}}
-{{head_meta .}}
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+{{head_meta . -}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
@@ -47,7 +49,7 @@
 <main class="main-col" id="main-content">
 {{end}}{{/* header */}}
 
-{{define "footer"}}
+{{- define "footer" -}}
 </main>
 </div>
 <footer class="site-footer">
@@ -65,16 +67,16 @@
   <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.th.T "回顶部"}}">↑</button>
   <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.th.T "到底部"}}">↓</button>
 </div>
-{{if .SQLDetails}}
-{{if .SQLDetails.Count}}
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
 <footer class="sql-details-footer">
   <details>
     <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
     <pre class="sql-details-content">{{.SQLDetails}}</pre>
   </details>
 </footer>
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 <script>
 (function(){
   var toggle = document.querySelector('[data-nav-toggle]');
@@ -90,24 +92,24 @@
 })();
 </script>
 <script src="/assets/common.js"></script>
-{{slot "body.end" .}}
+{{- slot "body.end" .}}
 </body>
 </html>
 {{end}}{{/* footer */}}
 
-{{define "pagination"}}
-{{with .Pager}}
-{{if gt .Pages 1}}
+{{- define "pagination" -}}
+{{- with .Pager}}
+{{- if gt .Pages 1}}
 <nav class="pagination">
   {{if gt .Page 1}}<a href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}" class="pagination-link">{{$.th.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
   {{if lt .Page .Pages}}<a href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}" class="pagination-link">{{$.th.T "下一页"}}</a>{{end}}
 </nav>
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 {{end}}{{/* pagination */}}
 
-{{define "comments"}}
+{{- define "comments" -}}
 <section class="comments" id="comments">
   <h3>{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
   {{list_comments .}}
@@ -117,10 +119,10 @@
 {{end}}{{/* comment */}}
 
 {{/* index.gohtml — 兜底页面模板，用数据特征区分页面类型 */}}
-{{define "index.gohtml"}}
+{{- define "index.gohtml" -}}
 {{- template "header" . -}}
 
-{{if .Code}}
+{{- if .Code}}
   {{/* 错误页 */}}
   <div class="error-page">
     <h1>{{.Code}}</h1>
@@ -173,7 +175,7 @@
 
   {{template "comments" .}}
 
-{{else}}
+{{- else}}
   {{/* 首页/列表 */}}
   {{if .Heading}}<h1 class="archive-title">{{.Heading}}</h1>{{end}}
   <div class="post-list">
@@ -199,7 +201,7 @@
     {{end}}
   </div>
   {{template "pagination" .}}
-{{end}}
+{{- end}}
 
 {{template "footer" .}}
-{{end}}
+{{- end}}

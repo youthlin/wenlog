@@ -1,9 +1,13 @@
-{{define "admin_import.gohtml"}}
+{{- define "admin_import.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{.t.T "WXR 导入 / 导出"}}</h1>
 
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-{{if .Success}}<p class="notice-banner">{{.Success}}</p>{{end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Success}}
+<p class="notice-banner">{{.Success}}</p>
+{{- end}}
 
 <div class="cards settings-cards">
   <section class="card settings-card">
@@ -101,4 +105,4 @@
 </div>
 
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

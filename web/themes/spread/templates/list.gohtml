@@ -1,11 +1,11 @@
-{{define "list.gohtml"}}
+{{- define "list.gohtml" -}}
 {{template "header" .}}
 <section class="archive-hero wide-shell">
   <p class="hero-kicker">{{.th.T "专题目录"}}</p>
   <h1 class="archive-title">{{.Heading}}</h1>
 </section>
 <div class="magazine-list compact-list">
-  {{range .List.Posts}}
+  {{- range .List.Posts}}
   <article class="{{post_class . "post-summary"}}">
     <div class="post-summary-inner wide-shell">
       <div class="issue-stack">
@@ -29,10 +29,10 @@
       </div>
     </div>
   </article>
-  {{else}}
+  {{- else}}
   <p class="empty wide-shell">{{.th.T "没有找到匹配的文章。"}}</p>
-  {{end}}
+  {{- end}}
 </div>
 {{template "pagination" .}}
 {{template "footer" .}}
-{{end}}
+{{- end}}

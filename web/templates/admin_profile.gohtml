@@ -1,8 +1,12 @@
-{{define "admin_profile.gohtml"}}
+{{- define "admin_profile.gohtml" -}}
 {{template "admin_header" .}}
 <h1>{{.t.T "个人资料"}}</h1>
-{{if .Error}}<p class="err">{{.Error}}</p>{{end}}
-{{if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
+{{- if .Error}}
+<p class="err">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice">{{.Notice}}</p>
+{{- end}}
 <div class="settings-main">
   <div class="settings-stack">
     <section class="card settings-card">
@@ -46,4 +50,4 @@
   </div>
 </div>
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

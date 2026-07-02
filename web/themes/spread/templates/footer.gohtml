@@ -1,4 +1,4 @@
-{{define "footer"}}
+{{- define "footer" -}}
 </main>
 <footer class="site-footer">
   <div class="wide-shell footer-shell">
@@ -15,19 +15,19 @@
   <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.th.T "回顶部"}}">↑</button>
   <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.th.T "到底部"}}">↓</button>
 </div>
-{{if .SQLDetails}}
-{{if .SQLDetails.Count}}
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
 <footer class="sql-details-footer">
   <details>
     <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
     <pre class="sql-details-content">{{.SQLDetails}}</pre>
   </details>
 </footer>
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}
 <script src="/theme-assets/theme.js?theme={{.ThemeName}}&v={{.ThemeVersion}}"></script>
 <script src="/assets/common.js"></script>
-{{slot "body.end" .}}
+{{- slot "body.end" .}}
 </body>
 </html>
-{{end}}
+{{- end}}

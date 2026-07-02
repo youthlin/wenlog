@@ -1,10 +1,10 @@
-{{define "widget_custom_html"}}
+{{- define "widget_custom_html" -}}
 {{$title := widget_option "title"}}
 {{$html := widget_option "html"}}
-{{if $html}}
+{{- if $html}}
 <section class="widget widget-custom-html">
   {{if $title}}<h3>{{$title}}</h3>{{end}}
   {{safeHTML $html}}
 </section>
-{{end}}
-{{end}}
+{{- end}}
+{{- end}}

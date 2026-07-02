@@ -1,4 +1,4 @@
-{{define "post.gohtml"}}
+{{- define "post.gohtml" -}}
 {{template "header" .}}
 <article class="{{post_class .Post "post-detail"}}">
   {{post_title .Post}}
@@ -17,4 +17,4 @@
 
 {{template "comments" .}}
 {{template "footer" .}}
-{{end}}
+{{- end}}

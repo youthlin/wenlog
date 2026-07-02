@@ -1,11 +1,15 @@
-{{define "admin_plugins.gohtml"}}
+{{- define "admin_plugins.gohtml" -}}
 {{template "admin_header" .}}
 <div class="page-head">
   <h1>{{.t.T "插件"}}</h1>
 </div>
 
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-{{if .Notice}}<p class="notice-banner">{{.Notice}}</p>{{end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
 <section class="card settings-card plugins-card">
   <h3>{{.t.T "插件管理"}}</h3>
@@ -99,4 +103,4 @@
 </section>
 
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

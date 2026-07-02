@@ -1,4 +1,4 @@
-{{define "comments"}}
+{{- define "comments" -}}
 <section class="comments wide-shell" id="comments">
   <div class="comments-inner">
     <p class="section-kicker">{{.th.T "读者回声"}}</p>
@@ -9,10 +9,10 @@
   </div>
 </section>
 <script src="/assets/comment.js"></script>
-{{end}}
+{{- end}}
 
-{{define "fragment_comments.gohtml"}}
+{{- define "fragment_comments.gohtml" -}}
 {{list_comments . "ul" 44}}
 {{comments_pagination .}}
 {{comment_form .}}
-{{end}}
+{{- end}}

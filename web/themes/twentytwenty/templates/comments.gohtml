@@ -1,4 +1,4 @@
-{{define "comments"}}
+{{- define "comments" -}}
 <section class="comments" id="comments">
   <h3>{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
   <div id="comments-box">
@@ -6,10 +6,10 @@
   </div>
 </section>
 <script src="/assets/comment.js"></script>
-{{end}}
+{{- end}}
 
-{{define "fragment_comments.gohtml"}}
+{{- define "fragment_comments.gohtml" -}}
 {{list_comments .}}
 {{comments_pagination .}}
 {{comment_form .}}
-{{end}}
+{{- end}}

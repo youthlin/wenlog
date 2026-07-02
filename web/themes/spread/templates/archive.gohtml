@@ -1,4 +1,4 @@
-{{define "archive.gohtml"}}
+{{- define "archive.gohtml" -}}
 {{template "header" .}}
 <article class="{{post_class .Post "post-detail" "archive-page"}}">
   <header class="post-hero wide-shell">
@@ -9,7 +9,7 @@
     </div>
   </header>
   <div class="archive-groups wide-shell">
-    {{range .Groups}}
+    {{- range .Groups}}
     <section class="archive-year-group">
       <h2 class="archive-year" id="{{.Year}}">{{.Year}}</h2>
       <ul class="archive-list">
@@ -18,8 +18,8 @@
         {{end}}
       </ul>
     </section>
-    {{end}}
+    {{- end}}
   </div>
 </article>
 {{template "footer" .}}
-{{end}}
+{{- end}}
