@@ -147,7 +147,7 @@ func ensureInitialContent(st *store.Store) error {
 	comment := &model.Comment{
 		PostID:    welcomPost.ID,
 		Author:    "youthlin",
-		Email:     "youthlinchen@outlook.com",
+		Email:     "admin@example.com",
 		URL:       "https://github.com/youthlin/blog",
 		IP:        "127.0.0.1",
 		Content:   gettext.T(bootstrapWelcomeComment),
