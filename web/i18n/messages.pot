@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-01 14:20+0800\n"
+"POT-Creation-Date: 2026-07-03 23:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,133 +17,133 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:14
 msgid "手动备份"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:15
 msgid "数据库路径：%s"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:18
 msgid "立即备份"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:23
 msgid "自动备份设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:24
 msgid ""
 "系统会按这里的时间每天自动创建数据库备份。默认每天 03:00 执行，保留最近 10 个"
 "备份。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:27
 msgid "启用自动备份"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:29
 msgid "执行时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:30
 msgid "保留数量"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:32
 msgid "保存自动备份设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:37
 msgid "邮件备份"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:38
 msgid "创建备份并通过邮件发送到指定邮箱。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:41
 msgid "收件人邮箱"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:44
 msgid "备份并发送邮件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:51
 msgid "备份列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:56
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:65
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:251
 msgid "文件名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:66
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:26
 msgid "大小"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:54
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:58
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:67
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:27
 msgid "时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:55
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:64
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:80
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:34
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:134
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:136
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:58
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:45
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:116
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_revisions.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_revisions.gohtml:25
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:37
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:48
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:94
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:106
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:32
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:110
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:64
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:28
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:34
 msgid "操作"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:69
 msgid "确定要从该备份恢复吗？当前数据将被覆盖。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:72
 msgid "恢复"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:74
 msgid "确定要删除此备份吗？"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:73
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:18
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:82
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:94
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:96
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:64
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:120
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:110
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:55
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:114
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:88
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:31
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:41
 msgid "删除"
 msgstr ""
 
@@ -168,8 +168,8 @@ msgid "加载文件失败"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:11
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:73
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:77
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:14
 msgid "预览"
@@ -180,7 +180,7 @@ msgid "继续编辑"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:70
 msgid "展开"
 msgstr ""
 
@@ -189,7 +189,7 @@ msgid "收起"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:31
 msgid "打开菜单"
 msgstr ""
 
@@ -197,140 +197,140 @@ msgstr ""
 msgid "收起菜单"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:28
 msgid "跳到主要内容"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:32
 msgid "%s・后台"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:32
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:38
 msgid "查看站点"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:47
 msgid "后台导航"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:50
 msgid "概览"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:56
 msgid "个人"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:64
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:63
 msgid "内容"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:66
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:4
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:72
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:93
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:76
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:97
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_revision_view.gohtml:12
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_revisions.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:37
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:47
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:94
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:105
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:109
 msgid "文章"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:67
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:73
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:94
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:44
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:69
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:131
 msgid "页面"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:69
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:74
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:95
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:83
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:78
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:99
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:85
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:41
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:95
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:99
 msgid "评论"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:60
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:70
 msgid "附件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:73
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:75
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:50
 msgid "分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:86
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:25
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:47
 msgid "主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:89
 msgid "组件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:95
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:97
 msgid "选项"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:100
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:59
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:78
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:102
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:80
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:132
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:55
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:50
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:52
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:117
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:78
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:35
 msgid "编辑"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:104
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:77
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:96
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:106
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:81
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:100
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:66
 msgid "设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:107
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:109
 msgid "常规"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:109
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:111
 msgid "开发"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:111
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:113
 msgid "迁移"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:113
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:115
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:14
 msgid "用户"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:115
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:117
 msgid "备份"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:122
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:124
 msgid "界面设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:124
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:125
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:126
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:127
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:14
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:15
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:14
@@ -342,7 +342,7 @@ msgstr ""
 msgid "语言"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:126
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:128
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:16
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:16
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:16
@@ -350,7 +350,7 @@ msgstr ""
 msgid "中文"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:127
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:129
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:17
@@ -358,11 +358,11 @@ msgstr ""
 msgid "English"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:131
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:133
 msgid "颜色"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:132
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:134
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:21
@@ -374,7 +374,7 @@ msgstr ""
 msgid "切换主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:133
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:135
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:23
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:23
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:23
@@ -382,7 +382,7 @@ msgstr ""
 msgid "暗黑"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:134
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:136
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:24
@@ -390,7 +390,7 @@ msgstr ""
 msgid "明亮"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:135
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:137
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:25
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:25
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:25
@@ -398,7 +398,7 @@ msgstr ""
 msgid "红梅"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:136
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:138
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:26
@@ -406,7 +406,7 @@ msgstr ""
 msgid "绿竹"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:137
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:139
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:27
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:27
@@ -414,7 +414,7 @@ msgstr ""
 msgid "藕粉"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:138
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:140
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:28
@@ -422,7 +422,7 @@ msgstr ""
 msgid "橙黄"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:139
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:141
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:29
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:29
@@ -430,7 +430,7 @@ msgstr ""
 msgid "蔚蓝"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:140
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:142
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_forgot_password.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:30
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:30
@@ -438,109 +438,109 @@ msgstr ""
 msgid "韵紫"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:145
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:147
 msgid "退出"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:160
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:162
 msgid "SQL 执行详情 (%d 条)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:4
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:5
 msgid "清除"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:7
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:9
 msgid "已批准"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:91
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:93
 msgid "待审"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:86
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:89
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:91
 msgid "垃圾"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:16
 msgid "全选"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:85
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:94
 msgid "批准"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:20
 msgid "确认批量删除选中评论?"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:32
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:50
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:36
 msgid "作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:33
 msgid "选择"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:43
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:54
 msgid "网址"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:55
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:76
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:90
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:31
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:102
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:55
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:104
 msgid "保存"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:56
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:75
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:58
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:77
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:256
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:90
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:92
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:11
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:26
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:83
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:34
 msgid "取消"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:67
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:153
 msgid "发表在"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:82
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:94
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:96
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:118
 msgid "确认删除?"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:90
 msgid "驳回"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:99
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:101
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_dashboard.gohtml:160
 msgid "暂无评论"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:105
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:107
 msgid "共 %d 条评论"
 msgid_plural "共 %d 条评论"
 msgstr[0] ""
@@ -638,27 +638,27 @@ msgid ""
 "入。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:11
 msgid "执行"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_debug.gohtml:15
 msgid "Result Set(JSON)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:7
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:9
 msgid "删除后你的账号将被永久删除，评论将匿名化保留。此操作不可撤销。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:11
 msgid "如果这是唯一的管理员账号，系统会阻止删除。请先创建或指定另一个管理员。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:15
 msgid "请输入 DELETE 确认"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_delete_account.gohtml:16
 msgid "确认删除"
 msgstr ""
 
@@ -667,7 +667,7 @@ msgid "主题「%s」加载失败，已自动切换为默认主题。错误: %s"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:42
 msgid "关闭"
 msgstr ""
 
@@ -713,7 +713,7 @@ msgid "加载中..."
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:162
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:48
 msgid "加载失败"
 msgstr ""
 
@@ -781,330 +781,352 @@ msgstr ""
 msgid "返回后台"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_export_data.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_export_data.gohtml:12
 msgid "你可以导出你的个人数据，包括个人资料和评论记录，格式为 JSON。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_export_data.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_export_data.gohtml:15
 msgid "导出我的数据"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:14
 msgid "导入 WordPress XML"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:17
 msgid ""
 "XML 中发现以下作者，请为每位作者选择对应的系统用户。未映射的作者将使用默认归"
 "属用户。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:72
 msgid "文件：%s"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:23
 msgid "XML 作者「%s」映射到"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:25
 msgid "使用默认用户"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:32
 msgid "确认并导入"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:36
 msgid ""
 "上传 WXR 导出 XML，并选择导入后文章/页面默认归属到哪个后台用户。若 XML 中包含"
 "多个作者，可在下一步为每位作者单独映射。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:37
 msgid ""
 "注意：如果数据库中已存在相同 ID 的文章、页面或评论，本次提交会按 upsert 覆盖"
 "保存。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:41
 msgid "XML 文件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:44
 msgid "默认归属用户"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:42
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:46
 msgid "请选择用户"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:52
 msgid "下一步：预览作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:55
 msgid "当前没有可选用户，请先创建管理员账号。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:61
 msgid "导入行为"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:63
 msgid "分类、标签会按原始 ID upsert 保存。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:64
 msgid "文章、页面会按原始 WordPress `post_id` upsert 保存。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:65
 msgid "XML 中的作者可在第二步映射到系统用户，未映射的作者使用默认归属用户。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:66
 msgid "评论会保留原始评论作者信息，并按评论 ID upsert 保存。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:67
 msgid "非 `post` / `page` 类型内容不会导入。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:67
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:71
 msgid "最近一次导入结果"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:86
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:90
 msgid "导出 XML"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:91
 msgid "导出后可直接在本页重新导入，用于迁移或备份。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:92
 msgid ""
 "说明：若只勾选「评论」而不勾选文章/页面，无法形成可回导 XML，因此提交时会提示"
 "错误。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:96
 msgid "选择要导出的内容"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_import.gohtml:102
 msgid "下载 XML"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:12
 msgid "导航菜单"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:13
 msgid ""
 "菜单位置由当前主题声明；菜单项可以来自页面，也可以是自定义链接。父级选择非空"
 "时会渲染为次级菜单。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:29
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:41
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:43
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:131
 msgid "类型"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:48
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:130
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:50
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
 msgid "页面/标题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:31
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:55
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:131
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:31
 msgid "链接"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:32
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:56
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:58
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:134
 msgid "父级"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:33
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:35
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:64
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:135
 msgid "新窗口"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:45
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:129
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:131
 msgid "自定义链接"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:50
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:86
 msgid "选择页面"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:130
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:55
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:132
 msgid "菜单标题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:58
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:100
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:102
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:78
 msgid "无"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:64
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:135
 msgid "否"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:62
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:133
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:64
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:135
 msgid "是"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:63
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:134
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:136
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:51
 msgid "移除"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:72
 msgid "添加页面"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:73
 msgid "添加自定义链接"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:75
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_menus.gohtml:77
 msgid "保存菜单"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:12
 msgid "返回插件列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:14
 msgid "当前插件未声明任何可配置选项。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:42
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:73
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:52
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:81
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:78
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:83
 msgid "启用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:49
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:59
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:90
 msgid "默认值：%s"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:15
 msgid "插件管理"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:16
 msgid ""
 "插件可以通过 action/filter/slot 扩展站点能力。启用或停用后会立即重载插件运行"
 "时和当前主题 hooks。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:17
 msgid "当前启用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:20
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:36
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:75
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:77
 msgid "状态"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:21
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:50
 msgid "能力"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:36
 msgid "ID"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:37
 msgid "来源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:38
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:42
 msgid "已启用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:44
 msgid "已停用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:42
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:46
 msgid "默认启用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:43
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:47
 msgid "包含静态资源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:51
 msgid "Actions"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:52
 msgid "Filters"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:53
 msgid "Slots"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:50
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:54
 msgid "Widgets"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:55
 msgid "Options"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:57
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:83
+msgid "下载"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:62
 msgid "确定要停用插件「%s」吗？"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:64
 msgid "停用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:64
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:69
 msgid "重载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:71
 msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:68
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:73
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:82
 msgid "卸载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:75
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:80
 msgid "确定要卸载插件「%s」吗？会执行卸载生命周期。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:83
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:88
 msgid "暂无已安装插件。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:96
+msgid "上传插件包"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:99
+msgid "上传插件包 (.zip)"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:100
+msgid "上传 .zip 格式的插件包来安装新插件。插件包需包含 plugin.yaml。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:101
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:109
+msgid "上传并安装"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:3
@@ -1125,130 +1147,130 @@ msgctxt "admin.post_type.singular"
 msgid "页面"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:13
 msgid "Slug(页面链接 /slug)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:14
 msgid "导航顺序(0 = 不在顶部导航显示,大于 0 为排序)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:15
 msgid "建议顺序值间隔大一些（如 10、20、30），方便之后在页面之间插入新页面。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:17
 msgid "Slug(文章别名，可选)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:18
 msgid ""
 "可留空自动根据标题生成；当文章固定链接结构包含 %postname% 时，这个 slug 会出"
 "现在文章链接中。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:21
 msgid "正文(Markdown)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:22
 msgid "Markdown 工具栏"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:26
 msgid "引用"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:27
 msgid "列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:29
 msgid "代码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:30
 msgid "代码块"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:34
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:5
 msgid "上传图片"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:33
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:35
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:41
 msgid "选择已上传图片"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:38
 msgid "支持文件上传、直接粘贴剪贴板图片，或从文件库选择后自动插入 Markdown。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:47
 msgid "检测到本地自动保存的草稿。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:48
 msgid "恢复草稿"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:49
 msgid "忽略"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:51
 msgid "编辑器视图"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:53
 msgid "分栏预览"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:58
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:60
 msgid "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:62
 msgid "摘要(可选)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:70
 msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:73
 msgid "如:Go, 教程, 随笔"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:73
 msgid "标签(逗号分隔)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:79
 msgid "发布"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:78
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:80
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:58
 msgid "草稿"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:79
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:81
 msgid "定时发布"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:84
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:36
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:68
 msgid "发布时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:87
 msgid "开放"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:86
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:88
 msgctxt "admin.comment_status.option"
 msgid "关闭"
 msgstr ""
@@ -1309,7 +1331,7 @@ msgid "定时"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:110
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:49
 msgid "上移"
 msgstr ""
 
@@ -1318,7 +1340,7 @@ msgid "回车保存"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:112
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:50
 msgid "下移"
 msgstr ""
 
@@ -1338,70 +1360,70 @@ msgid_plural "共 %d 篇文章"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:19
 msgid "头像由 Cravatar 提供，可前往 cravatar.com 修改。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:24
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:37
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:39
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:48
 msgid "用户名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:29
 msgid "用户名仅管理员可修改。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:20
 msgid "显示名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:32
 msgid "邮件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:33
 msgid "修改邮箱后需要先通过新邮箱中的验证链接确认，确认前仍保留当前邮箱。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:34
 msgid "个人网址"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:35
 msgid "登录后发表评论时会自动使用这个网址。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:36
 msgid "保存个人资料"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:41
 msgid "密码设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:44
 msgid "原密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:45
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:44
 msgid "新密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:42
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:46
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_reset_password.gohtml:45
 msgid "确认新密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:43
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_profile.gohtml:47
 msgid "修改密码"
 msgstr ""
 
@@ -1457,608 +1479,600 @@ msgstr ""
 msgid "暂无修订版本。保存文章后会自动创建。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:21
 msgid "模板设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:22
 msgid "当前模板模式：hot（本地模板 + 手动重新解析）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:22
 msgid "当前模板模式：static（embed 内置模板）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:22
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:26
 msgid ""
 "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生"
 "效。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:27
 msgid "重新解析模板"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:31
 msgid ""
 "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘"
 "上。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:32
 msgid "使用内嵌模板资源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:37
 msgid ""
 "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，"
 "并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖"
 "你的改动。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:38
 msgid "释放出模板文件夹"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:44
 msgid "资源文件设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:45
 msgid "当前资源模式：hot（本地资源目录，修改后立即生效）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:45
 msgid "当前资源模式：static（embed 内置资源）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:43
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:47
 msgid ""
 "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重"
 "新加载。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:50
 msgid ""
 "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:51
 msgid "使用内嵌资源文件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:56
 msgid ""
 "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，"
 "当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆"
 "盖你的改动。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:53
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:57
 msgid "释放资源文件夹"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:63
 msgid "翻译资源设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:64
 msgid "当前翻译模式：hot（本地翻译目录）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:64
 msgid "当前翻译模式：static（embed 内置翻译资源）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:66
 msgid "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:69
 msgid ""
 "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:70
 msgid "使用内嵌翻译资源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:75
 msgid ""
 "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/"
 "i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文"
 "件，不覆盖你的改动。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:72
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:76
 msgid "释放翻译资源目录"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:78
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:82
 msgid "主题资源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:80
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:84
 msgid "当前主题：%s (v%s)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:81
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:85
 msgid "主题目录：%s"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:86
 msgid ""
 "主题在启动时自动从内嵌资源释放到 `themes/` 目录。修改模板或 functions.go 后，"
 "可通过后台「主题管理 → 编辑文件」或下方按钮重载。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:89
 msgid "重载当前主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:92
 msgid "未检测到激活的主题。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:93
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:97
 msgid "插件资源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:95
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:99
 msgid "当前启用插件：%s"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:95
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:99
 msgid "当前没有启用插件。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:96
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:100
 msgid ""
 "插件可以同时启用多个；这里会重新加载所有已启用插件的 functions、hooks、组件和"
 "翻译绑定，并刷新当前主题 hooks。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:99
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:103
 msgid "重载插件资源"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:107
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:111
 msgid "Metrics 访问设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:110
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:114
 msgid ""
 "/metrics 端点使用 Basic Auth 保护。用户名固定为 metrics，密码可在这里查看和修"
 "改。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:111
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:115
 msgid "Metrics 用户名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:112
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:116
 msgid "Metrics 密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:113
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:117
 msgid "Prometheus 抓取时请使用 Basic Auth：用户名 metrics，密码为上方配置值。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:114
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:118
 msgid "保存 Metrics 密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:119
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:123
 msgid "SQL 调试"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:123
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:127
 msgid "在 HTML 响应中输出 SQL 执行详情（仅管理员登录时）"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:124
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:128
 msgid "开启"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:126
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:130
 msgid ""
 "开启后，管理员登录后台时，每页底部会显示本次请求执行的所有 SQL 语句及耗时。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:127
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:131
 msgid "保存 SQL 调试设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:137
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:141
 msgid "站点设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:140
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:144
 msgid "站点名称"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:141
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:145
 msgid "站点描述"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:142
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:146
 msgid "站点 Logo URL"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:143
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:147
 msgid ""
 "可选。设置后在主题 header 中显示 Logo 图片。可使用「文件管理」上传图片后复制"
 "链接。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:144
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:148
 msgid "文章固定链接结构"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:145
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:149
 msgid ""
 "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% "
 "%post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%"
 "%post_id%.html。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:147
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:151
 msgid "分类目录前缀"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:148
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:152
 msgid "标签前缀"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:150
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:154
 msgid ""
 "例如可把分类目录从 /category/go 改成 /topics/go，把标签从 /tag/gin 改成 /"
 "labels/gin。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:152
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:156
 msgid "列表分页数量"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:153
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:157
 msgid "Feed 输出数量"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:156
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:160
 msgid "默认头像"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:160
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:164
 msgid "神秘人士"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:160
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:164
 msgid "通用的人物轮廓"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:165
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:169
 msgid "空白"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:165
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:169
 msgid "透明图像"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:170
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:174
 msgid "Cravatar 标志"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:170
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:174
 msgid "默认服务标志"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:175
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:179
 msgid "抽象图形"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:175
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:180
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:185
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:190
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:195
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:179
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:184
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:189
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:194
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:199
 msgid "自动生成"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:185
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:189
 msgid "小怪物"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:190
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:194
 msgid "复古"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:198
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:202
 msgid "当评论者或用户没有自定义 Cravatar 头像时，使用这里选择的默认头像样式。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:200
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:204
 msgid "开放注册"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:201
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:205
 msgid "允许前台注册"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:204
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:208
 msgid "开启后前台显示注册入口，新用户需先验证邮箱，完成后默认为订阅者角色。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:206
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:210
 msgid "开放注册需要先配置 SMTP 邮件设置，否则无法发送邮箱验证邮件。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:208
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:212
 msgid "保存站点设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:213
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:217
 msgid "SMTP 邮件设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:216
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:220
 msgid "配置 SMTP 后可使用忘记密码等邮件功能。留空则禁用邮件发送。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:217
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:221
 msgid "SMTP 服务器"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:218
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:222
 msgid "SMTP 端口"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:219
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:223
 msgid "SMTP 用户名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:220
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:224
 msgid "SMTP 密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:220
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:224
 msgid "留空则不修改"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:221
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:225
 msgid "发件人地址"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:222
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:226
 msgid "站点 URL"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:223
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:227
 msgid "用于生成重置密码等邮件中的链接。留空则自动从请求推断。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:224
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:228
 msgid "测试收件人"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:225
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:229
 msgid "测试前会先保存上方 SMTP 设置。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:226
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:230
 msgid "保存 SMTP 设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:226
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:230
 msgid "发送测试邮件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:231
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:235
 msgid "会话设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:234
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:238
 msgid "新的 Session Secret"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:234
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:238
 msgid "请输入新的 Session Secret"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:235
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:239
 msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:235
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:239
 msgid ""
 "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
 "登录。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:236
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_settings.gohtml:240
 msgid "更新 Session Secret"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:22
 msgid "新建标签"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:22
 msgid "编辑标签"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:41
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:70
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:94
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:74
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:102
 msgid "名称"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:23
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:71
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:75
 msgid "留空时自动生成"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:29
 msgid "保存标签"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:29
 msgid "创建标签"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:38
 msgid "标签列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:53
 msgid "确认删除该标签吗？"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:56
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:60
 msgid "暂无标签"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:70
 msgid "新建分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:70
 msgid "编辑分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:72
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:94
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:104
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:76
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:108
 msgid "父分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:80
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:31
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:56
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:35
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:60
 msgid "描述"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:86
 msgid "保存分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:82
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:86
 msgid "创建分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:91
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:95
 msgid "分类列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:108
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:112
 msgid ""
 "确认删除该分类吗？该分类下的文章会迁移到父分类；没有父分类时会迁移到未分类。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:113
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:117
 msgid "默认分类不可删除"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:118
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:122
 msgid "暂无分类"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:126
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:130
 msgid "共 %d 个分类"
 msgid_plural "共 %d 个分类"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:126
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:130
 msgid "共 %d 个标签"
 msgid_plural "共 %d 个标签"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:12
 msgid "当前主题未声明任何可配置选项。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:12
 msgid "正在预览主题「%s」v%s，前台已生效。仅你可见，其他访客不受影响。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:11
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:15
 msgid "退出预览"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:23
 msgid "主题管理"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:25
 msgid "当前主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:29
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:38
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:42
 msgid "截图"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:49
 msgid "主题/作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:50
 msgid "当前"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:51
 msgid "主题名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:50
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:54
 msgid "版本"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:55
 msgid "主题作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:58
 msgid "授权协议"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:70
 msgid "激活"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:79
-msgid "下载"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:81
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:85
 msgid "确定要删除主题「%s」吗？此操作不可撤销。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:95
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:99
 msgid "暂无已安装的主题。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:100
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:104
 msgid "上传主题包"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:103
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:107
 msgid "上传主题包 (.zip)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:104
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:108
 msgid ""
 "上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目"
 "录。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_themes.gohtml:105
-msgid "上传并安装"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_uploads.gohtml:4
@@ -2088,90 +2102,90 @@ msgid_plural "共 %d 个文件"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:17
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_login.gohtml:38
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/auth_register.gohtml:42
 msgid "密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:19
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:22
 msgid "角色"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:22
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:24
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:27
 msgid "协作者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:23
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:28
 msgid "订阅者"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:30
 msgid "不能直接降低自己的管理员权限"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_user_form.gohtml:33
 msgid "创建用户"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:7
 msgid "共 %d 位用户"
 msgid_plural "共 %d 位用户"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:33
 msgid "注册时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:17
 msgid "未设置显示名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:35
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:37
 msgid "不能在用户管理中删除自己"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:39
 msgid "确认删除该用户?"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_users.gohtml:47
 msgid "暂无用户"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:23
 msgid "检测到该区域存在旧版组件配置，已清除，请重新配置。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:25
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:27
 msgid "— 选择组件 —"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:27
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:45
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:47
 msgid "内置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:30
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:32
 msgid "添加"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:46
 msgid "拖拽排序"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:97
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:99
 msgid "此区域暂无组件，请从右侧选择组件添加。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:105
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_widgets.gohtml:107
 msgid "当前主题未声明任何组件区域。"
 msgstr ""
 
@@ -2364,8 +2378,8 @@ msgstr ""
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
 msgstr ""
 
-#: internal/handler/admin_backup.go:22 internal/handler/admin_backup.go:169
-#: internal/handler/admin_backup.go:181
+#: internal/handler/admin_backup.go:22 internal/handler/admin_backup.go:171
+#: internal/handler/admin_backup.go:183
 msgid "数据库备份"
 msgstr ""
 
@@ -2390,63 +2404,63 @@ msgstr ""
 msgid "SMTP 未配置，请先在设置中配置邮件服务"
 msgstr ""
 
-#: internal/handler/admin_backup.go:85
+#: internal/handler/admin_backup.go:86
 #, c-format
 msgid "%s - 数据库备份 %s"
 msgstr ""
 
-#: internal/handler/admin_backup.go:86
+#: internal/handler/admin_backup.go:87
 #, c-format
 msgid "这是 %s 的数据库备份文件，备份时间：%s。"
 msgstr ""
 
-#: internal/handler/admin_backup.go:89
+#: internal/handler/admin_backup.go:91
 msgid "邮件发送失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:93
+#: internal/handler/admin_backup.go:95
 #, c-format
 msgid "备份已发送到 %s"
 msgstr ""
 
-#: internal/handler/admin_backup.go:102
+#: internal/handler/admin_backup.go:104
 msgid "自动备份时间不合法"
 msgstr ""
 
-#: internal/handler/admin_backup.go:117
+#: internal/handler/admin_backup.go:119
 msgid "自动备份设置已保存"
 msgstr ""
 
-#: internal/handler/admin_backup.go:125
+#: internal/handler/admin_backup.go:127
 msgid "请选择要恢复的备份文件"
 msgstr ""
 
-#: internal/handler/admin_backup.go:132
+#: internal/handler/admin_backup.go:134
 msgid "无效的备份文件名"
 msgstr ""
 
-#: internal/handler/admin_backup.go:138
+#: internal/handler/admin_backup.go:140
 msgid "备份文件不存在"
 msgstr ""
 
-#: internal/handler/admin_backup.go:143
+#: internal/handler/admin_backup.go:145
 msgid "恢复失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:147
+#: internal/handler/admin_backup.go:149
 #, c-format
 msgid "数据库已从 %s 恢复成功"
 msgstr ""
 
-#: internal/handler/admin_backup.go:155
+#: internal/handler/admin_backup.go:157
 msgid "请指定要删除的备份文件"
 msgstr ""
 
-#: internal/handler/admin_backup.go:160
+#: internal/handler/admin_backup.go:162
 msgid "删除失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:164
+#: internal/handler/admin_backup.go:166
 #, c-format
 msgid "备份文件 %s 已删除"
 msgstr ""
@@ -2551,94 +2565,159 @@ msgstr ""
 msgid "菜单已保存"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:42
+#: internal/handler/admin_plugins.go:56
 msgid "插件"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:61 internal/handler/admin_plugins.go:259
+#: internal/handler/admin_plugins.go:75 internal/handler/admin_plugins.go:273
+#: internal/handler/admin_plugins.go:424 internal/handler/admin_plugins.go:446
 msgid "插件管理器未初始化"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:67 internal/handler/admin_plugins.go:264
+#: internal/handler/admin_plugins.go:81 internal/handler/admin_plugins.go:278
 msgid "未指定插件"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:71 internal/handler/admin_plugins.go:269
+#: internal/handler/admin_plugins.go:85 internal/handler/admin_plugins.go:283
 #, c-format
 msgid "插件不存在: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:80 internal/handler/admin_plugins.go:88
+#: internal/handler/admin_plugins.go:94 internal/handler/admin_plugins.go:102
 #, c-format
 msgid "启用插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:97
+#: internal/handler/admin_plugins.go:111
 #, c-format
 msgid "启用插件失败，已回滚: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:100
+#: internal/handler/admin_plugins.go:114
 #, c-format
 msgid "插件「%s」已启用"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:105 internal/handler/admin_plugins.go:110
+#: internal/handler/admin_plugins.go:119 internal/handler/admin_plugins.go:124
 #, c-format
 msgid "停用插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:119
+#: internal/handler/admin_plugins.go:133
 #, c-format
 msgid "停用插件失败，已回滚: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:122
+#: internal/handler/admin_plugins.go:136
 #, c-format
 msgid "插件「%s」已停用"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:126 internal/handler/admin_plugins.go:129
+#: internal/handler/admin_plugins.go:140 internal/handler/admin_plugins.go:143
 #, c-format
 msgid "重载插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:136
+#: internal/handler/admin_plugins.go:150
 #, c-format
 msgid "插件「%s」已重载"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:139
+#: internal/handler/admin_plugins.go:153
 #, c-format
 msgid "卸载插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:143
+#: internal/handler/admin_plugins.go:157
 #, c-format
 msgid "卸载插件后重载失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:146
+#: internal/handler/admin_plugins.go:160
 #, c-format
 msgid "插件「%s」已卸载"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:148
+#: internal/handler/admin_plugins.go:162
 #, c-format
 msgid "未知插件操作: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:159
+#: internal/handler/admin_plugins.go:173
 msgid "插件设置"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:213
+#: internal/handler/admin_plugins.go:227
 #, c-format
 msgid "插件设置已保存，但重载失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:217
+#: internal/handler/admin_plugins.go:231
 msgid "插件设置已保存"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:385 internal/handler/admin_theme.go:99
+#: internal/handler/admin_upload.go:36
+msgid "未选择文件"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:389
+msgid "插件包不能超过 5MB"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:393
+msgid "仅支持 .zip 格式的插件包"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:399 internal/handler/admin_theme.go:113
+#: internal/handler/admin_upload.go:45
+msgid "打开上传文件失败"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:406 internal/handler/admin_theme.go:121
+msgid "创建临时目录失败"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:412
+#, c-format
+msgid "解压插件包失败: %s"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:418
+msgid "插件包中未找到 plugin.yaml"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:429
+#, c-format
+msgid "安装插件失败: %s"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:433
+#, c-format
+msgid "插件「%s」安装成功"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:441
+msgid "未指定插件 ID"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:451
+#, c-format
+msgid "插件「%s」不存在"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:456
+msgid "创建插件下载文件失败"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:463
+#, c-format
+msgid "打包插件失败: %s"
+msgstr ""
+
+#: internal/handler/admin_plugins.go:467
+#, c-format
+msgid "写入插件下载文件失败: %s"
 msgstr ""
 
 #: internal/handler/admin_post.go:39
@@ -2725,7 +2804,7 @@ msgstr ""
 msgid "文章 slug %q 为保留路由，请换一个"
 msgstr ""
 
-#: internal/handler/admin_profile.go:31 internal/handler/admin_profile.go:268
+#: internal/handler/admin_profile.go:31 internal/handler/admin_profile.go:270
 msgid "个人资料"
 msgstr ""
 
@@ -2791,38 +2870,38 @@ msgid ""
 "如果你没有请求修改邮箱，请忽略此邮件。\n"
 msgstr ""
 
-#: internal/handler/admin_profile.go:172
+#: internal/handler/admin_profile.go:173
 msgid "邮箱验证邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:202 internal/handler/admin_profile.go:209
+#: internal/handler/admin_profile.go:203 internal/handler/admin_profile.go:210
 msgid "邮箱验证链接无效或已过期，请重新提交邮箱变更。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:215
+#: internal/handler/admin_profile.go:216
 msgid "邮箱已验证并更新，请重新登录。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:232
+#: internal/handler/admin_profile.go:233
 msgid "原密码不正确。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:238 internal/handler/auth_handler.go:269
-#: internal/handler/auth_handler.go:408
+#: internal/handler/admin_profile.go:239 internal/handler/auth_handler.go:270
+#: internal/handler/auth_handler.go:410
 msgid "两次输入的密码不一致。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:244 internal/handler/admin_user.go:116
-#: internal/handler/auth_handler.go:264 internal/handler/auth_handler.go:400
+#: internal/handler/admin_profile.go:245 internal/handler/admin_user.go:116
+#: internal/handler/auth_handler.go:265 internal/handler/auth_handler.go:402
 msgid "密码长度不能少于 8 个字符。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:258 internal/handler/auth_handler.go:436
+#: internal/handler/admin_profile.go:259 internal/handler/auth_handler.go:438
 #, c-format
 msgid "[%s] 密码已变更"
 msgstr ""
 
-#: internal/handler/admin_profile.go:259
+#: internal/handler/admin_profile.go:260
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -2830,19 +2909,19 @@ msgid ""
 "你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n"
 msgstr ""
 
-#: internal/handler/admin_profile.go:286
+#: internal/handler/admin_profile.go:288
 msgid "导出数据"
 msgstr ""
 
-#: internal/handler/admin_profile.go:318 internal/handler/admin_profile.go:350
+#: internal/handler/admin_profile.go:320 internal/handler/admin_profile.go:352
 msgid "删除账号"
 msgstr ""
 
-#: internal/handler/admin_profile.go:333
+#: internal/handler/admin_profile.go:335
 msgid "请输入 DELETE 确认删除。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:338 internal/handler/admin_user.go:77
+#: internal/handler/admin_profile.go:340 internal/handler/admin_user.go:77
 msgid "不能删除唯一的管理员账号。请先创建或指定另一个管理员。"
 msgstr ""
 
@@ -2959,12 +3038,12 @@ msgstr ""
 msgid "SMTP 未配置完整，请填写服务器、端口和发件人地址。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:404
+#: internal/handler/admin_settings.go:405
 #, c-format
 msgid "[%s] SMTP 测试邮件"
 msgstr ""
 
-#: internal/handler/admin_settings.go:405
+#: internal/handler/admin_settings.go:406
 #, c-format
 msgid ""
 "这是一封来自 %s 的 SMTP 测试邮件。\n"
@@ -2972,122 +3051,122 @@ msgid ""
 "如果你收到这封邮件，说明 SMTP 配置已生效。\n"
 msgstr ""
 
-#: internal/handler/admin_settings.go:408
+#: internal/handler/admin_settings.go:410
 #, c-format
 msgid "测试邮件发送失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:422
+#: internal/handler/admin_settings.go:424
 msgid "Session Secret 不能为空。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:441
+#: internal/handler/admin_settings.go:443
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:447
+#: internal/handler/admin_settings.go:449
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:459
+#: internal/handler/admin_settings.go:461
 msgid "当前模板渲染器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:465
+#: internal/handler/admin_settings.go:467
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:472
+#: internal/handler/admin_settings.go:474
 #, c-format
 msgid "切换到本地模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:481
+#: internal/handler/admin_settings.go:483
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:493
+#: internal/handler/admin_settings.go:495
 msgid "当前不是 hot 模式，不能切回内嵌模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:499
+#: internal/handler/admin_settings.go:501
 #, c-format
 msgid "切换回内嵌模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:511
+#: internal/handler/admin_settings.go:513
 msgid "当前资源管理器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:517
+#: internal/handler/admin_settings.go:519
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:529
+#: internal/handler/admin_settings.go:531
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:535
+#: internal/handler/admin_settings.go:537
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:548
+#: internal/handler/admin_settings.go:550
 msgid "当前不是 hot 模式，不能切回内嵌资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:561
+#: internal/handler/admin_settings.go:563
 msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:569
+#: internal/handler/admin_settings.go:571
 #, c-format
 msgid "读取内嵌翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:575
+#: internal/handler/admin_settings.go:577
 #, c-format
 msgid "释放翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:583
-#: internal/handler/admin_settings.go:610
+#: internal/handler/admin_settings.go:585
+#: internal/handler/admin_settings.go:612
 #, c-format
 msgid "重新加载翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:590
-#: internal/handler/admin_settings.go:617
+#: internal/handler/admin_settings.go:592
+#: internal/handler/admin_settings.go:619
 #, c-format
 msgid "重新加载主题翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:603
+#: internal/handler/admin_settings.go:605
 msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:650
+#: internal/handler/admin_settings.go:652
 msgid "主题管理器未初始化。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:656
+#: internal/handler/admin_settings.go:658
 #, c-format
 msgid "重载主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:668
+#: internal/handler/admin_settings.go:670
 msgid "插件管理器未初始化。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:674
+#: internal/handler/admin_settings.go:676
 #, c-format
 msgid "重载插件资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:680
+#: internal/handler/admin_settings.go:682
 #, c-format
 msgid "重载插件翻译资源失败: %s"
 msgstr ""
@@ -3156,24 +3235,12 @@ msgstr ""
 msgid "外观"
 msgstr ""
 
-#: internal/handler/admin_theme.go:99 internal/handler/admin_upload.go:36
-msgid "未选择文件"
-msgstr ""
-
 #: internal/handler/admin_theme.go:103
 msgid "主题包不能超过 5MB"
 msgstr ""
 
 #: internal/handler/admin_theme.go:107
 msgid "仅支持 .zip 格式的主题包"
-msgstr ""
-
-#: internal/handler/admin_theme.go:113 internal/handler/admin_upload.go:45
-msgid "打开上传文件失败"
-msgstr ""
-
-#: internal/handler/admin_theme.go:121
-msgid "创建临时目录失败"
 msgstr ""
 
 #: internal/handler/admin_theme.go:127
@@ -3388,6 +3455,14 @@ msgstr ""
 msgid "组件配置已保存"
 msgstr ""
 
+#: internal/handler/auth.go:95
+#, c-format
+msgid ""
+"\n"
+"\n"
+"站点域名：%s\n"
+msgstr ""
+
 #: internal/handler/auth_handler.go:59 internal/handler/auth_handler.go:80
 msgid "登录"
 msgstr ""
@@ -3429,54 +3504,54 @@ msgid ""
 "如果您没有请求注册，请忽略此邮件。\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:191
+#: internal/handler/auth_handler.go:192
 msgid "验证邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:198
+#: internal/handler/auth_handler.go:199
 msgid "验证邮件已发送，请检查邮箱并在 24 小时内完成注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:210 internal/handler/auth_handler.go:255
+#: internal/handler/auth_handler.go:211 internal/handler/auth_handler.go:256
 msgid "完成注册"
 msgstr ""
 
-#: internal/handler/auth_handler.go:214 internal/handler/auth_handler.go:220
-#: internal/handler/auth_handler.go:280
+#: internal/handler/auth_handler.go:215 internal/handler/auth_handler.go:221
+#: internal/handler/auth_handler.go:281
 msgid "注册链接无效或已过期，请重新注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:228
+#: internal/handler/auth_handler.go:229
 msgid "用户名已被占用，请重新注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:236
+#: internal/handler/auth_handler.go:237
 msgid "邮箱已被注册，请重新注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:259
+#: internal/handler/auth_handler.go:260
 msgid "注册链接无效或密码不能为空。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:291 internal/handler/auth_handler.go:301
-#: internal/handler/auth_handler.go:310 internal/handler/auth_handler.go:335
-#: internal/handler/auth_handler.go:350 internal/handler/auth_handler.go:356
+#: internal/handler/auth_handler.go:292 internal/handler/auth_handler.go:302
+#: internal/handler/auth_handler.go:311 internal/handler/auth_handler.go:336
+#: internal/handler/auth_handler.go:352 internal/handler/auth_handler.go:358
 msgid "忘记密码"
 msgstr ""
 
-#: internal/handler/auth_handler.go:302
+#: internal/handler/auth_handler.go:303
 msgid "请输入邮箱地址。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:311 internal/handler/auth_handler.go:357
+#: internal/handler/auth_handler.go:312 internal/handler/auth_handler.go:359
 msgid "如果该邮箱已注册，重置密码链接已发送。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:336
+#: internal/handler/auth_handler.go:337
 msgid "站点 URL 未配置，无法发送安全重置链接，请联系管理员。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:342
+#: internal/handler/auth_handler.go:343
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3488,26 +3563,26 @@ msgid ""
 "如果您没有请求重置密码，请忽略此邮件。\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:343
+#: internal/handler/auth_handler.go:345
 #, c-format
 msgid "[%s] 密码重置"
 msgstr ""
 
-#: internal/handler/auth_handler.go:351
+#: internal/handler/auth_handler.go:353
 msgid "邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:373 internal/handler/auth_handler.go:379
-#: internal/handler/auth_handler.go:398 internal/handler/auth_handler.go:406
-#: internal/handler/auth_handler.go:415 internal/handler/auth_handler.go:440
+#: internal/handler/auth_handler.go:375 internal/handler/auth_handler.go:381
+#: internal/handler/auth_handler.go:400 internal/handler/auth_handler.go:408
+#: internal/handler/auth_handler.go:417 internal/handler/auth_handler.go:443
 msgid "重置密码"
 msgstr ""
 
-#: internal/handler/auth_handler.go:374 internal/handler/auth_handler.go:416
+#: internal/handler/auth_handler.go:376 internal/handler/auth_handler.go:418
 msgid "重置链接无效或已过期，请重新请求。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:437
+#: internal/handler/auth_handler.go:439
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3516,7 +3591,7 @@ msgid ""
 "员。\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:441
+#: internal/handler/auth_handler.go:444
 msgid "密码已重置，请使用新密码登录。"
 msgstr ""
 
@@ -3621,105 +3696,101 @@ msgstr ""
 msgid "你访问的页面不存在或已被删除。"
 msgstr ""
 
-#: internal/render/funcs.go:62
-msgid "草稿预览"
-msgstr ""
-
-#: internal/render/funcs.go:681
+#: internal/render/funcs.go:693
 msgid "评论已关闭"
 msgstr ""
 
-#: internal/render/funcs.go:769
+#: internal/render/funcs.go:783
 msgid "文章作者"
 msgstr ""
 
-#: internal/render/funcs.go:771
+#: internal/render/funcs.go:785
 msgid "管理员"
 msgstr ""
 
-#: internal/render/funcs.go:773
+#: internal/render/funcs.go:787
 msgid "登录用户"
 msgstr ""
 
-#: internal/render/funcs.go:783
+#: internal/render/funcs.go:797
 msgid "回复时邮件通知"
 msgstr ""
 
-#: internal/render/funcs.go:795
+#: internal/render/funcs.go:809
 msgid "评论审核中,当前仅自己可见"
 msgstr ""
 
-#: internal/render/funcs.go:806
+#: internal/render/funcs.go:822
 #, c-format
 msgid "回复 @%s"
 msgstr ""
 
-#: internal/render/funcs.go:818
+#: internal/render/funcs.go:836
 msgid "回复"
 msgstr ""
 
-#: internal/render/funcs.go:885
+#: internal/render/funcs.go:918
 msgid "上一页"
 msgstr ""
 
-#: internal/render/funcs.go:901
+#: internal/render/funcs.go:934
 msgid "下一页"
 msgstr ""
 
-#: internal/render/funcs.go:927
+#: internal/render/funcs.go:960
 #, c-format
 msgid "以 <strong>%s</strong> 的身份发表评论，"
 msgstr ""
 
-#: internal/render/funcs.go:937
+#: internal/render/funcs.go:970
 msgid "登出"
 msgstr ""
 
-#: internal/render/funcs.go:969
+#: internal/render/funcs.go:1002
 msgid "昵称"
 msgstr ""
 
-#: internal/render/funcs.go:973
+#: internal/render/funcs.go:1006
 msgid "昵称 *"
 msgstr ""
 
-#: internal/render/funcs.go:977
+#: internal/render/funcs.go:1010
 msgid "邮箱"
 msgstr ""
 
-#: internal/render/funcs.go:981
+#: internal/render/funcs.go:1014
 msgid "邮箱 *(不公开)"
 msgstr ""
 
-#: internal/render/funcs.go:985
+#: internal/render/funcs.go:1018
 msgid "网站"
 msgstr ""
 
-#: internal/render/funcs.go:989
+#: internal/render/funcs.go:1022
 msgid "网站(可选)"
 msgstr ""
 
-#: internal/render/funcs.go:995
+#: internal/render/funcs.go:1028
 msgid "评论内容"
 msgstr ""
 
-#: internal/render/funcs.go:997
+#: internal/render/funcs.go:1030
 msgid "说点什么吧…… *"
 msgstr ""
 
-#: internal/render/funcs.go:1010
+#: internal/render/funcs.go:1043
 msgid "有回复时邮件通知我"
 msgstr ""
 
-#: internal/render/funcs.go:1015
+#: internal/render/funcs.go:1048
 msgid "提交评论"
 msgstr ""
 
-#: internal/render/funcs.go:1017
+#: internal/render/funcs.go:1050
 msgid "取消回复"
 msgstr ""
 
-#: internal/render/funcs.go:1020
+#: internal/render/funcs.go:1053
 msgid "评论提交后需经审核才会显示。"
 msgstr ""
 

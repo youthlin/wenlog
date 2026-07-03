@@ -270,6 +270,7 @@ func commentReplyMail(tr *gettext.Translations, siteName, postTitle, targetAutho
 	subject := tr.T("[%s] 你的评论有新回复", siteName)
 	body := tr.T("您好 %s，\n\n%s 回复了你在《%s》下的评论：\n\n%s\n\n查看回复：\n%s\n\n如果你不想再收到通知，可联系站点管理员关闭该评论的回复通知。\n",
 		targetAuthor, replyAuthor, postTitle, replyContent, commentURL)
+	body = mailBodyWithSiteDomain(tr, body, commentURL)
 	return subject, body
 }
 

@@ -184,6 +184,7 @@ func (h *Auth) Register(c *gin.Context) {
 	siteName, _ := data["SiteName"].(string)
 	subject := tr.T("[%s] 注册邮箱验证", siteName)
 	body := tr.T("您好 %s，\n\n请点击以下链接验证邮箱并设置登录密码（24 小时内有效）：\n\n%s\n\n如果您没有请求注册，请忽略此邮件。\n", username, verifyURL)
+	body = mailBodyWithSiteDomain(tr, body, siteURL)
 	if err := smtpCfg.Send(emailAddr, subject, body); err != nil {
 		if h.log != nil {
 			h.log.Error("send registration verification email", "error", err, "to", emailAddr)
@@ -340,6 +341,7 @@ func (h *Auth) ForgotPassword(c *gin.Context) {
 	resetURL := strings.TrimRight(siteURL, "/") + "/auth/reset-password?token=" + token
 	siteName := siteNameFromStore(c, h.st)
 	body := tr.T("您好 %s，\n\n请点击以下链接重置密码（1 小时内有效）：\n\n%s\n\n如果您没有请求重置密码，请忽略此邮件。\n", u.DisplayName, resetURL)
+	body = mailBodyWithSiteDomain(tr, body, siteURL)
 	subject := tr.T("[%s] 密码重置", siteName)
 
 	if err := smtpCfg.Send(emailAddr, subject, body); err != nil {
@@ -435,6 +437,7 @@ func (h *Auth) ResetPassword(c *gin.Context) {
 	siteName := siteNameFromStore(c, h.st)
 	subject := tr.T("[%s] 密码已变更", siteName)
 	body := tr.T("您好 %s，\n\n你的账户密码刚刚通过重置链接被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
+	body = mailBodyWithSiteDomain(tr, body, siteURLFromRequest(h.st, c))
 	sendPasswordChangeNotification(h.st, h.log, u, subject, body)
 
 	data := h.base(c, tr.T("重置密码"))

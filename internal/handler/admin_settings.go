@@ -401,8 +401,10 @@ func (h *Admin) TestSMTPSettings(c *gin.Context) {
 		return
 	}
 	siteName := siteNameFromStore(c, h.st)
+	siteURL := siteURLFromRequest(h.st, c)
 	subject := tr.T("[%s] SMTP 测试邮件", siteName)
 	body := tr.T("这是一封来自 %s 的 SMTP 测试邮件。\n\n如果你收到这封邮件，说明 SMTP 配置已生效。\n", siteName)
+	body = mailBodyWithSiteDomain(tr, body, siteURL)
 	if err := smtpCfg.Send(to, subject, body); err != nil {
 		data := h.settingsDataForTab(c, "general")
 		data["Error"] = tr.T("测试邮件发送失败: %s", err.Error())

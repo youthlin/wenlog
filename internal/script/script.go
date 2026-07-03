@@ -1,6 +1,7 @@
 package script
 
 import (
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -78,9 +79,11 @@ func CompileAndRegister(source string, options CompileOptions) (*interp.Interpre
 			return nil, errors.Wrapf(err, "注入%sAPI失败", subject)
 		}
 	}
-	if _, err := i.Eval(source); err != nil {
+	prog, err := safeEval(i, source)
+	if err != nil {
 		return nil, errors.Wrapf(err, "执行%s函数失败", subject)
 	}
+	_ = prog
 
 	registerName := options.PackageName + ".Register"
 	registerFn, err := i.Eval(registerName)
@@ -97,6 +100,18 @@ func CompileAndRegister(source string, options CompileOptions) (*interp.Interpre
 		return nil, err
 	}
 	return i, nil
+}
+
+// safeEval 调用 i.Eval，捕获 yaegi 内部可能的 panic（如 Go 版本不兼容）。
+func safeEval(i *interp.Interpreter, source string) (prog any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.Errorf("yaegi 编译脚本时 panic: %v", r)
+			slog.Error("执行脚本panic", slog.Any("error", err))
+		}
+	}()
+	v, evalErr := i.Eval(source)
+	return v, evalErr
 }
 
 // 以下 helper 都在 yaegi 解释器边界工作：Eval 返回的是 reflect.Value，

@@ -7,6 +7,7 @@
 /output
 tmp*
 __debug*
+__pycache__
 
 # 运行时数据
 /data/
@@ -16,7 +17,8 @@ __debug*
 
 # WordPress 导出原始数据
 WordPress.*.xml
-
+backup*
+wordpress/
 /docs/browser*
 
 # 系统/编辑器

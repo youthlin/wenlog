@@ -385,7 +385,7 @@ func bodyClass(data any) string {
 		classes = append(classes, "singular")
 	}
 	if dataValue(data, "List") != nil {
-		classes = append(classes, "archive-list")
+		classes = append(classes, "page-list")
 	}
 	if uid, _ := dataValue(data, "CurrentUserID").(uint); uid != 0 {
 		classes = append(classes, "logged-in")

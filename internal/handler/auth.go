@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	gettext "github.com/youthlin/t"
 
 	"github.com/youthlin/blog/internal/consts"
 	"github.com/youthlin/blog/internal/email"
@@ -80,4 +81,24 @@ func siteURLFromRequest(st *store.Store, c *gin.Context) string {
 		scheme = "https"
 	}
 	return scheme + "://" + c.Request.Host
+}
+
+func mailBodyWithSiteDomain(tr *gettext.Translations, body, siteURL string) string {
+	domain := siteDomain(siteURL)
+	if domain == "" {
+		return body
+	}
+	body = strings.TrimRight(body, "\r\n")
+	if tr == nil {
+		return body + "\n\n站点域名：" + domain + "\n"
+	}
+	return body + tr.T("\n\n站点域名：%s\n", domain)
+}
+
+func siteDomain(siteURL string) string {
+	parsed, err := url.Parse(strings.TrimSpace(siteURL))
+	if err == nil && parsed.Host != "" {
+		return parsed.Host
+	}
+	return ""
 }

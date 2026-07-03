@@ -164,6 +164,7 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 	verifyURL := strings.TrimRight(siteURL, "/") + "/admin/profile/email/verify?token=" + url.QueryEscape(token)
 	subject := tr.T("[%s] 邮箱变更验证", siteNameFromStore(c, h.st))
 	body := tr.T("您好 %s，\n\n请点击以下链接验证并更新你的邮箱（24 小时内有效）：\n\n%s\n\n如果你没有请求修改邮箱，请忽略此邮件。\n", displayName, verifyURL)
+	body = mailBodyWithSiteDomain(tr, body, siteURL)
 	if err := smtpCfg.Send(email, subject, body); err != nil {
 		if h.log != nil {
 			h.log.Error("send profile email verification", "error", err, "to", email, "user_id", u.ID)
@@ -257,6 +258,7 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 	siteName := siteNameFromStore(c, h.st)
 	subject := tr.T("[%s] 密码已变更", siteName)
 	body := tr.T("您好 %s，\n\n你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
+	body = mailBodyWithSiteDomain(tr, body, siteURLFromRequest(h.st, c))
 	sendPasswordChangeNotification(h.st, h.log, u, subject, body)
 	middleware.ClearSession(c)
 	c.Redirect(http.StatusSeeOther, "/auth/login")

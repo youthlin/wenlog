@@ -82,8 +82,10 @@ func (h *Admin) BackupEmail(c *gin.Context) {
 	}
 
 	siteName := siteNameFromStore(c, h.st)
+	siteURL := siteURLFromRequest(h.st, c)
 	subject := tr.T("%s - 数据库备份 %s", siteName, time.Now().Format("2006-01-02 15:04"))
 	body := tr.T("这是 %s 的数据库备份文件，备份时间：%s。", siteName, time.Now().Format("2006-01-02 15:04:05"))
+	body = mailBodyWithSiteDomain(tr, body, siteURL)
 
 	if err := smtpCfg.SendWithAttachment(emailTo, subject, body, filepath.Base(path), data); err != nil {
 		h.backupError(c, tr.T("邮件发送失败: %v", err))

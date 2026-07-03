@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog spread theme\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-01 14:20:46+0800\n"
+"POT-Creation-Date: 2026-07-03 23:25:16+0800\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,7 +14,7 @@ msgid "读者回声"
 msgstr "Reader Echoes"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:5
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:19
 msgid "%d 条评论"
 msgid_plural "%d 条评论"
@@ -22,7 +22,7 @@ msgstr[0] "%d comment"
 msgstr[1] "%d comments"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/comments.gohtml:5
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:20
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:18
 msgid "暂无评论"
 msgstr "No comments yet"
@@ -64,7 +64,7 @@ msgid "网络错误,请稍后重试。"
 msgstr "Network error. Please try again later."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:37
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:43
 msgid "打开菜单"
 msgstr "Open menu"
 
@@ -72,33 +72,33 @@ msgstr "Open menu"
 msgid "收起菜单"
 msgstr "Close menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:26
 msgid "跳到主要内容"
 msgstr "Skip to main content"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:26
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:32
 msgid "首页"
 msgstr "Home"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:30
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:31
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:37
 msgid "语言"
 msgstr "Language"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:32
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:38
 msgid "中文"
 msgstr "中文"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/header.gohtml:39
 msgid "English"
 msgstr "English"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:19
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:17
 msgid "评论已关闭"
 msgstr "Comments are closed"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:22
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:20
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/page.gohtml:10
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/post.gohtml:11
@@ -107,18 +107,18 @@ msgid_plural "%d 次阅读"
 msgstr[0] "%d view"
 msgstr[1] "%d views"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:23
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:21
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/page.gohtml:11
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/post.gohtml:12
 msgid "编辑"
 msgstr "Edit"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:30
 msgid "阅读全文"
 msgstr "Read the full story"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/index.gohtml:36
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/spread/templates/list.gohtml:33
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."

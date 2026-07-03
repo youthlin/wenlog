@@ -247,7 +247,7 @@ func TestCommentReplyMailHelpers(t *testing.T) {
 		t.Fatalf("page comment anchor=%q", pageURL)
 	}
 	subject, body := commentReplyMail(gettext.NewTranslations(), "站点", "文章", "Alice", "Bob", "回复内容", "https://example.com/post#comment-1")
-	if !strings.Contains(subject, "站点") || !strings.Contains(body, "Alice") || !strings.Contains(body, "Bob") || !strings.Contains(body, "https://example.com/post#comment-1") {
+	if !strings.Contains(subject, "站点") || !strings.Contains(body, "Alice") || !strings.Contains(body, "Bob") || !strings.Contains(body, "https://example.com/post#comment-1") || !strings.Contains(body, "站点域名：example.com") {
 		t.Fatalf("commentReplyMail subject=%q body=%q", subject, body)
 	}
 }
