@@ -25,6 +25,12 @@ require_cmd() {
   fi
 }
 
+require_private_release_cmds() {
+  if [ -n "$GITHUB_TOKEN" ]; then
+    require_cmd python3
+  fi
+}
+
 detect_arch() {
   case "$(uname -m)" in
     x86_64 | amd64) printf 'amd64' ;;
@@ -68,11 +74,35 @@ resolve_version() {
 download_github_asset() {
   local url="$1"
   local output="$2"
+  local asset_name
   local -a args=(-fL --retry 3 --retry-delay 2 -o "$output")
   if [ -n "$GITHUB_TOKEN" ]; then
+    asset_name="$(basename -- "$url")"
+    url="$(github_asset_api_url "$asset_name")"
     args+=(-H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/octet-stream")
   fi
   curl "${args[@]}" "$url"
+}
+
+github_asset_api_url() {
+  local asset_name="$1"
+  curl -fsSL \
+    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${REPO}/releases/tags/${version}" \
+    | python3 -c '
+import json, sys
+
+asset_name = sys.argv[1]
+release = json.load(sys.stdin)
+for asset in release.get("assets", []):
+    if asset.get("name") == asset_name:
+        print(asset["url"])
+        break
+else:
+    print(f"未找到 Release 资源: {asset_name}", file=sys.stderr)
+    sys.exit(1)
+' "$asset_name"
 }
 
 restart_service() {
@@ -111,6 +141,7 @@ main() {
   require_cmd sha256sum
   require_cmd uname
   require_cmd mktemp
+  require_private_release_cmds
 
   local os arch version asset checksum_url download_url bin_path bin_dir tmp backup
   os="linux"
@@ -127,7 +158,7 @@ main() {
   bin_path="$(detect_bin_path)"
   bin_dir="$(dirname -- "$bin_path")"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/blog-update.XXXXXX")"
-  trap 'rm -rf "$tmp"' EXIT
+  trap 'rm -rf "${tmp:-}"' EXIT
 
   printf '准备更新 %s 到 %s (%s/%s)\n' "$bin_path" "$version" "$os" "$arch"
   mkdir -p "$bin_dir"
