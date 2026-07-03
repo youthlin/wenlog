@@ -5,7 +5,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log/slog"
 	"os"
 	"runtime"
 
@@ -33,7 +32,7 @@ func runDaemon(cfg *config.Config) bool {
 	return false
 }
 
-func writePidFile(cfg *config.Config, log *slog.Logger) func() {
+func writePidFile(cfg *config.Config) func() {
 	return func() {}
 }
 
