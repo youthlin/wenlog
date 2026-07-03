@@ -33,10 +33,11 @@ func (w *themeHTMLRender) Render(wr http.ResponseWriter) error {
 	ctx := &RequestContext{
 		Context:     dataContext(w.data),
 		Data:        w.data,
+		Runtime:     w.runtime,
 		ThemeLoader: dataValue(w.data, ThemeLoaderDataKey),
 		Theme:       dataValue(w.data, ThemeDataKey),
 	}
-	tpl, err := cloneTemplateForRequest(w.tmpl, ctx, w.runtime)
+	tpl, err := cloneTemplateForRequest(w.tmpl, ctx)
 	if err != nil {
 		return err
 	}
@@ -49,11 +50,32 @@ func (w *themeHTMLRender) Render(wr http.ResponseWriter) error {
 // RequestContext 是一次模板渲染独占的运行时上下文。
 // 类型保持为 any，避免 render 包依赖 store/theme 包。
 type RequestContext struct {
-	Context       context.Context
-	Template      *template.Template
-	Data          any
-	ThemeLoader   any
-	Theme         any
+	// Context 是当前 HTTP 请求的 context.Context，从模板 Data 的 __request_context key 提取。
+	// 用于传递 trace ID、超时控制、请求取消信号等；若 Data 中不存在则 fallback 到 context.Background()。
+	Context context.Context
+
+	// Template 是已 clone 并绑定了请求级模板函数闭包的模板实例。
+	// 模板函数（如 listComments）通过它执行自定义评论模板等子模板。
+	Template *template.Template
+
+	// Data 是模板渲染的根数据对象（通常是 gin.H），包含所有模板可访问的字段，
+	// 如 SiteName、Post、Comments、CurrentUser、Menus 等。
+	Data any
+
+	// Runtime 是模板运行时能力提供者，持有 hooks 执行器、组件提供者、
+	// 主题选项读取器、hook 调用器等回调。之前作为独立参数传递，现已合并进 RequestContext。
+	Runtime *TemplateRuntime
+
+	// ThemeLoader 是当前请求的 DataLoader 实例（any 避免循环依赖 store 包）。
+	// 模板函数中用于按需加载额外数据（如文章详情、分类列表等）。
+	ThemeLoader any
+
+	// Theme 是当前激活的主题对象（any 避免循环依赖 theme 包）。
+	// 模板函数中用于读取主题相关配置（如主题选项、组件区域等）。
+	Theme any
+
+	// WidgetOptions 是当前正在渲染的组件的选项键值对。
+	// renderWidgets 遍历组件时设置，widgetOption 模板函数读取；渲染完成后清空为 nil。
 	WidgetOptions map[string]string
 }
 
@@ -204,7 +226,7 @@ func dataValue(data any, key string) any {
 	return nil
 }
 
-func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtime *TemplateRuntime) (*template.Template, error) {
+func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext) (*template.Template, error) {
 	if tpl == nil {
 		return nil, nil
 	}
@@ -214,24 +236,24 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext, runtim
 	}
 	// 添加实际函数的实现
 	cloned.Funcs(template.FuncMap{
-		tplFuncHookInvoke:         func(name string, args ...any) any { return hookInvoke(runtime, ctx, name, args...) },
-		tplFuncThemeOption:        func(optionID string) string { return themeOption(runtime, ctx, optionID) },
+		tplFuncHookInvoke:         func(name string, args ...any) any { return hookInvoke(ctx, name, args...) },
+		tplFuncThemeOption:        func(optionID string) string { return themeOption(ctx, optionID) },
 		tplFuncWidgetOption:       func(key string) string { return widgetOption(ctx, key) },
-		tplFuncRenderWidgets:      func(area string, data any) template.HTML { return renderWidgets(runtime, ctx, area, data) },
+		tplFuncRenderWidgets:      func(area string, data any) template.HTML { return renderWidgets(ctx, area, data) },
 		tplFuncRenderMenu:         func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
-		tplFuncSlot:               func(name string, data any) template.HTML { return slot(runtime, ctx, name, data) },
-		tplFuncPostTitle:          func(post any) template.HTML { return postTitle(runtime, ctx, post) },
-		tplFuncPostExcerpt:        func(post any) template.HTML { return postExcerpt(runtime, ctx, post) },
-		tplFuncPostContent:        func(post any) template.HTML { return postContent(runtime, ctx, post) },
+		tplFuncSlot:               func(name string, data any) template.HTML { return slot(ctx, name, data) },
+		tplFuncPostTitle:          func(post any) template.HTML { return postTitle(ctx, post) },
+		tplFuncPostExcerpt:        func(post any) template.HTML { return postExcerpt(ctx, post) },
+		tplFuncPostContent:        func(post any) template.HTML { return postContent(ctx, post) },
 		tplFuncPostTags:           func(post any) template.HTML { return postTags(post) },
 		tplFuncPostNavigation:     func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
 		tplFuncBodyClass:          func(data any) string { return bodyClass(data) },
 		tplFuncPostClass:          func(post any, extra ...string) string { return postClass(post, extra...) },
 		tplFuncCommentClass:       func(comment any, extra ...string) string { return commentClass(comment, extra...) },
-		tplFuncCommentContent:     func(comment any) template.HTML { return commentContent(runtime, ctx, comment) },
-		tplFuncHeadMeta:           func(data any) template.HTML { return headMeta(runtime, ctx, data) },
-		tplFuncListComments:       func(args ...any) template.HTML { return listComments(runtime, ctx, args...) },
-		tplFuncCommentForm:        func(data any) template.HTML { return commentForm(runtime, ctx, data) },
+		tplFuncCommentContent:     func(comment any) template.HTML { return commentContent(ctx, comment) },
+		tplFuncHeadMeta:           func(data any) template.HTML { return headMeta(ctx, data) },
+		tplFuncListComments:       func(args ...any) template.HTML { return listComments(ctx, args...) },
+		tplFuncCommentForm:        func(data any) template.HTML { return commentForm(ctx, data) },
 		tplFuncCommentsPagination: func(data any) template.HTML { return commentsPagination(ctx, data) },
 	})
 	return cloned, nil

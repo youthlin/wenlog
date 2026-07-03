@@ -458,11 +458,11 @@ func indirectValue(v any) reflect.Value {
 }
 
 // renderWidgets 渲染指定区域的所有组件，返回 HTML。
-func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, data any) template.HTML {
-	if runtime == nil || ctx == nil || ctx.Template == nil {
+func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
+	if ctx == nil || ctx.Runtime == nil || ctx.Template == nil {
 		return ""
 	}
-	provider := runtime.current().WidgetsProvider
+	provider := ctx.Runtime.current().WidgetsProvider
 	if provider == nil {
 		return ""
 	}
@@ -475,12 +475,12 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 	var result strings.Builder
 	for _, item := range widgets {
 		ctx.WidgetOptions = item.Options
-		html, ok := renderWidgetItem(runtime, ctx, item, data)
+		html, ok := renderWidgetItem(ctx, item, data)
 		if !ok {
 			slog.Info("renderWidgets: widget render failed", "area", area, "id", item.ID, "source", item.Source, "plugin_id", item.PluginID)
 			continue
 		}
-		if h := hooks(runtime); h != nil {
+		if h := hooks(ctx.Runtime); h != nil {
 			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), item, area, data))
 		}
 		util.WriteString(&result, string(html))
@@ -489,8 +489,8 @@ func renderWidgets(runtime *TemplateRuntime, ctx *RequestContext, area string, d
 	return template.HTML(result.String())
 }
 
-func renderWidgetItem(runtime *TemplateRuntime, ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
-	resolver := runtime.current().WidgetResolver
+func renderWidgetItem(ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
+	resolver := ctx.Runtime.current().WidgetResolver
 	if resolver == nil {
 		slog.Info("renderWidgetItem: no resolver")
 		return "", false

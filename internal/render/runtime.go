@@ -78,8 +78,8 @@ func (r *Renderer) SetWidgetResolver(resolver hook.WidgetResolver) {
 }
 
 // slot 触发一个模板 slot action，并收集主题/插件写入的 HTML。
-func slot(runtime *TemplateRuntime, ctx *RequestContext, name string, data any) template.HTML {
-	h := hooks(runtime)
+func slot(ctx *RequestContext, name string, data any) template.HTML {
+	h := hooks(ctx.Runtime)
 	if h == nil || name == "" {
 		return ""
 	}

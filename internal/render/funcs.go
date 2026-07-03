@@ -20,11 +20,11 @@ import (
 
 // hookInvoke 在模板中使用 {{hook_invoke "FuncName" "argName" argValue ...}}
 // 其中 FuncName 是在 functions.goyaegi 中通过 RegisterFunc 注册的导出函数（大写开头）。
-func hookInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args ...any) any {
-	if runtime == nil {
+func hookInvoke(ctx *RequestContext, name string, args ...any) any {
+	if ctx == nil || ctx.Runtime == nil {
 		return nil
 	}
-	provider := runtime.current().HookInvoke
+	provider := ctx.Runtime.current().HookInvoke
 	if provider == nil {
 		return nil
 	}
@@ -32,11 +32,11 @@ func hookInvoke(runtime *TemplateRuntime, ctx *RequestContext, name string, args
 }
 
 // themeOption 在模板中使用 {{themeOption "<optionID>"}}
-func themeOption(runtime *TemplateRuntime, ctx *RequestContext, optionID string) string {
-	if runtime == nil {
+func themeOption(ctx *RequestContext, optionID string) string {
+	if ctx == nil || ctx.Runtime == nil {
 		return ""
 	}
-	provider := runtime.current().ThemeOption
+	provider := ctx.Runtime.current().ThemeOption
 	if provider == nil {
 		return ""
 	}
@@ -52,9 +52,9 @@ func widgetOption(ctx *RequestContext, key string) string {
 	return ctx.WidgetOptions[key]
 }
 
-func postTitle(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
+func postTitle(ctx *RequestContext, post any) template.HTML {
 	title := reflectStringField(post, "Title")
-	if h := hooks(runtime); h != nil {
+	if h := hooks(ctx.Runtime); h != nil {
 		title = stringFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostTitle, title, post), title)
 	}
 	title = html.EscapeString(title)
@@ -89,9 +89,9 @@ func stringFromFilterValue(v any, fallback string) string {
 	}
 }
 
-func postExcerpt(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
+func postExcerpt(ctx *RequestContext, post any) template.HTML {
 	html := postExcerptHTMLAny(post)
-	if h := hooks(runtime); h != nil {
+	if h := hooks(ctx.Runtime); h != nil {
 		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostExcerptHTML, string(html), post))
 	}
 	return html
@@ -124,9 +124,9 @@ func postExcerptHTMLAny(post any) template.HTML {
 }
 
 // postContent 输出文章正文，并应用 post.content_html filter。
-func postContent(runtime *TemplateRuntime, ctx *RequestContext, post any) template.HTML {
+func postContent(ctx *RequestContext, post any) template.HTML {
 	html := postContentHTML(post)
-	if h := hooks(runtime); h != nil {
+	if h := hooks(ctx.Runtime); h != nil {
 		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostContentHTML, string(html), post))
 	}
 	return html
@@ -152,9 +152,9 @@ func postContentHTML(post any) template.HTML {
 }
 
 // commentContent 输出评论正文，并应用 comment.render_html filter。
-func commentContent(runtime *TemplateRuntime, ctx *RequestContext, comment any) template.HTML {
+func commentContent(ctx *RequestContext, comment any) template.HTML {
 	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
-	if h := hooks(runtime); h != nil {
+	if h := hooks(ctx.Runtime); h != nil {
 		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookCommentContentHTML, string(html), comment))
 	}
 	return html
@@ -186,12 +186,14 @@ func postTags(post any) template.HTML {
 		if name == "" || slug == "" {
 			continue
 		}
+		util.WriteString(&out, "\n  ")
 		util.WriteString(&out, `<a class="tag" href="`)
 		util.WriteString(&out, html.EscapeString(permalink.Tag(slug)))
 		util.WriteString(&out, `">#`)
 		util.WriteString(&out, name)
 		util.WriteString(&out, `</a>`)
 	}
+	util.WriteString(&out, "\n")
 	util.WriteString(&out, `</div>`)
 	return template.HTML(out.String())
 }
@@ -470,7 +472,7 @@ func slugClass(s string) string {
 // headMeta 生成 OpenGraph / Twitter Card meta 标签。
 // 在模板 <head> 中使用 {{headMeta .}} 调用。
 // 生成的 HTML 会经过 head.meta filter，插件可改写、追加或清空 meta 标签。
-func headMeta(runtime *TemplateRuntime, ctx *RequestContext, data any) template.HTML {
+func headMeta(ctx *RequestContext, data any) template.HTML {
 	title := stringValue(data, "Title")
 	desc := stringValue(data, "Description")
 	url := stringValue(data, "CanonicalURL")
@@ -515,7 +517,7 @@ func headMeta(runtime *TemplateRuntime, ctx *RequestContext, data any) template.
 	}
 
 	html := template.HTML(b.String())
-	if h := hooks(runtime); h != nil {
+	if h := hooks(ctx.Runtime); h != nil {
 		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookHeadMeta, string(html), data))
 	}
 	return html
@@ -571,7 +573,7 @@ func indent(depth int) string {
 // listComments 渲染评论列表和分页。
 // 模板调用: {{listComments .}} 或 {{listComments . "ol" 44 "my_comment"}}
 // 参数: args[0]=data(必填), args[1]=style(默认"ul"), args[2]=avatarSize(默认40), args[3]=callback模板名(默认"comment_item")
-func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) template.HTML {
+func listComments(ctx *RequestContext, args ...any) template.HTML {
 	if len(args) == 0 {
 		return ""
 	}
@@ -652,7 +654,7 @@ func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) te
 			continue
 		}
 		util.WriteString(&out, indent(1))
-		writeCommentItem(&out, runtime, ctx, data, c, comments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, 1)
+		writeCommentItem(&out, ctx, data, c, comments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, 1)
 	}
 
 	util.WriteString(&out, indent(0))
@@ -665,7 +667,7 @@ func listComments(runtime *TemplateRuntime, ctx *RequestContext, args ...any) te
 
 // commentForm 渲染登录提示和评论表单（或"评论已关闭"提示）。
 // 模板调用: {{commentForm .}}
-func commentForm(runtime *TemplateRuntime, ctx *RequestContext, data any) template.HTML {
+func commentForm(ctx *RequestContext, data any) template.HTML {
 	if data == nil && ctx != nil {
 		data = ctx.Data
 	}
@@ -685,7 +687,7 @@ func commentForm(runtime *TemplateRuntime, ctx *RequestContext, data any) templa
 
 	// 评论表单或关闭提示
 	if commentOpen {
-		writeCommentForm(&out, runtime, ctx, data, postID, csrfToken, mailEnabled)
+		writeCommentForm(&out, ctx, data, postID, csrfToken, mailEnabled)
 	} else {
 		util.WriteString(&out, `<p class="comment-closed">`)
 		util.WriteString(&out, ctx.T("评论已关闭"))
@@ -696,7 +698,7 @@ func commentForm(runtime *TemplateRuntime, ctx *RequestContext, data any) templa
 }
 
 // writeCommentItem 渲染单条评论（含 <li> 包裹）及其子回复。
-func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+func writeCommentItem(out *strings.Builder, ctx *RequestContext,
 	data any, comment any, allComments []any, callbackTpl string, hasCustomTpl bool,
 	avatarSize int, defaultAvatar string, listTag string, depth int) {
 
@@ -725,18 +727,18 @@ func writeCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 			util.WriteString(out, buf.String())
 		}
 	} else {
-		writeDefaultCommentItem(out, runtime, ctx, data, comment, avatarSize, defaultAvatar, depth)
+		writeDefaultCommentItem(out, ctx, data, comment, avatarSize, defaultAvatar, depth)
 	}
 
 	// 子回复
-	writeCommentChildren(out, runtime, ctx, data, comment, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, depth)
+	writeCommentChildren(out, ctx, data, comment, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, depth)
 
 	util.WriteString(out, indent(depth))
 	util.WriteString(out, `</li>`)
 }
 
 // writeDefaultCommentItem 生成默认评论 HTML（与 default 主题结构一致）。
-func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+func writeDefaultCommentItem(out *strings.Builder, ctx *RequestContext,
 	data any, comment any, avatarSize int, defaultAvatar string, depth int) {
 
 	id := reflectUintField(comment, "ID")
@@ -820,7 +822,7 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 		util.WriteString(out, html.EscapeString(ctx.T("回复 @%s", replyToAuthor)))
 		util.WriteString(out, `</a>`)
 	}
-	util.WriteString(out, string(commentContent(runtime, ctx, comment)))
+	util.WriteString(out, string(commentContent(ctx, comment)))
 	util.WriteString(out, indent(depth+1))
 	util.WriteString(out, `</div>`)
 
@@ -836,7 +838,7 @@ func writeDefaultCommentItem(out *strings.Builder, runtime *TemplateRuntime, ctx
 }
 
 // writeCommentChildren 渲染评论的子回复列表。
-func writeCommentChildren(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+func writeCommentChildren(out *strings.Builder, ctx *RequestContext,
 	data any, parent any, allComments []any, callbackTpl string, hasCustomTpl bool,
 	avatarSize int, defaultAvatar string, listTag string, depth int) {
 
@@ -866,7 +868,7 @@ func writeCommentChildren(out *strings.Builder, runtime *TemplateRuntime, ctx *R
 
 	for _, child := range children {
 		util.WriteString(out, indent(depth+2))
-		writeCommentItem(out, runtime, ctx, data, child, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, depth+2)
+		writeCommentItem(out, ctx, data, child, allComments, callbackTpl, hasCustomTpl, avatarSize, defaultAvatar, listTag, depth+2)
 	}
 
 	util.WriteString(out, indent(depth+1))
@@ -971,7 +973,7 @@ func writeCommentLoginTip(out *strings.Builder, ctx *RequestContext, data any, c
 }
 
 // writeCommentForm 渲染评论表单。
-func writeCommentForm(out *strings.Builder, runtime *TemplateRuntime, ctx *RequestContext,
+func writeCommentForm(out *strings.Builder, ctx *RequestContext,
 	data any, postID uint, csrfToken string, mailEnabled bool) {
 
 	rememberedCommenter := dataValue(data, "RememberedCommenter")
@@ -1029,7 +1031,7 @@ func writeCommentForm(out *strings.Builder, runtime *TemplateRuntime, ctx *Reque
 	util.WriteString(out, `" required></textarea></p>`)
 
 	// slot: comment.form.after_textarea
-	if h := hooks(runtime); h != nil {
+	if h := hooks(ctx.Runtime); h != nil {
 		var slotBuf strings.Builder
 		h.DoAction(requestContext(ctx), hook.HookCommentFormAfterTextarea, &slotBuf,
 			hook.CommentFormAfterTextareaData{Data: data})
