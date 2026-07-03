@@ -158,7 +158,8 @@ func (h *Admin) UploadsJSON(c *gin.Context) {
 	}
 	uploads, _, err := h.st.ListUploadsForUser(c, page, adminPageSize, uploaderID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": err.Error()})
+		h.log.ErrorContext(c, "查询上传文件失败", slog.Any("error", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": "查询上传文件失败"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "uploads": uploads})

@@ -614,11 +614,7 @@ func (h *Public) serverError(c *gin.Context, err error) {
 		slog.String("path", c.Request.URL.Path),
 		slog.Any("error", err),
 	)
-	msg := "服务器内部错误"
-	if err != nil && strings.TrimSpace(err.Error()) != "" {
-		msg = err.Error()
-	}
-	h.textError(c, http.StatusInternalServerError, msg)
+	h.textError(c, http.StatusInternalServerError, "服务器内部错误")
 }
 
 func (h *Public) textError(c *gin.Context, code int, msg string) {

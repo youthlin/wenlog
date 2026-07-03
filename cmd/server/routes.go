@@ -56,6 +56,12 @@ func registerAuthRoutes(r *gin.Engine, auth *handler.Auth) {
 		KeyFunc: middleware.DefaultRateLimitKey,
 	})
 
+	resetPassLimiter := middleware.RateLimitMiddleware(limiter, middleware.RateLimitConfig{
+		Window:  15 * time.Minute,
+		Max:     5,
+		KeyFunc: middleware.DefaultRateLimitKey,
+	})
+
 	r.GET("/auth/login", auth.LoginForm)
 	r.POST("/auth/login", loginLimiter, auth.Login)
 
@@ -68,7 +74,7 @@ func registerAuthRoutes(r *gin.Engine, auth *handler.Auth) {
 	r.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
 
 	r.GET("/auth/reset-password", auth.ResetPasswordForm)
-	r.POST("/auth/reset-password", auth.ResetPassword)
+	r.POST("/auth/reset-password", resetPassLimiter, auth.ResetPassword)
 
 	r.POST("/auth/logout", middleware.AuthRequired(auth.Store()), middleware.CSRFMiddleware(), auth.Logout)
 
