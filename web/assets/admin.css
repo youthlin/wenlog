@@ -1918,6 +1918,18 @@ body.admin.nav-open { overflow: hidden; }
   .admin-home-link { min-height: 36px; }
 }
 
+/* 后台实例版本 footer */
+.admin-instance-footer {
+  margin: 0;
+  padding: 12px 20px 20px;
+  color: var(--muted);
+  background: var(--bg);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
 /* SQL 执行详情 footer */
 .sql-details-footer {
   margin: 0;

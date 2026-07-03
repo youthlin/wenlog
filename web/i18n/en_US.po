@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 23:25+0800\n"
+"POT-Creation-Date: 2026-07-03 23:54+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -436,7 +436,11 @@ msgstr "Elegant Purple"
 msgid "退出"
 msgstr "Log out"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:162
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:158
+msgid "当前版本"
+msgstr "Current version"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:163
 msgid "SQL 执行详情 (%d 条)"
 msgstr "SQL Details (%d items)"
 
@@ -2513,19 +2517,19 @@ msgstr "Current administrators:\n"
 msgid "未分类"
 msgstr "Uncategorized"
 
-#: internal/handler/admin.go:285
+#: internal/handler/admin.go:287
 msgid "未找到"
 msgstr "Not found"
 
-#: internal/handler/admin.go:294
+#: internal/handler/admin.go:296
 msgid "服务器错误"
 msgstr "Server error"
 
-#: internal/handler/admin.go:303
+#: internal/handler/admin.go:305
 msgid "用户名不能为空"
 msgstr "Username cannot be empty."
 
-#: internal/handler/admin.go:306
+#: internal/handler/admin.go:308
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
 msgstr ""
 "Username must be 2-32 characters, using only letters, digits, underscores, "

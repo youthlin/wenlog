@@ -23,6 +23,7 @@ import (
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/theme"
 	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/blog/internal/version"
 )
 
 // ThemeManager 是主题管理器的类型别名，方便 handler 层引用。
@@ -89,6 +90,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
 		"PendingCount":         pendingCount,
 		"PostPermalinkPattern": currentPostPermalink,
+		"InstanceVersion":      version.Display(),
 		"RoleAdmin":            model.RoleAdmin,
 		"RoleAuthor":           model.RoleAuthor,
 		"RoleSubscriber":       model.RoleSubscriber,
