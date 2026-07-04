@@ -309,7 +309,7 @@ img { max-width: 100%; }
 /* ============================================================
    8. 主内容区 - 文章正文内容
    ============================================================ */
-.post-content { word-wrap: break-word; }
+.post-content { min-width: 0; word-wrap: break-word; overflow-wrap: anywhere; }
 .post-content img { height: auto; }
 .post-content pre { background: var(--pre-bg); color: var(--pre-fg); padding: 14px; overflow-x: auto; border-radius: 6px; border: 1px solid var(--pre-fg);}
 .post-content code { background: var(--code-bg); padding: 2px 5px; border-radius: 3px; }
@@ -317,6 +317,31 @@ img { max-width: 100%; }
 .post-content td pre { border: none; }
 .post-content figure { margin: 16px 0; text-align: center; }
 .post-content figcaption { color: var(--muted); font-size: 13px; }
+.post-content > table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 16px 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+.post-content > table > thead,
+.post-content > table > tbody,
+.post-content > table > tfoot {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+}
+.post-content > table tr { display: table-row; }
+.post-content > table th,
+.post-content > table td {
+  display: table-cell;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+.post-content > table th { background: var(--code-bg); font-weight: 600; }
 
 /* 文章内容响应式 */
 @media (max-width: 860px) {
@@ -521,7 +546,11 @@ img { max-width: 100%; }
 .comment-form button { background: var(--accent); color: #fff; border: 0; padding: 9px 22px; border-radius: 5px; cursor: pointer; font-size: 15px; }
 .comment-form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .comment-form button.comment-cancel-reply { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.comments .pagination + .comment-form,
+.comments .pagination + .comment-login-tip,
+.comments .pagination + .comment-closed { margin-top: 24px; }
 .comment-tip, .comment-closed { color: var(--muted); font-size: 13px; }
+.comment-form .comment-tip { margin-top: 10px; }
 .comment-msg { padding: 10px; border-radius: 5px; margin-top: 12px; }
 .comment-msg.ok { background: #e6f7ea; color: #1a7f3c; }
 .comment-msg.err { background: #fdeaea; color: #b03030; }

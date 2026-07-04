@@ -416,7 +416,6 @@ body.nav-open { overflow: hidden; }
 .post-content {
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
   word-wrap: break-word;
   overflow-wrap: anywhere;
   font-size: 18px;
@@ -457,7 +456,24 @@ body.nav-open { overflow: hidden; }
 .post-content ul, .post-content ol { padding-left: 1.5em; margin: 0 0 1.25em; }
 .post-content li { margin-bottom: 0.25em; }
 .post-content hr { border: 0; border-top: 1px solid var(--border); margin: 2em 0; }
-.post-content > table { width: max-content; min-width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 16px; }
+.post-content > table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 16px;
+  white-space: nowrap;
+}
+.post-content > table > thead,
+.post-content > table > tbody,
+.post-content > table > tfoot {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+}
+.post-content > table tr { display: table-row; }
 .post-content > table th, .post-content > table td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
 .post-content > table th { background: var(--code-bg); font-weight: 600; }
 
@@ -709,7 +725,11 @@ body.nav-open { overflow: hidden; }
   border: 1px solid var(--accent);
 }
 .comment-form button.comment-cancel-reply:hover { background: var(--header-chip-hover); }
+.comments .pagination + .comment-form,
+.comments .pagination + .comment-login-tip,
+.comments .pagination + .comment-closed { margin-top: 28px; }
 .comment-tip, .comment-closed { color: var(--muted); font-size: 14px; }
+.comment-form .comment-tip { margin-top: 10px; }
 .comment-msg { padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 15px; }
 .comment-msg.ok { background: #e6f7ea; color: #1a7f3c; }
 .comment-msg.err { background: #fdeaea; color: #b03030; }

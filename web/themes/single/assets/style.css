@@ -191,7 +191,7 @@ img { max-width: 100%; height: auto; }
 
 /* ---------- 正文内容 ---------- */
 .post-content {
-  word-wrap: break-word; line-height: 1.85;
+  min-width: 0; word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.85;
   font-size: 16px;
 }
 .post-content h1, .post-content h2, .post-content h3,
@@ -221,16 +221,24 @@ img { max-width: 100%; height: auto; }
   border: none; border-top: 1px solid var(--border);
   margin: 32px 0;
 }
-.post-content table {
-  width: 100%; border-collapse: collapse; margin: 16px 0;
+.post-content > table {
+  display: block; width: 100%; max-width: 100%; overflow-x: auto;
+  border-collapse: collapse; margin: 16px 0; white-space: nowrap;
   font-size: 14px;
 }
-.post-content th, .post-content td {
+.post-content > table > thead,
+.post-content > table > tbody,
+.post-content > table > tfoot {
+  display: table; width: max-content; min-width: 100%;
+}
+.post-content > table tr { display: table-row; }
+.post-content > table th, .post-content > table td {
+  display: table-cell;
   padding: 10px 14px; border: 1px solid var(--border);
   text-align: left;
 }
-.post-content th { background: var(--bg-elevated); font-weight: 600; }
-.post-content tr:nth-child(even) td { background: rgba(255,255,255,0.01); }
+.post-content > table th { background: var(--bg-elevated); font-weight: 600; }
+.post-content > table tr:nth-child(even) td { background: rgba(255,255,255,0.01); }
 
 /* 代码 */
 .post-content code {
@@ -560,7 +568,10 @@ img { max-width: 100%; height: auto; }
   border: 1px solid var(--border-light);
 }
 .comment-form button.comment-cancel-reply:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
-.comment-tip, .comment-closed { color: var(--fg-muted); font-size: 13px; margin-top: 8px; }
+.comments .pagination + .comment-form,
+.comments .pagination + .comment-login-tip,
+.comments .pagination + .comment-closed { margin-top: 24px; }
+.comment-tip, .comment-closed { color: var(--fg-muted); font-size: 13px; margin-top: 10px; }
 .comment-msg { padding: 10px 14px; border-radius: 6px; margin-top: 12px; font-size: 14px; }
 .comment-msg.ok { background: rgba(63, 185, 80, 0.12); color: #7ee787; border: 1px solid rgba(63, 185, 80, 0.25); }
 .comment-msg.err { background: rgba(248, 81, 73, 0.12); color: #ffa198; border: 1px solid rgba(248, 81, 73, 0.25); }

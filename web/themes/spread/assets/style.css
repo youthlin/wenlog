@@ -318,7 +318,6 @@ body.nav-is-open::before {
   min-width: 0;
   margin-top: 24px;
   font-size: clamp(17px, 1.7vw, 20px);
-  overflow-x: auto;
   overflow-wrap: anywhere;
 }
 .post-content > :first-child { margin-top: 0; }
@@ -552,14 +551,30 @@ body.nav-is-open::before {
   max-width: 100%;
 }
 .post-content > table {
-  width: max-content;
-  min-width: 100%;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   border: 2px solid var(--ink);
   border-radius: 16px;
+  white-space: nowrap;
 }
+.post-content > table > thead,
+.post-content > table > tbody,
+.post-content > table > tfoot {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+}
+.post-content > table tr { display: table-row; }
 .post-content > table th,
-.post-content > table td { border: 1px solid var(--line); padding: 10px; }
+.post-content > table td {
+  display: table-cell;
+  min-width: 14rem;
+  border: 1px solid var(--line);
+  padding: 10px;
+}
 .post-tags {
   max-width: 68ch;
   margin: 34px auto 0;
@@ -633,6 +648,10 @@ ul.comment-list { padding-block-end: 42px; }
 .comment-closed,
 .comment-tip,
 .comment-login-tip { color: var(--muted); font-weight: 800; }
+.comments .pagination + .comment-form,
+.comments .pagination + .comment-login-tip,
+.comments .pagination + .comment-closed { margin-top: 28px; }
+.comment-form .comment-tip { margin-top: 10px; }
 .comment-form {
   display: grid;
   gap: 14px;
@@ -713,10 +732,11 @@ ul.comment-list { padding-block-end: 42px; }
   min-width: 42px;
 }
 .pagination .page-numbers.current {
-  border: 2px solid var(--ink);
+  border: 2px solid var(--accent);
   border-radius: 999px;
   padding: 10px 16px;
-  background: var(--paper);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 950;
 }
 .pagination .page-numbers.dots {
@@ -1292,11 +1312,11 @@ body {
   color: var(--ink);
 }
 .pagination .page-numbers.current {
-  border: 1px solid rgba(38, 33, 28, 0.14);
+  border: 1px solid var(--accent);
   padding: 8px 14px;
-  background: rgba(255, 252, 246, 0.58);
-  color: rgba(38, 33, 28, 0.62);
-  font-weight: 720;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 820;
 }
 .pagination .page-numbers.dots {
   color: rgba(38, 33, 28, 0.62);
