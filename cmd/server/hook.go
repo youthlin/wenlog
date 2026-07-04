@@ -230,7 +230,7 @@ func releaseBundledTheme(themeName string) error {
 }
 
 // ensurePluginsOnDisk 确保所有内嵌插件在磁盘上存在。
-// 插件与主题一样以磁盘目录作为运行时来源：首次启动释放内置插件；已存在的插件保留本地调整。
+// 插件与主题一样以磁盘目录作为运行时来源：首次启动释放内置插件；内置插件版本更新时覆盖运行时目录。
 func ensurePluginsOnDisk() {
 	entries, err := fs.ReadDir(plugins.Plugins, ".")
 	if err != nil {
@@ -244,12 +244,53 @@ func ensurePluginsOnDisk() {
 		pluginID := entry.Name()
 		pluginYAML := filepath.Join("plugins", pluginID, "plugin.yaml")
 		if _, err := os.Stat(pluginYAML); err == nil {
-			continue
+			if !bundledPluginNewer(pluginYAML, pluginID+"/plugin.yaml") {
+				continue // 已存在且版本不低于内嵌版本，保留用户可能做过的本地调整
+			}
+			if err := os.RemoveAll(filepath.Join("plugins", pluginID)); err != nil {
+				slog.Warn("清理旧运行时插件失败", "plugin", pluginID, "error", err)
+				continue
+			}
 		}
 		if err := releaseBundledPlugin(pluginID); err != nil {
 			slog.Warn("释放内嵌插件失败", "plugin", pluginID, "error", err)
 		}
 	}
+}
+
+func bundledPluginNewer(diskYAML, embedPath string) bool {
+	disk, err := readPluginMetaFromDisk(diskYAML)
+	if err != nil {
+		return false
+	}
+	bundled, err := readPluginMetaFromEmbed(embedPath)
+	if err != nil {
+		return false
+	}
+	return disk.ID == bundled.ID && compareVersion(disk.Version, bundled.Version) < 0
+}
+
+type pluginMeta struct {
+	ID      string `yaml:"id"`
+	Version string `yaml:"version"`
+}
+
+func readPluginMetaFromDisk(path string) (pluginMeta, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return pluginMeta{}, err
+	}
+	var meta pluginMeta
+	return meta, yaml.Unmarshal(data, &meta)
+}
+
+func readPluginMetaFromEmbed(path string) (pluginMeta, error) {
+	data, err := fs.ReadFile(plugins.Plugins, path)
+	if err != nil {
+		return pluginMeta{}, err
+	}
+	var meta pluginMeta
+	return meta, yaml.Unmarshal(data, &meta)
 }
 
 func releaseBundledPlugin(pluginID string) error {

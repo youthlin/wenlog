@@ -7,6 +7,8 @@ import (
 	"hook"
 )
 
+const assetVersion = "20260704161000"
+
 var smileyNames = []string{
 	"微笑",
 	"呲牙",
@@ -48,7 +50,7 @@ func renderAssets(api *hook.API) {
 	if !enabled(api) {
 		return
 	}
-	api.Printf(`<link rel="stylesheet" href="/plugin-assets/comment-smilies/comment-smilies.css">`)
+	api.Printf(`<link rel="stylesheet" href="/plugin-assets/comment-smilies/comment-smilies.css?v=%s">`, assetVersion)
 }
 
 func renderSmileyPanel(api *hook.API) {

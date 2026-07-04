@@ -409,6 +409,7 @@ func (h *Public) base(c *gin.Context, title, desc string, s publicSettings, load
 	data := gin.H{
 		"SiteName":         s.SiteName,
 		"SiteLogo":         s.SiteLogo,
+		"AssetVersion":     assetVersion(),
 		"Title":            title,
 		"Description":      desc,
 		"CanonicalURL":     requestBaseURL(c) + c.Request.URL.String(),

@@ -68,6 +68,12 @@ func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var head strings.Builder
+	hooks.DoAction(context.Background(), hook.HookHeadEnd, &head, nil)
+	if got := head.String(); !strings.Contains(got, `/plugin-assets/comment-smilies/comment-smilies.css?v=`) {
+		t.Fatalf("smiley css not rendered: %s", got)
+	}
+
 	var panel strings.Builder
 	hooks.DoAction(context.Background(), hook.HookCommentFormAfterTextarea, &panel, nil)
 	if got := panel.String(); !strings.Contains(got, `class="comment-smilies"`) || !strings.Contains(got, `class="comment-smilies-label sr-only"`) || !strings.Contains(got, `data-smiley-code="[/微笑]"`) {

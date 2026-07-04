@@ -10,11 +10,14 @@
 
   function getForm() { return document.getElementById("comment-form"); }
   function getFormHome() { return document.getElementById("comment-form-home"); }
+  function getLoginTip() { return document.querySelector(".comment-login-tip"); }
 
   function moveFormHome() {
     var f = getForm();
     var home = getFormHome();
     if (!f || !home || !home.parentNode) return;
+    var tip = getLoginTip();
+    if (tip) home.parentNode.insertBefore(tip, home);
     home.parentNode.insertBefore(f, home.nextSibling);
     f.querySelector("[name=parent_id]").value = "0";
     f.querySelector("[name=reply_to_id]").value = "0";
@@ -26,6 +29,8 @@
     var f = getForm();
     var target = document.getElementById(commentID);
     if (!f || !target) return;
+    var tip = getLoginTip();
+    if (tip) target.appendChild(tip);
     target.appendChild(f);
     f.querySelector("[name=parent_id]").value = replyToID;
     f.querySelector("[name=reply_to_id]").value = replyToID;
