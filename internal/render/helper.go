@@ -46,40 +46,51 @@ func renderContentHTML(src string) template.HTML {
 	return template.HTML(addSrcSet(HighlightCodeBlocks(SanitizeHTML(src))))
 }
 
-var fencedCodeRe = regexp.MustCompile(`(?s)<pre><code(?: class="language-([^"]+)")?>(.*?)</code></pre>`)
+var (
+	fencedCodeRe    = regexp.MustCompile(`(?s)<pre><code(?: class="language-([^"]+)")?>(.*?)</code></pre>`)
+	legacyPreCodeRe = regexp.MustCompile(`(?s)<pre>([^<].*?)</pre>`)
+)
 
 // HighlightCodeBlocks 为 HTML 中的 <pre><code> 做服务端高亮与行号输出。
 func HighlightCodeBlocks(src string) string {
-	return fencedCodeRe.ReplaceAllStringFunc(src, func(block string) string {
+	src = fencedCodeRe.ReplaceAllStringFunc(src, func(block string) string {
 		m := fencedCodeRe.FindStringSubmatch(block)
-		lang := strings.TrimSpace(m[1])
-		code := stdhtml.UnescapeString(m[2])
-		lexer := lexers.Get(lang)
-		if lexer == nil {
-			lexer = lexers.Analyse(code)
-		}
-		if lexer == nil {
-			lexer = lexers.Fallback
-		}
-		it, err := lexer.Tokenise(nil, code)
-		if err != nil {
-			return block
-		}
-		formatter := html.New(
-			html.WithClasses(false),
-			html.WithLineNumbers(true),
-			html.LineNumbersInTable(true),
-		)
-		style := styles.Get("github-dark")
-		if style == nil {
-			style = styles.Fallback
-		}
-		var b strings.Builder
-		if err := formatter.Format(&b, style, it); err != nil {
-			return block
-		}
-		return `<div class="codehilite">` + b.String() + `</div>`
+		return highlightCodeBlock(block, m[1], m[2])
 	})
+	return legacyPreCodeRe.ReplaceAllStringFunc(src, func(block string) string {
+		m := legacyPreCodeRe.FindStringSubmatch(block)
+		return highlightCodeBlock(block, "", m[1])
+	})
+}
+
+func highlightCodeBlock(block, lang, escapedCode string) string {
+	lang = strings.TrimSpace(lang)
+	code := stdhtml.UnescapeString(escapedCode)
+	lexer := lexers.Get(lang)
+	if lexer == nil {
+		lexer = lexers.Analyse(code)
+	}
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	it, err := lexer.Tokenise(nil, code)
+	if err != nil {
+		return block
+	}
+	formatter := html.New(
+		html.WithClasses(false),
+		html.WithLineNumbers(true),
+		html.LineNumbersInTable(true),
+	)
+	style := styles.Get("github-dark")
+	if style == nil {
+		style = styles.Fallback
+	}
+	var b strings.Builder
+	if err := formatter.Format(&b, style, it); err != nil {
+		return block
+	}
+	return `<div class="codehilite">` + b.String() + `</div>`
 }
 
 var (

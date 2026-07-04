@@ -682,7 +682,10 @@ func commentForm(ctx *RequestContext, data any) template.HTML {
 
 	var out strings.Builder
 
-	// 登录提示
+	util.WriteString(&out, `<div id="comment-form-home"></div>`)
+	util.WriteString(&out, `<div id="comment-form-box" class="comment-form-box">`)
+
+	// 登录提示和评论表单作为一个整体移动，避免回复时两者布局不一致。
 	writeCommentLoginTip(&out, ctx, data, csrfToken)
 
 	// 评论表单或关闭提示
@@ -693,6 +696,7 @@ func commentForm(ctx *RequestContext, data any) template.HTML {
 		util.WriteString(&out, ctx.T("评论已关闭"))
 		util.WriteString(&out, `</p>`)
 	}
+	util.WriteString(&out, `</div>`)
 
 	return template.HTML(out.String())
 }
@@ -980,7 +984,6 @@ func writeCommentForm(out *strings.Builder, ctx *RequestContext,
 	currentUser := dataValue(data, "CurrentUser")
 	hasCurrentUser := !isNilAny(currentUser)
 
-	util.WriteString(out, `<div id="comment-form-home"></div>`)
 	util.WriteString(out, `<form class="comment-form" id="comment-form" method="post" action="/comment">`)
 	util.WriteString(out, `<input type="hidden" name="post_id" value="`)
 	util.WriteString(out, strconv.FormatUint(uint64(postID), 10))

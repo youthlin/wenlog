@@ -144,6 +144,19 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 	}
 }
 
+func TestHighlightCodeBlocksSupportsLegacyPre(t *testing.T) {
+	got := HighlightCodeBlocks(`<p>legacy</p><pre>package main
+
+func main() {}
+</pre>`)
+	if !strings.Contains(got, `class="codehilite"`) || !strings.Contains(got, `<table`) {
+		t.Fatalf("legacy pre block should be highlighted, got: %s", got)
+	}
+	if strings.Contains(got, `<pre>package main`) {
+		t.Fatalf("legacy pre block was not replaced: %s", got)
+	}
+}
+
 func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	dir := t.TempDir()
 	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{hook_invoke "loader"}}/{{hook_invoke "theme"}}|{{render_widgets "sidebar" .}}{{end}}`)
