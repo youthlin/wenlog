@@ -47,20 +47,34 @@ func renderContentHTML(src string) template.HTML {
 }
 
 var (
-	fencedCodeRe    = regexp.MustCompile(`(?s)<pre><code(?: class="language-([^"]+)")?>(.*?)</code></pre>`)
-	legacyPreCodeRe = regexp.MustCompile(`(?s)<pre>([^<].*?)</pre>`)
+	fencedCodeRe    = regexp.MustCompile(`(?s)<pre\b([^>]*)>\s*<code\b([^>]*)>(.*?)</code>\s*</pre>`)
+	legacyPreCodeRe = regexp.MustCompile(`(?s)<pre\b([^>]*)>([^<].*?)</pre>`)
+	languageClassRe = regexp.MustCompile(`\blanguage-([A-Za-z0-9_+.-]+)\b`)
+	wpLangClassRe   = regexp.MustCompile(`\blang:([A-Za-z0-9_+.-]+)\b`)
 )
 
 // HighlightCodeBlocks 为 HTML 中的 <pre><code> 做服务端高亮与行号输出。
 func HighlightCodeBlocks(src string) string {
 	src = fencedCodeRe.ReplaceAllStringFunc(src, func(block string) string {
 		m := fencedCodeRe.FindStringSubmatch(block)
-		return highlightCodeBlock(block, m[1], m[2])
+		return highlightCodeBlock(block, codeBlockLang(m[1], m[2]), m[3])
 	})
 	return legacyPreCodeRe.ReplaceAllStringFunc(src, func(block string) string {
 		m := legacyPreCodeRe.FindStringSubmatch(block)
-		return highlightCodeBlock(block, "", m[1])
+		return highlightCodeBlock(block, codeBlockLang(m[1]), m[2])
 	})
+}
+
+func codeBlockLang(attrs ...string) string {
+	for _, attr := range attrs {
+		if m := languageClassRe.FindStringSubmatch(attr); len(m) == 2 {
+			return m[1]
+		}
+		if m := wpLangClassRe.FindStringSubmatch(attr); len(m) == 2 && m[1] != "default" {
+			return m[1]
+		}
+	}
+	return ""
 }
 
 func highlightCodeBlock(block, lang, escapedCode string) string {

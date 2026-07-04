@@ -191,6 +191,17 @@ func main() {}
 	}
 }
 
+func TestHighlightCodeBlocksSupportsWordPressPreAttrs(t *testing.T) {
+	got := HighlightCodeBlocks(`<pre class="height-set:true lang:java decode:true " title="Demo.java">public class Demo {
+}</pre>`)
+	if !strings.Contains(got, `class="codehilite"`) || !strings.Contains(got, `<table`) {
+		t.Fatalf("wordpress pre with attributes should be highlighted, got: %s", got)
+	}
+	if strings.Contains(got, `height-set:true`) || strings.Contains(got, `<pre class="height-set:true`) {
+		t.Fatalf("wordpress pre block was not replaced: %s", got)
+	}
+}
+
 func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 	dir := t.TempDir()
 	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{hook_invoke "loader"}}/{{hook_invoke "theme"}}|{{render_widgets "sidebar" .}}{{end}}`)

@@ -414,7 +414,11 @@ body.nav-open { overflow: hidden; }
    9. 主内容区 - 文章正文内容
    ============================================================ */
 .post-content {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
   font-size: 18px;
   line-height: 1.75;
 }
@@ -453,9 +457,9 @@ body.nav-open { overflow: hidden; }
 .post-content ul, .post-content ol { padding-left: 1.5em; margin: 0 0 1.25em; }
 .post-content li { margin-bottom: 0.25em; }
 .post-content hr { border: 0; border-top: 1px solid var(--border); margin: 2em 0; }
-.post-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 16px; }
-.post-content th, .post-content td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
-.post-content th { background: var(--code-bg); font-weight: 600; }
+.post-content > table { width: max-content; min-width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 16px; }
+.post-content > table th, .post-content > table td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+.post-content > table th { background: var(--code-bg); font-weight: 600; }
 
 /* 文章内容响应式 */
 @media (max-width: 700px) {
@@ -463,6 +467,8 @@ body.nav-open { overflow: hidden; }
   .post-content h2 { font-size: 24px; }
   .post-content h3 { font-size: 20px; }
   .post-content pre { padding: 14px; font-size: 14px; }
+  .post-content > table { font-size: 15px; }
+  .post-content > table th, .post-content > table td { padding: 8px 10px; }
 }
 
 /* ============================================================
