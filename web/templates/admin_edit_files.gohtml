@@ -24,6 +24,9 @@
           <select id="resource-kind-selector" onchange="switchKind(this.value)" style="width:100%;margin-bottom:0.5rem;">
             <option value="theme" {{if eq .EditKind "theme"}}selected{{end}}>{{.t.T "主题"}}</option>
             <option value="plugin" {{if eq .EditKind "plugin"}}selected{{end}}>{{.t.T "插件"}}</option>
+            <option value="template" {{if eq .EditKind "template"}}selected{{end}}>{{.t.T "项目模板"}}</option>
+            <option value="asset" {{if eq .EditKind "asset"}}selected{{end}}>{{.t.T "项目资源"}}</option>
+            <option value="i18n" {{if eq .EditKind "i18n"}}selected{{end}}>{{.t.T "项目翻译"}}</option>
           </select>
           {{if eq .EditKind "plugin"}}
           <select id="plugin-selector" onchange="switchPlugin(this.value)" style="width:100%;margin-bottom:0.5rem;">
@@ -33,12 +36,17 @@
             <option value="">{{$.t.T "暂无已安装插件"}}</option>
             {{end}}
           </select>
-          {{else}}
+          {{else if eq .EditKind "theme"}}
           <select id="theme-selector" onchange="switchTheme(this.value)" style="width:100%;margin-bottom:0.5rem;">
             {{range .Themes}}
             <option value="{{.Name}}" {{if eq .Name $.EditTheme}}selected{{end}}>{{.Name}}</option>
             {{end}}
           </select>
+          {{else}}
+          <div class="tip" style="margin-bottom:0.5rem;">{{.EditResourceName}}</div>
+          {{end}}
+          {{- if .EditorHint}}
+          <div class="tip" style="margin-bottom:0.5rem;">{{.EditorHint}}</div>
           {{end}}
           <ul id="file-tree" class="theme-editor-file-tree">
             {{range .ThemeFiles}}
@@ -51,7 +59,9 @@
           </ul>
           <div class="theme-editor-actions">
             <button class="btn btn-sm" onclick="showNewFileDialog()">{{.t.T "新建文件"}}</button>
-            <button class="btn-secondary btn-sm" onclick="reloadCurrentResource()">{{if eq .EditKind "plugin"}}{{.t.T "重载插件"}}{{else}}{{.t.T "重载主题"}}{{end}}</button>
+            {{- if .CanReloadResource}}
+            <button class="btn-secondary btn-sm" onclick="reloadCurrentResource()">{{if eq .EditKind "plugin"}}{{.t.T "重载插件"}}{{else if eq .EditKind "template"}}{{.t.T "重载模板"}}{{else if eq .EditKind "i18n"}}{{.t.T "重载翻译"}}{{else}}{{.t.T "重载主题"}}{{end}}</button>
+            {{- end}}
           </div>
         </div>
 
@@ -113,14 +123,18 @@ function switchKind(kind) {
     window.location.href = '/admin/theme/files?kind=plugin' + (currentPlugin ? '&plugin=' + encodeURIComponent(currentPlugin) : '');
     return;
   }
-  window.location.href = '/admin/theme/files?kind=theme' + (currentTheme ? '&theme=' + encodeURIComponent(currentTheme) : '');
+  if (kind === 'theme') {
+    window.location.href = '/admin/theme/files?kind=theme' + (currentTheme ? '&theme=' + encodeURIComponent(currentTheme) : '');
+    return;
+  }
+  window.location.href = '/admin/theme/files?kind=' + encodeURIComponent(kind);
 }
 
 function resourceQuery() {
   var query = 'kind=' + encodeURIComponent(currentKind) + '&path=' + encodeURIComponent(currentPath);
   if (currentKind === 'plugin') {
     query += '&plugin=' + encodeURIComponent(currentPlugin);
-  } else {
+  } else if (currentKind === 'theme') {
     query += '&theme=' + encodeURIComponent(currentTheme);
   }
   return query;
@@ -181,7 +195,7 @@ function saveFile() {
       }
       currentContent = content;
       if (data.reloaded) {
-        document.getElementById('editor-status').textContent = currentKind === 'plugin' ? '{{.t.T "已保存并重载插件"}}' : '{{.t.T "已保存并重载主题"}}';
+        document.getElementById('editor-status').textContent = savedAndReloadedMessage();
       } else {
         document.getElementById('editor-status').textContent = '{{.t.T "已保存"}}';
       }
@@ -192,6 +206,8 @@ function saveFile() {
 }
 
 function isCoreFile(path) {
+  if (currentKind === 'template') return path === 'admin_edit_files.gohtml';
+  if (currentKind === 'asset' || currentKind === 'i18n') return false;
   return path === 'theme.yaml' || path === 'plugin.yaml' || path === 'functions.go' || path === 'functions.goyaegi';
 }
 
@@ -216,16 +232,33 @@ function deleteFile() {
 
 function reloadCurrentResource() {
   document.getElementById('editor-status').textContent = '{{.t.T "重载中..."}}';
-  var url = currentKind === 'plugin' ? '/admin/plugin/' + encodeURIComponent(currentPlugin) + '/reload' : '/admin/theme/reload';
-  fetch(url, {method: 'POST', headers: jsonHeaders()})
+  fetch('/admin/theme/file/reload', {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(resourcePayload({}))
+  })
     .then(parseJSONResponse)
     .then(data => {
       if (data.error) {
         document.getElementById('editor-status').textContent = data.error;
       } else {
-        document.getElementById('editor-status').textContent = currentKind === 'plugin' ? '{{.t.T "插件已重载"}}' : '{{.t.T "主题已重载"}}';
+        document.getElementById('editor-status').textContent = reloadedMessage();
       }
     });
+}
+
+function savedAndReloadedMessage() {
+  if (currentKind === 'plugin') return '{{.t.T "已保存并重载插件"}}';
+  if (currentKind === 'template') return '{{.t.T "已保存并重载模板"}}';
+  if (currentKind === 'i18n') return '{{.t.T "已保存并重载翻译"}}';
+  return '{{.t.T "已保存并重载主题"}}';
+}
+
+function reloadedMessage() {
+  if (currentKind === 'plugin') return '{{.t.T "插件已重载"}}';
+  if (currentKind === 'template') return '{{.t.T "模板已重载"}}';
+  if (currentKind === 'i18n') return '{{.t.T "翻译已重载"}}';
+  return '{{.t.T "主题已重载"}}';
 }
 
 function clearRecovery() {

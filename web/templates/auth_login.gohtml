@@ -43,7 +43,7 @@
   {{- if .SMTPConfigured}} | <a href="/auth/forgot-password">{{.t.T "忘记密码？"}}</a>{{end}}
   </p>
 </form>
-<script src="/assets/theme.js"></script>
+<script src="/assets/theme.js?v={{.AssetVersion}}"></script>
 </body>
 </html>
 {{- end}}

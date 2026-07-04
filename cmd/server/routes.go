@@ -180,6 +180,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.POST("/theme/file", adm.ThemeFileSave)
 	adminGroup.POST("/theme/file/create", adm.ThemeFileCreate)
 	adminGroup.POST("/theme/file/delete", adm.ThemeFileDelete)
+	adminGroup.POST("/theme/file/reload", adm.ThemeFileReload)
 	adminGroup.POST("/theme/recovery/clear", adm.ThemeRecoveryClear)
 	adminGroup.POST("/theme/reload", adm.ThemeReload)
 

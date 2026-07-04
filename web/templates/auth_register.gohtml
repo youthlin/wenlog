@@ -53,7 +53,7 @@
   {{safeHTML (.t.T "← 返回 <a href=\"/\">%s</a>" (escapeHTML .SiteName))}} | <a href="/auth/login">{{.t.T "登录"}}</a>
   </p>
 </form>
-<script src="/assets/theme.js"></script>
+<script src="/assets/theme.js?v={{.AssetVersion}}"></script>
 </body>
 </html>
 {{- end}}

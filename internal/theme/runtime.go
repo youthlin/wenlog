@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/blog/hook"
@@ -236,7 +237,41 @@ func (m *Manager) ReloadCurrentTheme(ctx context.Context) error {
 	if err != nil || name == "" {
 		name = defaultThemeName
 	}
+	if err := m.reloadThemeMetadata(name); err != nil {
+		return err
+	}
 	return m.LoadTheme(ctx, name)
+}
+
+// reloadThemeMetadata 重新读取主题描述文件并刷新内存中的主题元数据。
+// LoadTheme 只会使用已扫描到 m.themes 中的 Theme；因此后台修改 theme.yaml
+// 后必须先刷新这里的缓存，否则模板里的 ThemeVersion 等元数据仍会是旧值。
+func (m *Manager) reloadThemeMetadata(name string) error {
+	m.mu.RLock()
+	cached := m.themes[name]
+	m.mu.RUnlock()
+
+	dir := ""
+	if cached != nil {
+		dir = cached.Dir
+	}
+	if dir == "" {
+		dir = filepath.Join(m.themesDir, name)
+	}
+
+	t, err := LoadTheme(dir)
+	if err != nil {
+		return errors.Wrap(err, "重新读取主题描述失败")
+	}
+	if t.Name != name {
+		return errors.Errorf("主题名称不能通过重载修改: 当前为 %s，文件中为 %s", name, t.Name)
+	}
+
+	m.mu.Lock()
+	m.themes[name] = t
+	m.mu.Unlock()
+	_ = t.LoadTranslations()
+	return nil
 }
 
 // LoadPreviewTheme 加载预览主题的模板到 Renderer 的独立缓存，不影响主模板。

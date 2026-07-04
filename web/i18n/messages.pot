@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 23:54+0800\n"
+"POT-Creation-Date: 2026-07-04 14:59+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,7 +77,7 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:56
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_backup.gohtml:65
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:251
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:284
 msgid "文件名"
 msgstr ""
 
@@ -137,7 +137,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:20
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:84
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:96
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:64
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:74
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:120
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:55
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:114
@@ -442,7 +442,7 @@ msgstr ""
 msgid "退出"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:158
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_base.gohtml:156
 msgid "当前版本"
 msgstr ""
 
@@ -503,7 +503,7 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:57
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:76
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugin_settings.gohtml:55
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:92
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_theme_options.gohtml:65
@@ -514,7 +514,7 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:58
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_comments.gohtml:77
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:256
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:289
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_post_edit.gohtml:92
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_posts.gohtml:6
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_terms.gohtml:15
@@ -683,105 +683,141 @@ msgstr ""
 msgid "切换文件列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:27
+msgid "项目模板"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:28
+msgid "项目资源"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:29
+msgid "项目翻译"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:36
 msgid "暂无已安装插件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:57
 msgid "无可编辑文件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:53
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:249
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:282
 msgid "新建文件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:63
 msgid "重载主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:63
 msgid "重载插件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:63
+msgid "重载模板"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:63
+msgid "重载翻译"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:71
 msgid "选择文件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:78
 msgid "选择左侧文件开始编辑"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:138
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:152
 msgid "加载中..."
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:162
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:176
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_plugins.gohtml:48
 msgid "加载失败"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:169
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:183
 msgid "保存中..."
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:184
-msgid "已保存并重载主题"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:184
-msgid "已保存并重载插件"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:186
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:200
 msgid "已保存"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:190
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:204
 msgid "保存失败"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:200
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:216
 msgid "确定要删除 %s 吗？"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:218
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:234
 msgid "重载中..."
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:226
-msgid "主题已重载"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:226
-msgid "插件已重载"
-msgstr ""
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:251
-msgid "如 style.css、templates/index.gohtml"
+msgid "已保存并重载插件"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:252
+msgid "已保存并重载模板"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:253
+msgid "已保存并重载翻译"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:254
+msgid "已保存并重载主题"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:258
+msgid "插件已重载"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:259
+msgid "模板已重载"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:260
+msgid "翻译已重载"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:261
+msgid "主题已重载"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:284
+msgid "如 style.css、templates/index.gohtml"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:285
 msgid "输入文件路径"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:255
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:288
 msgid "创建"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:280
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:313
 msgid "请输入文件名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:283
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:316
 msgid "创建中..."
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:300
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_edit_files.gohtml:333
 msgid "创建失败"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_error.gohtml:3
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/templates/admin_error.gohtml:11
 msgid "返回后台"
 msgstr ""
 
@@ -2366,19 +2402,19 @@ msgstr ""
 msgid "未分类"
 msgstr ""
 
-#: internal/handler/admin.go:287
+#: internal/handler/admin.go:288
 msgid "未找到"
 msgstr ""
 
-#: internal/handler/admin.go:296
+#: internal/handler/admin.go:298
 msgid "服务器错误"
 msgstr ""
 
-#: internal/handler/admin.go:305
+#: internal/handler/admin.go:308
 msgid "用户名不能为空"
 msgstr ""
 
-#: internal/handler/admin.go:308
+#: internal/handler/admin.go:311
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
 msgstr ""
 
@@ -2833,7 +2869,7 @@ msgid "个人网址格式不正确。"
 msgstr ""
 
 #: internal/handler/admin_profile.go:103 internal/handler/admin_user.go:133
-#: internal/handler/admin_user.go:223 internal/handler/auth_handler.go:152
+#: internal/handler/admin_user.go:223 internal/handler/auth_handler.go:154
 msgid "用户名已被占用。"
 msgstr ""
 
@@ -2849,11 +2885,11 @@ msgstr ""
 msgid "修改邮箱需要先配置 SMTP 邮件设置，以便发送验证邮件。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:144 internal/handler/auth_handler.go:162
+#: internal/handler/admin_profile.go:144 internal/handler/auth_handler.go:164
 msgid "邮箱已被注册。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:160 internal/handler/auth_handler.go:179
+#: internal/handler/admin_profile.go:160 internal/handler/auth_handler.go:181
 msgid "站点 URL 未配置，无法发送安全验证链接，请联系管理员。"
 msgstr ""
 
@@ -2890,17 +2926,17 @@ msgstr ""
 msgid "原密码不正确。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:239 internal/handler/auth_handler.go:270
-#: internal/handler/auth_handler.go:410
+#: internal/handler/admin_profile.go:239 internal/handler/auth_handler.go:272
+#: internal/handler/auth_handler.go:412
 msgid "两次输入的密码不一致。"
 msgstr ""
 
 #: internal/handler/admin_profile.go:245 internal/handler/admin_user.go:116
-#: internal/handler/auth_handler.go:265 internal/handler/auth_handler.go:402
+#: internal/handler/auth_handler.go:267 internal/handler/auth_handler.go:404
 msgid "密码长度不能少于 8 个字符。"
 msgstr ""
 
-#: internal/handler/admin_profile.go:259 internal/handler/auth_handler.go:438
+#: internal/handler/admin_profile.go:259 internal/handler/auth_handler.go:440
 #, c-format
 msgid "[%s] 密码已变更"
 msgstr ""
@@ -3339,33 +3375,51 @@ msgstr ""
 msgid "编辑文件"
 msgstr ""
 
-#: internal/handler/admin_theme_files.go:218
+#: internal/handler/admin_theme_files.go:80
+#, c-format
+msgid "本地目录 %s 不存在，请先在开发设置中释放对应的内嵌资源。"
+msgstr ""
+
+#: internal/handler/admin_theme_files.go:322
+#: internal/handler/admin_theme_files.go:411
+#: internal/handler/admin_theme_files.go:421
+#: internal/handler/admin_theme_files.go:506
+msgid "不支持的文件类型"
+msgstr ""
+
+#: internal/handler/admin_theme_files.go:326
 msgid "文件内容不能超过 100KB"
 msgstr ""
 
-#: internal/handler/admin_theme_files.go:245
+#: internal/handler/admin_theme_files.go:348
 #, c-format
 msgid "文件已保存，但重载失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme_files.go:279
+#: internal/handler/admin_theme_files.go:416
 msgid "无效的文件路径"
 msgstr ""
 
-#: internal/handler/admin_theme_files.go:284
-msgid "不支持的文件类型"
-msgstr ""
-
-#: internal/handler/admin_theme_files.go:294
+#: internal/handler/admin_theme_files.go:431
 msgid "文件已存在"
 msgstr ""
 
-#: internal/handler/admin_theme_files.go:345
+#: internal/handler/admin_theme_files.go:512
 #, c-format
 msgid "不能删除核心文件 %s"
 msgstr ""
 
-#: internal/handler/admin_theme_files.go:379
+#: internal/handler/admin_theme_files.go:526
+#, c-format
+msgid "文件已删除，但重载失败: %s"
+msgstr ""
+
+#: internal/handler/admin_theme_files.go:551
+#, c-format
+msgid "重载失败: %s"
+msgstr ""
+
+#: internal/handler/admin_theme_files.go:615
 #, c-format
 msgid "主题重载失败: %s"
 msgstr ""
@@ -3447,7 +3501,7 @@ msgstr ""
 msgid "编辑用户"
 msgstr ""
 
-#: internal/handler/admin_user.go:188 internal/handler/auth_handler.go:121
+#: internal/handler/admin_user.go:188 internal/handler/auth_handler.go:123
 msgid "用户名和邮箱不能为空。"
 msgstr ""
 
@@ -3467,36 +3521,36 @@ msgid ""
 "站点域名：%s\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:59 internal/handler/auth_handler.go:80
+#: internal/handler/auth_handler.go:61 internal/handler/auth_handler.go:82
 msgid "登录"
 msgstr ""
 
-#: internal/handler/auth_handler.go:61
+#: internal/handler/auth_handler.go:63
 msgid "Session Secret 已更新，所有登录用户都需要重新登录。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:81
+#: internal/handler/auth_handler.go:83
 msgid "用户名或密码错误。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:102 internal/handler/auth_handler.go:116
+#: internal/handler/auth_handler.go:104 internal/handler/auth_handler.go:118
 msgid "注册"
 msgstr ""
 
-#: internal/handler/auth_handler.go:132 internal/handler/comment.go:175
+#: internal/handler/auth_handler.go:134 internal/handler/comment.go:175
 msgid "邮箱格式不正确。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:141
+#: internal/handler/auth_handler.go:143
 msgid "站点尚未配置 SMTP，暂时无法发送验证邮件。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:185
+#: internal/handler/auth_handler.go:187
 #, c-format
 msgid "[%s] 注册邮箱验证"
 msgstr ""
 
-#: internal/handler/auth_handler.go:186
+#: internal/handler/auth_handler.go:188
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3508,54 +3562,54 @@ msgid ""
 "如果您没有请求注册，请忽略此邮件。\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:192
+#: internal/handler/auth_handler.go:194
 msgid "验证邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:199
+#: internal/handler/auth_handler.go:201
 msgid "验证邮件已发送，请检查邮箱并在 24 小时内完成注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:211 internal/handler/auth_handler.go:256
+#: internal/handler/auth_handler.go:213 internal/handler/auth_handler.go:258
 msgid "完成注册"
 msgstr ""
 
-#: internal/handler/auth_handler.go:215 internal/handler/auth_handler.go:221
-#: internal/handler/auth_handler.go:281
+#: internal/handler/auth_handler.go:217 internal/handler/auth_handler.go:223
+#: internal/handler/auth_handler.go:283
 msgid "注册链接无效或已过期，请重新注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:229
+#: internal/handler/auth_handler.go:231
 msgid "用户名已被占用，请重新注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:237
+#: internal/handler/auth_handler.go:239
 msgid "邮箱已被注册，请重新注册。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:260
+#: internal/handler/auth_handler.go:262
 msgid "注册链接无效或密码不能为空。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:292 internal/handler/auth_handler.go:302
-#: internal/handler/auth_handler.go:311 internal/handler/auth_handler.go:336
-#: internal/handler/auth_handler.go:352 internal/handler/auth_handler.go:358
+#: internal/handler/auth_handler.go:294 internal/handler/auth_handler.go:304
+#: internal/handler/auth_handler.go:313 internal/handler/auth_handler.go:338
+#: internal/handler/auth_handler.go:354 internal/handler/auth_handler.go:360
 msgid "忘记密码"
 msgstr ""
 
-#: internal/handler/auth_handler.go:303
+#: internal/handler/auth_handler.go:305
 msgid "请输入邮箱地址。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:312 internal/handler/auth_handler.go:359
+#: internal/handler/auth_handler.go:314 internal/handler/auth_handler.go:361
 msgid "如果该邮箱已注册，重置密码链接已发送。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:337
+#: internal/handler/auth_handler.go:339
 msgid "站点 URL 未配置，无法发送安全重置链接，请联系管理员。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:343
+#: internal/handler/auth_handler.go:345
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3567,26 +3621,26 @@ msgid ""
 "如果您没有请求重置密码，请忽略此邮件。\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:345
+#: internal/handler/auth_handler.go:347
 #, c-format
 msgid "[%s] 密码重置"
 msgstr ""
 
-#: internal/handler/auth_handler.go:353
+#: internal/handler/auth_handler.go:355
 msgid "邮件发送失败，请稍后重试或联系管理员。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:375 internal/handler/auth_handler.go:381
-#: internal/handler/auth_handler.go:400 internal/handler/auth_handler.go:408
-#: internal/handler/auth_handler.go:417 internal/handler/auth_handler.go:443
+#: internal/handler/auth_handler.go:377 internal/handler/auth_handler.go:383
+#: internal/handler/auth_handler.go:402 internal/handler/auth_handler.go:410
+#: internal/handler/auth_handler.go:419 internal/handler/auth_handler.go:445
 msgid "重置密码"
 msgstr ""
 
-#: internal/handler/auth_handler.go:376 internal/handler/auth_handler.go:418
+#: internal/handler/auth_handler.go:378 internal/handler/auth_handler.go:420
 msgid "重置链接无效或已过期，请重新请求。"
 msgstr ""
 
-#: internal/handler/auth_handler.go:439
+#: internal/handler/auth_handler.go:441
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3595,7 +3649,7 @@ msgid ""
 "员。\n"
 msgstr ""
 
-#: internal/handler/auth_handler.go:444
+#: internal/handler/auth_handler.go:446
 msgid "密码已重置，请使用新密码登录。"
 msgstr ""
 

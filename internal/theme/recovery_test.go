@@ -17,6 +17,13 @@ type testSettingStore struct{}
 func (testSettingStore) GetSetting(context.Context, string) (string, error) { return "", nil }
 func (testSettingStore) SetSetting(context.Context, string, string) error   { return nil }
 
+type fixedThemeSettingStore string
+
+func (s fixedThemeSettingStore) GetSetting(context.Context, string) (string, error) {
+	return string(s), nil
+}
+func (fixedThemeSettingStore) SetSetting(context.Context, string, string) error { return nil }
+
 func TestThemeFilePathRejectsTraversalAndPrefixSibling(t *testing.T) {
 	root := t.TempDir()
 	themeDir := filepath.Join(root, "default")
@@ -123,6 +130,34 @@ func TestManagerDeleteRebuildsTranslations(t *testing.T) {
 	}
 	if !gettext.HasDomain("theme_default") {
 		t.Fatal("default theme domain should remain after deleting another theme")
+	}
+}
+
+func TestReloadCurrentThemeRefreshesThemeMetadata(t *testing.T) {
+	root := t.TempDir()
+	themeDir := filepath.Join(root, "themes", "custom")
+	if err := os.MkdirAll(filepath.Join(themeDir, "templates"), 0o755); err != nil {
+		t.Fatalf("create theme dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(themeDir, "theme.yaml"), []byte("name: custom\nversion: 1.0.0\n"), 0o644); err != nil {
+		t.Fatalf("write theme yaml: %v", err)
+	}
+	m, err := NewManager(filepath.Join(root, "themes"), fixedThemeSettingStore("custom"), nil)
+	if err != nil {
+		t.Fatalf("new manager: %v", err)
+	}
+	if got := m.Get("custom").Version; got != "1.0.0" {
+		t.Fatalf("initial version = %q, want 1.0.0", got)
+	}
+
+	if err := os.WriteFile(filepath.Join(themeDir, "theme.yaml"), []byte("name: custom\nversion: 2.0.0\n"), 0o644); err != nil {
+		t.Fatalf("update theme yaml: %v", err)
+	}
+	if err := m.ReloadCurrentTheme(context.Background()); err != nil {
+		t.Fatalf("reload theme: %v", err)
+	}
+	if got := m.Get("custom").Version; got != "2.0.0" {
+		t.Fatalf("reloaded version = %q, want 2.0.0", got)
 	}
 }
 

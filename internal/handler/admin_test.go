@@ -91,6 +91,33 @@ func TestReleaseDirFromFS(t *testing.T) {
 	}
 }
 
+func TestLocalEditableResourceHelpers(t *testing.T) {
+	if got := editableKind("template"); got != editableResourceTemplate {
+		t.Fatalf("editableKind(template) = %q", got)
+	}
+	if got := editableResourceRoot(editableResourceTemplate); got != filepath.Join("web", "templates") {
+		t.Fatalf("template root = %q", got)
+	}
+	if !isEditableLocalFilePath(editableResourceTemplate, "admin_base.gohtml") {
+		t.Fatal("template gohtml should be editable")
+	}
+	if isEditableLocalFilePath(editableResourceTemplate, "admin_base.html") {
+		t.Fatal("template html should not be editable")
+	}
+	if !isEditableLocalFilePath(editableResourceAsset, "admin.css") || !isEditableLocalFilePath(editableResourceAsset, "icons/site.svg") {
+		t.Fatal("asset css/svg should be editable")
+	}
+	if isEditableLocalFilePath(editableResourceAsset, "logo.png") {
+		t.Fatal("binary asset should not be editable")
+	}
+	if !isEditableLocalFilePath(editableResourceI18n, "en_US.po") || !isEditableLocalFilePath(editableResourceI18n, "messages.pot") {
+		t.Fatal("i18n po/pot should be editable")
+	}
+	if isEditableLocalFilePath(editableResourceI18n, "compiled.mo") {
+		t.Fatal("i18n mo should not be editable for app resources")
+	}
+}
+
 func TestNormalizeTermSlug(t *testing.T) {
 	tests := map[string]string{
 		" Go 教程 ":              "go-教程",

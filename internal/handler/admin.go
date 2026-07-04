@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -90,7 +92,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
 		"PendingCount":         pendingCount,
 		"PostPermalinkPattern": currentPostPermalink,
-		"AssetVersion":         version.Version,
+		"AssetVersion":         assetVersion(),
 		"InstanceVersion":      version.Display(),
 		"RoleAdmin":            model.RoleAdmin,
 		"RoleAuthor":           model.RoleAuthor,
@@ -227,7 +229,7 @@ func adminNavKey(c *gin.Context) string {
 		return "users"
 	case "/admin/themes", "/admin/theme/upload", "/admin/theme/activate", "/admin/theme/delete", "/admin/theme/download", "/admin/theme/preview", "/admin/theme/preview/clear", "/admin/theme/screenshot/:name/:file":
 		return "themes"
-	case "/admin/theme/files", "/admin/theme/file", "/admin/theme/file/create", "/admin/theme/file/delete", "/admin/theme/recovery/clear", "/admin/theme/reload":
+	case "/admin/theme/files", "/admin/theme/file", "/admin/theme/file/create", "/admin/theme/file/delete", "/admin/theme/file/reload", "/admin/theme/recovery/clear", "/admin/theme/reload":
 		return "theme-files"
 	case "/admin/menus":
 		return "menus"
@@ -286,7 +288,7 @@ func (h *Admin) notFound(c *gin.Context) {
 	c.HTML(http.StatusNotFound, "admin_error.gohtml", i18n.Inject(c, gin.H{
 		"Title":        "404",
 		"Message":      tr.T("未找到"),
-		"AssetVersion": version.Version,
+		"AssetVersion": assetVersion(),
 	}))
 }
 
@@ -296,8 +298,31 @@ func (h *Admin) serverError(c *gin.Context, err error) {
 	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", i18n.Inject(c, gin.H{
 		"Title":        "500",
 		"Message":      tr.T("服务器错误"),
-		"AssetVersion": version.Version,
+		"AssetVersion": assetVersion(),
 	}))
+}
+
+func assetVersion() string {
+	root := filepath.Join("web", "assets")
+	info, err := os.Stat(root)
+	if err != nil || !info.IsDir() {
+		return version.Version
+	}
+	maxMod := info.ModTime().UnixNano()
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+		if mod := info.ModTime().UnixNano(); mod > maxMod {
+			maxMod = mod
+		}
+		return nil
+	})
+	return version.Version + "-" + strconv.FormatInt(maxMod, 36)
 }
 
 var usernameAllowedRe = regexp.MustCompile(`^[a-zA-Z0-9_-]{2,32}$`)
