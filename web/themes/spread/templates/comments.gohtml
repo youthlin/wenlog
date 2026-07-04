@@ -13,6 +13,6 @@
 
 {{- define "fragment_comments.gohtml" -}}
 {{list_comments . "ul" 44}}
-{{comments_pagination .}}
+{{comments_pagination . 2}}
 {{comment_form .}}
 {{- end}}

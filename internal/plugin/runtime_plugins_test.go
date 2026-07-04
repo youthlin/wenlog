@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -49,6 +50,60 @@ func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
 	}
 	if got := widgets[0]; got.ID != "saying" || got.Source != "plugin" || got.PluginID != "common-widgets" {
 		t.Fatalf("registered widget = %+v", got)
+	}
+}
+
+type countingSettingStore struct {
+	value    string
+	getCount int
+	setCount int
+}
+
+func (s *countingSettingStore) GetSetting(context.Context, string) (string, error) {
+	s.getCount++
+	return s.value, nil
+}
+
+func (s *countingSettingStore) SetSetting(_ context.Context, _ string, value string) error {
+	s.setCount++
+	s.value = value
+	return nil
+}
+
+func TestManagerEnabledIDsUsesMemoryCache(t *testing.T) {
+	stored, err := json.Marshal([]string{"common-widgets"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := &countingSettingStore{value: string(stored)}
+	m, err := NewManager(filepath.Join("..", "..", "web", "plugins"), settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ids := m.EnabledIDs(context.Background())
+	if got, want := strings.Join(ids, ","), "common-widgets"; got != want {
+		t.Fatalf("enabled ids = %q, want %q", got, want)
+	}
+	ids[0] = "mutated"
+	if got, want := strings.Join(m.EnabledIDs(context.Background()), ","), "common-widgets"; got != want {
+		t.Fatalf("cached enabled ids should be cloned, got %q want %q", got, want)
+	}
+	if settings.getCount != 1 {
+		t.Fatalf("GetSetting calls = %d, want 1", settings.getCount)
+	}
+
+	if err := m.Enable(context.Background(), "comment-smilies"); err != nil {
+		t.Fatal(err)
+	}
+	if settings.setCount != 1 {
+		t.Fatalf("SetSetting calls = %d, want 1", settings.setCount)
+	}
+	if got, want := strings.Join(m.EnabledIDs(context.Background()), ","), "common-widgets,comment-smilies"; got != want {
+		t.Fatalf("enabled ids after enable = %q, want %q", got, want)
+	}
+	if settings.getCount != 1 {
+		t.Fatalf("GetSetting calls after cache update = %d, want 1", settings.getCount)
 	}
 }
 

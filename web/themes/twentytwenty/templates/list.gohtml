@@ -21,6 +21,6 @@
   <p>{{.th.T "没有找到匹配的文章。"}}</p>
   {{end}}
 </div>
-{{template "pagination" .}}
+{{posts_pagination . 2}}
 {{template "footer" .}}
 {{- end}}

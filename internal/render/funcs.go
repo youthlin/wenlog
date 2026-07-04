@@ -882,63 +882,162 @@ func writeCommentChildren(out *strings.Builder, ctx *RequestContext,
 }
 
 // commentsPagination 渲染评论分页导航。
-// 模板调用: {{the_comments_pagination .}}
-func commentsPagination(ctx *RequestContext, data any) template.HTML {
+// 模板调用: {{comments_pagination .}} 或 {{comments_pagination . 2}}
+func commentsPagination(ctx *RequestContext, data any, midSize ...int) template.HTML {
 	var out strings.Builder
-	writeCommentPagination(&out, ctx, data)
+	writeCommentPagination(&out, ctx, data, midSize...)
 	return template.HTML(out.String())
 }
 
-// writeCommentPagination 渲染评论分页导航。
-func writeCommentPagination(out *strings.Builder, ctx *RequestContext, data any) {
-	pagerAny := dataValue(data, "CommentPager")
-	if pagerAny == nil {
-		return
-	}
-	pager, ok := pagerAny.(map[string]any)
+// postsPagination 渲染文章列表分页导航，类似 WordPress paginate_links。
+// midSize 控制当前页左右展示的页码数量，默认 2。
+func postsPagination(ctx *RequestContext, data any, midSize ...int) template.HTML {
+	pager, ok := pagerData(dataValue(data, "Pager"))
 	if !ok {
-		if gh, ok2 := pagerAny.(gin.H); ok2 {
-			pager = map[string]any(gh)
-		} else {
-			return
+		return ""
+	}
+	pages, _ := toInt(pager["Pages"])
+	if pages <= 1 {
+		return ""
+	}
+	page, _ := toInt(pager["Page"])
+	if page < 1 {
+		page = 1
+	}
+	if page > pages {
+		page = pages
+	}
+	baseURL, _ := pager["BaseURL"].(string)
+	sep, _ := pager["Sep"].(string)
+	if sep == "" {
+		sep = "?"
+	}
+	ms := 2
+	if len(midSize) > 0 && midSize[0] >= 0 {
+		ms = midSize[0]
+	}
+
+	var out strings.Builder
+	util.WriteString(&out, `<nav class="pagination posts-pagination"><div class="nav-links">`)
+	if page > 1 {
+		writePostPageLink(&out, ctx.T("上一页"), postPageURL(baseURL, sep, page-1), "prev")
+	}
+	writePageNumbers(&out, page, pages, ms, func(i int) {
+		writePostPageLink(&out, strconv.Itoa(i), postPageURL(baseURL, sep, i), "")
+	})
+	if page < pages {
+		writePostPageLink(&out, ctx.T("下一页"), postPageURL(baseURL, sep, page+1), "next")
+	}
+	util.WriteString(&out, `</div></nav>`)
+	return template.HTML(out.String())
+}
+
+func pagerData(pagerAny any) (map[string]any, bool) {
+	if pagerAny == nil {
+		return nil, false
+	}
+	if pager, ok := pagerAny.(map[string]any); ok {
+		return pager, true
+	}
+	if pager, ok := pagerAny.(gin.H); ok {
+		return map[string]any(pager), true
+	}
+	return nil, false
+}
+
+func postPageURL(baseURL, sep string, page int) string {
+	if page <= 1 {
+		return baseURL
+	}
+	return baseURL + sep + "page=" + strconv.Itoa(page)
+}
+
+func writePostPageLink(out *strings.Builder, label, href, extraClass string) {
+	util.WriteString(out, `<a class="page-numbers`)
+	if extraClass != "" {
+		util.WriteString(out, ` `)
+		util.WriteString(out, html.EscapeString(extraClass))
+	}
+	util.WriteString(out, `" href="`)
+	util.WriteString(out, html.EscapeString(href))
+	util.WriteString(out, `">`)
+	util.WriteString(out, html.EscapeString(label))
+	util.WriteString(out, `</a>`)
+}
+
+func writePageNumbers(out *strings.Builder, page, pages, midSize int, writeLink func(page int)) {
+	wroteDots := false
+	for i := 1; i <= pages; i++ {
+		visible := i == 1 || i == pages || (i >= page-midSize && i <= page+midSize)
+		if !visible {
+			if !wroteDots {
+				util.WriteString(out, `<span class="page-numbers dots">&hellip;</span>`)
+				wroteDots = true
+			}
+			continue
 		}
+		wroteDots = false
+		if i == page {
+			util.WriteString(out, `<span class="page-numbers current">`)
+			util.WriteString(out, strconv.Itoa(i))
+			util.WriteString(out, `</span>`)
+			continue
+		}
+		writeLink(i)
+	}
+}
+
+// writeCommentPagination 渲染评论分页导航。
+func writeCommentPagination(out *strings.Builder, ctx *RequestContext, data any, midSize ...int) {
+	pager, ok := pagerData(dataValue(data, "CommentPager"))
+	if !ok {
+		return
 	}
 	pages, _ := toInt(pager["Pages"])
 	if pages <= 1 {
 		return
 	}
 	page, _ := toInt(pager["Page"])
+	if page < 1 {
+		page = 1
+	}
+	if page > pages {
+		page = pages
+	}
 	baseURL, _ := pager["BaseURL"].(string)
+	ms := 2
+	if len(midSize) > 0 && midSize[0] >= 0 {
+		ms = midSize[0]
+	}
 
-	util.WriteString(out, `<nav class="pagination comment-pagination">`)
+	util.WriteString(out, `<nav class="pagination comment-pagination"><div class="nav-links">`)
 	if page > 1 {
-		util.WriteString(out, `<a href="`)
-		util.WriteString(out, html.EscapeString(baseURL))
-		util.WriteString(out, `?cpage=`)
-		util.WriteString(out, strconv.Itoa(page-1))
-		util.WriteString(out, `#comments" data-cpage="`)
-		util.WriteString(out, strconv.Itoa(page-1))
-		util.WriteString(out, `">`)
-		util.WriteString(out, ctx.T("上一页"))
-		util.WriteString(out, `</a>`)
+		writeCommentPageLink(out, ctx.T("上一页"), baseURL, page-1, "prev")
 	}
-	util.WriteString(out, `<span class="page-info">`)
-	util.WriteString(out, strconv.Itoa(page))
-	util.WriteString(out, ` / `)
-	util.WriteString(out, strconv.Itoa(pages))
-	util.WriteString(out, `</span>`)
+	writePageNumbers(out, page, pages, ms, func(i int) {
+		writeCommentPageLink(out, strconv.Itoa(i), baseURL, i, "")
+	})
 	if page < pages {
-		util.WriteString(out, `<a href="`)
-		util.WriteString(out, html.EscapeString(baseURL))
-		util.WriteString(out, `?cpage=`)
-		util.WriteString(out, strconv.Itoa(page+1))
-		util.WriteString(out, `#comments" data-cpage="`)
-		util.WriteString(out, strconv.Itoa(page+1))
-		util.WriteString(out, `">`)
-		util.WriteString(out, ctx.T("下一页"))
-		util.WriteString(out, `</a>`)
+		writeCommentPageLink(out, ctx.T("下一页"), baseURL, page+1, "next")
 	}
-	util.WriteString(out, `</nav>`)
+	util.WriteString(out, `</div></nav>`)
+}
+
+func writeCommentPageLink(out *strings.Builder, label, baseURL string, page int, extraClass string) {
+	util.WriteString(out, `<a class="page-numbers`)
+	if extraClass != "" {
+		util.WriteString(out, ` `)
+		util.WriteString(out, html.EscapeString(extraClass))
+	}
+	util.WriteString(out, `" href="`)
+	util.WriteString(out, html.EscapeString(baseURL))
+	util.WriteString(out, `?cpage=`)
+	util.WriteString(out, strconv.Itoa(page))
+	util.WriteString(out, `#comments" data-cpage="`)
+	util.WriteString(out, strconv.Itoa(page))
+	util.WriteString(out, `">`)
+	util.WriteString(out, html.EscapeString(label))
+	util.WriteString(out, `</a>`)
 }
 
 // writeCommentLoginTip 渲染已登录用户的身份提示。

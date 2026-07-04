@@ -10,6 +10,6 @@
 
 {{- define "fragment_comments.gohtml" -}}
 {{list_comments .}}
-{{comments_pagination .}}
+{{comments_pagination . 2}}
 {{comment_form .}}
 {{- end}}

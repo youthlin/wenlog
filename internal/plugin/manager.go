@@ -24,15 +24,17 @@ const (
 
 // Manager 管理插件扫描、启用列表和共享 Hook Registry。
 type Manager struct {
-	pluginsDir  string
-	store       hook.SettingStore
-	plugins     map[string]*Plugin
-	hooks       *Registry
-	scripts     map[string]*FunctionsScript
-	loadErrors  map[string]string
-	log         *slog.Logger
-	mu          sync.RWMutex
-	pluginOpMu  sync.Mutex // 串行化 Install/Delete 操作
+	pluginsDir string
+	store      hook.SettingStore
+	plugins    map[string]*Plugin
+	hooks      *Registry
+	scripts    map[string]*FunctionsScript
+	loadErrors map[string]string
+	enabledIDs []string
+	enabledSet bool
+	log        *slog.Logger
+	mu         sync.RWMutex
+	pluginOpMu sync.Mutex // 串行化 Install/Delete 操作
 }
 
 // NewManager 创建插件管理器。pluginsDir 是插件存放目录（如 "plugins"）。
@@ -333,6 +335,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 	}
 	m.mu.Lock()
 	m.plugins[pluginID] = p
+	m.invalidateEnabledIDsCacheLocked()
 	m.mu.Unlock()
 	if err := m.RebuildTranslations(); err != nil {
 		m.mu.Lock()
@@ -341,6 +344,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 		} else {
 			delete(m.plugins, pluginID)
 		}
+		m.invalidateEnabledIDsCacheLocked()
 		m.mu.Unlock()
 		rbErr := rollbackPluginInstall(targetDir, backupDir)
 		restoreErr := m.RebuildTranslations()
@@ -369,10 +373,12 @@ func (m *Manager) Delete(id string) error {
 	}
 	m.mu.Lock()
 	delete(m.plugins, id)
+	m.invalidateEnabledIDsCacheLocked()
 	m.mu.Unlock()
 	if err := m.RebuildTranslations(); err != nil {
 		m.mu.Lock()
 		m.plugins[id] = p
+		m.invalidateEnabledIDsCacheLocked()
 		m.mu.Unlock()
 		if backupDir != "" {
 			_ = os.Rename(backupDir, p.Dir)
@@ -387,6 +393,7 @@ func (m *Manager) Delete(id string) error {
 		if err := os.RemoveAll(backupDir); err != nil {
 			m.mu.Lock()
 			m.plugins[id] = p
+			m.invalidateEnabledIDsCacheLocked()
 			m.mu.Unlock()
 			if _, statErr := os.Stat(p.Dir); os.IsNotExist(statErr) {
 				_ = os.Rename(backupDir, p.Dir)
@@ -482,24 +489,38 @@ func (m *Manager) EnabledIDs(ctx context.Context) []string {
 		return nil
 	}
 	m.mu.RLock()
-	defer m.mu.RUnlock()
+	if m.enabledSet {
+		ids := cloneIDs(m.enabledIDs)
+		m.mu.RUnlock()
+		return ids
+	}
+	m.mu.RUnlock()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.enabledIDsLocked(ctx)
 }
 
 func (m *Manager) enabledIDsLocked(ctx context.Context) []string {
+	if m.enabledSet {
+		return cloneIDs(m.enabledIDs)
+	}
 	raw, err := m.store.GetSetting(ctx, settingEnabledPlugins)
-	if err != nil || raw == "" {
-		return m.defaultEnabledIDsLocked()
-	}
 	var ids []string
-	if err := json.Unmarshal([]byte(raw), &ids); err != nil {
-		return nil
+	if err != nil || raw == "" {
+		ids = m.defaultEnabledIDsLocked()
+	} else if err := json.Unmarshal([]byte(raw), &ids); err != nil {
+		ids = nil
+	} else {
+		installed := make(map[string]bool, len(m.plugins))
+		for id := range m.plugins {
+			installed[id] = true
+		}
+		ids = filterInstalledIDs(ids, installed)
 	}
-	installed := make(map[string]bool, len(m.plugins))
-	for id := range m.plugins {
-		installed[id] = true
-	}
-	return filterInstalledIDs(ids, installed)
+	m.enabledIDs = cloneIDs(ids)
+	m.enabledSet = true
+	return cloneIDs(ids)
 }
 
 func (m *Manager) defaultEnabledIDsLocked() []string {
@@ -566,7 +587,28 @@ func (m *Manager) saveEnabledIDs(ctx context.Context, ids []string) error {
 	if err != nil {
 		return errors.Wrap(err, "序列化启用插件列表失败")
 	}
-	return m.store.SetSetting(ctx, settingEnabledPlugins, string(data))
+	if err := m.store.SetSetting(ctx, settingEnabledPlugins, string(data)); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	m.enabledIDs = cloneIDs(ids)
+	m.enabledSet = true
+	m.mu.Unlock()
+	return nil
+}
+
+func (m *Manager) invalidateEnabledIDsCacheLocked() {
+	m.enabledIDs = nil
+	m.enabledSet = false
+}
+
+func cloneIDs(ids []string) []string {
+	if len(ids) == 0 {
+		return nil
+	}
+	out := make([]string, len(ids))
+	copy(out, ids)
+	return out
 }
 
 func (m *Manager) installedSet() map[string]bool {

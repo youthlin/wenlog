@@ -191,8 +191,12 @@ const (
 	tplFuncCommentForm = "comment_form"
 
 	// tplFuncCommentsPagination 渲染评论分页导航。
-	// 用法: {{comments_pagination .}}
+	// 用法: {{comments_pagination .}} 或 {{comments_pagination . 2}}
 	tplFuncCommentsPagination = "comments_pagination"
+
+	// tplFuncPostsPagination 渲染文章列表分页导航。
+	// 用法: {{posts_pagination .}} 或 {{posts_pagination . 2}}
+	tplFuncPostsPagination = "posts_pagination"
 )
 
 // dataContext 从前台页面的 Data 中通过 [ContextDataKey] 拿到 [context.Context]
@@ -254,7 +258,8 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext) (*temp
 		tplFuncHeadMeta:           func(data any) template.HTML { return headMeta(ctx, data) },
 		tplFuncListComments:       func(args ...any) template.HTML { return listComments(ctx, args...) },
 		tplFuncCommentForm:        func(data any) template.HTML { return commentForm(ctx, data) },
-		tplFuncCommentsPagination: func(data any) template.HTML { return commentsPagination(ctx, data) },
+		tplFuncCommentsPagination: func(data any, midSize ...int) template.HTML { return commentsPagination(ctx, data, midSize...) },
+		tplFuncPostsPagination:    func(data any, midSize ...int) template.HTML { return postsPagination(ctx, data, midSize...) },
 	})
 	return cloned, nil
 }
@@ -282,6 +287,7 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncHeadMeta:           func(data any) template.HTML { return "" },
 		tplFuncListComments:       func(args ...any) template.HTML { return "" },
 		tplFuncCommentForm:        func(data any) template.HTML { return "" },
-		tplFuncCommentsPagination: func(data any) template.HTML { return "" },
+		tplFuncCommentsPagination: func(data any, midSize ...int) template.HTML { return "" },
+		tplFuncPostsPagination:    func(data any, midSize ...int) template.HTML { return "" },
 	}
 }

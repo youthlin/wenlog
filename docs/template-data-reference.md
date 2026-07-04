@@ -88,6 +88,8 @@
 | `renderWidgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{renderWidgets "sidebar" .}}` |
 | `widgetOption` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
 | `renderMenu` | `func(string, ...any) template.HTML` | 渲染指定位置的导航菜单，如 `{{renderMenu "primary" .}}`；支持多级下拉子菜单，自动从 `.Menus` 或 `.Menu` 取数据 |
+| `comments_pagination` | `func(any, ...int) template.HTML` | 渲染评论分页导航，读取 `.CommentPager`；第二个可选参数为 `midSize`，控制当前页左右显示几个页码，默认 `2` |
+| `posts_pagination` | `func(any, ...int) template.HTML` | 渲染文章列表分页导航，读取 `.Pager`；第二个可选参数为 `midSize`，控制当前页左右显示几个页码，默认 `2` |
 
 ## 数据模型
 

@@ -352,8 +352,18 @@ img { max-width: 100%; }
 /* ============================================================
    12. 主内容区 - 分页
    ============================================================ */
-.pagination { display: flex; align-items: center; gap: 16px; margin-top: 32px; justify-content: center; }
-.page-info { color: var(--muted); }
+.pagination { margin-top: 32px; }
+.pagination .nav-links { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.pagination .page-numbers { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--fg); text-decoration: none; }
+.pagination .page-numbers:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+.pagination .page-numbers.current { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pagination .page-numbers.dots { border-color: transparent; color: var(--muted); min-width: auto; padding: 0 4px; }
+.pagination .page-numbers.dots:hover { border-color: transparent; color: var(--muted); }
+.pagination .prev, .pagination .next { font-weight: 600; }
+@media (max-width: 520px) {
+  .pagination .nav-links { gap: 6px; }
+  .pagination .page-numbers:not(.prev):not(.next):not(.current) { display: none; }
+}
 
 /* ============================================================
    13. 主内容区 - 归档页

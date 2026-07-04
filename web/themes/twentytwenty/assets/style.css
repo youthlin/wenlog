@@ -557,6 +557,10 @@ body.nav-open { overflow: hidden; }
 .pagination .page-numbers.dots { color: var(--muted); min-width: auto; padding: 0 4px; }
 .pagination .page-numbers.dots:hover { background: transparent; color: var(--muted); }
 .pagination .prev, .pagination .next { font-weight: 600; }
+@media (max-width: 520px) {
+  .pagination .nav-links { justify-content: center; gap: 6px; }
+  .pagination .page-numbers:not(.prev):not(.next):not(.current) { display: none; }
+}
 
 /* ============================================================
    14. 主内容区 - 归档页
@@ -924,7 +928,10 @@ body.nav-open { overflow: hidden; }
   margin-bottom: 24px;
   box-shadow: none;
   overflow: visible;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
+.footer-widgets .widget a { overflow-wrap: anywhere; word-break: break-word; }
 .footer-widgets .widget-recent-comments { overflow: auto; }
 .footer-widgets .widget h3 {
   font-size: 2rem;
@@ -937,6 +944,10 @@ body.nav-open { overflow: hidden; }
 .footer-widgets .widget li { padding: 4px 0; }
 @media (max-width: 640px) {
   .footer-widgets {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
     grid-template-columns: 1fr;
     gap: 0;
   }

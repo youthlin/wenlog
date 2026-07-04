@@ -98,15 +98,7 @@
 {{end}}{{/* footer */}}
 
 {{- define "pagination" -}}
-{{- with .Pager}}
-{{- if gt .Pages 1}}
-<nav class="pagination">
-  {{if gt .Page 1}}<a href="{{.BaseURL}}{{if gt (sub .Page 1) 1}}{{.Sep}}page={{sub .Page 1}}{{end}}" class="pagination-link">{{$.th.T "上一页"}}</a>{{end}}
-  <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="{{.BaseURL}}{{.Sep}}page={{add .Page 1}}" class="pagination-link">{{$.th.T "下一页"}}</a>{{end}}
-</nav>
-{{- end}}
-{{- end}}
+{{posts_pagination . 2}}
 {{end}}{{/* pagination */}}
 
 {{- define "comments" -}}
@@ -121,7 +113,7 @@
 
 {{- define "fragment_comments.gohtml" -}}
   {{list_comments .}}
-  {{comments_pagination .}}
+  {{comments_pagination . 2}}
   {{comment_form .}}
 {{- end}}
 
@@ -207,7 +199,7 @@
     <p>{{.th.T "没有找到匹配的文章。"}}</p>
     {{end}}
   </div>
-  {{template "pagination" .}}
+  {{posts_pagination . 2}}
 {{- end}}
 
 {{template "footer" .}}

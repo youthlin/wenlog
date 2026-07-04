@@ -131,6 +131,13 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 		},
 	}
 
+	ctx := &RequestContext{Data: data}
+	tpl, err = cloneTemplateForRequest(tpl, ctx)
+	if err != nil {
+		t.Fatalf("clone template: %v", err)
+	}
+	ctx.Template = tpl
+
 	var b bytes.Buffer
 	if err := tpl.ExecuteTemplate(&b, "pagination", data); err != nil {
 		t.Fatalf("execute pagination: %v", err)
@@ -141,6 +148,33 @@ func TestPaginationTemplateKeepsPageContext(t *testing.T) {
 	}
 	if !strings.Contains(got, `href="/?page=3"`) || !strings.Contains(got, "下一页") {
 		t.Fatalf("pagination should render next page link, got: %s", got)
+	}
+}
+
+func TestCommentsPaginationRendersPageNumbers(t *testing.T) {
+	data := map[string]any{
+		"th": testTranslator{},
+		"CommentPager": map[string]any{
+			"Page":    5,
+			"Pages":   10,
+			"BaseURL": "/post.html",
+		},
+	}
+	got := string(commentsPagination(&RequestContext{Data: data}, data, 1))
+	for _, want := range []string{
+		`class="pagination comment-pagination"`,
+		`class="page-numbers prev" href="/post.html?cpage=4#comments" data-cpage="4"`,
+		`class="page-numbers current">5</span>`,
+		`class="page-numbers" href="/post.html?cpage=6#comments" data-cpage="6"`,
+		`class="page-numbers next" href="/post.html?cpage=6#comments" data-cpage="6"`,
+		`class="page-numbers dots"`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("comments pagination missing %q, got: %s", want, got)
+		}
+	}
+	if strings.Contains(got, `cpage=3`) || strings.Contains(got, `cpage=7`) {
+		t.Fatalf("comments pagination should respect midSize=1, got: %s", got)
 	}
 }
 

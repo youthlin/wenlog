@@ -292,20 +292,31 @@ img { max-width: 100%; height: auto; }
 
 /* ---------- 分页 ---------- */
 .pagination {
-  display: flex; align-items: center; justify-content: center; gap: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
   margin-top: 40px;
 }
-.pagination-link {
-  padding: 8px 18px; border-radius: 6px;
+.pagination .nav-links { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.pagination-link,
+.pagination .page-numbers {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 38px; min-height: 38px; padding: 0 12px; border-radius: 6px;
   border: 1px solid var(--border-light);
   color: var(--fg-dim); font-size: 14px;
   transition: all var(--transition);
 }
-.pagination-link:hover {
+.pagination-link:hover,
+.pagination .page-numbers:hover {
   border-color: var(--accent); color: var(--accent);
   text-decoration: none; background: var(--accent-dim);
 }
+.pagination .page-numbers.current { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.pagination .page-numbers.dots { border-color: transparent; color: var(--fg-muted); min-width: auto; padding: 0 4px; }
+.pagination .page-numbers.dots:hover { border-color: transparent; color: var(--fg-muted); background: transparent; }
 .page-info { color: var(--fg-muted); font-size: 14px; }
+@media (max-width: 520px) {
+  .pagination .nav-links { gap: 6px; }
+  .pagination .page-numbers:not(.prev):not(.next):not(.current) { display: none; }
+}
 
 /* ---------- 归档 ---------- */
 .archive-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; }

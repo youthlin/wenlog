@@ -709,8 +709,34 @@ ul.comment-list { padding-block-end: 42px; }
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 42px 0;
+}
+.pagination .nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pagination .page-numbers {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+}
+.pagination .page-numbers.current {
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: var(--paper);
+  font-weight: 950;
+}
+.pagination .page-numbers.dots {
+  color: rgba(38, 33, 28, 0.62);
+  min-width: auto;
+  padding: 0 4px;
 }
 .page-info {
   border: 2px solid var(--ink);
@@ -1279,11 +1305,25 @@ body {
   background: rgba(255, 252, 246, 0.66);
   color: var(--ink);
 }
+.pagination .page-numbers.current {
+  border: 1px solid rgba(38, 33, 28, 0.14);
+  padding: 8px 14px;
+  background: rgba(255, 252, 246, 0.58);
+  color: rgba(38, 33, 28, 0.62);
+  font-weight: 720;
+}
+.pagination .page-numbers.dots {
+  color: rgba(38, 33, 28, 0.62);
+}
 .pagination a:hover {
   border-color: rgba(157, 78, 63, 0.42);
   background: rgba(157, 78, 63, 0.10);
   color: var(--accent);
   box-shadow: none;
+}
+@media (max-width: 520px) {
+  .pagination .nav-links { gap: 8px; }
+  .pagination .page-numbers:not(.prev):not(.next):not(.current) { display: none; }
 }
 .page-info {
   border: 1px solid rgba(38, 33, 28, 0.14);
