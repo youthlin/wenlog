@@ -90,6 +90,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
 		"PendingCount":         pendingCount,
 		"PostPermalinkPattern": currentPostPermalink,
+		"AssetVersion":         version.Version,
 		"InstanceVersion":      version.Display(),
 		"RoleAdmin":            model.RoleAdmin,
 		"RoleAuthor":           model.RoleAuthor,
@@ -283,8 +284,9 @@ func normalizeTaxonomySlug(s string) string {
 func (h *Admin) notFound(c *gin.Context) {
 	tr := i18n.Get(c)
 	c.HTML(http.StatusNotFound, "admin_error.gohtml", i18n.Inject(c, gin.H{
-		"Title":   "404",
-		"Message": tr.T("未找到"),
+		"Title":        "404",
+		"Message":      tr.T("未找到"),
+		"AssetVersion": version.Version,
 	}))
 }
 
@@ -292,8 +294,9 @@ func (h *Admin) serverError(c *gin.Context, err error) {
 	h.log.Error("admin error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
 	tr := i18n.Get(c)
 	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", i18n.Inject(c, gin.H{
-		"Title":   "500",
-		"Message": tr.T("服务器错误"),
+		"Title":        "500",
+		"Message":      tr.T("服务器错误"),
+		"AssetVersion": version.Version,
 	}))
 }
 

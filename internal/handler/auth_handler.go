@@ -20,6 +20,7 @@ import (
 	"github.com/youthlin/blog/internal/model"
 	"github.com/youthlin/blog/internal/store"
 	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/blog/internal/version"
 )
 
 // Auth 是认证处理器，独立于 Public 和 Admin。
@@ -47,6 +48,7 @@ func (h *Auth) base(c *gin.Context, title string) gin.H {
 	data := gin.H{
 		"SiteName":         siteName,
 		"Title":            title,
+		"AssetVersion":     version.Version,
 		"RegistrationOpen": settings[consts.SettingsRegistrationOpen] == "true",
 		"SMTPConfigured":   smtpConfigFromStore(c, h.st).Configured(),
 	}

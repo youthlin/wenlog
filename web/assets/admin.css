@@ -399,7 +399,7 @@ body.admin.nav-open { overflow: hidden; }
 /* ============================================================
    6. 后台主内容区 (Admin Main)
    ============================================================ */
-.admin-main { min-width: 0; padding-bottom: 40px; }
+.admin-main { min-width: 0; }
 
 .admin-shell .page-head,
 .admin-shell > .notice-banner,
@@ -1921,13 +1921,11 @@ body.admin.nav-open { overflow: hidden; }
 /* 后台实例版本 footer */
 .admin-instance-footer {
   margin: 0;
-  padding: 12px 20px 20px;
+  padding: 42px 0 12px;
   color: var(--muted);
   background: var(--bg);
-  font-size: 12px;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-  text-align: center;
+  text-align: end;
+  font-style: italic;
 }
 
 /* SQL 执行详情 footer */

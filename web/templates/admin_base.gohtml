@@ -21,7 +21,7 @@
 {{- if .CSRFToken}}
 <meta name="csrf-token" content="{{.CSRFToken}}">
 {{- end}}
-<link rel="stylesheet" href="/assets/admin.css">
+<link rel="stylesheet" href="/assets/admin.css?v={{.AssetVersion}}">
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body class="admin">
@@ -153,9 +153,9 @@
 {{- end}}
 
 {{- define "admin_footer" -}}
+  <footer class="admin-instance-footer">{{.t.T "当前版本"}}: {{.InstanceVersion}}</footer>
   </main>
 </div><!-- .admin-shell -->
-<footer class="admin-instance-footer">{{.t.T "当前版本"}}: {{.InstanceVersion}}</footer>
 {{- if .SQLDetails}}
 {{- if .SQLDetails.Count}}
 <footer class="sql-details-footer">
