@@ -1,0 +1,115 @@
+{{- define "admin_themes.gohtml" -}}
+{{template "admin_header" .}}
+<h1>{{.t.T "外观"}}</h1>
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
+{{- if .PreviewTheme}}
+<p class="notice-banner theme-preview-notice">
+  {{.t.T "正在预览主题「%s」v%s，前台已生效。仅你可见，其他访客不受影响。" .PreviewTheme.Name .PreviewTheme.Version}}
+  <form class="inline" method="post" action="/admin/theme/preview/clear" style="margin-left:1em">
+    {{template "csrf_field" .}}
+    <button type="submit" class="btn-secondary btn-sm">{{.t.T "退出预览"}}</button>
+  </form>
+</p>
+{{- end}}
+
+<div class="settings-main themes-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "主题管理"}}</h3>
+      {{if .CurrentTheme}}
+      <p class="tip">{{.t.T "当前主题"}}: <strong>{{.CurrentTheme.Name}}</strong> {{if .CurrentTheme.Version}}v{{.CurrentTheme.Version}}{{end}} — {{.CurrentTheme.Description}}</p>
+      {{end}}
+      {{if .Themes}}
+      {{$currentName := ""}}{{if .CurrentTheme}}{{$currentName = .CurrentTheme.Name}}{{end}}
+      <div class="table-scroll">
+        <table class="data-table themes-table">
+          <thead>
+          <tr>
+            <th>{{.t.T "截图"}}</th>
+            <th>{{.t.T "主题/作者"}}</th>
+            <th>{{.t.T "描述"}}</th>
+            <th>{{.t.T "操作"}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          {{range .Themes}}
+          <tr>
+            <td data-label="{{$.t.T "截图"}}" class="theme-screenshot-cell">
+              {{if .ScreenshotURL}}
+              <img src="{{.ScreenshotURL}}" alt="{{.Name}} screenshot" class="theme-screenshot-thumb" loading="lazy">
+              {{else}}
+              <span class="theme-no-screenshot">—</span>
+              {{end}}
+            </td>
+            <td class="theme-name-cell" data-label="{{$.t.T "主题/作者"}}">
+              {{if eq .Name $currentName}}<span class="badge">{{$.t.T "当前"}}</span><br>{{end}}
+              <span data-label="{{$.t.T "主题名"}}">
+              {{if .ThemeURI}}<a href="{{.ThemeURI}}" target="_blank" rel="noopener" class="theme-title-link"><strong>{{.Name}}</strong></a>{{else}}<strong>{{.Name}}</strong>{{end}}
+              </span>
+              <span class="theme-version" data-label="{{$.t.T "版本"}}">v{{.Version}}</span><br>
+              <span data-label="{{$.t.T "主题作者"}}">
+              {{if .AuthorURI}}<a href="{{.AuthorURI}}" target="_blank" rel="noopener" class="theme-meta-link">{{.Author}}</a>{{else}}{{.Author}}{{end}}
+              </span>
+              {{if .License}}(<span class="theme-license"  data-label="{{$.t.T "授权协议"}}">{{.License}}</span>){{end}}
+            </td>
+            <td class="theme-description-cell" data-label="{{$.t.T "描述"}}">
+              {{.Description}}
+              {{if .Tags}}<br><span class="theme-tags">{{range .Tags}}<span class="theme-tag">{{.}}</span>{{end}}</span>{{end}}
+            </td>
+            <td class="actions theme-actions-cell" data-label="{{$.t.T "操作"}}">
+              <div class="theme-actions-row">
+                {{if ne .Name $currentName}}
+                <form class="inline" method="post" action="/admin/theme/activate">
+                  {{template "csrf_field" $}}
+                  <input type="hidden" name="theme_name" value="{{.Name}}">
+                  <button type="submit" class="btn-secondary btn-sm">{{$.t.T "激活"}}</button>
+                </form>
+                {{end}}
+                {{if ne .Name $currentName}}
+                <form class="inline" method="post" action="/admin/theme/preview">
+                  {{template "csrf_field" $}}
+                  <input type="hidden" name="theme_name" value="{{.Name}}">
+                  <button type="submit" class="btn-secondary btn-sm">{{$.t.T "预览"}}</button>
+                </form>
+                {{end}}
+              </div>
+              <div class="theme-actions-row">
+                <a href="/admin/theme/files?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "编辑"}}</a>
+                <a href="/admin/theme/download?theme={{.Name}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
+                {{if ne .Name "default"}}
+                <form class="inline" method="post" action="/admin/theme/delete" onsubmit="return confirm('{{$.t.T "确定要删除主题「%s」吗？此操作不可撤销。" .Name}}')">
+                  {{template "csrf_field" $}}
+                  <input type="hidden" name="theme_name" value="{{.Name}}">
+                  <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "删除"}}</button>
+                </form>
+                {{end}}
+              </div>
+            </td>
+          </tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p class="tip">{{.t.T "暂无已安装的主题。"}}</p>
+      {{end}}
+    </section>
+
+    <section class="card settings-card theme-upload-card">
+      <h3>{{.t.T "上传主题包"}}</h3>
+      <form class="edit-form" method="post" action="/admin/theme/upload" enctype="multipart/form-data">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "上传主题包 (.zip)"}}<input type="file" name="theme_zip" accept=".zip" required></label>
+        <p class="tip">{{.t.T "上传 .zip 格式的主题包来安装新主题。主题包需包含 theme.yaml 和 templates/ 目录。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "上传并安装"}}</button></p>
+      </form>
+    </section>
+  </div>
+</div>
+{{template "admin_footer" .}}
+{{- end}}

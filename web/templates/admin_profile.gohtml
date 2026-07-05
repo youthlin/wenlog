@@ -1,0 +1,53 @@
+{{- define "admin_profile.gohtml" -}}
+{{template "admin_header" .}}
+<h1>{{.t.T "个人资料"}}</h1>
+{{- if .Error}}
+<p class="err">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice">{{.Notice}}</p>
+{{- end}}
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "个人资料"}}</h3>
+      {{if .CurrentUser}}
+      <div class="profile-avatar-panel">
+        <img class="avatar profile-avatar" src="{{avatarURL .CurrentUser.Email .DefaultAvatar}}" alt="" width="80" height="80">
+        <div>
+          <p class="profile-avatar-name">{{if .CurrentUser.DisplayName}}{{.CurrentUser.DisplayName}}{{else}}{{.CurrentUser.Username}}{{end}}</p>
+          <p class="form-hint">{{.t.T "头像由 Cravatar 提供，可前往 cravatar.com 修改。"}}</p>
+        </div>
+      </div>
+      {{end}}
+      <form class="edit-form" method="post" action="/admin/profile">
+        {{template "csrf_field" .}}
+        {{if .CanEditUsername}}
+        <label>{{.t.T "用户名"}}<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
+        {{else}}
+        <label>{{.t.T "用户名"}}<input type="text" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" disabled></label>
+        <p class="form-hint">{{.t.T "用户名仅管理员可修改。"}}</p>
+        {{end}}
+        <label>{{.t.T "显示名"}}<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
+        <label>{{.t.T "邮件"}}<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
+        <p class="form-hint">{{.t.T "修改邮箱后需要先通过新邮箱中的验证链接确认，确认前仍保留当前邮箱。"}}</p>
+        <label>{{.t.T "个人网址"}}<input type="url" name="website" value="{{if .CurrentUser}}{{.CurrentUser.Website}}{{end}}" placeholder="https://example.com"></label>
+        <p class="form-hint">{{.t.T "登录后发表评论时会自动使用这个网址。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存个人资料"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "密码设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/profile/password">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "原密码"}}<input type="password" name="current_password" required></label>
+        <label>{{.t.T "新密码"}}<input type="password" name="new_password" required></label>
+        <label>{{.t.T "确认新密码"}}<input type="password" name="confirm_password" required></label>
+        <p><button type="submit" class="btn">{{.t.T "修改密码"}}</button></p>
+      </form>
+    </section>
+  </div>
+</div>
+{{template "admin_footer" .}}
+{{- end}}

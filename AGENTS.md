@@ -28,22 +28,55 @@
 - `internal/model`：GORM 模型与状态常量
 - `internal/permalink`：永久链接规则唯一来源
 - `internal/render`：模板函数、正文展示规则、代码高亮
+- `internal/theme`：主题元数据、激活/预览/恢复、组件和主题选项
 - `internal/wxr`：WordPress XML 解析与内容清洗
-- `web/templates`、`web/assets`：嵌入式模板与静态资源
+- `web/templates`、`web/assets`：后台/认证模板与全局静态资源
+- `web/themes`、`web/widgets`：内嵌前台主题与内置组件模板
 
 ### 请求与数据流
 
 - 服务启动时先加载环境变量配置，再打开 SQLite 并自动迁移。
-- Gin 中间件顺序为：panic 恢复、访问日志、Prometheus 指标。
-- 前台与后台共用同一个进程；后台挂在 `/admin/*` 下，除登录页外都要求已登录 session。
+- Gin 全局中间件顺序为：panic 恢复、Trace ID、访问日志、Prometheus 指标、SQL 追踪、Session、i18n。
+- 前台、认证与后台共用同一个进程；认证路由挂在 `/auth/*`，后台管理路由挂在 `/admin/*` 下，后台路由都要求已登录 session。
 - handler 层通常只做参数解析、权限判断、调用 store、拼装模板数据；查询细节基本都下沉到 `store`。
 - 开发时如果本地存在 `web/templates` 或 `web/assets`，服务会优先直接读取磁盘，便于修改模板/CSS/JS 后立即生效；否则回退到 `embed` 内容。
+- 前台展示由主题系统接管：启动时会确保内嵌主题释放到 `themes/`，当前主题由 Setting 表的 `current_theme` 决定；前台模板从 `themes/{name}/templates` 解析，主题资源从 `/theme-assets/*` 输出。
+
+### 主题系统当前模型
+
+- 内嵌主题源文件位于 `web/themes/{default,single}`；运行时会释放到磁盘 `themes/`，已存在的主题不会被覆盖。不要再把前台主题模板放回 `web/templates`。
+- 后台/认证模板仍在 `web/templates`；主题模板加载时会补齐后台/认证模板，但前台主题本身应自包含。
+- `internal/theme.Manager` 负责扫描 `themes/`、读取 `theme.yaml`、激活/删除/预览主题、加载主题模板、编译 `functions.go/functions.goyaegi`，并在加载失败时回退默认主题。
+- `internal/render.Renderer` 负责解析模板、模板函数、模板层级 fallback、预览模板缓存和组件渲染。页面类型到模板的 fallback 链在 `render.TemplateHierarchy` 中维护。
+- `theme.yaml` 当前不只是元数据，还声明 `widget_areas`、`widgets`、组件级 `options` 与主题全局 `options`。组件配置保存在 Setting 表的 `widget_<area>`，主题选项保存在 `option_<theme>_<option>`。
+- 前台请求通常先通过 `store.DataLoader` 全量预加载公开数据，再由 `Public.base()` 注入 `.RecentPosts`、`.Categories`、`.Tags`、`.ArchiveMonths`、`.RecentCommentItems`、`.Menu` 等通用模板数据。
+- 主题自定义逻辑通过 `functions.goyaegi` 的 `Register(api *themeapi.API)` 注册主题函数；模板侧通过 `themeInvoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
+- 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `renderWidgets "area" .` 渲染区域，用 `widgetOption "key"` 读取当前组件实例选项。
+- 主题静态资源通过 `/theme-assets/...` 引用，当前/预览主题会自动解析到对应 `assets/` 目录。不要在主题模板里硬编码 `/web/themes/...`。
+
+**主题与插件设计文档：**
+- `docs/template-data-reference.md` — 模板数据字段、模板函数、数据模型、theme.yaml 配置参考（主题开发必读）
+- `docs/theme-system-optimization-plan.md` — 主题系统当前实现梳理与优化计划
+- `docs/plugin-system-design.md` — 插件系统设计（hook/Registry、组件注册、插件生命周期）
+- `docs/outdated/` — 历史设计稿（v1~v6），仅供参考演进背景
+
+> **维护约定**：迭代插件或主题系统时，若变更影响模板数据字段、模板函数签名、theme.yaml 配置格式或插件 API，需同步更新 `docs/` 下对应文档。
+
+### 插件系统当前模型
+
+- 插件位于 `web/plugins/{id}/`，包含 `plugin.yaml`（元数据）、`functions.goyaegi`（业务逻辑）、可选 `widgets/`（组件模板）和 `assets/`（静态资源）。
+- `internal/plugin.Manager` 负责扫描、启用/禁用、编译插件脚本；插件 hook 注册到共享的 `hook.Registry`。
+- 插件通过 `hook.Registry` 注册 action/filter，与主题 `functions.goyaegi` 共享同一套 hook 机制。
+- 插件可声明组件（widget），组件注册到统一 `WidgetRegistry`，优先级：内置 < 主题 < 插件（后注册覆盖先注册）。
+- 插件静态资源通过 `/plugin-assets/{plugin_id}/...` 访问。
+- 初始化流程集中在 `cmd/server/hook.go` 的 `initHook`：创建 Registry → 注入 theme.Manager → 配置 renderer → 加载主题 → 构建组件注册表 → 注册资源路由。
 
 ### 路由设计的关键点
 
 - 前台根路径下只有一个 `/:seg` 单段路由，同时承载：
   - 文章：`/{year}{id}.html`
   - 页面：`/{slug}`
+- 目前只有 `archive` 走前台特殊页面逻辑；如果需要“友情链接页”，应创建普通页面并使用 `links` 之类的 slug，而不是依赖单独功能模块。
 - 因为文章和页面共享根路径，所以是否为文章完全依赖 `internal/permalink` 解析结果；不要绕过这层自己拼 URL 规则。
 - `/?p={id}` 旧 WordPress 链接会尝试 301 到当前永久链接。
 
@@ -51,6 +84,7 @@
 
 - `model.Post.ID` 沿用 WordPress 原始 `post_id`，这是永久链接兼容的核心前提。
 - `model.Post` 同时承载文章和页面，通过 `PostType` 区分。
+- 当前没有单独的友链数据模型；友情链接若需要保留，应作为普通页面内容维护。
 - 评论默认走审核流，状态为 `pending / approved / spam`。
 - 上传文件既落磁盘，也在 `upload` 表里记录元数据。
 
@@ -58,13 +92,13 @@
 
 ### 环境要求
 
-- Go 版本：`go 1.26`
+- Go 版本：`go 1.25.0`
 - 数据库：SQLite（纯 Go 驱动，无需 CGO）
 
 ### 设置后台管理员密码
 
 ```bash
-go run ./cmd/server -set-admin "用户名:密码"
+go run ./cmd/server -reset-password "用户名:密码"
 ```
 
 如果不传密码部分，程序会生成随机密码并打印。普通首次启动时，如果数据库里还没有任何用户，服务也会自动创建 `admin` 用户并把密码打印到控制台。
@@ -75,10 +109,18 @@ go run ./cmd/server -set-admin "用户名:密码"
 go run ./cmd/server
 ```
 
+**重启服务**请使用内置的 daemon 模式，不要用 `go run ./cmd/server &` 丢到 bash 后台——bash 会话结束后进程会被杀掉：
+
+```bash
+go run ./cmd/server restart
+```
+
+程序会自动在后台启动或重启，不依赖当前 shell 会话。
+
 默认访问：
 
 - 前台：`http://localhost:8888/`
-- 后台：`http://localhost:8888/admin/login`
+- 后台登录：`http://localhost:8888/auth/login`
 - 导入：`http://localhost:8888/admin/import`
 - 指标：`http://localhost:8888/metrics`
 - 健康检查：`http://localhost:8888/healthz`
@@ -87,6 +129,7 @@ go run ./cmd/server
 
 - 会自动创建 `admin` 用户
 - 随机密码只打印一次，需从控制台保存
+- 后续管理员可以修改自己的用户名, 此时执行 -reset-password admin:xxx 会报错无此用户并列出当前用户
 
 ### 导入 / 导出 WordPress XML
 
@@ -110,8 +153,8 @@ go test ./...
 ### 构建生产二进制
 
 ```bash
-go build -o blog ./cmd/server
-./blog
+go build -o wenlog ./cmd/server
+./wenlog
 ```
 
 部署时通常还需要：
@@ -148,13 +191,140 @@ go build -o blog ./cmd/server
 - 后台保存文章时会同时维护：
   - `ContentMD`：后台编辑原文
   - `Content`：用于前台展示的 HTML
-- 评论分页是按“顶层评论”分页，不是按全部评论平铺分页；改评论相关逻辑时先理解这一点。
+- 评论分页是按"顶层评论"分页，不是按全部评论平铺分页；改评论相关逻辑时先理解这一点。
+
+### 模板空白符控制约定
+
+所有 `.gohtml` 模板文件统一使用 Go template 的空白符修剪语法，避免渲染输出中出现多余空行，同时保证需要换行的 HTML 标签不被挤到上一行。
+
+**规则：**
+
+1. **`{{define}}` / `{{end}}`（模板定义边界）**：始终使用 `{{- define "name" -}}` 和 `{{- end}}`，修剪模板首尾空白。
+2. **`{{if}}` / `{{with}}` / `{{range}}`（块级动作）**：独占一行时使用 `{{- if ...}}`、`{{- with ...}}`、`{{- range ...}}`，修剪前方空白避免条件为 false 时残留空行。
+3. **`{{else}}`**：独占一行时使用 `{{- else}}`。
+4. **`{{end}}`（块级结束）**：独占一行时使用 `{{- end}}`。
+5. **行内动作不修剪**：与 HTML 标签在同一行的 `{{if}}`/`{{range}}`/`{{end}}` 等保持原样，不加 `-`。
+6. **块级元素内容必须换行**：`{{- if}}` 的内容如果是块级标签（`<p>`、`<meta>`、`<div>` 等），必须拆成多行，不能挤在同一行。
+
+**示例：**
+
+```gohtml
+{{- define "header" -}}
+<!DOCTYPE html>
+<html>
+...
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+...
+{{- end}}
+```
+
+```gohtml
+{{- define "pagination" -}}
+{{- with .Pager}}
+{{- if gt .Pages 1}}
+<nav class="pagination">
+  ...
+</nav>
+{{- end}}
+{{- end}}
+{{- end}}
+```
+
+**行内动作（不加 `-`）：**
+```gohtml
+{{if .SiteLogo}}<img src="{{.SiteLogo}}">{{else}}<span>{{.SiteName}}</span>{{end}}
+{{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+```
+
+### 后台表格规范
+
+后台管理页面（文章、评论、分类、标签、附件、用户、主题、菜单等）的数据表格统一使用以下模式，通过 CSS 实现桌面端/平板/移动端三档响应式。
+
+**HTML 结构：**
+```gohtml
+<div class="table-scroll">
+  <table class="data-table {entity}-table">
+    <thead>
+    <tr>
+      <th>{{.t.T "列名"}}</th>
+      ...
+      <th>{{.t.T "操作"}}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Items}}
+    <tr>
+      <td data-label="{{$.t.T "列名"}}">{{.Field}}</td>
+      ...
+      <td class="actions" data-label="{{$.t.T "操作"}}">
+        <form class="inline" method="post" action="/admin/...">
+          {{template "csrf_field" $}}
+          <button type="submit" class="btn-secondary btn-sm">{{$.t.T "操作"}}</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="N">{{.t.T "暂无内容"}}</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+```
+
+**关键约定：**
+- 外层用 `<div class="table-scroll">` 包裹，提供横向滚动
+- `<table>` 使用 `class="data-table {entity}-table"`（如 `posts-table`、`comments-table`、`themes-table`）
+- 每个 `<td>` 必须带 `data-label` 属性，用于响应式布局
+- 操作列使用 `class="actions"`，内嵌 `<form class="inline">` + CSRF token
+- 空状态用 `{{else}}` 分支显示 "暂无内容"
+- 分页使用 `{{if gt .Pages 1}}` 包裹的 prev/next 链接 + `page-info`
+
+**响应式 CSS 三阶段（定义在 `web/assets/admin.css`）：**
+
+1. **桌面端（默认）**：标准 `<table>` 布局，`data-table` 类提供宽度 100%、边框折叠、圆角卡片背景。操作列 `white-space: nowrap` 防止换行。
+
+2. **平板过渡（`@media (max-width: 760px)`）**：每种表格类型设置 `min-width`，在卡片布局触发前先启用横向滚动，避免表格过早变形：
+   ```css
+   .table-scroll .posts-table { min-width: 700px; }
+   .table-scroll .comments-table { min-width: 860px; }
+   .table-scroll .menu-items-table { min-width: 760px; }
+   /* ... 其他表格类似 */
+   ```
+
+3. **移动端卡片布局（`@media (max-width: 760px)`）**：表格转为卡片流式布局，核心变换：
+   - `thead { display: none }` — 隐藏表头
+   - 所有表格元素 `display: block; width: 100%` — 从表格模型转为块模型
+   - `tbody { display: grid; gap: 14px }` — 每行变成独立卡片
+   - `tbody tr` 添加 `border + border-radius + box-shadow` — 卡片外观
+   - `td[data-label]::before { content: attr(data-label) }` — 用 `data-label` 生成每列标签
+   - `.actions` 改为 `display: grid; gap: 8px` — 操作按钮纵向排列
+   - `.table-scroll:has(.{entity}-table) { overflow: visible }` — 取消横向滚动，让卡片自然流动
+
+**新增表格类型的 checklist：**
+
+1. 模板中：`<table class="data-table {entity}-table">`，每个 `<td>` 带 `data-label`
+2. `admin.css` 桌面端：无需额外样式（`data-table` 已覆盖通用样式）
+3. `admin.css` 平板过渡：在 `@media (max-width: 760px)` 中添加 `.table-scroll .{entity}-table { min-width: Npx }`
+4. `admin.css` 移动端卡片：在 `@media (max-width: 760px)` 中按现有表格模式复制一份，将选择器替换为 `{entity}-table`，调整 `colspan` 和特殊列的 `display`/`order`
+
+### i18n / 翻译字符串约定
+
+- 源码默认语言是中文；Go 代码优先通过请求级 translator 调用 `tr.T / tr.N / tr.X / tr.XN`，模板里统一使用 `.t.T / .t.N / .t.X / .t.XN`。
+- **不要把可翻译句子拆成多个片段再和变量/数字拼接**。像 `T("阅读")` 前面单独放数字、或 `T("文章有") + n + T("篇")` 这类写法都应改成一个完整消息，例如 `N("%d 次阅读", "%d 次阅读", n, n)`。
+- **涉及数量时优先用 `N/N64`（或 `XN/XN64`）**，即使中文单复数看起来一样，也要为英文等语言保留复数分支；`int64` 计数统一用 `N64/XN64`。
+- **同一中文词在不同语义/词性下可能需要上下文时，优先使用 `X/XN`**。典型例子：列表里的“页面/文章”可能要翻成复数，但“编辑页面/文章”里的对象名通常要用单数；按钮“关闭”与状态“关闭”也可能需要不同译法。
+- 带少量 HTML 的翻译文案必须先转义用户输入，再整体做安全输出；不要把未经转义的用户输入直接插进 `safeHTML`。
+- 修改翻译调用后，记得运行 `./scripts/update_i18n.sh` 同步 `web/i18n/messages.pot` 与现有 `.po` 文件；如果改了复数/格式化占位符，再额外检查 `msgfmt --check-format`。
 
 ### 修改时特别注意
 
 - **不要修改 `Post.ID` 与永久链接之间的关系**，否则会破坏历史链接兼容。
 - **不要在 handler 中重新实现 permalink 判断**，统一复用 `internal/permalink`。
 - **不要把模板层逻辑搬到前端 JS 里重做**；该项目以服务端渲染为主，JS 主要是增强体验。
+- **谨慎执行 `git reset --hard`**：除非已经确认当前工作区的所有改动都有可靠备份且能完整还原，否则不要使用会丢弃改动的命令。
+- **不要擅自删除 stash**：stash 应作为恢复兜底保留。需要使用 stash 内容时，优先使用 `git stash apply`，避免 `git stash pop`；更不要执行 `git stash drop`，除非用户明确要求删除对应 stash。
 
 ## 4. 测试策略与执行建议
 
@@ -190,8 +360,8 @@ go build -o blog ./cmd/server
 
 ### 公开暴露的端点
 
-- `/metrics` 与 `/healthz` 是公开路由。
-- 若部署到公网，通常应由网关、反向代理或网络层做额外限制。
+- `/healthz` 是公开路由。
+- `/metrics` 通过 Basic Auth 保护，用户名固定为 `metrics`，密码可在后台设置页配置；公网部署仍建议结合网关、反向代理或网络层限制访问来源。
 
 ### CSRF 与后台操作
 
@@ -222,19 +392,35 @@ go build -o blog ./cmd/server
 
 | 变量 | 默认值 | 用途 |
 |---|---|---|
-| `BLOG_ADDR` | `:8888` | HTTP 监听地址 |
-| `BLOG_DB` | `data/blog.db` | SQLite 路径 |
-| `BLOG_PUBLIC_DIR` | `public` | 历史图片与上传文件根目录 |
-| `BLOG_LOG_JSON` | `false` | 是否输出 JSON 日志 |
+| `WENLOG_ADDR` | `:8888` | HTTP 监听地址 |
+| `WENLOG_DB` | `data/wenlog.db` | SQLite 路径 |
+| `WENLOG_PUBLIC_DIR` | `public` | 历史图片与上传文件根目录 |
+| `WENLOG_LOG_JSON` | `false` | 是否输出 JSON 日志 |
 
 ### 配置上的关键行为
 
-- RSS 与导出里的绝对链接基于当前请求 Host 生成，不再单独读取 `BLOG_SITE_URL`。
+- RSS 与导出里的绝对链接基于当前请求 Host 生成，无需 SITE_URL 这种 ENV。
 - 前台列表分页数量、feed 输出数量、session secret 都可以在后台设置页修改；其中 session secret 修改后所有登录用户都需要重新登录。
 - 启动服务时 `store.Open` 会自动创建数据库目录并执行自动迁移。
 - 开发环境下模板与静态资源优先读磁盘，生产环境则通常依赖 embed 资源。
 
 ## 7. 调试、重构与排障建议
+
+### SQL 查询分析流程
+
+当需要排查 SQL 查询数量或性能问题时，按以下步骤操作：
+
+1. **访问目标页面**：浏览器访问页面，从响应头中获取 `X-Trace-Id`（如 `bbc51f441ebb4685`）。
+2. **从日志中 grep SQL 查询**：
+   ```bash
+   grep "bbc51f441ebb4685" /path/to/logfile | grep -E "SQL|sql|query"
+   ```
+   日志中每条 SQL 查询都带有 trace ID，可以精确统计查询次数和内容。
+3. **分析重复查询**：按 SQL 语句分组统计，找出重复执行的查询。常见重复来源：
+   - `current_theme` 设置被多次读取（每次 `theme.Manager.Current()` 都会查库）
+   - Widget 数据（RecentPosts、RecentComments 等）在 `base()` 和 widget `Data()` 中各查一次
+   - 模板渲染中通过函数调用触发的隐式查询
+4. **优化方向**：缓存可复用的查询结果（如主题名、设置项），将 `base()` 中已查询的数据传递给 widget 复用。
 
 ### 需要先看的位置
 

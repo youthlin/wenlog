@@ -10,16 +10,18 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/wxr"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/wxr"
 )
 
 // Options 是导入选项。
 type Options struct {
-	// TargetUserID 指定导入后的文章/页面归属用户。
+	// TargetUserID 指定导入后的文章/页面归属用户(默认,未在 AuthorMapping 中映射的作者使用此值)。
 	TargetUserID uint
 	// IncludeDrafts 为 false 时跳过非 publish 内容。
 	IncludeDrafts bool
+	// AuthorMapping 将 XML 中的 dc:creator 映射到系统用户 ID。未映射的作者使用 TargetUserID。
+	AuthorMapping map[string]uint
 }
 
 // Stats 是导入结果统计。
@@ -39,6 +41,25 @@ func ImportReader(db *gorm.DB, r io.Reader, opts Options) (*Stats, error) {
 		return nil, err
 	}
 	return ImportDocument(db, doc, opts)
+}
+
+// PreviewAuthors 从 XML reader 中提取所有 dc:creator 值(去重)。
+func PreviewAuthors(r io.Reader) ([]string, error) {
+	doc, err := wxr.Parse(r)
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	var authors []string
+	for _, it := range doc.Items {
+		c := strings.TrimSpace(it.Creator)
+		if c == "" || seen[c] {
+			continue
+		}
+		seen[c] = true
+		authors = append(authors, c)
+	}
+	return authors, nil
 }
 
 // ImportDocument 把解析后的 WXR 文档 upsert 到数据库。
@@ -120,6 +141,7 @@ func importTerms(db *gorm.DB, doc *wxr.Document, s *Stats) error {
 
 // importItems 导入文章和页面(及其评论、关联、meta)。
 func importItems(db *gorm.DB, doc *wxr.Document, opts Options, s *Stats) error {
+	wpAuthorIDToTargetUserID := authorIDMapping(doc, opts)
 	for i := range doc.Items {
 		it := &doc.Items[i]
 		if it.PostType != model.PostTypePost && it.PostType != model.PostTypePage {
@@ -128,14 +150,34 @@ func importItems(db *gorm.DB, doc *wxr.Document, opts Options, s *Stats) error {
 		if it.Status != "publish" && !opts.IncludeDrafts {
 			continue
 		}
-		if err := importOneItem(db, it, opts.TargetUserID, s); err != nil {
+		// 根据作者映射确定归属用户
+		authorID := opts.TargetUserID
+		if mapped, ok := opts.AuthorMapping[it.Creator]; ok {
+			authorID = mapped
+		}
+		if err := importOneItem(db, it, authorID, wpAuthorIDToTargetUserID, s); err != nil {
 			return errors.Wrapf(err, "import item id=%d", it.PostID)
 		}
 	}
 	return nil
 }
 
-func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, s *Stats) error {
+func authorIDMapping(doc *wxr.Document, opts Options) map[int]uint {
+	result := make(map[int]uint)
+	for _, author := range doc.Authors {
+		if author.ID <= 0 {
+			continue
+		}
+		uid := opts.TargetUserID
+		if mapped, ok := opts.AuthorMapping[author.Login]; ok && mapped > 0 {
+			uid = mapped
+		}
+		result[author.ID] = uid
+	}
+	return result
+}
+
+func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, wpAuthorIDToTargetUserID map[int]uint, s *Stats) error {
 	content := wxr.CleanContent(it.Content)
 	excerpt := strings.TrimSpace(it.Excerpt)
 
@@ -190,6 +232,9 @@ func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, s *Stats) error
 			Author: c.Author, Email: c.Email, URL: c.URL, IP: c.IP,
 			Content: c.Content, Status: cstatus, NotifyOnReply: false,
 			CreatedAt: c.Date,
+		}
+		if userID, ok := wpAuthorIDToTargetUserID[c.UserID]; ok && userID > 0 {
+			cm.UserID = &userID
 		}
 		if err := db.Clauses(clause.OnConflict{
 			Columns: []clause.Column{{Name: "id"}}, UpdateAll: true,

@@ -1,1013 +1,339 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
-	"image"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
-	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/gomarkdown/markdown"
-	mhtml "github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
-	"golang.org/x/crypto/bcrypt"
+	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/internal/config"
-	"github.com/youthlin/blog/internal/consts"
-	wpimport "github.com/youthlin/blog/internal/importer"
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
-	renderx "github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/config"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/plugin"
+	renderx "github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/theme"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/internal/version"
 )
+
+// ThemeManager 是主题管理器的类型别名，方便 handler 层引用。
+type ThemeManager = theme.Manager
+
+// PluginManager 是插件管理器的类型别名，方便 handler 层引用。
+type PluginManager = plugin.Manager
 
 // Admin 是后台处理器。
 type Admin struct {
-	st  *store.Store
-	cfg *config.Config
-	log *slog.Logger
+	st            *store.Store
+	cfg           *config.Config
+	log           *slog.Logger
+	renderer      *renderx.Renderer
+	assets        hotSwitcher
+	themeManager  *ThemeManager
+	pluginManager *PluginManager
 }
 
 // NewAdmin 构造后台处理器。
-func NewAdmin(st *store.Store, cfg *config.Config, log *slog.Logger) *Admin {
-	return &Admin{st: st, cfg: cfg, log: log}
+func NewAdmin(st *store.Store, cfg *config.Config, renderer *renderx.Renderer, assets *LocalFirstFileSystem, tm *ThemeManager, pm *PluginManager) *Admin {
+	return &Admin{
+		st:            st,
+		cfg:           cfg,
+		log:           slog.Default().With("component", "admin-handler"),
+		renderer:      renderer,
+		assets:        assets,
+		themeManager:  tm,
+		pluginManager: pm,
+	}
 }
 
 const adminPageSize = 20
-const maxImportXMLSize = 50 << 20
 const defaultPublicPageSize = 10
 const defaultFeedSize = 20
 
+// parseUintParam 解析 URL 参数为 uint,解析失败返回 0 和错误。
+func parseUintParam(s string) (uint, error) {
+	id, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint(id), nil
+}
+
+func (h *Admin) Store() *store.Store { return h.st }
+
 func (h *Admin) base(c *gin.Context, title string) gin.H {
-	v, _ := h.st.GetSetting(consts.SettingsSiteName)
-	siteName := firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault)
+	currentPostPermalink := syncPostPermalink(c, h.st)
+	// 批量查询设置，避免多次 GetSetting
+	settings, err := h.st.GetSettings(c, consts.SettingsSiteName, consts.SettingsDefaultAvatar, consts.SettingsShowSQLDetails)
+	if err != nil && h.log != nil {
+		h.log.Error("get settings", "error", err)
+	}
+	v := settings[consts.SettingsSiteName]
+	defaultAvatar := settings[consts.SettingsDefaultAvatar]
+	pendingCount := h.st.PendingCommentCount(c)
+	// 缓存 pending 数到 context，避免 DashboardStats 中 AdminCommentCounts 重复查询
+	c.Request = c.Request.WithContext(store.CtxWithPendingCommentCount(c.Request.Context(), pendingCount))
+	siteName := util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, v)
 	data := gin.H{
-		"SiteName":     siteName,
-		"Title":        title,
-		"PendingCount": h.st.PendingCommentCount(),
+		"SiteName":             siteName,
+		"Title":                title,
+		"DefaultAvatar":        util.NormalizeDefaultAvatar(defaultAvatar),
+		"PendingCount":         pendingCount,
+		"PostPermalinkPattern": currentPostPermalink,
+		"AssetVersion":         assetVersion(),
+		"InstanceVersion":      version.Display(),
+		"RoleAdmin":            model.RoleAdmin,
+		"RoleAuthor":           model.RoleAuthor,
+		"RoleSubscriber":       model.RoleSubscriber,
+	}
+	if h.themeManager != nil {
+		if currentTheme := h.themeManager.Current(c); currentTheme != nil {
+			data["AdminThemeSupportsWidgets"] = len(currentTheme.WidgetAreas) > 0
+			data["AdminThemeSupportsOptions"] = len(currentTheme.Options) > 0
+			data["AdminThemeSupportsMenus"] = len(currentTheme.MenuLocations) > 0
+		}
 	}
 	if c != nil {
+		currentUser := h.currentUser(c)
+		data["User"] = currentUser
+		if currentUser != nil {
+			data["CurrentUserID"] = currentUser.ID
+		}
 		data["CSRFToken"] = middleware.CSRFToken(c)
+		data["CurrentAdminNav"] = adminNavKey(c)
+		s := sessions.Default(c)
+		if role, ok := s.Get(middleware.SessionRoleKey).(string); ok {
+			data["CurrentUserRole"] = role
+		}
+		// 管理员且设置开启时，注入 SQL 详情供模板 footer 输出
+		if currentUser != nil && currentUser.Role == model.RoleAdmin {
+			if settings[consts.SettingsShowSQLDetails] == "true" {
+				data["SQLDetails"] = &store.LazySQLDetails{Ctx: c.Request.Context()}
+			}
+		}
 	}
-	return data
+	return i18n.Inject(c, data)
 }
 
-// LoginForm 显示登录页。
-func (h *Admin) LoginForm(c *gin.Context) {
-	data := h.base(nil, "登录")
-	if c.Query("message") == "session-secret-updated" {
-		data["Notice"] = "Session Secret 已更新，所有登录用户都需要重新登录。"
-	}
-	c.HTML(http.StatusOK, "admin_login.gohtml", data)
-}
-
-// Login 处理登录 当前只有管理员一种用户 所以登录就能进入管理后台
-func (h *Admin) Login(c *gin.Context) {
-	username := strings.TrimSpace(c.PostForm("username"))
-	password := c.PostForm("password")
-	u, err := h.st.GetUserByUsername(username)
-	if err != nil || bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
-		data := h.base(nil, "登录")
-		data["Error"] = "用户名或密码错误。"
-		c.HTML(http.StatusUnauthorized, "admin_login.gohtml", data)
-		return
-	}
-	s := sessions.Default(c)
-	s.Set(middleware.SessionUserKey, u.ID)
-	_ = s.Save()
-	c.Redirect(http.StatusSeeOther, "/admin/")
-}
-
-// Logout 退出登录。
-func (h *Admin) Logout(c *gin.Context) {
-	s := sessions.Default(c)
-	s.Clear()
-	_ = s.Save()
-	c.Redirect(http.StatusSeeOther, "/admin/login")
-}
-
-// Dashboard 后台首页。
-func (h *Admin) Dashboard(c *gin.Context) {
-	c.HTML(http.StatusOK, "admin_dashboard.gohtml", h.base(c, "后台"))
-}
-
-// ImportPage 显示 WXR 导入/导出页。
-func (h *Admin) ImportPage(c *gin.Context) {
-	data, ok := h.importPageData(c, "WXR 导入 / 导出")
-	if !ok {
-		return
-	}
-	c.HTML(http.StatusOK, "admin_import.gohtml", data)
-}
-
-// ImportXML 处理后台上传的 WXR XML,并把文章/页面归属到指定用户。
-func (h *Admin) ImportXML(c *gin.Context) {
-	data, ok := h.importPageData(c, "WXR 导入 / 导出")
-	if !ok {
-		return
-	}
-	var form struct {
-		UserID uint `form:"user_id"`
-	}
-	if err := c.ShouldBind(&form); err != nil {
-		data["Error"] = "表单参数有误。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	data["SelectedUserID"] = form.UserID
-	if form.UserID == 0 {
-		data["Error"] = "请选择导入归属用户。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	user, err := h.st.GetUserByID(form.UserID)
-	if err != nil {
-		data["Error"] = "所选用户不存在。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	fh, err := c.FormFile("xml_file")
-	if err != nil {
-		data["Error"] = "请选择要导入的 XML 文件。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	if fh.Size <= 0 {
-		data["Error"] = "XML 文件不能为空。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	if fh.Size > maxImportXMLSize {
-		data["Error"] = "XML 文件不能超过 50MB。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	file, err := fh.Open()
-	if err != nil {
-		data["Error"] = "打开上传文件失败。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	defer file.Close()
-	stats, err := wpimport.ImportReader(h.st.DB(), file, wpimport.Options{
-		TargetUserID:  user.ID,
-		IncludeDrafts: true,
-	})
-	if err != nil {
-		h.log.Error("import xml",
-			slog.Any("error", err),
-			slog.String("file", fh.Filename),
-			slog.Uint64("user_id", uint64(user.ID)),
-		)
-		data["Error"] = "导入失败: " + err.Error()
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	data["Success"] = "导入完成，若 XML 中存在相同 ID 的文章/页面/评论，已按 upsert 覆盖保存。"
-	data["TargetUser"] = user
-	data["ImportStats"] = stats
-	data["ImportedFileName"] = fh.Filename
-	data["SelectedUserID"] = user.ID
-	c.HTML(http.StatusOK, "admin_import.gohtml", data)
-}
-
-// ExportXML 导出可被当前后台重新导入的 XML。
-func (h *Admin) ExportXML(c *gin.Context) {
-	data, ok := h.importPageData(c, "WXR 导入 / 导出")
-	if !ok {
-		return
-	}
-	var form struct {
-		Posts    []string `form:"include_posts"`
-		Pages    []string `form:"include_pages"`
-		Comments []string `form:"include_comments"`
-		Settings []string `form:"include_settings"`
-	}
-	if err := c.ShouldBind(&form); err != nil {
-		data["Error"] = "导出表单参数有误。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	includePosts := len(form.Posts) > 0
-	includePages := len(form.Pages) > 0
-	includeComments := len(form.Comments) > 0
-	includeSettings := len(form.Settings) > 0
-	data["ExportPosts"] = includePosts
-	data["ExportPages"] = includePages
-	data["ExportComments"] = includeComments
-	data["ExportSettings"] = includeSettings
-	if !includePosts && !includePages && !includeComments && !includeSettings {
-		data["Error"] = "请至少选择一项导出内容。"
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	v, _ := h.st.GetSetting(consts.SettingsSiteName)
-	xmlData, _, err := wpimport.ExportXML(h.st.DB(), wpimport.ExportOptions{
-		Posts:     includePosts,
-		Pages:     includePages,
-		Comments:  includeComments,
-		Settings:  includeSettings,
-		SiteTitle: firstNonEmptyAdmin(v, consts.SettingsSiteNameDefault),
-		SiteURL:   requestBaseURL(c),
-	})
-	if err != nil {
-		data["Error"] = "导出失败: " + err.Error()
-		c.HTML(http.StatusBadRequest, "admin_import.gohtml", data)
-		return
-	}
-	c.Header("Content-Type", "application/xml; charset=utf-8")
-	c.Header("Content-Disposition", `attachment; filename="`+wpimport.ExportFilename()+`"`)
-	c.Data(http.StatusOK, "application/xml; charset=utf-8", xmlData)
-}
-
-// SettingsPage 后台设置页:站点设置 + 个人设置。
-func (h *Admin) SettingsPage(c *gin.Context) {
-	data := h.settingsData(c)
-	c.HTML(http.StatusOK, "admin_settings.gohtml", data)
-}
-
-func (h *Admin) settingsData(c *gin.Context) gin.H {
-	data := h.base(c, "设置")
-	settings, _ := h.st.GetSettings(
-		consts.SettingsSiteName,
-		consts.SettingsSiteDesc,
-		consts.SettingsPageSize,
-		consts.SettingsFeedSize,
-		consts.SettingsSessionSecret,
-	)
-	data["SiteNameValue"] = firstNonEmptyAdmin(settings[consts.SettingsSiteName], consts.SettingsSiteNameDefault)
-	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
-	data["PageSizeValue"] = positiveIntSetting(settings[consts.SettingsPageSize], defaultPublicPageSize)
-	data["FeedSizeValue"] = positiveIntSetting(settings[consts.SettingsFeedSize], defaultFeedSize)
-	if strings.TrimSpace(settings[consts.SettingsSessionSecret]) != "" {
-		data["SessionSecretConfigured"] = true
-	}
+func (h *Admin) currentUserRole(c *gin.Context) string {
 	if u := h.currentUser(c); u != nil {
-		data["CurrentUser"] = u
+		return u.Role
 	}
-	return data
+	if c != nil {
+		if role, ok := sessions.Default(c).Get(middleware.SessionRoleKey).(string); ok {
+			return role
+		}
+	}
+	return ""
 }
 
-func (h *Admin) importPageData(c *gin.Context, title string) (gin.H, bool) {
-	data := h.base(c, title)
-	data["SelectedUserID"] = uint(0)
-	data["ExportPosts"] = true
-	data["ExportPages"] = true
-	data["ExportComments"] = true
-	data["ExportSettings"] = true
-	users, err := h.st.ListUsers()
-	if err != nil {
-		h.serverError(c, err)
-		return nil, false
+func (h *Admin) canManagePost(c *gin.Context, p *model.Post) bool {
+	if p == nil {
+		return false
 	}
-	data["Users"] = users
-	return data, true
-}
-
-// SaveSiteSettings 保存站点名称/描述。
-func (h *Admin) SaveSiteSettings(c *gin.Context) {
-	name := strings.TrimSpace(c.PostForm("site_name"))
-	desc := strings.TrimSpace(c.PostForm("site_description"))
-	pageSize, err := strconv.Atoi(strings.TrimSpace(c.PostForm("page_size")))
-	if err != nil || pageSize < 1 {
-		pageSize = defaultPublicPageSize
-	}
-	feedSize, err := strconv.Atoi(strings.TrimSpace(c.PostForm("feed_size")))
-	if err != nil || feedSize < 1 {
-		feedSize = defaultFeedSize
-	}
-	if err := h.st.SetSetting("site_name", name); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting("site_description", desc); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting("page_size", strconv.Itoa(pageSize)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.SetSetting("feed_size", strconv.Itoa(feedSize)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings")
-}
-
-// SaveSessionSettings 修改 session secret。修改后所有登录用户都需要重新登录。
-func (h *Admin) SaveSessionSettings(c *gin.Context) {
-	secret := strings.TrimSpace(c.PostForm("session_secret"))
-	if secret == "" {
-		data := h.settingsData(c)
-		data["Error"] = "Session Secret 不能为空。"
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
-	if err := h.st.SetSetting(consts.SettingsSessionSecret, secret); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	s := sessions.Default(c)
-	s.Clear()
-	_ = s.Save()
-	c.Redirect(http.StatusSeeOther, "/admin/login?message=session-secret-updated")
-}
-
-// SaveProfileSettings 保存当前用户用户名/显示名/邮箱。
-func (h *Admin) SaveProfileSettings(c *gin.Context) {
-	u := h.currentUser(c)
-	if u == nil {
-		h.notFound(c)
-		return
-	}
-	username := strings.TrimSpace(c.PostForm("username"))
-	displayName := strings.TrimSpace(c.PostForm("display_name"))
-	email := strings.TrimSpace(c.PostForm("email"))
-	if username == "" || displayName == "" || email == "" {
-		data := h.settingsData(c)
-		data["Error"] = "用户名、显示名和邮件不能为空。"
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
-	exists, err := h.st.UserExistsByUsername(username, u.ID)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if exists {
-		data := h.settingsData(c)
-		data["Error"] = "用户名已被占用。"
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
-	if err := h.st.UpdateUserProfile(u.ID, username, displayName, email); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings")
-}
-
-// SavePasswordSettings 修改当前用户密码。
-func (h *Admin) SavePasswordSettings(c *gin.Context) {
-	u := h.currentUser(c)
-	if u == nil {
-		h.notFound(c)
-		return
-	}
-	password := c.PostForm("new_password")
-	confirm := c.PostForm("confirm_password")
-	currentPassword := c.PostForm("current_password")
-	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
-		data := h.settingsData(c)
-		data["Error"] = "原密码不正确。"
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
-	if password == "" || password != confirm {
-		data := h.settingsData(c)
-		data["Error"] = "两次输入的密码不一致。"
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if err := h.st.UpdateUserPassword(u.ID, string(hash)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/settings")
-}
-
-// DebugPage 是只读 SQL 调试页,以 JSON 展示结果集。
-func (h *Admin) DebugPage(c *gin.Context) {
-	data := h.base(c, "DB Debug")
-	sqlText := strings.TrimSpace(c.PostForm("sql"))
-	if c.Request.Method == http.MethodGet {
-		sqlText = ""
-	}
-	data["SQL"] = sqlText
-	if sqlText == "" {
-		c.HTML(http.StatusOK, "admin_debug.gohtml", data)
-		return
-	}
-	if !allowDebugSQL(sqlText) {
-		data["Error"] = "仅允许只读 SQL(SELECT/EXPLAIN)。"
-		c.HTML(http.StatusBadRequest, "admin_debug.gohtml", data)
-		return
-	}
-	rows, err := h.st.DebugQuery(sqlText)
-	if err != nil {
-		data["Error"] = err.Error()
-		c.HTML(http.StatusBadRequest, "admin_debug.gohtml", data)
-		return
-	}
-	b, _ := json.MarshalIndent(rows, "", "  ")
-	data["ResultJSON"] = string(b)
-	c.HTML(http.StatusOK, "admin_debug.gohtml", data)
-}
-
-func allowDebugSQL(sqlText string) bool {
-	upper := strings.ToUpper(strings.TrimSpace(sqlText))
-	return strings.HasPrefix(upper, "SELECT") ||
-		strings.HasPrefix(upper, "EXPLAIN")
-}
-
-func firstNonEmptyAdmin(v, fallback string) string {
-	if strings.TrimSpace(v) != "" {
-		return v
-	}
-	return fallback
-}
-
-func (h *Admin) currentUser(c *gin.Context) *model.User {
-	uid := h.currentUserID(c)
-	if uid == 0 {
-		return nil
-	}
-	u, err := h.st.GetUserByID(uid)
-	if err != nil {
-		return nil
-	}
-	return u
-}
-
-// UploadFile 上传图片并返回可直接插入 Markdown 的地址。
-func (h *Admin) UploadFile(c *gin.Context) {
-	u := h.currentUser(c)
-	if u == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "message": "未登录"})
-		return
-	}
-	fh, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": "未选择文件"})
-		return
-	}
-	if fh.Size > 10<<20 {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": "文件不能超过 10MB"})
-		return
-	}
-	file, err := fh.Open()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": "打开上传文件失败"})
-		return
-	}
-	defer file.Close()
-
-	buf := make([]byte, 512)
-	n, _ := io.ReadFull(file, buf)
-	buf = buf[:n]
-	mimeType := http.DetectContentType(buf)
-	if !allowedUploadMIME(mimeType) {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": "仅支持 png/jpg/gif/webp 图片"})
-		return
-	}
-	if _, err = file.Seek(0, 0); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": "读取上传文件失败"})
-		return
-	}
-
-	now := time.Now()
-	ext := safeImageExt(fh.Filename, mimeType)
-	relDir := filepath.Join("wp-content", "uploads", now.Format("2006"), now.Format("01"))
-	fileName := util.GenerateRandomString(24, util.WithAlphaNumer()) + ext
-	absDir := filepath.Join(h.cfg.PublicDir, relDir)
-	if err = os.MkdirAll(absDir, 0o755); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": "创建上传目录失败"})
-		return
-	}
-	absPath := filepath.Join(absDir, fileName)
-	out, err := os.Create(absPath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": "保存文件失败"})
-		return
-	}
-	if _, err := io.Copy(out, file); err != nil {
-		out.Close()
-		_ = os.Remove(absPath)
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": "写入文件失败"})
-		return
-	}
-	_ = out.Close()
-
-	width, height := imageSize(absPath)
-	urlPath := "/" + filepath.ToSlash(filepath.Join(relDir, fileName))
-	record := &model.Upload{Path: urlPath, OrigName: fh.Filename, MimeType: mimeType, Size: fh.Size, Width: width, Height: height, UploaderID: u.ID, CreatedAt: now}
-	if err := h.st.SaveUpload(record); err != nil {
-		_ = os.Remove(absPath)
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": "保存上传记录失败"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"ok": true, "id": record.ID, "url": urlPath, "markdown": "![](" + urlPath + ")"})
-}
-
-// UploadsPage 文件管理页。
-func (h *Admin) UploadsPage(c *gin.Context) {
-	page := atoiDefault(c.Query("page"), 1)
-	uploads, total, err := h.st.ListUploads(page, adminPageSize)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	data := h.base(c, "文件管理")
-	data["Uploads"] = uploads
-	data["Total"] = total
-	data["Page"] = page
-	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
-	c.HTML(http.StatusOK, "admin_uploads.gohtml", data)
-}
-
-// UploadsJSON 返回最近上传文件的 JSON 列表,供编辑器文件选择器使用。
-func (h *Admin) UploadsJSON(c *gin.Context) {
-	page := atoiDefault(c.Query("page"), 1)
-	uploads, _, err := h.st.ListUploads(page, adminPageSize)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "message": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"ok": true, "uploads": uploads})
-}
-
-// DeleteUpload 删除上传文件及元数据。
-func (h *Admin) DeleteUpload(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	u, err := h.st.GetUpload(uint(id))
-	if err != nil {
-		h.notFound(c)
-		return
-	}
-	absPath := filepath.Join(h.cfg.PublicDir, strings.TrimPrefix(filepath.FromSlash(u.Path), string(filepath.Separator)))
-	_ = os.Remove(absPath)
-	if err := h.st.DeleteUpload(uint(id)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/uploads")
-}
-
-func allowedUploadMIME(m string) bool {
-	switch m {
-	case "image/png", "image/jpeg", "image/gif", "image/webp":
+	switch h.currentUserRole(c) {
+	case model.RoleAdmin:
 		return true
+	case model.RoleAuthor:
+		return p.AuthorID == currentUserID(c)
 	default:
 		return false
 	}
 }
 
-func safeImageExt(name, mimeType string) string {
-	ext := strings.ToLower(filepath.Ext(name))
-	switch mimeType {
-	case "image/png":
-		if ext != ".png" {
-			return ".png"
-		}
-	case "image/jpeg":
-		if ext != ".jpg" && ext != ".jpeg" {
-			return ".jpg"
-		}
-	case "image/gif":
-		if ext != ".gif" {
-			return ".gif"
-		}
-	case "image/webp":
-		if ext != ".webp" {
-			return ".webp"
-		}
+func (h *Admin) canManageComment(c *gin.Context, commentID uint) bool {
+	if h.currentUserRole(c) == model.RoleAdmin {
+		return true
 	}
-	if ext == "" {
-		return ".bin"
+	if h.currentUserRole(c) != model.RoleAuthor {
+		return false
 	}
-	return ext
-}
-
-func imageSize(path string) (int, int) {
-	f, err := os.Open(path)
+	comment, err := h.st.GetCommentByID(c, commentID)
 	if err != nil {
-		return 0, 0
+		return false
 	}
-	defer f.Close()
-	cfg, _, err := image.DecodeConfig(f)
+	post, err := h.st.PostMeta(c, comment.PostID)
 	if err != nil {
-		return 0, 0
+		return false
 	}
-	return cfg.Width, cfg.Height
+	return post.AuthorID == currentUserID(c)
 }
 
-// --- 文章/页面 ---
-
-// ListPosts 后台文章/页面列表。type 查询参数区分。
-func (h *Admin) ListPosts(c *gin.Context) {
-	pt := c.DefaultQuery("type", model.PostTypePost)
-	if pt != model.PostTypePost && pt != model.PostTypePage {
-		pt = model.PostTypePost
+func (h *Admin) filterManageableCommentIDs(c *gin.Context, ids []uint) []uint {
+	if h.currentUserRole(c) == model.RoleAdmin {
+		return ids
 	}
-	page := atoiDefault(c.Query("page"), 1)
-	posts, total, err := h.st.AdminListPosts(pt, page, adminPageSize)
-	if err != nil {
-		h.serverError(c, err)
-		return
+	allowed := make([]uint, 0, len(ids))
+	for _, id := range ids {
+		if h.canManageComment(c, id) {
+			allowed = append(allowed, id)
+		}
 	}
-	data := h.base(c, "内容管理")
-	data["Posts"] = posts
-	data["Total"] = total
-	data["PostType"] = pt
-	data["Page"] = page
-	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
-	c.HTML(http.StatusOK, "admin_posts.gohtml", data)
+	return allowed
 }
 
-// EditPostForm 显示新建/编辑表单。id=0 或缺省为新建。
-func (h *Admin) EditPostForm(c *gin.Context) {
-	pt := c.DefaultQuery("type", model.PostTypePost)
-	data := h.base(c, "编辑内容")
-	data["PostType"] = pt
-	data["AllCategories"] = h.st.AllCategories()
-	data["SelectedCats"] = map[uint]bool{}
-	data["TagsCSV"] = ""
-	if idStr := c.Param("id"); idStr != "" && idStr != "new" {
-		id, _ := strconv.ParseUint(idStr, 10, 64)
-		p, err := h.st.AdminGetPost(uint(id))
-		if err != nil {
-			h.notFound(c)
-			return
+func adminNavKey(c *gin.Context) string {
+	if c == nil {
+		return ""
+	}
+	path := c.FullPath()
+	if path == "" && c.Request != nil && c.Request.URL != nil {
+		path = c.Request.URL.Path
+	}
+	switch path {
+	case "/admin/":
+		return "dashboard"
+	case "/admin/posts":
+		return adminPostNavKey(c.DefaultQuery("type", model.PostTypePost))
+	case "/admin/post/new", "/admin/post/:id", "/admin/post", "/admin/preview":
+		postType := c.PostForm("post_type")
+		if postType == "" {
+			postType = c.DefaultQuery("type", model.PostTypePost)
 		}
-		data["Post"] = p
-		data["PostType"] = p.PostType
-		data["IsEdit"] = true
-		// 当前选中的分类 ID 集合 + 标签名(逗号分隔),供模板回填。
-		selected := map[uint]bool{}
-		for _, cat := range p.Categories {
-			selected[cat.ID] = true
-		}
-		data["SelectedCats"] = selected
-		var tagNames []string
-		for _, t := range p.Tags {
-			tagNames = append(tagNames, t.Name)
-		}
-		data["TagsCSV"] = strings.Join(tagNames, ", ")
-	}
-	c.HTML(http.StatusOK, "admin_post_edit.gohtml", data)
-}
-
-// postForm 是文章/页面编辑表单。正文统一为 Markdown。
-type postForm struct {
-	ID            uint   `form:"id"`
-	Title         string `form:"title"`
-	Slug          string `form:"slug"`
-	ContentMD     string `form:"content_md"`
-	Excerpt       string `form:"excerpt"`
-	PostType      string `form:"post_type"`
-	Status        string `form:"status"`
-	CommentStatus string `form:"comment_status"`
-	MenuOrder     int    `form:"menu_order"`
-	CategoryIDs   []uint `form:"category_ids"`
-	Tags          string `form:"tags"`
-}
-
-// SavePost 保存文章/页面。正文以 Markdown 原文存 ContentMD,渲染后的 HTML 存 Content。
-func (h *Admin) SavePost(c *gin.Context) {
-	var f postForm
-	if err := c.ShouldBind(&f); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	if f.PostType != model.PostTypePage {
-		f.PostType = model.PostTypePost
-	}
-	if f.Status != model.StatusDraft {
-		f.Status = model.StatusPublished
-	}
-
-	now := time.Now()
-	var p *model.Post
-	if f.ID > 0 {
-		existing, err := h.st.AdminGetPost(f.ID)
-		if err != nil {
-			h.notFound(c)
-			return
-		}
-		p = existing
-	} else {
-		id, err := h.st.NextPostID()
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-		p = &model.Post{ID: id, PublishedAt: now, AuthorID: h.currentUserID(c)}
-	}
-
-	p.Title = strings.TrimSpace(f.Title)
-	p.Slug = strings.TrimSpace(f.Slug)
-	if f.PostType == model.PostTypePage {
-		if err := validatePageSlug(p.Slug); err != nil {
-			data := h.base(c, "编辑内容")
-			data["Error"] = err.Error()
-			data["PostType"] = f.PostType
-			data["AllCategories"] = h.st.AllCategories()
-			data["SelectedCats"] = map[uint]bool{}
-			data["TagsCSV"] = f.Tags
-			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-			data["IsEdit"] = f.ID > 0
-			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
-			return
-		}
-		exists, err := h.st.PageSlugExists(p.Slug, p.ID)
-		if err != nil {
-			h.serverError(c, err)
-			return
-		}
-		if exists {
-			data := h.base(c, "编辑内容")
-			data["Error"] = fmt.Sprintf("页面链接 /%s 已存在，请换一个 slug。", p.Slug)
-			data["PostType"] = f.PostType
-			data["AllCategories"] = h.st.AllCategories()
-			data["SelectedCats"] = map[uint]bool{}
-			data["TagsCSV"] = f.Tags
-			data["Post"] = &model.Post{ID: f.ID, Title: p.Title, Slug: p.Slug, ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder}
-			data["IsEdit"] = f.ID > 0
-			c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
-			return
-		}
-	}
-	p.Excerpt = f.Excerpt
-	p.PostType = f.PostType
-	p.Status = f.Status
-	p.CommentStatus = f.CommentStatus
-	p.MenuOrder = f.MenuOrder
-	p.ModifiedAt = now
-
-	// 正文:Markdown 原文 + 渲染后的 HTML 一并保存。
-	p.ContentMD = f.ContentMD
-	p.Content = renderMarkdown(f.ContentMD)
-	p.ContentFormat = model.FormatMarkdown
-
-	// 仅文章关联分类/标签;页面不需要。
-	if f.PostType == model.PostTypePost {
-		tagNames := parseTags(f.Tags)
-		if err := h.st.SavePostWithTerms(p, f.CategoryIDs, tagNames); err != nil {
-			h.serverError(c, err)
-			return
-		}
-	} else if err := h.st.SavePost(p); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/posts?type="+p.PostType)
-}
-
-// currentUserID 从 session 读取当前管理员 ID。
-func (h *Admin) currentUserID(c *gin.Context) uint {
-	s := sessions.Default(c)
-	if v := s.Get(middleware.SessionUserKey); v != nil {
-		if id, ok := v.(uint); ok {
-			return id
-		}
-	}
-	return 0
-}
-
-// parseTags 把逗号分隔的标签串拆为去空白、去重的标签名切片。
-func parseTags(s string) []string {
-	seen := map[string]bool{}
-	var out []string
-	for _, part := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == '，' }) {
-		name := strings.TrimSpace(part)
-		if name == "" || seen[name] {
-			continue
-		}
-		seen[name] = true
-		out = append(out, name)
-	}
-	return out
-}
-
-// Preview 渲染 Markdown 为 HTML 片段(后台编辑预览,Ajax)。
-func (h *Admin) Preview(c *gin.Context) {
-	md := c.PostForm("content_md")
-	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.String(http.StatusOK, renderMarkdown(md))
-}
-
-// DeletePost 删除文章/页面。
-func (h *Admin) DeletePost(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.st.DeletePost(uint(id)); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/posts")
-}
-
-// --- 评论 ---
-
-// ListComments 后台评论列表。
-func (h *Admin) ListComments(c *gin.Context) {
-	status := c.DefaultQuery("status", model.CommentPending)
-	page := atoiDefault(c.Query("page"), 1)
-	comments, total, err := h.st.AdminListComments(status, page, adminPageSize)
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	data := h.base(c, "评论管理")
-	data["Comments"] = comments
-	data["Total"] = total
-	data["FilterStatus"] = status
-	data["Counts"] = h.st.AdminCommentCounts()
-	data["Page"] = page
-	data["Pages"] = int((total + int64(adminPageSize) - 1) / int64(adminPageSize))
-	c.HTML(http.StatusOK, "admin_comments.gohtml", data)
-}
-
-// EditComment 修改评论内容。
-func (h *Admin) EditComment(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	content := strings.TrimSpace(c.PostForm("content"))
-	if content == "" {
-		c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
-		return
-	}
-	if err := h.st.UpdateCommentContent(uint(id), content); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
-}
-
-// BatchComments 批量操作评论(approve/pending/spam/delete)。
-func (h *Admin) BatchComments(c *gin.Context) {
-	action := c.PostForm("action")
-	idStrs := c.PostFormArray("ids")
-	var ids []uint
-	for _, s := range idStrs {
-		if n, err := strconv.ParseUint(s, 10, 64); err == nil {
-			ids = append(ids, uint(n))
-		}
-	}
-	var err error
-	switch action {
-	case "approve":
-		err = h.st.BatchSetCommentStatus(ids, model.CommentApproved)
-	case "pending":
-		err = h.st.BatchSetCommentStatus(ids, model.CommentPending)
-	case "spam":
-		err = h.st.BatchSetCommentStatus(ids, model.CommentSpam)
-	case "delete":
-		err = h.st.BatchDeleteComments(ids)
+		return adminPostNavKey(postType)
+	case "/admin/comments", "/admin/comment/:id/:action", "/admin/comments/edit/:id", "/admin/comments/batch":
+		return "comments"
+	case "/admin/categories", "/admin/category", "/admin/category/:id/delete":
+		return "categories"
+	case "/admin/tags", "/admin/tag", "/admin/tag/:id/delete":
+		return "tags"
+	case "/admin/settings", "/admin/settings/developer", "/admin/settings/site", "/admin/settings/session", "/admin/settings/assets/release", "/admin/settings/assets/embed", "/admin/settings/i18n/release", "/admin/settings/i18n/embed", "/admin/settings/templates/release", "/admin/settings/templates/embed", "/admin/settings/templates/reload", "/admin/settings/theme/reload", "/admin/settings/plugins/reload":
+		return "settings"
+	case "/admin/profile", "/admin/profile/password":
+		return "profile"
+	case "/admin/my-comments", "/admin/my-comments/:id/edit", "/admin/my-comments/:id/delete":
+		return "profile-comments"
+	case "/admin/export-data":
+		return "profile-export"
+	case "/admin/delete-account":
+		return "profile-delete"
+	case "/admin/debug":
+		return "debug"
+	case "/admin/uploads", "/admin/uploads.json", "/admin/upload", "/admin/upload/:id/delete":
+		return "uploads"
+	case "/admin/import", "/admin/export":
+		return "import"
+	case "/admin/users", "/admin/user/:id/role", "/admin/user/:id/delete":
+		return "users"
+	case "/admin/themes", "/admin/theme/upload", "/admin/theme/activate", "/admin/theme/delete", "/admin/theme/download", "/admin/theme/preview", "/admin/theme/preview/clear", "/admin/theme/screenshot/:name/:file":
+		return "themes"
+	case "/admin/theme/files", "/admin/theme/file", "/admin/theme/file/create", "/admin/theme/file/delete", "/admin/theme/file/reload", "/admin/theme/recovery/clear", "/admin/theme/reload":
+		return "theme-files"
+	case "/admin/menus":
+		return "menus"
+	case "/admin/widgets":
+		return "widgets"
+	case "/admin/theme-options":
+		return "theme-options"
+	case "/admin/plugins", "/admin/plugin/:id/:action", "/admin/plugin/:id/settings":
+		return "plugins"
 	default:
-		c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
-		return
+		return ""
 	}
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
 }
 
-// ModerateComment 审核评论(approve/spam/delete)。
-func (h *Admin) ModerateComment(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	action := c.Param("action")
-	var err error
-	switch action {
-	case "approve":
-		err = h.st.SetCommentStatus(uint(id), model.CommentApproved)
-	case "pending":
-		err = h.st.SetCommentStatus(uint(id), model.CommentPending)
-	case "spam":
-		err = h.st.SetCommentStatus(uint(id), model.CommentSpam)
-	case "delete":
-		err = h.st.DeleteComment(uint(id))
-	default:
-		h.notFound(c)
-		return
+func adminPostNavKey(postType string) string {
+	if postType == model.PostTypePage {
+		return "pages"
 	}
-	if err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, c.GetHeader("Referer"))
+	return "posts"
 }
 
-// --- 友链 ---
-
-// ListLinks 友链管理列表。
-func (h *Admin) ListLinks(c *gin.Context) {
-	links, _ := h.st.AllLinks()
-	data := h.base(c, "友链管理")
-	data["Links"] = links
-	c.HTML(http.StatusOK, "admin_links.gohtml", data)
+// safeRedirect 校验 Referer 是否为本域名,是则重定向到 Referer,否则回退到 fallback。
+func safeRedirect(c *gin.Context, fallback string) {
+	ref := strings.TrimSpace(c.GetHeader("Referer"))
+	if ref != "" {
+		u, err := url.Parse(ref)
+		if err == nil && u.Host != "" && strings.EqualFold(u.Host, c.Request.Host) {
+			c.Redirect(http.StatusSeeOther, ref)
+			return
+		}
+	}
+	c.Redirect(http.StatusSeeOther, fallback)
 }
 
-// SaveLink 新建/更新友链。
-func (h *Admin) SaveLink(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.PostForm("id"), 10, 64)
-	sort, _ := strconv.Atoi(c.PostForm("sort"))
-	l := &model.Link{
-		ID:          uint(id),
-		Name:        strings.TrimSpace(c.PostForm("name")),
-		URL:         strings.TrimSpace(c.PostForm("url")),
-		Description: strings.TrimSpace(c.PostForm("description")),
-		Sort:        sort,
-	}
-	if l.Name == "" || l.URL == "" {
-		c.Redirect(http.StatusSeeOther, "/admin/links")
-		return
-	}
-	if err := h.st.SaveLink(l); err != nil {
-		h.serverError(c, err)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, "/admin/links")
+func (h *Admin) currentUser(c *gin.Context) *model.User {
+	return currentUserByStore(c, h.st, c)
 }
 
-// DeleteLink 删除友链。
-func (h *Admin) DeleteLink(c *gin.Context) {
-	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := h.st.DeleteLink(uint(id)); err != nil {
-		h.serverError(c, err)
-		return
+func (h *Admin) currentTheme(c *gin.Context) *theme.Theme {
+	if h.themeManager == nil {
+		return nil
 	}
-	c.Redirect(http.StatusSeeOther, "/admin/links")
+	return h.themeManager.Current(c)
 }
 
-// --- 辅助 ---
+func normalizeTermSlug(s string) string {
+	return util.Slugify(s)
+}
+
+func normalizeTaxonomySlug(s string) string {
+	return util.URLSlugify(s)
+}
 
 func (h *Admin) notFound(c *gin.Context) {
-	c.HTML(http.StatusNotFound, "admin_error.gohtml", gin.H{
-		"Title":   "404",
-		"Message": "未找到",
-	})
+	tr := i18n.Get(c)
+	c.HTML(http.StatusNotFound, "admin_error.gohtml", i18n.Inject(c, gin.H{
+		"Title":        "404",
+		"Message":      tr.T("未找到"),
+		"AssetVersion": assetVersion(),
+	}))
 }
 
 func (h *Admin) serverError(c *gin.Context, err error) {
 	h.log.Error("admin error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
-	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", gin.H{
-		"Title":   "500",
-		"Message": "服务器错误",
+	tr := i18n.Get(c)
+	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", i18n.Inject(c, gin.H{
+		"Title":        "500",
+		"Message":      tr.T("服务器错误"),
+		"AssetVersion": assetVersion(),
+	}))
+}
+
+func assetVersion() string {
+	root := filepath.Join("web", "assets")
+	info, err := os.Stat(root)
+	if err != nil || !info.IsDir() {
+		return version.Version
+	}
+	maxMod := info.ModTime().UnixNano()
+	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+		if mod := info.ModTime().UnixNano(); mod > maxMod {
+			maxMod = mod
+		}
+		return nil
 	})
+	return version.Version + "-" + strconv.FormatInt(maxMod, 36)
 }
 
-var pageSlugReserved = map[string]bool{
-	"admin":   true,
-	"feed":    true,
-	"healthz": true,
-	"metrics": true,
-	"search":  true,
-}
+var usernameAllowedRe = regexp.MustCompile(`^[a-zA-Z0-9_-]{2,32}$`)
 
-var pageSlugAllowedRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
-
-func validatePageSlug(slug string) error {
-	slug = strings.TrimSpace(slug)
-	if slug == "" {
-		return fmt.Errorf("页面 slug 不能为空")
+func validateUsernameT(tr func(string, ...any) string, username string) error {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return errors.New(tr(gettext.Mark.T("用户名不能为空")))
 	}
-	if strings.ContainsRune(slug, '/') {
-		return fmt.Errorf("页面 slug 只能是单段路径，不能包含 /")
-	}
-	if strings.ContainsAny(slug, "?# \t\r\n") {
-		return fmt.Errorf("页面 slug 不能包含空白、? 或 #")
-	}
-	if slug == "." || slug == ".." {
-		return fmt.Errorf("页面 slug 非法")
-	}
-	if !pageSlugAllowedRe.MatchString(slug) {
-		return fmt.Errorf("页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头")
-	}
-	if _, _, ok := permalink.ParsePostPath("/" + slug); ok {
-		return fmt.Errorf("页面 slug 不能与文章永久链接格式冲突")
-	}
-	if pageSlugReserved[strings.ToLower(slug)] {
-		return fmt.Errorf("页面 slug %q 为保留路由，请换一个", slug)
+	if !usernameAllowedRe.MatchString(username) {
+		return errors.New(tr(gettext.Mark.T("用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符")))
 	}
 	return nil
-}
-
-// renderMarkdown 把 Markdown 渲染为 HTML,并复用前台统一的代码块高亮逻辑。
-func renderMarkdown(md string) string {
-	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
-	doc := p.Parse([]byte(md))
-	renderer := mhtml.NewRenderer(mhtml.RendererOptions{Flags: mhtml.CommonFlags})
-	out := string(markdown.Render(doc, renderer))
-	return renderx.HighlightCodeBlocks(out)
 }

@@ -1,0 +1,19 @@
+{{- define "widget_saying" -}}
+{{$title := plugin_option "title" | default (.tp.T "博主动态")}}
+{{$postID := plugin_option "post_id" | toInt}}
+{{$saying := hook_invoke "SayingItems" "post_id" $postID "count" 5}}
+{{- if $saying}}
+<section class="widget widget-saying">
+  <h3>{{$title}}</h3>
+  <div class="widget-saying-author">
+    <img class="avatar" src="{{.api.AvatarURL (index $saying 0).AuthorEmail .Data.DefaultAvatar}}" alt="" width="32" height="32">
+    <span>{{(index $saying 0).AuthorName}}</span>
+  </div>
+  <ul>
+    {{range $saying}}
+    <li><div class="widget-comment-line"><a href="{{.CommentURL}}">{{.Snippet}}</a></div></li>
+    {{end}}
+  </ul>
+</section>
+{{- end}}
+{{- end}}

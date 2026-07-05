@@ -1,0 +1,26 @@
+{{- define "list.gohtml" -}}
+{{template "header" .}}
+<h1 class="archive-title">{{.Heading}}</h1>
+<div class="post-list">
+  {{range .List.Posts}}
+  <article class="{{post_class . "post-summary"}}">
+    <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
+    <div class="post-meta">
+      <time>{{fmtDate .PublishedAt}}</time>
+      {{if .Author.DisplayName}}<span class="author">{{.Author.DisplayName}}</span>{{end}}
+      {{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+      {{range .Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
+      <span class="views">{{$.th.N1_64 "%d 次阅读" .Views .Views}}</span>
+      {{if eq .CommentStatus "closed"}}<span class="comment-count">{{$.th.T "评论已关闭"}}</span>
+      {{else if eq .CommentCount 0}}<a class="comment-count" href="{{postURL .}}#comments">{{$.th.T "暂无评论"}}</a>
+      {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</a>{{end}}
+      {{if and $.CurrentUserID (eq $.CurrentUserID .AuthorID)}}<a class="edit-link" href="/admin/post/{{.ID}}">{{$.th.T "编辑"}}</a>{{end}}
+    </div>
+  </article>
+  {{else}}
+  <p>{{.th.T "没有找到匹配的文章。"}}</p>
+  {{end}}
+</div>
+{{posts_pagination . 2}}
+{{template "footer" .}}
+{{- end}}

@@ -1,0 +1,60 @@
+{{- define "admin_users.gohtml" -}}
+{{template "admin_header" .}}
+<h1>{{.t.T "用户管理"}}</h1>
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+<p class="total">{{.t.N1_64 "共 %d 位用户" .Total .Total}} · <a href="/admin/user/new" class="btn">{{.t.T "新增用户"}}</a></p>
+<div class="table-scroll">
+  <table class="data-table users-table">
+    <thead><tr><th>{{.t.T "用户名"}}</th><th>{{.t.T "显示名"}}</th><th>{{.t.T "邮箱"}}</th><th>{{.t.T "角色"}}</th><th>{{.t.T "注册时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
+    <tbody>
+    {{range .Users}}
+    <tr class="users-row">
+      <td class="user-name-cell" data-label="{{$.t.T "用户"}}">
+        <div class="user-panel">
+          <div class="user-name-line">{{.Username}}</div>
+          <div class="user-display-line">{{if .DisplayName}}{{.DisplayName}}{{else}}{{$.t.T "未设置显示名"}}{{end}}</div>
+        </div>
+      </td>
+      <td class="user-display-cell" data-label="{{$.t.T "显示名"}}">{{.DisplayName}}</td>
+      <td class="user-email-cell" data-label="{{$.t.T "邮箱"}}"><a href="mailto:{{.Email}}">{{.Email}}</a></td>
+      <td class="user-role-cell" data-label="{{$.t.T "角色"}}">
+        <form class="inline" method="post" action="/admin/user/{{.ID}}/role">
+          {{template "csrf_field" $}}
+          <select class="widget-add-select user-role-select" name="role" onchange="this.form.submit()" {{if and (eq .ID $.CurrentUserID) (eq .Role $.RoleAdmin)}}disabled{{end}}>
+            <option value="admin" {{if eq .Role "admin"}}selected{{end}}>{{$.t.T "管理员"}}</option>
+            <option value="author" {{if eq .Role "author"}}selected{{end}}>{{$.t.T "协作者"}}</option>
+            <option value="subscriber" {{if eq .Role "subscriber"}}selected{{end}}>{{$.t.T "订阅者"}}</option>
+          </select>
+          {{if and (eq .ID $.CurrentUserID) (eq .Role $.RoleAdmin)}}<span class="form-hint">{{$.t.T "不能直接降低自己的管理员权限"}}</span>{{end}}
+        </form>
+      </td>
+      <td class="user-created-cell" data-label="{{$.t.T "注册时间"}}"><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDate .CreatedAt}}</time></td>
+      <td class="actions user-actions-cell" data-label="{{$.t.T "操作"}}">
+        <a href="/admin/user/{{.ID}}/edit" class="user-action-link">{{$.t.T "编辑"}}</a>
+        {{if eq .ID $.CurrentUserID}}
+        <span class="form-hint">{{$.t.T "不能在用户管理中删除自己"}}</span>
+        {{else}}
+        <form class="inline" method="post" action="/admin/user/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该用户?"}}')">
+          {{template "csrf_field" $}}
+          <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+        </form>
+        {{end}}
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="6">{{.t.T "暂无用户"}}</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+{{- if gt .Pages 1}}
+<nav class="pagination">
+  {{if gt .Page 1}}<a href="/admin/users?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
+  <span class="page-info">{{.Page}} / {{.Pages}}</span>
+  {{if lt .Page .Pages}}<a href="/admin/users?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
+</nav>
+{{- end}}
+{{template "admin_footer" .}}
+{{- end}}

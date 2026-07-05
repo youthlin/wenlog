@@ -1,12 +1,165 @@
-{{define "admin_dashboard.gohtml"}}
-{{template "admin_header" .}}
-<h1>欢迎回来</h1>
-<div class="cards">
-  <a class="card" href="/admin/posts?type=post"><h3>文章</h3><p>管理博客文章</p></a>
-  <a class="card" href="/admin/posts?type=page"><h3>页面</h3><p>管理独立页面</p></a>
-  <a class="card" href="/admin/comments"><h3>评论</h3><p>{{.PendingCount}} 条待审</p></a>
-  <a class="card" href="/admin/links"><h3>友链</h3><p>管理友情链接</p></a>
-  <a class="card" href="/admin/import"><h3>导入</h3><p>上传 WordPress XML 并覆盖导入</p></a>
+{{- define "admin_dashboard.gohtml" -}}
+{{- template "admin_header" . -}}
+{{ if .User }}
+<h1>{{.t.T "%s, 欢迎回来" .User.DisplayName}}</h1>
+{{ else }}
+<h1>{{.t.T "欢迎回来"}}</h1>
+{{ end }}
+
+{{- if .User}}
+<section class="card dashboard-welcome-card">
+  <a class="dashboard-user-avatar" href="/admin/profile" aria-label="{{.t.T "查看个人资料"}}">
+    <img class="avatar" src="{{avatarURL .User.Email .DefaultAvatar}}" alt="" width="72" height="72">
+  </a>
+  <div class="dashboard-user-main">
+    <a class="dashboard-user-name" href="/admin/profile">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.User.Username}}{{end}}</a>
+    <p>{{.t.T "欢迎来到后台。你可以在个人资料中维护名称和邮箱。"}}</p>
+  </div>
+</section>
+{{- end}}
+
+{{- if .Stats -}}
+<div class="dashboard-stats">
+  <a class="stat-card" href="/admin/posts?type=post">
+    <span class="stat-icon">📝</span>
+    <span class="stat-value">{{.Stats.PostsPublished}}</span>
+    <span class="stat-label">{{.t.T "已发布文章"}}</span>
+    {{- if gt .Stats.PostsDraft 0}}
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .Stats.PostsDraft .Stats.PostsDraft}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/posts?type=page">
+    <span class="stat-icon">📄</span>
+    <span class="stat-value">{{.Stats.PagesPublished}}</span>
+    <span class="stat-label">{{.t.T "已发布页面"}}</span>
+    {{- if gt .Stats.PagesDraft 0}}
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .Stats.PagesDraft .Stats.PagesDraft}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/comments">
+    <span class="stat-icon">💬</span>
+    <span class="stat-value">{{.Stats.Comments.Approved}}</span>
+    <span class="stat-label">{{.t.T "已批准评论"}}</span>
+    {{- if gt .Stats.Comments.Pending 0}}
+    <span class="stat-sub stat-warn">{{.t.N1_64 "%d 条待审" .Stats.Comments.Pending .Stats.Comments.Pending}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/categories">
+    <span class="stat-icon">📁</span>
+    <span class="stat-value">{{.Stats.CategoryCount}}</span>
+    <span class="stat-label">{{.t.T "分类"}}</span>
+  </a>
+  <a class="stat-card" href="/admin/tags">
+    <span class="stat-icon">🏷️</span>
+    <span class="stat-value">{{.Stats.TagCount}}</span>
+    <span class="stat-label">{{.t.T "标签"}}</span>
+  </a>
+  <a class="stat-card" href="/admin/uploads">
+    <span class="stat-icon">🖼️</span>
+    <span class="stat-value">{{.Stats.UploadCount}}</span>
+    <span class="stat-label">{{.t.T "附件"}}</span>
+  </a>
 </div>
-{{template "admin_footer" .}}
-{{end}}
+
+<div class="dashboard-actions">
+  <a class="btn" href="/admin/post/new?type=post">{{.t.T "写文章"}}</a>
+  <a class="btn" href="/admin/post/new?type=page">{{.t.T "新建页面"}}</a>
+  {{- if gt .Stats.Comments.Pending 0}}
+  <a class="btn btn-accent" href="/admin/comments?status=pending">{{.t.T "审核评论"}}</a>
+  {{- end}}
+  <a class="btn" href="/admin/uploads">{{.t.T "附件"}}</a>
+</div>
+{{- end -}}
+
+{{- if .AuthorStats -}}
+<div class="dashboard-stats">
+  <a class="stat-card" href="/admin/posts?type=post">
+    <span class="stat-icon">📝</span>
+    <span class="stat-value">{{.AuthorStats.PostsPublished}}</span>
+    <span class="stat-label">{{.t.T "我的已发布文章"}}</span>
+    {{- if gt .AuthorStats.PostsDraft 0}}
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .AuthorStats.PostsDraft .AuthorStats.PostsDraft}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/posts?type=page">
+    <span class="stat-icon">📄</span>
+    <span class="stat-value">{{.AuthorStats.PagesPublished}}</span>
+    <span class="stat-label">{{.t.T "我的已发布页面"}}</span>
+    {{- if gt .AuthorStats.PagesDraft 0}}
+    <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .AuthorStats.PagesDraft .AuthorStats.PagesDraft}}</span>
+    {{- end}}
+  </a>
+</div>
+
+<div class="dashboard-actions">
+  <a class="btn" href="/admin/post/new?type=post">{{.t.T "写文章"}}</a>
+  <a class="btn" href="/admin/post/new?type=page">{{.t.T "新建页面"}}</a>
+</div>
+{{- end -}}
+
+{{- if .ReaderStats -}}
+<div class="dashboard-stats">
+  <a class="stat-card" href="/admin/my-comments">
+    <span class="stat-icon">💬</span>
+    <span class="stat-value">{{.ReaderStats.CommentCount}}</span>
+    <span class="stat-label">{{.t.T "我的评论"}}</span>
+    {{- if gt .ReaderStats.PendingCommentCount 0}}
+    <span class="stat-sub stat-warn">{{.t.N1_64 "%d 条待审" .ReaderStats.PendingCommentCount .ReaderStats.PendingCommentCount}}</span>
+    {{- end}}
+  </a>
+  <a class="stat-card" href="/admin/posts?type=post">
+    <span class="stat-icon">📝</span>
+    <span class="stat-value">{{.ReaderStats.CommentedPostCount}}</span>
+    <span class="stat-label">{{.t.T "我评论的文章"}}</span>
+  </a>
+  <a class="stat-card" href="/admin/posts?type=page">
+    <span class="stat-icon">📄</span>
+    <span class="stat-value">{{.ReaderStats.CommentedPageCount}}</span>
+    <span class="stat-label">{{.t.T "我评论的页面"}}</span>
+  </a>
+</div>
+{{- end -}}
+
+<div class="dashboard-grid">
+  <div class="dashboard-panel">
+    <h2 class="panel-title">{{.t.T "最近文章"}}</h2>
+    {{- if .RecentPosts}}
+    <ul class="dashboard-list">
+      {{- range .RecentPosts}}
+      <li class="dashboard-recent-post-item">
+        <a class="dashboard-list-link" href="{{postURL .}}">{{.Title}}</a>
+        {{- if or (eq $.CurrentUserRole "admin") (eq $.User.ID .AuthorID)}}
+        <a class="dashboard-list-edit" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
+        {{- end}}
+        <time class="dashboard-list-meta">{{fmtDate .PublishedAt}}</time>
+      </li>
+      {{- end}}
+    </ul>
+    {{- else}}
+    <p class="dashboard-empty">{{.t.T "暂无文章"}}</p>
+    {{- end}}
+  </div>
+  <div class="dashboard-panel">
+    <h2 class="panel-title">{{.t.T "最近评论"}}</h2>
+    {{- if .RecentComments}}
+    <ul class="dashboard-list">
+      {{- range .RecentComments}}
+      <li class="dashboard-recent-comment-item">
+        {{- $postURL := index $.CommentPostURLs .PostID}}
+        {{- $postTitle := index $.CommentPostTitles .PostID}}
+        <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{.Content}}</a>
+        <span class="dashboard-list-meta dashboard-comment-meta">
+          <span class="dashboard-comment-author">{{.Author}}</span>
+          <span>{{$.t.T "发表在"}}</span>
+          <span class="dashboard-comment-post-title">《{{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}》</span>
+        </span>
+      </li>
+      {{- end}}
+    </ul>
+    {{- else}}
+    <p class="dashboard-empty">{{.t.T "暂无评论"}}</p>
+    {{- end}}
+  </div>
+</div>
+{{- template "admin_footer" . -}}
+{{- end}}

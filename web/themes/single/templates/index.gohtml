@@ -1,0 +1,206 @@
+{{- define "header" -}}
+<!DOCTYPE html>
+<html lang="{{.htmlLang}}"
+      data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
+      data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
+      data-comment-network="{{.th.T "网络错误,请稍后重试。"}}"
+      data-nav-open-label="{{.th.T "打开菜单"}}"
+      data-nav-close-label="{{.th.T "收起菜单"}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+{{head_meta . -}}
+<link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
+<link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+<link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
+{{slot "head.end" .}}
+</head>
+<body class="{{body_class .}}">
+<a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="site-title" href="/">{{if .SiteLogo}}<img class="site-logo" src="{{.SiteLogo}}" alt="{{.SiteName}}">{{else}}{{.SiteName}}{{end}}</a>
+    <nav id="site-nav-menu" class="site-nav" data-nav-panel>
+      <div class="site-nav-links">
+        {{render_menu "primary" .}}
+      </div>
+      <div class="site-nav-utility">
+        <label class="lang-select-wrap">
+          <span class="sr-only">{{.th.T "语言"}}</span>
+          <select class="lang-select" aria-label="{{.th.T "语言"}}" onchange="if(this.value)location=this.value">
+            <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>中文</option>
+            <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>English</option>
+          </select>
+        </label>
+      </div>
+    </nav>
+    <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.th.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+  </div>
+</header>
+<div class="container layout">
+<main class="main-col" id="main-content">
+{{end}}{{/* header */}}
+
+{{- define "footer" -}}
+</main>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-widgets">
+      {{render_widgets "footer" .}}
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; {{.CurrentYear}} {{.SiteName}}</p>
+      <p class="footer-powered">{{theme_option "footer_text" | default "Powered by Go"}}</p>
+    </div>
+  </div>
+</footer>
+<div class="scroll-tools">
+  <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.th.T "回顶部"}}">↑</button>
+  <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.th.T "到底部"}}">↓</button>
+</div>
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{- end}}
+{{- end}}
+<script>
+(function(){
+  var toggle = document.querySelector('[data-nav-toggle]');
+  var nav = document.getElementById('site-nav-menu');
+  if (!toggle || !nav) return;
+  toggle.addEventListener('click', function(){
+    var open = nav.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open
+      ? document.documentElement.getAttribute('data-nav-close-label') || '收起菜单'
+      : document.documentElement.getAttribute('data-nav-open-label') || '打开菜单');
+  });
+})();
+</script>
+<script src="/assets/common.js?v={{.AssetVersion}}"></script>
+{{- slot "body.end" .}}
+</body>
+</html>
+{{end}}{{/* footer */}}
+
+{{- define "pagination" -}}
+{{posts_pagination . 2}}
+{{end}}{{/* pagination */}}
+
+{{- define "comments" -}}
+<section class="comments" id="comments">
+  <h3>{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
+  <div id="comments-box">
+    {{template "fragment_comments.gohtml" .}}
+  </div>
+</section>
+<script src="/assets/comment.js?v={{.AssetVersion}}"></script>
+{{end}}{{/* comment */}}
+
+{{- define "fragment_comments.gohtml" -}}
+  {{list_comments .}}
+  {{comments_pagination . 2}}
+  {{comment_form .}}
+{{- end}}
+
+{{/* index.gohtml — 兜底页面模板，用数据特征区分页面类型 */}}
+{{- define "index.gohtml" -}}
+{{- template "header" . -}}
+
+{{- if .Code}}
+  {{/* 错误页 */}}
+  <div class="error-page">
+    <h1>{{.Code}}</h1>
+    <p>{{.Message}}</p>
+    <p><a href="/">{{.th.T "返回首页"}}</a></p>
+  </div>
+
+{{else if .Groups}}
+  {{/* 归档页 */}}
+  <article class="{{post_class .Post "page-detail"}}">
+    <h1 class="post-title">{{.Post.Title}}</h1>
+    {{if .Post.Content}}<div class="post-content">{{safeHTML .Post.Content}}</div>{{end}}
+    <div class="archive-groups">
+      {{range .Groups}}
+      <h3 class="archive-year" id="{{.Year}}">{{.Year}}</h3>
+      <ul class="archive-list">
+        {{range .Posts}}
+        <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{.Title}}</a></li>
+        {{end}}
+      </ul>
+      {{end}}
+    </div>
+  </article>
+
+{{else if .Post}}
+  {{/* 文章/页面详情 */}}
+  <article class="{{post_class .Post "post-detail"}}">
+    <h1 class="post-title">{{.Post.Title}}{{if .IsDraft}} <span class="draft-badge">{{.th.T "草稿预览"}}</span>{{end}}</h1>
+    <div class="post-meta">
+      <a class="post-date-link" href="{{postURL .Post}}"><time datetime="{{fmtDateTime .Post.PublishedAt}}">{{fmtDate .Post.PublishedAt}}</time></a>
+      {{if .Post.Author.DisplayName}}<span class="author">{{.Post.Author.DisplayName}}</span>{{end}}
+      {{range .Post.Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+      <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
+      {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
+    </div>
+    <div class="post-content">{{post_content .Post}}</div>
+    {{if .Post.Tags}}
+    <div class="post-tags">
+      {{range .Post.Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
+    </div>
+    {{end}}
+  </article>
+
+  {{if or .PrevPost .NextPost}}
+  <nav class="post-nav">
+    <span class="prev">{{if .PrevPost}}<a href="{{postURL .PrevPost}}">← {{.PrevPost.Title}}</a>{{end}}</span>
+    <span class="next">{{if .NextPost}}<a href="{{postURL .NextPost}}">{{.NextPost.Title}} →</a>{{end}}</span>
+  </nav>
+  {{end}}
+
+  {{template "comments" .}}
+
+{{- else}}
+  {{/* 首页/列表 */}}
+  {{if .Heading}}<h1 class="archive-title">{{.Heading}}</h1>{{end}}
+  <div class="post-list">
+    {{range .List.Posts}}
+    <article class="{{post_class . "post-summary"}}">
+      <h2 class="post-title"><a href="{{postURL .}}">{{.Title}}</a></h2>
+      <div class="post-meta">
+        <time>{{fmtDate .PublishedAt}}</time>
+        {{if .Author.DisplayName}}<span class="author">{{.Author.DisplayName}}</span>{{end}}
+        {{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+        {{range .Tags}}<a class="tag" href="{{tagURL .Slug}}">#{{.Name}}</a>{{end}}
+        <span class="views">{{$.th.N1_64 "%d 次阅读" .Views .Views}}</span>
+        {{if eq .CommentStatus "closed"}}<span class="comment-count">{{$.th.T "评论已关闭"}}</span>
+        {{else if eq .CommentCount 0}}<a class="comment-count" href="{{postURL .}}#comments">{{$.th.T "暂无评论"}}</a>
+        {{else}}<a class="comment-count" href="{{postURL .}}#comments">{{$.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</a>{{end}}
+        {{if and $.CurrentUserID (eq $.CurrentUserID .AuthorID)}}<a class="edit-link" href="/admin/post/{{.ID}}">{{$.th.T "编辑"}}</a>{{end}}
+      </div>
+      <div class="post-content">{{post_excerpt .}}</div>
+      {{if hasMore .Content}}<a class="read-more" href="{{postURL .}}#more-{{.ID}}">{{$.th.T "阅读全文 →"}}</a>{{end}}
+    </article>
+    {{else}}
+    <p>{{.th.T "没有找到匹配的文章。"}}</p>
+    {{end}}
+  </div>
+  {{posts_pagination . 2}}
+{{- end}}
+
+{{template "footer" .}}
+{{- end}}

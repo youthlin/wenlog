@@ -1,0 +1,34 @@
+# 默认主题配置 — v6: 组件级选项 + 可重复组件
+name: "default"
+version: "20260705141547"
+description: "默认主题，内容+边栏双栏设计，带多种颜色外观"
+author: "youthlin"
+author_uri: "https://github.com/youthlin"
+theme_uri: "https://github.com/youthlin/wenlog"
+license: "MIT"
+tags: ["双栏", "响应式", "多配色"]
+
+widget_areas:
+  sidebar:
+    name: "侧边栏"
+    description: "文章页侧边栏区域"
+
+menu_locations:
+  primary:
+    name: "主导航"
+    description: "站点顶部导航菜单"
+
+widgets: []
+
+options:
+  - id: custom_css
+    type: css
+    label: "自定义 CSS"
+    description: "会注入到页面 <head> 中"
+    default: ""
+
+  - id: footer_text
+    type: text
+    label: "页脚文字"
+    description: "显示在页面底部"
+    default: "Powered by WenLog"

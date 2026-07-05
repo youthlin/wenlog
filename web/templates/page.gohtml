@@ -1,9 +1,0 @@
-{{define "page.gohtml"}}
-{{template "header" .}}
-<article class="page-detail">
-  <h1 class="post-title">{{.Post.Title}}</h1>
-  <div class="post-content">{{detailHTML .Post}}</div>
-</article>
-{{if .ShowComments}}{{template "comments" .}}{{end}}
-{{template "footer" .}}
-{{end}}

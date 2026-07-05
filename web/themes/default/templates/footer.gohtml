@@ -1,0 +1,29 @@
+{{- define "footer" -}}
+</main>
+{{template "sidebar" .}}
+</div>
+<div class="scroll-tools">
+  <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.th.T "回顶部"}}">↑</button>
+  <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.th.T "到底部"}}">↓</button>
+</div>
+<footer class="site-footer">
+  <div class="container">
+    <p>{{theme_option "footer_text" | default "Powered by WenLog"}}</p>
+  </div>
+</footer>
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{- end}}
+{{- end}}
+<script src="/assets/common.js?v={{.AssetVersion}}"></script>
+<script src="/assets/theme.js"></script>
+{{- slot "body.end" .}}
+</body>
+</html>
+{{- end}}

@@ -1,39 +1,180 @@
-{{define "admin_posts.gohtml"}}
-{{template "admin_header" .}}
+{{- define "admin_posts.gohtml" -}}
+{{- template "admin_header" . -}}
 <div class="page-head">
-  <h1>{{if eq .PostType "page"}}页面{{else}}文章{{end}}管理</h1>
-  <a class="btn" href="/admin/post/new?type={{.PostType}}">新建</a>
+  <h1>{{.Title}}</h1>
+  <div>
+    {{if or .CategoryFilterID .TagFilterID .Keyword}}<a class="btn-secondary" href="{{.ClearPostFilterURL}}">{{.t.T "取消"}}</a>{{end}}
+    <a class="btn" href="/admin/post/new?type={{.PostType}}">{{.t.T "新建"}}</a>
+  </div>
 </div>
-<table class="data-table">
-  <thead><tr><th>ID</th><th>标题</th><th>状态</th><th>发布时间</th><th>浏览</th><th>操作</th></tr></thead>
-  <tbody>
-  {{range .Posts}}
-  <tr>
-    <td>{{.ID}}</td>
-    <td>{{.Title}}</td>
-    <td>{{if eq .Status "published"}}已发布{{else}}草稿{{end}}</td>
-    <td>{{fmtDate .PublishedAt}}</td>
-    <td>{{.Views}}</td>
-    <td>
-      <a href="/admin/post/{{.ID}}">编辑</a>
-      <form class="inline" method="post" action="/admin/post/{{.ID}}/delete" onsubmit="return confirm('确认删除?')">
-        {{template "csrf_field" $}}
-        <button type="submit" class="link-danger">删除</button>
-      </form>
-    </td>
-  </tr>
-  {{else}}
-  <tr><td colspan="6">暂无内容</td></tr>
-  {{end}}
-  </tbody>
-</table>
-<p class="total">共 {{.Total}} 条</p>
-{{if gt .Pages 1}}
+<div class="posts-toolbar">
+  <form class="posts-filter-form" method="get" action="/admin/posts">
+    <input type="hidden" name="type" value="{{.PostType}}">
+    {{if eq .PostType "post"}}
+    <select name="category_id" aria-label="{{.t.T "分类目录"}}" data-searchable-select data-search-placeholder="{{.t.T "输入分类名筛选…"}}" data-search-empty="{{.t.T "没有匹配的分类"}}">
+      <option value="0">{{.t.T "不限分类"}}</option>
+      {{range .AllCategories}}
+      <option value="{{.ID}}" {{if eq $.CategoryFilterID .ID}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+    <select name="tag_id" aria-label="{{.t.T "标签"}}" data-searchable-select data-search-placeholder="{{.t.T "输入标签名筛选…"}}" data-search-empty="{{.t.T "没有匹配的标签"}}">
+      <option value="0">{{.t.T "不限标签"}}</option>
+      {{range .AllTags}}
+      <option value="{{.ID}}" {{if eq $.TagFilterID .ID}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+    {{end}}
+    <input type="search" name="q" value="{{.Keyword}}" placeholder="{{.t.T "搜索"}}">
+    <button type="submit" class="btn-secondary">{{.t.T "查询"}}</button>
+  </form>
+</div>
+<div class="table-scroll">
+  <table class="data-table posts-table">
+    <thead>
+    <tr>
+      <th class="post-title-head">{{.t.T "标题"}}</th>
+      <th class="post-published-head">{{.t.T "发布时间"}}</th>
+      {{if ne .PostType "page"}}
+      <th class="post-category-head">{{.t.T "分类目录"}}</th>
+      <th class="post-tags-head">{{.t.T "标签"}}</th>
+      {{end}}
+      <th class="post-stats-head">{{printf "%s / %s" (.t.T "评论") (.t.T "浏览")}}</th>
+      {{if eq .PostType "page"}}
+      <th class="post-menu-order-head">{{.t.T "顺序"}}</th>
+      {{end}}
+      <th class="post-actions-head">{{.t.T "操作"}}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Posts}}
+    <tr>
+      {{$viewURL := postURL .}}
+      <td class="post-title-cell" data-label="{{$.t.T "标题"}}">
+        <div class="post-title-panel">
+          <div class="post-title-main">
+            <a href="{{$viewURL}}" target="_blank" rel="noreferrer">{{if .Title}}{{.Title}}{{else}}{{$.t.T "（无标题）"}}{{end}}</a>
+            <span class="post-id-badge">#{{.ID}}</span>
+            {{if ne .Status "published"}}
+            <span class="post-status-badge is-draft">{{if eq .Status "draft"}}{{$.t.T "草稿"}}{{else if eq .Status "scheduled"}}{{$.t.T "定时"}}{{else}}{{.Status}}{{end}}</span>
+            {{end}}
+          </div>
+          <div class="post-meta-list">
+            <div class="post-inline-meta">
+              <time class="post-inline-meta-item" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
+            </div>
+          </div>
+        </div>
+      </td>
+      <td class="post-published-cell" data-label="{{$.t.T "发布时间"}}">
+        <time class="post-published-time" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
+      </td>
+      {{if ne $.PostType "page"}}
+      <td class="post-category-cell" data-label="{{$.t.T "分类目录"}}">
+        <div class="post-taxonomy-list is-inline">
+          <span class="post-taxonomy-inline">
+          {{range $i, $category := .Categories}}
+          {{if gt $i 0}}<span class="post-taxonomy-sep">, </span>{{end}}<a class="post-taxonomy-chip" href="{{$.CategoriesPageURL}}?edit_category={{$category.ID}}">{{$category.Name}}</a>
+          {{else}}
+          <span class="post-empty-value">—</span>
+          {{end}}
+          </span>
+        </div>
+      </td>
+      <td class="post-tags-cell" data-label="{{$.t.T "标签"}}">
+        <div class="post-taxonomy-list is-inline">
+          <span class="post-taxonomy-inline">
+          {{range $i, $tag := .Tags}}
+          {{if gt $i 0}}<span class="post-taxonomy-sep">, </span>{{end}}<a class="post-taxonomy-chip" href="{{$.TagsPageURL}}?edit_tag={{$tag.ID}}">{{$tag.Name}}</a>
+          {{else}}
+          <span class="post-empty-value">—</span>
+          {{end}}
+          </span>
+        </div>
+      </td>
+      {{end}}
+      <td class="post-stats-cell" data-label="{{printf "%s / %s" ($.t.T "评论") ($.t.T "浏览")}}">
+        <div class="post-stats-list">
+          <span class="post-stat-chip">
+            {{if gt .CommentCount 0}}<a href="/admin/comments?post_id={{.ID}}">{{end}}<strong>{{.CommentCount}}</strong>{{if gt .CommentCount 0}}</a>{{end}}
+            <span>{{$.t.T "评论"}}</span>
+          </span>
+          <span class="post-stat-chip">
+            <strong>{{.Views}}</strong>
+            <span>{{$.t.T "浏览"}}</span>
+          </span>
+        </div>
+      </td>
+      {{if eq $.PostType "page"}}
+      <td class="post-menu-order-cell" data-label="{{$.t.T "顺序"}}">
+        <div class="menu-order-controls">
+          <button type="button" class="menu-order-btn menu-order-up" data-id="{{.ID}}" data-action="up" title="{{$.t.T "上移"}}">▲</button>
+          <input type="number" class="menu-order-input" data-id="{{.ID}}" value="{{.MenuOrder}}" min="0" title="{{$.t.T "回车保存"}}">
+          <button type="button" class="menu-order-btn menu-order-down" data-id="{{.ID}}" data-action="down" title="{{$.t.T "下移"}}">▼</button>
+        </div>
+      </td>
+      {{end}}
+      <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
+        <a class="post-action-link" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
+        <form class="inline" method="post" action="/admin/post/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除?"}}')">
+          {{template "csrf_field" $}}
+          <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="{{if eq .PostType "page"}}6{{else}}6{{end}}">{{.t.T "暂无内容"}}</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+<p class="total">{{if eq .PostType "page"}}{{.t.N1_64 "共 %d 个页面" .Total .Total}}{{else}}{{.t.N1_64 "共 %d 篇文章" .Total .Total}}{{end}}</p>
+{{- if gt .Pages 1}}
 <nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/posts?type={{.PostType}}&page={{sub .Page 1}}">上一页</a>{{end}}
+  {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
   <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/posts?type={{.PostType}}&page={{add .Page 1}}">下一页</a>{{end}}
+  {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
 </nav>
-{{end}}
-{{template "admin_footer" .}}
-{{end}}
+{{- end}}
+{{- if eq .PostType "page"}}
+<script>
+(function(){
+  var csrf = '{{.CSRFToken}}';
+  var url = location.pathname + location.search;
+  document.querySelectorAll('.menu-order-input').forEach(function(input){
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var id = this.dataset.id;
+        var order = this.value;
+        var fd = new FormData();
+        fd.append('_csrf', csrf);
+        fd.append('action', 'set');
+        fd.append('order', order);
+        fetch('/admin/post/' + id + '/menu-order', {method:'POST',body:fd})
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if(!d.ok){ alert(d.msg); } })
+          .catch(function(e){ alert(e.message); });
+      }
+    });
+  });
+  document.querySelectorAll('.menu-order-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = this.dataset.id;
+      var action = this.dataset.action;
+      var fd = new FormData();
+      fd.append('_csrf', csrf);
+      fd.append('action', action);
+      fetch('/admin/post/' + id + '/menu-order?' + new URLSearchParams(location.search).toString(), {method:'POST',body:fd})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.ok){ location.reload(); }
+          else { alert(d.msg); }
+        })
+        .catch(function(e){ alert(e.message); });
+    });
+  });
+})();
+</script>
+{{- end}}
+{{- template "admin_footer" . -}}
+{{- end}}

@@ -1,0 +1,14 @@
+{{- define "widget_recent_posts" -}}
+{{$title := widget_option "title" | default (.t.T "近期文章")}}
+{{$n := widget_option "count" | toInt | default 5}}
+<section class="widget widget-recent-posts">
+  <h3>{{$title}}</h3>
+  <ul>
+    {{- range $i, $p := .RecentPosts}}
+    {{- if lt $i $n}}
+    <li><a href="{{postURL $p}}">{{$p.Title}}</a></li>
+    {{- end}}
+    {{- end}}
+  </ul>
+</section>
+{{- end}}

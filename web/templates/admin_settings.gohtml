@@ -1,49 +1,247 @@
-{{define "admin_settings.gohtml"}}
+{{- define "admin_settings.gohtml" -}}
 {{template "admin_header" .}}
-<h1>设置</h1>
-{{if .Error}}<p class="err-banner">{{.Error}}</p>{{end}}
-<div class="cards settings-cards">
-  <section class="card settings-card">
-    <h3>站点设置</h3>
-    <form class="edit-form" method="post" action="/admin/settings/site">
-      {{template "csrf_field" .}}
-      <label>站点名称<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
-      <label>站点描述<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
-      <div class="form-row">
-        <label>列表分页数量<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
-        <label>Feed 输出数量<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
-      </div>
-      <p><button type="submit" class="btn">保存站点设置</button></p>
-    </form>
-  </section>
+<h1>
+  {{if eq .CurrentSettingsSection "developer"}}
+  {{.t.T "开发设置"}}
+  {{else}}
+  {{.t.T "常规设置"}}
+  {{end}}
+</h1>
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
 
-  <section class="card settings-card">
-    <h3>会话设置</h3>
-    <form class="edit-form" method="post" action="/admin/settings/session">
-      {{template "csrf_field" .}}
-      <label>新的 Session Secret<input type="text" name="session_secret" placeholder="请输入新的 Session Secret" required></label>
-      <p class="tip">{{if .SessionSecretConfigured}}已配置自定义 Session Secret。{{else}}当前仍在使用默认或环境变量提供的 Session Secret。{{end}}修改后所有登录用户都需要重新登录。</p>
-      <p><button type="submit" class="btn">更新 Session Secret</button></p>
-    </form>
-  </section>
+{{- if eq .CurrentSettingsSection "developer"}}
+<div class="settings-main developer-settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "模板设置"}}</h3>
+      <p class="tip">{{if .TemplateHotReload}}{{.t.T "当前模板模式：hot（本地模板 + 手动重新解析）"}}{{else}}{{.t.T "当前模板模式：static（embed 内置模板）"}}{{end}}</p>
+      {{if .TemplateHotReload}}
+      <form class="edit-form" method="post" action="/admin/settings/templates/reload">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "检测到本地 `web/templates` 目录。修改模板文件后，点击下面按钮才会重新解析并生效。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "重新解析模板"}}</button></p>
+      </form>
+      <form class="edit-form" method="post" action="/admin/settings/templates/embed">
+        {{template "csrf_field" .}}
+        <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌模板资源，本地 `web/templates` 目录会保留在磁盘上。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌模板资源"}}</button></p>
+      </form>
+      {{else}}
+      <form class="edit-form" method="post" action="/admin/settings/templates/release">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "当前正在使用编译进程序的模板。点击下面按钮后会把模板释放到 `web/templates`，并让当前进程立即切换到 hot 模式；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "释放出模板文件夹"}}</button></p>
+      </form>
+      {{end}}
+    </section>
 
-  <section class="card settings-card">
-    <h3>个人设置</h3>
-    <form class="edit-form" method="post" action="/admin/settings/profile">
-      {{template "csrf_field" .}}
-      <label>用户名<input type="text" name="username" value="{{if .CurrentUser}}{{.CurrentUser.Username}}{{end}}" required></label>
-      <label>显示名<input type="text" name="display_name" value="{{if .CurrentUser}}{{.CurrentUser.DisplayName}}{{end}}" required></label>
-      <label>邮件<input type="email" name="email" value="{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}" required></label>
-      <p><button type="submit" class="btn">保存个人资料</button></p>
-    </form>
-    <form class="edit-form" method="post" action="/admin/settings/password">
-      {{template "csrf_field" .}}
-      <label>原密码<input type="password" name="current_password" required></label>
-      <label>新密码<input type="password" name="new_password" required></label>
-      <label>确认新密码<input type="password" name="confirm_password" required></label>
-      <p><button type="submit" class="btn">修改密码</button></p>
-    </form>
-  </section>
+    <section class="card settings-card">
+      <h3>{{.t.T "资源文件设置"}}</h3>
+      <p class="tip">{{if .AssetHotReload}}{{.t.T "当前资源模式：hot（本地资源目录，修改后立即生效）"}}{{else}}{{.t.T "当前资源模式：static（embed 内置资源）"}}{{end}}</p>
+      {{if .AssetHotReload}}
+      <p class="tip">{{.t.T "检测到本地 `web/assets` 目录。CSS / JS 等资源文件修改后会立即生效，无需手动重新加载。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/assets/embed">
+        {{template "csrf_field" .}}
+        <p class="warn-banner">{{.t.T "切回后后续请求会自动使用内嵌资源文件，本地 `web/assets` 目录会保留在磁盘上。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌资源文件"}}</button></p>
+      </form>
+      {{else}}
+      <form class="edit-form" method="post" action="/admin/settings/assets/release">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "当前正在使用编译进程序的资源文件。点击下面按钮后会把资源释放到 `web/assets`，当前进程也会立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "释放资源文件夹"}}</button></p>
+      </form>
+      {{end}}
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "翻译资源设置"}}</h3>
+      <p class="tip">{{if .I18nHotReload}}{{.t.T "当前翻译模式：hot（本地翻译目录）"}}{{else}}{{.t.T "当前翻译模式：static（embed 内置翻译资源）"}}{{end}}</p>
+      {{if .I18nHotReload}}
+      <p class="tip">{{.t.T "检测到本地 `web/i18n` 目录。当前进程会优先读取本地翻译资源。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/i18n/embed">
+        {{template "csrf_field" .}}
+        <p class="warn-banner">{{.t.T "切回后当前进程会立即使用内嵌翻译资源，本地 `web/i18n` 目录会保留在磁盘上。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "使用内嵌翻译资源"}}</button></p>
+      </form>
+      {{else}}
+      <form class="edit-form" method="post" action="/admin/settings/i18n/release">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "当前正在使用编译进程序的翻译资源。点击下面按钮后会把翻译资源释放到 `web/i18n`，并让当前进程立即优先读取本地目录；如果该目录已存在，则直接复用现有文件，不覆盖你的改动。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "释放翻译资源目录"}}</button></p>
+      </form>
+      {{end}}
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "主题资源"}}</h3>
+      {{if .CurrentThemeName}}
+      <p class="tip">{{.t.T "当前主题：%s (v%s)" .CurrentThemeName .CurrentThemeVersion}}</p>
+      <p class="tip">{{.t.T "主题目录：%s" .CurrentThemeDir}}</p>
+      <p class="tip">{{.t.T "主题在启动时自动从内嵌资源释放到 `themes/` 目录。修改模板或 functions.go 后，可通过后台「主题管理 → 编辑文件」或下方按钮重载。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/theme/reload">
+        {{template "csrf_field" .}}
+        <p><button type="submit" class="btn-secondary">{{.t.T "重载当前主题"}}</button></p>
+      </form>
+      {{else}}
+      <p class="tip">{{.t.T "未检测到激活的主题。"}}</p>
+      {{end}}
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "插件资源"}}</h3>
+      {{if .PluginManagerAvailable}}
+      {{if .EnabledPluginIDs}}<p class="tip">{{.t.T "当前启用插件：%s" .EnabledPluginIDs}}</p>{{else}}<p class="tip">{{.t.T "当前没有启用插件。"}}</p>{{end}}
+      <p class="tip">{{.t.T "插件可以同时启用多个；这里会重新加载所有已启用插件的 functions、hooks、组件和翻译绑定，并刷新当前主题 hooks。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/plugins/reload">
+        {{template "csrf_field" .}}
+        <p><button type="submit" class="btn-secondary">{{.t.T "重载插件资源"}}</button></p>
+      </form>
+      {{else}}
+      <p class="tip">{{.t.T "插件管理器未初始化。"}}</p>
+      {{end}}
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "Metrics 访问设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/metrics">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "/metrics 端点使用 Basic Auth 保护。用户名固定为 metrics，密码可在这里查看和修改。"}}</p>
+        <label>{{.t.T "Metrics 用户名"}}<input type="text" name="metrics_auth_username" value="{{.MetricsAuthUsernameValue}}" readonly></label>
+        <label>{{.t.T "Metrics 密码"}}<input type="text" name="metrics_auth_password" value="{{.MetricsAuthPasswordValue}}" minlength="12" required autocomplete="new-password"></label>
+        <p class="tip">{{.t.T "Prometheus 抓取时请使用 Basic Auth：用户名 metrics，密码为上方配置值。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存 Metrics 密码"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "SQL 调试"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/sql-details">
+        {{template "csrf_field" .}}
+        <div class="inline-setting-row">
+          <span class="inline-setting-title">{{.t.T "在 HTML 响应中输出 SQL 执行详情（仅管理员登录时）"}}</span>
+          <label class="checkbox-label inline-checkbox"><input type="checkbox" name="show_sql_details" {{if .ShowSQLDetails}}checked{{end}}> {{.t.T "开启"}}</label>
+        </div>
+        <p class="tip">{{.t.T "开启后，管理员登录后台时，每页底部会显示本次请求执行的所有 SQL 语句及耗时。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存 SQL 调试设置"}}</button></p>
+      </form>
+    </section>
+
+  </div>
 </div>
+{{- else}}
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <h3>{{.t.T "站点设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/site">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "站点名称"}}<input type="text" name="site_name" value="{{.SiteNameValue}}" required></label>
+        <label>{{.t.T "站点描述"}}<textarea name="site_description" rows="4">{{.SiteDescriptionValue}}</textarea></label>
+        <label>{{.t.T "站点 Logo URL"}}<input type="url" name="site_logo" value="{{.SiteLogoValue}}" placeholder="https://example.com/logo.png"></label>
+        <p class="tip">{{.t.T "可选。设置后在主题 header 中显示 Logo 图片。可使用「文件管理」上传图片后复制链接。"}}</p>
+        <label>{{.t.T "文章固定链接结构"}}<input type="text" name="post_permalink" value="{{.PostPermalinkValue}}" required></label>
+        <p class="tip">{{.t.T "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% %post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%%post_id%.html。"}}</p>
+        <div class="form-row">
+          <label>{{.t.T "分类目录前缀"}}<input type="text" name="category_prefix" value="{{.CategoryPrefixValue}}" required></label>
+          <label>{{.t.T "标签前缀"}}<input type="text" name="tag_prefix" value="{{.TagPrefixValue}}" required></label>
+        </div>
+        <p class="tip">{{.t.T "例如可把分类目录从 /category/go 改成 /topics/go，把标签从 /tag/gin 改成 /labels/gin。"}}</p>
+        <div class="form-row">
+          <label>{{.t.T "列表分页数量"}}<input type="number" min="1" name="page_size" value="{{.PageSizeValue}}" required></label>
+          <label>{{.t.T "Feed 输出数量"}}<input type="number" min="1" name="feed_size" value="{{.FeedSizeValue}}" required></label>
+        </div>
+        <fieldset class="avatar-choice-group">
+          <legend>{{.t.T "默认头像"}}</legend>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="mp" {{if eq .DefaultAvatarValue "mp"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "mp"}}" alt="" width="48" height="48">
+            <span><strong>{{.t.T "神秘人士"}}</strong><small>{{.t.T "通用的人物轮廓"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="blank" {{if eq .DefaultAvatarValue "blank"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "blank"}}" alt="" width="48" height="48">
+            <span><strong>{{.t.T "空白"}}</strong><small>{{.t.T "透明图像"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="cravatar" {{if eq .DefaultAvatarValue "cravatar"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "cravatar"}}" alt="" width="48" height="48">
+            <span><strong>{{.t.T "Cravatar 标志"}}</strong><small>{{.t.T "默认服务标志"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="identicon" {{if eq .DefaultAvatarValue "identicon"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "identicon"}}" alt="" width="48" height="48">
+            <span><strong>{{.t.T "抽象图形"}}</strong><small>{{.t.T "自动生成"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="wavatar" {{if eq .DefaultAvatarValue "wavatar"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "wavatar"}}" alt="" width="48" height="48">
+            <span><strong>Wavatar</strong><small>{{.t.T "自动生成"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="monsterid" {{if eq .DefaultAvatarValue "monsterid"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "monsterid"}}" alt="" width="48" height="48">
+            <span><strong>{{.t.T "小怪物"}}</strong><small>{{.t.T "自动生成"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="retro" {{if eq .DefaultAvatarValue "retro"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "retro"}}" alt="" width="48" height="48">
+            <span><strong>{{.t.T "复古"}}</strong><small>{{.t.T "自动生成"}}</small></span>
+          </label>
+          <label class="avatar-choice">
+            <input type="radio" name="default_avatar" value="robohash" {{if eq .DefaultAvatarValue "robohash"}}checked{{end}}>
+            <img class="avatar" src="{{defaultAvatarURL "robohash"}}" alt="" width="48" height="48">
+            <span><strong>RoboHash</strong><small>{{.t.T "自动生成"}}</small></span>
+          </label>
+        </fieldset>
+        <p class="tip">{{.t.T "当评论者或用户没有自定义 Cravatar 头像时，使用这里选择的默认头像样式。"}}</p>
+        <div class="inline-setting-row">
+          <span class="inline-setting-title">{{.t.T "开放注册"}}</span>
+          <label class="checkbox-label inline-checkbox"><input type="checkbox" name="registration_open" {{if .RegistrationOpenValue}}checked{{end}} {{if not .SMTPConfigured}}disabled{{end}}> {{.t.T "允许前台注册"}}</label>
+        </div>
+        {{if .SMTPConfigured}}
+        <p class="tip">{{.t.T "开启后前台显示注册入口，新用户需先验证邮箱，完成后默认为订阅者角色。"}}</p>
+        {{else}}
+        <p class="warn-banner">{{.t.T "开放注册需要先配置 SMTP 邮件设置，否则无法发送邮箱验证邮件。"}}</p>
+        {{end}}
+        <p><button type="submit" class="btn">{{.t.T "保存站点设置"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "SMTP 邮件设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/smtp">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "配置 SMTP 后可使用忘记密码等邮件功能。留空则禁用邮件发送。"}}</p>
+        <label>{{.t.T "SMTP 服务器"}}<input type="text" name="smtp_host" value="{{.SMTPHostValue}}" placeholder="smtp.example.com"></label>
+        <label>{{.t.T "SMTP 端口"}}<input type="number" name="smtp_port" value="{{.SMTPPortValue}}" placeholder="587"></label>
+        <label>{{.t.T "SMTP 用户名"}}<input type="text" name="smtp_user" value="{{.SMTPUserValue}}" placeholder="user@example.com"></label>
+        <label>{{.t.T "SMTP 密码"}}<input type="password" name="smtp_password" value="{{.SMTPPasswordValue}}" placeholder="{{.t.T "留空则不修改"}}"></label>
+        <label>{{.t.T "发件人地址"}}<input type="email" name="smtp_from" value="{{.SMTPFromValue}}" placeholder="noreply@example.com"></label>
+        <label>{{.t.T "站点 URL"}}<input type="url" name="site_url" value="{{.SiteURLValue}}" placeholder="https://example.com"></label>
+        <p class="tip">{{.t.T "用于生成重置密码等邮件中的链接。留空则自动从请求推断。"}}</p>
+        <label>{{.t.T "测试收件人"}}<input type="email" name="test_email" value="{{if .SMTPTestEmailValue}}{{.SMTPTestEmailValue}}{{else}}{{if .CurrentUser}}{{.CurrentUser.Email}}{{end}}{{end}}" placeholder="you@example.com"></label>
+        <p class="tip">{{.t.T "测试前会先保存上方 SMTP 设置。"}}</p>
+        <p class="form-actions"><button type="submit" class="btn">{{.t.T "保存 SMTP 设置"}}</button><button type="submit" class="btn-secondary" formaction="/admin/settings/smtp/test">{{.t.T "发送测试邮件"}}</button></p>
+      </form>
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "会话设置"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/session">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "新的 Session Secret"}}<input type="text" name="session_secret" placeholder="{{.t.T "请输入新的 Session Secret"}}" required></label>
+        <p class="tip">{{if .SessionSecretConfigured}}{{.t.T "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"}}{{else}}{{.t.T "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新登录。"}}{{end}}</p>
+        <p><button type="submit" class="btn">{{.t.T "更新 Session Secret"}}</button></p>
+      </form>
+    </section>
+  </div>
+</div>
+{{- end}}
 {{template "admin_footer" .}}
-{{end}}
+{{- end}}

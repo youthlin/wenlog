@@ -1,0 +1,338 @@
+{{- define "admin_edit_files.gohtml" -}}
+{{template "admin_header" .}}
+<h1>{{.t.T "编辑文件"}}</h1>
+
+{{- if .RecoveryInfo}}
+<div class="err-banner" style="display:flex;justify-content:space-between;align-items:center;">
+  <span>{{.t.T "主题「%s」加载失败，已自动切换为默认主题。错误: %s" .RecoveryInfo.FailedTheme .RecoveryInfo.Error}}</span>
+  <span>
+    <button class="btn-secondary btn-sm" onclick="clearRecovery()">{{.t.T "关闭"}}</button>
+  </span>
+</div>
+{{- end}}
+
+<div class="settings-main">
+  <div class="settings-stack">
+    <section class="card settings-card">
+      <div class="theme-editor-layout">
+        <!-- 文件树 -->
+        <div class="theme-editor-sidebar">
+          <div class="theme-editor-sidebar-header">
+            <h3>{{.t.T "文件列表"}}</h3>
+            <button type="button" class="theme-editor-toggle" id="file-tree-toggle" onclick="toggleFileTree()" aria-label="{{.t.T "切换文件列表"}}">☰</button>
+          </div>
+          <select id="resource-kind-selector" onchange="switchKind(this.value)" style="width:100%;margin-bottom:0.5rem;">
+            <option value="theme" {{if eq .EditKind "theme"}}selected{{end}}>{{.t.T "主题"}}</option>
+            <option value="plugin" {{if eq .EditKind "plugin"}}selected{{end}}>{{.t.T "插件"}}</option>
+            <option value="template" {{if eq .EditKind "template"}}selected{{end}}>{{.t.T "项目模板"}}</option>
+            <option value="asset" {{if eq .EditKind "asset"}}selected{{end}}>{{.t.T "项目资源"}}</option>
+            <option value="i18n" {{if eq .EditKind "i18n"}}selected{{end}}>{{.t.T "项目翻译"}}</option>
+          </select>
+          {{if eq .EditKind "plugin"}}
+          <select id="plugin-selector" onchange="switchPlugin(this.value)" style="width:100%;margin-bottom:0.5rem;">
+            {{range .Plugins}}
+            <option value="{{.ID}}" {{if eq .ID $.EditPlugin}}selected{{end}}>{{.Name}} ({{.ID}})</option>
+            {{else}}
+            <option value="">{{$.t.T "暂无已安装插件"}}</option>
+            {{end}}
+          </select>
+          {{else if eq .EditKind "theme"}}
+          <select id="theme-selector" onchange="switchTheme(this.value)" style="width:100%;margin-bottom:0.5rem;">
+            {{range .Themes}}
+            <option value="{{.Name}}" {{if eq .Name $.EditTheme}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+          </select>
+          {{else}}
+          <div class="tip" style="margin-bottom:0.5rem;">{{.EditResourceName}}</div>
+          {{end}}
+          {{- if .EditorHint}}
+          <div class="tip" style="margin-bottom:0.5rem;">{{.EditorHint}}</div>
+          {{end}}
+          <ul id="file-tree" class="theme-editor-file-tree">
+            {{range .ThemeFiles}}
+            <li>
+              <a href="#" class="theme-editor-file-link" data-path="{{.Path}}" onclick="loadFile('{{.Path}}');return false;">{{.Path}}</a>
+            </li>
+            {{else}}
+            <li class="empty">{{.t.T "无可编辑文件"}}</li>
+            {{end}}
+          </ul>
+          <div class="theme-editor-actions">
+            <button class="btn btn-sm" onclick="showNewFileDialog()">{{.t.T "新建文件"}}</button>
+            {{- if .CanReloadResource}}
+            <button class="btn-secondary btn-sm" onclick="reloadCurrentResource()">{{if eq .EditKind "plugin"}}{{.t.T "重载插件"}}{{else if eq .EditKind "template"}}{{.t.T "重载模板"}}{{else if eq .EditKind "i18n"}}{{.t.T "重载翻译"}}{{else}}{{.t.T "重载主题"}}{{end}}</button>
+            {{- end}}
+          </div>
+        </div>
+
+        <!-- 编辑器 -->
+        <div class="theme-editor-main">
+          <div class="theme-editor-toolbar">
+            <h3 id="current-file">{{.t.T "选择文件"}}</h3>
+            <div class="theme-editor-toolbar-actions">
+              <button id="save-btn" class="btn btn-sm" onclick="saveFile()" disabled>{{.t.T "保存"}}</button>
+              <button id="delete-btn" class="btn-secondary btn-sm link-danger" onclick="deleteFile()" disabled>{{.t.T "删除"}}</button>
+            </div>
+          </div>
+          <textarea id="file-editor" class="theme-editor-textarea"
+                    placeholder="{{.t.T "选择左侧文件开始编辑"}}" disabled></textarea>
+          <div id="editor-status" class="theme-editor-status"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+let currentKind = '{{.EditKind}}';
+let currentTheme = '{{.EditTheme}}';
+let currentPlugin = '{{.EditPlugin}}';
+let currentPath = '';
+let currentContent = '';
+
+function csrfToken() {
+  var meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute('content') : '';
+}
+
+function jsonHeaders() {
+  var headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'fetch'};
+  var token = csrfToken();
+  if (token) headers['X-CSRF-Token'] = token;
+  return headers;
+}
+
+function parseJSONResponse(resp) {
+  return resp.text().then(function(text) {
+    var data = text ? JSON.parse(text) : {};
+    if (!resp.ok && !data.error) data.error = resp.status + ' ' + resp.statusText;
+    return data;
+  });
+}
+
+function switchTheme(name) {
+  window.location.href = '/admin/theme/files?kind=theme&theme=' + encodeURIComponent(name);
+}
+
+function switchPlugin(id) {
+  window.location.href = '/admin/theme/files?kind=plugin&plugin=' + encodeURIComponent(id);
+}
+
+function switchKind(kind) {
+  if (kind === 'plugin') {
+    window.location.href = '/admin/theme/files?kind=plugin' + (currentPlugin ? '&plugin=' + encodeURIComponent(currentPlugin) : '');
+    return;
+  }
+  if (kind === 'theme') {
+    window.location.href = '/admin/theme/files?kind=theme' + (currentTheme ? '&theme=' + encodeURIComponent(currentTheme) : '');
+    return;
+  }
+  window.location.href = '/admin/theme/files?kind=' + encodeURIComponent(kind);
+}
+
+function resourceQuery() {
+  var query = 'kind=' + encodeURIComponent(currentKind) + '&path=' + encodeURIComponent(currentPath);
+  if (currentKind === 'plugin') {
+    query += '&plugin=' + encodeURIComponent(currentPlugin);
+  } else if (currentKind === 'theme') {
+    query += '&theme=' + encodeURIComponent(currentTheme);
+  }
+  return query;
+}
+
+function resourcePayload(extra) {
+  var payload = {kind: currentKind, theme: currentTheme, plugin: currentPlugin};
+  Object.keys(extra || {}).forEach(function(key) { payload[key] = extra[key]; });
+  return payload;
+}
+
+function loadFile(path) {
+  currentPath = path;
+  document.getElementById('current-file').textContent = path;
+  document.getElementById('editor-status').textContent = '{{.t.T "加载中..."}}';
+  document.getElementById('save-btn').disabled = true;
+  document.getElementById('delete-btn').disabled = true;
+  document.getElementById('file-editor').disabled = true;
+
+  fetch('/admin/theme/file?' + resourceQuery())
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        document.getElementById('editor-status').textContent = data.error;
+        return;
+      }
+      currentContent = data.content;
+      document.getElementById('file-editor').value = data.content;
+      document.getElementById('file-editor').disabled = false;
+      document.getElementById('save-btn').disabled = false;
+      document.getElementById('delete-btn').disabled = isCoreFile(path);
+      document.getElementById('editor-status').textContent = '';
+      // 高亮当前文件
+      document.querySelectorAll('.theme-editor-file-link').forEach(el => el.classList.remove('active'));
+      var link = document.querySelector('.theme-editor-file-link[data-path="' + path + '"]');
+      if (link) link.classList.add('active');
+    })
+    .catch(err => {
+      document.getElementById('editor-status').textContent = '{{.t.T "加载失败"}}: ' + err;
+    });
+}
+
+function saveFile() {
+  if (!currentPath) return;
+  const content = document.getElementById('file-editor').value;
+  document.getElementById('editor-status').textContent = '{{.t.T "保存中..."}}';
+
+  fetch('/admin/theme/file', {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(resourcePayload({path: currentPath, content: content}))
+  })
+    .then(parseJSONResponse)
+    .then(data => {
+      if (data.error) {
+        document.getElementById('editor-status').textContent = data.error;
+        return;
+      }
+      currentContent = content;
+      if (data.reloaded) {
+        document.getElementById('editor-status').textContent = savedAndReloadedMessage();
+      } else {
+        document.getElementById('editor-status').textContent = '{{.t.T "已保存"}}';
+      }
+    })
+    .catch(err => {
+      document.getElementById('editor-status').textContent = '{{.t.T "保存失败"}}: ' + err;
+    });
+}
+
+function isCoreFile(path) {
+  if (currentKind === 'template') return path === 'admin_edit_files.gohtml';
+  if (currentKind === 'asset' || currentKind === 'i18n') return false;
+  return path === 'theme.yaml' || path === 'plugin.yaml' || path === 'functions.go' || path === 'functions.goyaegi';
+}
+
+function deleteFile() {
+  if (!currentPath) return;
+  if (!confirm('{{.t.T "确定要删除 %s 吗？"}}'.replace('%s', currentPath))) return;
+
+  fetch('/admin/theme/file/delete', {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(resourcePayload({path: currentPath}))
+  })
+    .then(parseJSONResponse)
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      location.reload();
+    });
+}
+
+function reloadCurrentResource() {
+  document.getElementById('editor-status').textContent = '{{.t.T "重载中..."}}';
+  fetch('/admin/theme/file/reload', {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(resourcePayload({}))
+  })
+    .then(parseJSONResponse)
+    .then(data => {
+      if (data.error) {
+        document.getElementById('editor-status').textContent = data.error;
+      } else {
+        document.getElementById('editor-status').textContent = reloadedMessage();
+      }
+    });
+}
+
+function savedAndReloadedMessage() {
+  if (currentKind === 'plugin') return '{{.t.T "已保存并重载插件"}}';
+  if (currentKind === 'template') return '{{.t.T "已保存并重载模板"}}';
+  if (currentKind === 'i18n') return '{{.t.T "已保存并重载翻译"}}';
+  return '{{.t.T "已保存并重载主题"}}';
+}
+
+function reloadedMessage() {
+  if (currentKind === 'plugin') return '{{.t.T "插件已重载"}}';
+  if (currentKind === 'template') return '{{.t.T "模板已重载"}}';
+  if (currentKind === 'i18n') return '{{.t.T "翻译已重载"}}';
+  return '{{.t.T "主题已重载"}}';
+}
+
+function clearRecovery() {
+  fetch('/admin/theme/recovery/clear', {method: 'POST', headers: jsonHeaders()})
+    .then(() => location.reload());
+}
+
+function toggleFileTree() {
+  document.getElementById('file-tree').classList.toggle('collapsed');
+}
+
+// --- 新建文件 ---
+function showNewFileDialog() {
+  var overlay = document.getElementById('new-file-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'new-file-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML =
+      '<div class="modal-dialog">' +
+      '<h3>{{.t.T "新建文件"}}</h3>' +
+      '<div class="form-group">' +
+      '<label>{{.t.T "文件名"}} <span class="hint">{{.t.T "如 style.css、templates/index.gohtml"}}</span></label>' +
+      '<input type="text" id="new-file-path" class="form-input" placeholder="{{.t.T "输入文件路径"}}" />' +
+      '</div>' +
+      '<div class="modal-actions">' +
+      '<button class="btn btn-sm" onclick="createFile()">{{.t.T "创建"}}</button>' +
+      '<button class="btn-secondary btn-sm" onclick="hideNewFileDialog()">{{.t.T "取消"}}</button>' +
+      '</div>' +
+      '<div id="new-file-status" class="theme-editor-status" style="margin-top:0.5rem;"></div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) hideNewFileDialog();
+    });
+  }
+  overlay.style.display = 'flex';
+  document.getElementById('new-file-path').value = '';
+  document.getElementById('new-file-status').textContent = '';
+  setTimeout(function() { document.getElementById('new-file-path').focus(); }, 100);
+}
+
+function hideNewFileDialog() {
+  var overlay = document.getElementById('new-file-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function createFile() {
+  var path = document.getElementById('new-file-path').value.trim();
+  var status = document.getElementById('new-file-status');
+  if (!path) {
+    status.textContent = '{{.t.T "请输入文件名"}}';
+    return;
+  }
+  status.textContent = '{{.t.T "创建中..."}}';
+  fetch('/admin/theme/file/create', {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(resourcePayload({path: path, content: ''}))
+  })
+    .then(parseJSONResponse)
+    .then(function(data) {
+      if (data.error) {
+        status.textContent = data.error;
+        return;
+      }
+      hideNewFileDialog();
+      // 刷新文件列表
+      location.reload();
+    })
+    .catch(function(err) {
+      status.textContent = '{{.t.T "创建失败"}}: ' + err;
+    });
+}
+</script>
+{{template "admin_footer" .}}
+{{- end}}

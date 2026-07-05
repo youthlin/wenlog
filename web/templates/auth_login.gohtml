@@ -1,0 +1,49 @@
+{{define "auth_login.gohtml"}}<!DOCTYPE html>
+<html lang="{{.htmlLang}}" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.t.T "%s · 登录" .SiteName}}</title>
+<link rel="stylesheet" href="/assets/admin.css?v={{.AssetVersion}}">
+<script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+</head>
+<body class="admin login-page">
+<form class="login-box" method="post" action="/auth/login">
+  <div class="login-tools">
+    <label class="lang-select-wrap">
+      <span class="sr-only">{{.t.T "语言"}}</span>
+      <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+        <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.t.T "中文"}}</option>
+        <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.t.T "English"}}</option>
+      </select>
+    </label>
+    <label class="theme-select-wrap">
+      <span class="sr-only">{{.t.T "切换主题"}}</span>
+      <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
+        <option value="dark">{{.t.T "暗黑"}}</option>
+        <option value="light">{{.t.T "明亮"}}</option>
+        <option value="red-plum">{{.t.T "红梅"}}</option>
+        <option value="bamboo">{{.t.T "绿竹"}}</option>
+        <option value="lotus">{{.t.T "藕粉"}}</option>
+        <option value="orange">{{.t.T "橙黄"}}</option>
+        <option value="azure">{{.t.T "蔚蓝"}}</option>
+        <option value="purple">{{.t.T "韵紫"}}</option>
+      </select>
+    </label>
+  </div>
+  <h1>{{.t.T "%s · 登录" .SiteName}}</h1>
+  {{- if .Error}}<p class="err">{{.Error}}</p>{{end}}
+  {{- if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
+  <p><label class="sr-only" for="login-username">{{.t.T "用户名"}}</label><input id="login-username" type="text" name="username" placeholder="{{.t.T "用户名"}}" required autofocus></p>
+  <p><label class="sr-only" for="login-password">{{.t.T "密码"}}</label><input id="login-password" type="password" name="password" placeholder="{{.t.T "密码"}}" required></p>
+  <p><button type="submit">{{.t.T "登录"}}</button></p>
+  <p class="login-links">
+  {{safeHTML (.t.T "← 返回 <a href=\"/\">%s</a>" (escapeHTML .SiteName))}}  
+  {{- if .RegistrationOpen}} | <a href="/auth/register">{{.t.T "注册"}}</a>{{end}}
+  {{- if .SMTPConfigured}} | <a href="/auth/forgot-password">{{.t.T "忘记密码？"}}</a>{{end}}
+  </p>
+</form>
+<script src="/assets/theme.js?v={{.AssetVersion}}"></script>
+</body>
+</html>
+{{- end}}

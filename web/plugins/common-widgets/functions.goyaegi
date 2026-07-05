@@ -1,0 +1,68 @@
+package plugin
+
+import (
+	"hook"
+	"sort"
+)
+
+type SayingItem struct {
+	CommentURL  string
+	AuthorURL   string
+	Snippet     string
+	AuthorName  string
+	AuthorEmail string
+}
+
+// Register 注册插件函数。
+func Register(api *hook.API) {
+	api.RegisterFunc("SayingItems", SayingItems)
+	api.RegisterFunc("PopularPosts", PopularPosts)
+}
+
+func SayingItems(api *hook.API, args hook.Args) any {
+	postID := args.Any("post_id")
+	count := args.PositiveInt("count", 5)
+	post := api.Post(postID)
+	if post == nil {
+		return nil
+	}
+	author := api.User(post.AuthorID)
+	if author == nil {
+		return nil
+	}
+	comments := api.CommentsByPost(postID)
+	if len(comments) == 0 {
+		return nil
+	}
+	// 只取博主本人的评论，倒序遍历取最新几条。
+	items := make([]SayingItem, 0, count)
+	for i := len(comments) - 1; i >= 0; i-- {
+		c := comments[i]
+		if c.UserID == nil || *c.UserID != post.AuthorID {
+			continue
+		}
+		items = append(items, SayingItem{
+			CommentURL:  api.CommentURL(post, c),
+			AuthorURL:   c.URL,
+			Snippet:     api.Snippet(c.Content, 36),
+			AuthorName:  author.DisplayName,
+			AuthorEmail: author.Email,
+		})
+		if len(items) >= count {
+			break
+		}
+	}
+	return items
+}
+
+func PopularPosts(api *hook.API, args hook.Args) any {
+	n := args.PositiveInt("n", 5)
+	posts := api.Posts()
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].Views > posts[j].Views
+	})
+	if n > len(posts) {
+		n = len(posts)
+	}
+	return posts[:n]
+}

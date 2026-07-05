@@ -1,0 +1,26 @@
+# 极简暗黑主题 — 单栏布局，纯暗色，无颜色切换
+name: "single"
+version: "20260705141547"
+description: "极简暗黑单栏主题，纯暗色外观"
+author: "youthlin"
+author_uri: "https://github.com/youthlin"
+theme_uri: "https://github.com/youthlin/wenlog"
+license: "MIT"
+tags: ["单栏", "暗色", "极简"]
+
+widget_areas:
+  footer:
+    name: "页脚"
+    description: "页面底部区域"
+
+menu_locations:
+  primary:
+    name: "主导航"
+    description: "站点顶部导航菜单"
+
+options:
+  - id: footer_text
+    type: text
+    label: "页脚文字"
+    description: "显示在页面底部"
+    default: "Powered by Go"

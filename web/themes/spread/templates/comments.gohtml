@@ -1,0 +1,18 @@
+{{- define "comments" -}}
+<section class="comments wide-shell" id="comments">
+  <div class="comments-inner">
+    <p class="section-kicker">{{.th.T "读者回声"}}</p>
+    <h2>{{if eq .CommentCount 0}}{{.th.T "暂无评论"}}{{else}}{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}{{end}}</h2>
+    <div id="comments-box">
+      {{template "fragment_comments.gohtml" .}}
+    </div>
+  </div>
+</section>
+<script src="/assets/comment.js?v={{.AssetVersion}}"></script>
+{{- end}}
+
+{{- define "fragment_comments.gohtml" -}}
+{{list_comments . "ul" 44}}
+{{comments_pagination . 2}}
+{{comment_form .}}
+{{- end}}

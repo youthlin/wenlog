@@ -1,0 +1,47 @@
+{{- define "header" -}}<!DOCTYPE html>
+<html lang="{{.htmlLang}}"
+      data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
+      data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
+      data-comment-network="{{.th.T "网络错误,请稍后重试。"}}"
+      data-nav-open-label="{{.th.T "打开菜单"}}"
+      data-nav-close-label="{{.th.T "收起菜单"}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+{{- if .Description}}
+<meta name="description" content="{{.Description}}">
+{{- end}}
+{{head_meta . -}}
+<link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
+{{$customCSS := theme_option "custom_css" -}}
+{{- if $customCSS}}
+<style>{{$customCSS | safeHTML}}</style>
+{{- end -}}
+<link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
+<link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
+{{slot "head.end" .}}
+</head>
+<body class="{{body_class .}}">
+<a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>
+<header class="site-header">
+  <div class="wide-shell header-inner">
+    <a class="site-title" href="/" aria-label="{{.SiteName}}">{{if .SiteLogo}}<img class="site-logo" src="{{.SiteLogo}}" alt="{{.SiteName}}">{{else}}<span>{{.SiteName}}</span>{{end}}</a>
+    <nav id="site-nav-menu" class="site-nav" data-nav-panel>
+      <div class="site-nav-links">
+        <a href="/">{{.th.T "首页"}}</a>
+        {{render_menu "primary" .}}
+      </div>
+      <label class="lang-select-wrap">
+        <span class="sr-only">{{.th.T "语言"}}</span>
+        <select class="lang-select" aria-label="{{.th.T "语言"}}" onchange="if(this.value)location=this.value">
+          <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.th.T "中文"}}</option>
+          <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.th.T "English"}}</option>
+        </select>
+      </label>
+    </nav>
+    <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.th.T "打开菜单"}}" aria-controls="site-nav-menu" aria-expanded="false">☰</button>
+  </div>
+</header>
+<main id="main-content">
+{{- end}}

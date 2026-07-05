@@ -1,0 +1,15 @@
+{{- define "comments" -}}
+<section class="comments" id="comments">
+  <h3>{{.th.N1_64 "%d 条评论" .CommentCount .CommentCount}}</h3>
+  <div id="comments-box">
+    {{template "fragment_comments.gohtml" .}}
+  </div>
+</section>
+<script src="/assets/comment.js?v={{.AssetVersion}}"></script>
+{{- end}}
+
+{{- define "fragment_comments.gohtml" -}}
+{{list_comments .}}
+{{comments_pagination . 2}}
+{{comment_form .}}
+{{- end}}

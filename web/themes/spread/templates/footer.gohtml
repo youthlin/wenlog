@@ -1,0 +1,33 @@
+{{- define "footer" -}}
+</main>
+<footer class="site-footer">
+  <div class="wide-shell footer-shell">
+    <div class="footer-brand">
+      <p class="footer-title">{{.SiteName}}</p>
+      <p class="footer-text">{{theme_option "footer_text" | default "Published with WenLog"}}</p>
+      {{render_menu "footer" .}}
+    </div>
+    <div class="footer-widgets">{{render_widgets "footer" .}}</div>
+  </div>
+</footer>
+<div class="scroll-tools">
+  <button type="button" class="scroll-btn toc-toggle-btn" data-toc-toggle aria-label="{{.th.T "目录"}}" aria-expanded="false" hidden>☰</button>
+  <button type="button" class="scroll-btn" data-scroll="top" aria-label="{{.th.T "回顶部"}}">↑</button>
+  <button type="button" class="scroll-btn" data-scroll="bottom" aria-label="{{.th.T "到底部"}}">↓</button>
+</div>
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.th.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{- end}}
+{{- end}}
+<script src="/theme-assets/theme.js?theme={{.ThemeName}}&v={{.ThemeVersion}}"></script>
+<script src="/assets/common.js?v={{.AssetVersion}}"></script>
+{{- slot "body.end" .}}
+</body>
+</html>
+{{- end}}

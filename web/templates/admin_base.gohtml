@@ -1,39 +1,173 @@
-{{define "admin_header"}}<!DOCTYPE html>
-<html lang="zh-Hans" data-theme="light">
+{{- /* 本文件定义了 admin_header, admin_footer 等模板 */ -}}
+{{- define "csrf_field"}}{{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}{{end -}}
+{{- define "admin_header" -}}
+<!DOCTYPE html>
+<html lang="{{.htmlLang}}" data-theme="dark"
+      data-uploading="{{.t.T "上传中..."}}"
+      data-upload-failed="{{.t.T "上传失败"}}"
+      data-image-inserted="{{.t.T "已插入图片 Markdown"}}"
+      data-existing-image-inserted="{{.t.T "已插入已有图片"}}"
+      data-load-files-failed="{{.t.T "加载文件失败"}}"
+      data-preview-label="{{.t.T "预览"}}"
+      data-continue-editing-label="{{.t.T "继续编辑"}}"
+      data-expand-label="{{.t.T "展开"}}"
+      data-collapse-label="{{.t.T "收起"}}"
+      data-nav-open-label="{{.t.T "打开菜单"}}"
+      data-nav-close-label="{{.t.T "收起菜单"}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.Title}} · {{.SiteName}} 后台</title>
-{{if .CSRFToken}}<meta name="csrf-token" content="{{.CSRFToken}}">{{end}}
-<link rel="stylesheet" href="/assets/admin.css">
-<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<title>{{.Title}} · {{.SiteName}}</title>
+{{- if .CSRFToken}}
+<meta name="csrf-token" content="{{.CSRFToken}}">
+{{- end}}
+<link rel="stylesheet" href="/assets/admin.css?v={{.AssetVersion}}">
+<script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>
 <body class="admin">
-<header class="admin-header">
-  <div class="admin-bar">
-    <a class="brand" href="/admin/">{{.SiteName}} 后台</a>
-    <nav>
-      <a href="/admin/posts?type=post">文章</a>
-      <a href="/admin/posts?type=page">页面</a>
-      <a href="/admin/comments">评论{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}</a>
-      <a href="/admin/links">友链</a>
-      <a href="/admin/uploads">文件</a>
-      <a href="/admin/import">导入</a>
-      <a href="/admin/settings">设置</a>
-      <a href="/" target="_blank">查看站点</a>
-      <form class="inline" method="post" action="/admin/logout">{{template "csrf_field" .}}<button type="submit">退出</button></form>
-      <button type="button" class="theme-toggle" data-theme-toggle aria-label="切换主题">🌓</button>
-    </nav>
+<a class="skip-link" href="#main-content">{{.t.T "跳到主要内容"}}</a>
+<header class="site-header admin-header">
+  <div class="container header-inner admin-bar">
+    <button type="button" class="nav-toggle" data-nav-toggle aria-label="{{.t.T "打开菜单"}}" aria-controls="admin-nav-menu" aria-expanded="false">☰</button>
+    <a class="site-title brand" href="/admin/">{{.t.T "%s・后台" .SiteName}}</a>
+    <div class="header-actions admin-header-actions">
+      <a class="admin-header-link admin-home-link" href="/" target="_blank" rel="noreferrer" aria-label="{{.t.T "查看站点"}}">
+        <svg class="admin-home-link-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 3.2 4 9.6V21h5.8v-6.2h4.4V21H20V9.6l-8-6.4Zm6.2 16h-2.2v-6.2H8v6.2H5.8v-8.7L12 5.5l6.2 5Z" fill="currentColor"></path>
+        </svg>
+        <span class="admin-home-link-text">{{.t.T "查看站点"}}</span>
+      </a>
+    </div>
   </div>
 </header>
-<main class="admin-main">
-{{end}}
+<div class="admin-nav-backdrop" data-nav-backdrop></div>
+<div class="admin-shell">
+  <aside id="admin-nav-menu" class="admin-sidebar" data-nav-panel>
+    <div class="admin-sidebar-inner">
+      <nav class="admin-nav" aria-label="{{.t.T "后台导航"}}">
+        <div class="admin-nav-groups">
+          <div class="nav-group">
+            <span class="nav-group-title">{{.t.T "概览"}}</span>
+            <div class="nav-group-links">
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "dashboard"}} is-active{{end}}" href="/admin/"><span>{{.t.T "欢迎"}}</span></a>
+            </div>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title">{{.t.T "个人"}}</span>
+            <div class="nav-group-links">
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile"}} is-active{{end}}" href="/admin/profile"><span>{{.t.T "个人资料"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-comments"}} is-active{{end}}" href="/admin/my-comments"><span>{{.t.T "我的评论"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-export"}} is-active{{end}}" href="/admin/export-data"><span>{{.t.T "导出数据"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "profile-delete"}} is-active{{end}}" href="/admin/delete-account"><span>{{.t.T "删除账号"}}</span></a>
+            </div>
+          </div>
+          {{if or (eq .CurrentUserRole "admin") (eq .CurrentUserRole "author")}}
+          <div class="nav-group">
+            <span class="nav-group-title">{{.t.T "内容"}}</span>
+            <div class="nav-group-links">
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "posts"}} is-active{{end}}" href="/admin/posts?type=post"><span>{{.t.T "文章"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "pages"}} is-active{{end}}" href="/admin/posts?type=page"><span>{{.t.T "页面"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "comments"}} is-active{{end}}" href="/admin/comments">
+                <span>{{.t.T "评论"}}</span>{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}
+              </a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "uploads"}} is-active{{end}}" href="/admin/uploads"><span>{{.t.T "附件"}}</span></a>
+              {{if eq .CurrentUserRole "admin"}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "categories"}} is-active{{end}}" href="/admin/categories"><span>{{.t.T "分类"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "tags"}} is-active{{end}}" href="/admin/tags"><span>{{.t.T "标签"}}</span></a>
+              {{end}}
+            </div>
+          </div>
+          {{end}}
+          {{if eq .CurrentUserRole "admin"}}
+          <div class="nav-group">
+            <span class="nav-group-title">{{.t.T "外观"}}</span>
+            <div class="nav-group-links">
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "themes"}} is-active{{end}}" href="/admin/themes">
+                <span>{{.t.T "主题"}}</span></a>
+              {{if .AdminThemeSupportsWidgets}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "widgets"}} is-active{{end}}" href="/admin/widgets">
+                <span>{{.t.T "组件"}}</span></a>
+              {{end}}
+              {{if .AdminThemeSupportsMenus}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "menus"}} is-active{{end}}" href="/admin/menus">
+                <span>{{.t.T "菜单"}}</span></a>
+              {{end}}
+              {{if .AdminThemeSupportsOptions}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-options"}} is-active{{end}}" href="/admin/theme-options">
+                <span>{{.t.T "选项"}}</span></a>
+              {{end}}
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "plugins"}} is-active{{end}}" href="/admin/plugins">
+                <span>{{.t.T "插件"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "theme-files"}} is-active{{end}}" href="/admin/theme/files">
+                <span>{{.t.T "编辑"}}</span></a>
+            </div>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group-title">{{.t.T "设置"}}</span>
+            <div class="nav-group-links">
+              <a class="admin-nav-link{{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "general")}} is-active{{end}}" href="/admin/settings">
+                <span>{{.t.T "常规"}}</span></a>
+              <a class="admin-nav-link{{if and (eq .CurrentAdminNav "settings") (eq .CurrentSettingsSection "developer")}} is-active{{end}}" href="/admin/settings/developer">
+                <span>{{.t.T "开发"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "import"}} is-active{{end}}" href="/admin/import">
+                <span>{{.t.T "迁移"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "users"}} is-active{{end}}" href="/admin/users">
+                <span>{{.t.T "用户"}}</span></a>
+              <a class="admin-nav-link{{if eq .CurrentAdminNav "backup"}} is-active{{end}}" href="/admin/backup">
+                <span>{{.t.T "备份"}}</span></a>
+            </div>
+          </div>
+          {{end}}
+        </div>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <div class="admin-sidebar-utility" aria-label="{{.t.T "界面设置"}}">
+          <label class="lang-select-wrap">
+            <span class="sidebar-utility-label">{{.t.T "语言"}}</span>
+            <select class="lang-select" aria-label="{{.t.T "语言"}}" onchange="if(this.value)location=this.value">
+              <option value="{{index .langURL "zh_CN"}}" {{if eq (.usedLocale) "zh_CN"}}selected{{end}}>{{.t.T "中文"}}</option>
+              <option value="{{index .langURL "en_US"}}" {{if eq (.usedLocale) "en_US"}}selected{{end}}>{{.t.T "English"}}</option>
+            </select>
+          </label>
+          <label class="theme-select-wrap">
+            <span class="sidebar-utility-label">{{.t.T "颜色"}}</span>
+            <select class="theme-select" data-theme-select aria-label="{{.t.T "切换主题"}}">
+              <option value="dark">{{.t.T "暗黑"}}</option>
+              <option value="light">{{.t.T "明亮"}}</option>
+              <option value="red-plum">{{.t.T "红梅"}}</option>
+              <option value="bamboo">{{.t.T "绿竹"}}</option>
+              <option value="lotus">{{.t.T "藕粉"}}</option>
+              <option value="orange">{{.t.T "橙黄"}}</option>
+              <option value="azure">{{.t.T "蔚蓝"}}</option>
+              <option value="purple">{{.t.T "韵紫"}}</option>
+            </select>
+          </label>
+        </div>
+        <div class="admin-sidebar-actions">
+          <form class="inline" method="post" action="/auth/logout">{{template "csrf_field" .}}<button type="submit">{{.t.T "退出"}}</button></form>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <main class="admin-main" id="main-content">
+{{- end}}
 
-{{define "csrf_field"}}{{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}{{end}}
-
-{{define "admin_footer"}}
-</main>
-<script src="/assets/theme.js"></script>
+{{- define "admin_footer" -}}
+  <footer class="admin-instance-footer">{{.t.T "当前版本"}}: {{.InstanceVersion}}</footer>
+  </main>
+</div><!-- .admin-shell -->
+{{- if .SQLDetails}}
+{{- if .SQLDetails.Count}}
+<footer class="sql-details-footer">
+  <details>
+    <summary>{{.t.T "SQL 执行详情 (%d 条)" .SQLDetails.Count}}</summary>
+    <pre class="sql-details-content">{{.SQLDetails}}</pre>
+  </details>
+</footer>
+{{- end}}
+{{- end}}
+<script src="/assets/theme.js?v={{.AssetVersion}}"></script>
+<script src="/assets/common.js?v={{.AssetVersion}}"></script>
 </body>
 </html>
-{{end}}
+{{- end}}

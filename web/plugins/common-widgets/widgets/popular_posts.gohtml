@@ -1,0 +1,15 @@
+{{- define "widget_popular_posts" -}}
+{{$title := plugin_option "title" | default (.tp.T "最热文章")}}
+{{$n := plugin_option "count" | toInt | default 5}}
+{{$popular := hook_invoke "PopularPosts" "n" $n}}
+<section class="widget widget-popular-posts">
+  <h3>{{$title}}</h3>
+  <ul>
+    {{if $popular}}
+    {{range $popular}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+    {{else}}
+    {{range $i, $p := .Data.RecentPosts}}{{if lt $i $n}}<li><a href="{{postURL $p}}">{{$p.Title}}</a></li>{{end}}{{end}}
+    {{end}}
+  </ul>
+</section>
+{{- end}}

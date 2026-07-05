@@ -1,0 +1,106 @@
+{{- define "admin_plugins.gohtml" -}}
+{{template "admin_header" .}}
+<div class="page-head">
+  <h1>{{.t.T "插件"}}</h1>
+</div>
+
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
+{{- if .Notice}}
+<p class="notice-banner">{{.Notice}}</p>
+{{- end}}
+
+<section class="card settings-card plugins-card">
+  <h3>{{.t.T "插件管理"}}</h3>
+  <p class="tip">{{.t.T "插件可以通过 action/filter/slot 扩展站点能力。启用或停用后会立即重载插件运行时和当前主题 hooks。"}}</p>
+  {{if .EnabledPluginIDs}}<p class="tip">{{.t.T "当前启用"}}: <code>{{.EnabledPluginIDs}}</code></p>{{end}}
+
+  <div class="table-scroll">
+    <table class="data-table plugins-table">
+      <thead>
+      <tr>
+        <th>{{.t.T "插件"}}</th>
+        <th>{{.t.T "状态"}}</th>
+        <th>{{.t.T "能力"}}</th>
+        <th>{{.t.T "操作"}}</th>
+      </tr>
+      </thead>
+      <tbody>
+      {{range .Plugins}}
+      <tr>
+        <td class="plugin-info-cell" data-label="{{$.t.T "插件"}}">
+          <div class="plugin-title-panel">
+            <strong>{{.Name}}</strong> {{if .Version}}<span class="theme-version">v{{.Version}}</span>{{end}}
+            {{if .Description}}<span class="plugin-description">{{.Description}}</span>{{end}}
+            <span class="tip plugin-meta-line"><span>{{$.t.T "ID"}}: <code>{{.ID}}</code></span>{{if .Author}}<span>{{$.t.T "作者"}}: {{.Author}}</span>{{end}}</span>
+            <span class="tip">{{$.t.T "来源"}}: <code>{{.Source}}</code></span>
+          </div>
+        </td>
+        <td class="plugin-status-cell" data-label="{{$.t.T "状态"}}">
+          {{if .Enabled}}
+          <span class="badge">{{$.t.T "已启用"}}</span>
+          {{else}}
+          <span class="widget-source-badge widget-source-theme">{{$.t.T "已停用"}}</span>
+          {{end}}
+          {{if .DefaultEnabled}}<br><span class="tip">{{$.t.T "默认启用"}}</span>{{end}}
+          {{if .HasAssets}}<br><span class="tip">{{$.t.T "包含静态资源"}}</span>{{end}}
+          {{if .LoadError}}<p class="err-banner">{{$.t.T "加载失败"}}: {{.LoadError}}</p>{{end}}
+        </td>
+        <td class="plugin-capabilities-cell" data-label="{{$.t.T "能力"}}">
+          {{if .ActionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Actions"}}</strong>: {{range .ActionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if .FilterNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Filters"}}</strong>: {{range .FilterNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if .SlotNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Slots"}}</strong>: {{range .SlotNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if .WidgetNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Widgets"}}</strong>: {{range .WidgetNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if .OptionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Options"}}</strong>: {{range .OptionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if and (not .ActionNames) (not .FilterNames) (not .SlotNames) (not .WidgetNames) (not .OptionNames)}}—{{end}}
+        </td>
+        <td class="actions plugin-actions-cell" data-label="{{$.t.T "操作"}}">
+          <a class="btn-secondary btn-sm theme-action-link" href="/admin/theme/files?kind=plugin&plugin={{.ID}}">{{$.t.T "编辑"}}</a>
+          <a href="/admin/plugin/download?plugin={{.ID}}" class="btn-secondary btn-sm theme-action-link">{{$.t.T "下载"}}</a>
+          {{if .Enabled}}
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/disable" onsubmit="return confirm('{{$.t.T "确定要停用插件「%s」吗？" .Name}}')">
+            {{template "csrf_field" $}}
+            <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "停用"}}</button>
+          </form>
+          {{if .OptionNames}}<a class="btn-secondary btn-sm theme-action-link" href="/admin/plugin/{{.ID}}/settings">{{$.t.T "设置"}}</a>{{end}}
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/reload">
+            {{template "csrf_field" $}}
+            <button type="submit" class="btn-secondary btn-sm">{{$.t.T "重载"}}</button>
+          </form>
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。" .Name}}')">
+            {{template "csrf_field" $}}
+            <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "卸载"}}</button>
+          </form>
+          {{else}}
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/enable">
+            {{template "csrf_field" $}}
+            <button type="submit" class="btn-secondary btn-sm">{{$.t.T "启用"}}</button>
+          </form>
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会执行卸载生命周期。" .Name}}')">
+            {{template "csrf_field" $}}
+            <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "卸载"}}</button>
+          </form>
+          {{end}}
+        </td>
+      </tr>
+      {{else}}
+      <tr><td colspan="4">{{.t.T "暂无已安装插件。"}}</td></tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card settings-card plugin-upload-card">
+  <h3>{{.t.T "上传插件包"}}</h3>
+  <form class="edit-form" method="post" action="/admin/plugin/upload" enctype="multipart/form-data">
+    {{template "csrf_field" .}}
+    <label>{{.t.T "上传插件包 (.zip)"}}<input type="file" name="plugin_zip" accept=".zip" required></label>
+    <p class="tip">{{.t.T "上传 .zip 格式的插件包来安装新插件。插件包需包含 plugin.yaml。"}}</p>
+    <p><button type="submit" class="btn">{{.t.T "上传并安装"}}</button></p>
+  </form>
+</section>
+
+{{template "admin_footer" .}}
+{{- end}}

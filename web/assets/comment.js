@@ -1,10 +1,43 @@
 // 评论 Ajax 提交 + 评论分页 Ajax 切换。
 (function () {
+  var root = document.documentElement.dataset || {};
+  var MSG_SUCCESS = root.commentSuccess || "Comment submitted and awaiting moderation.";
+  var MSG_FAIL = root.commentFail || "Submission failed. Please try again later.";
+  var MSG_NETWORK = root.commentNetwork || "Network error. Please try again later.";
   var commentsBox = document.getElementById("comments-box");
   var form = document.getElementById("comment-form");
   if (!commentsBox) return;
 
   function getForm() { return document.getElementById("comment-form"); }
+  function getFormBox() { return document.getElementById("comment-form-box") || getForm(); }
+  function getFormHome() { return document.getElementById("comment-form-home"); }
+
+  function moveFormHome() {
+    var f = getForm();
+    var box = getFormBox();
+    var home = getFormHome();
+    if (!f || !box || !home || !home.parentNode) return;
+    home.parentNode.insertBefore(box, home.nextSibling);
+    f.querySelector("[name=parent_id]").value = "0";
+    f.querySelector("[name=reply_to_id]").value = "0";
+    var cancel = f.querySelector("[data-cancel-reply]");
+    if (cancel) cancel.hidden = true;
+  }
+
+  function moveFormToComment(commentID, replyToID) {
+    var f = getForm();
+    var box = getFormBox();
+    var target = document.getElementById(commentID);
+    if (!f || !box || !target) return;
+    target.appendChild(box);
+    f.querySelector("[name=parent_id]").value = replyToID;
+    f.querySelector("[name=reply_to_id]").value = replyToID;
+    var cancel = f.querySelector("[data-cancel-reply]");
+    if (cancel) cancel.hidden = false;
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+    var textarea = f.querySelector("textarea[name=content]");
+    if (textarea) textarea.focus({ preventScroll: true });
+  }
 
   function showMsg(text, ok) {
     var f = getForm();
@@ -19,13 +52,44 @@
     el.className = "comment-msg " + (ok ? "ok" : "err");
   }
 
+  function insertTextAtCursor(textarea, text) {
+    if (!textarea) return;
+    var start = textarea.selectionStart;
+    var end = textarea.selectionEnd;
+    var value = textarea.value || "";
+    if (typeof start !== "number" || typeof end !== "number") {
+      textarea.value = value + text;
+      return;
+    }
+    textarea.value = value.slice(0, start) + text + value.slice(end);
+    var next = start + text.length;
+    textarea.setSelectionRange(next, next);
+  }
+
+  function bindSmilies() {
+    var f = getForm();
+    if (!f) return;
+    var textarea = f.querySelector("textarea[name=content]");
+    if (!textarea) return;
+    f.querySelectorAll("[data-smiley-code]").forEach(function (btn) {
+      if (btn.dataset.boundSmiley === "1") return;
+      btn.dataset.boundSmiley = "1";
+      btn.addEventListener("click", function () {
+        var code = btn.getAttribute("data-smiley-code") || "";
+        if (!code) return;
+        textarea.focus({ preventScroll: true });
+        insertTextAtCursor(textarea, code);
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    });
+  }
+
   function bindReplyButtons() {
     var f = getForm();
     if (!f) return;
     commentsBox.querySelectorAll("[data-reply]").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        f.querySelector("[name=parent_id]").value = btn.getAttribute("data-reply");
-        f.scrollIntoView({ behavior: "smooth" });
+        moveFormToComment(btn.getAttribute("data-reply-target"), btn.getAttribute("data-reply"));
       });
     });
   }
@@ -33,13 +97,15 @@
   function fetchCommentPage(page, push) {
     var url = new URL(window.location.href);
     url.searchParams.set("cpage", page);
-    url.searchParams.set("ajax", "comments");
-    fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+    url.searchParams.set("fragment", "comments");
+    return fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
       .then(function (r) { return r.text(); })
       .then(function (html) {
         commentsBox.innerHTML = html;
         bindReplyButtons();
         bindForm();
+        var comments = document.getElementById("comments");
+        if (comments) comments.scrollIntoView({ behavior: "smooth" });
         if (push) {
           var u = new URL(window.location.href);
           u.searchParams.set("cpage", page);
@@ -64,6 +130,7 @@
   function bindForm() {
     var f = getForm();
     if (!f || f.dataset.bound === "1") return;
+    bindSmilies();
     f.dataset.bound = "1";
     f.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -77,16 +144,22 @@
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data.ok) {
-            showMsg(data.message || "评论已提交,等待审核后显示。", true);
+            var page = parseInt(data.comment_page, 10) || (parseInt(new URL(window.location.href).searchParams.get("cpage"), 10) || 1);
             f.querySelector("[name=content]").value = "";
-            f.querySelector("[name=parent_id]").value = "0";
+            return fetchCommentPage(page, true).then(function () {
+              showMsg(data.message || MSG_SUCCESS, true);
+            });
           } else {
-            showMsg(data.message || "提交失败,请稍后重试。", false);
+            showMsg(data.message || MSG_FAIL, false);
           }
         })
-        .catch(function () { showMsg("网络错误,请稍后重试。", false); })
+        .catch(function () { showMsg(MSG_NETWORK, false); })
         .finally(function () { btn.disabled = false; });
     });
+    var cancel = f.querySelector("[data-cancel-reply]");
+    if (cancel) {
+      cancel.addEventListener("click", moveFormHome);
+    }
     bindReplyButtons();
     bindPager();
   }

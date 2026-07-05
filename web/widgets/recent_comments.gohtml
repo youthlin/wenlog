@@ -1,0 +1,23 @@
+{{- define "widget_recent_comments" -}}
+{{$title := widget_option "title" | default (.t.T "近期评论")}}
+{{$n := widget_option "count" | toInt | default 5}}
+<section class="widget widget-recent-comments">
+  <h3>{{$title}}</h3>
+  <ul>
+    {{range $i, $item := .RecentCommentItems}}{{if lt $i $n}}
+    <li>
+      <img class="avatar" src="{{avatarURL $item.Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
+      <div class="widget-comment-content">
+        <div class="widget-comment-line">
+          <a href="{{$item.CommentURL}}">{{$item.Snippet}}</a>
+        </div>
+        <div class="widget-comment-meta">
+          {{if $item.AuthorURL}}<a href="{{$item.AuthorURL}}" target="_blank" rel="nofollow noopener">{{$item.Comment.Author}}</a>{{else}}{{$item.Comment.Author}}{{end}}
+          {{$.t.T "发表在"}} <a href="{{$item.CommentURL}}">{{$item.Post.Title}}</a>
+        </div>
+      </div>
+    </li>
+    {{end}}{{end}}
+  </ul>
+</section>
+{{- end}}
