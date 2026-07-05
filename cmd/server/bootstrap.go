@@ -12,14 +12,14 @@ import (
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 var (
-	bootstrapWelcomePostTitle = gettext.Mark.T("欢迎来到我的博客")
+	bootstrapWelcomePostTitle = gettext.Mark.T("欢迎使用 WenLog(文录)")
 	bootstrapWelcomeMarkdown  = gettext.Mark.T("欢迎使用这个独立博客程序。它专注于：\n\n- **简单部署**：单二进制 + SQLite，适合个人博客快速上线。\n- **内容优先**：支持 Markdown 写作，也兼容逐步整理已有内容。\n- **可持续维护**：后台可管理文章、页面、评论、资源与模板。\n\n你可以先到后台看看设置、写一篇文章、再把这里改成真正属于你自己的首页开场白。祝写作愉快。")
 	bootstrapWelcomeComment   = gettext.Mark.T("欢迎使用这个博客程序，你可以在后台管理评论，快去看看吧。")
 	bootstrapAboutPageTitle   = gettext.Mark.T("关于")
@@ -148,7 +148,7 @@ func ensureInitialContent(st *store.Store) error {
 		PostID:    welcomPost.ID,
 		Author:    "youthlin",
 		Email:     "admin@example.com",
-		URL:       "https://github.com/youthlin/blog",
+		URL:       "https://github.com/youthlin/wenlog",
 		IP:        "127.0.0.1",
 		Content:   gettext.T(bootstrapWelcomeComment),
 		Status:    model.CommentApproved,

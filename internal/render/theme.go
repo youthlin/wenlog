@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	ginrender "github.com/gin-gonic/gin/render"
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/web"
 )
 
 // LoadThemeTemplates 加载主题模板目录。先解析主题模板，再补充内置组件模板，

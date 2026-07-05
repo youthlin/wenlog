@@ -8,7 +8,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/youthlin/blog/internal/config"
+	"github.com/youthlin/wenlog/internal/config"
 )
 
 func runDaemon(cfg *config.Config) bool {

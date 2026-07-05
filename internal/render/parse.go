@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
-	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/internal/wxr"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/internal/wxr"
 )
 
 const pattern = "*.gohtml"

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/youthlin/blog/internal/consts"
+	"github.com/youthlin/wenlog/internal/consts"
 )
 
 // FirstNonEmpty 返回第一个非空字符串,若全为空则返回空字符串。

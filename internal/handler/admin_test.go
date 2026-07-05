@@ -16,11 +16,11 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
 	gettext "github.com/youthlin/t"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 func TestAllowDebugSQL(t *testing.T) {

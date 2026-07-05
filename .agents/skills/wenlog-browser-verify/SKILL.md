@@ -1,12 +1,12 @@
 ---
-name: blog-browser-verify
+name: wenlog-browser-verify
 version: 1.0.0
 description: "用于本仓库的本地运行与浏览器验收流程。当用户要求启动项目、设置后台管理员、打开 8888 页面、验证前后台主题/语言切换、检查样式协调性、截图确认页面效果时使用。"
 ---
 
-# Blog Browser Verify
+# WenLog Browser Verify
 
-适用于 `youthlin/blog` 仓库的本地启动 + 浏览器验收流程。
+适用于 `youthlin/wenlog` 仓库的本地启动 + 浏览器验收流程。
 
 ## When to use
 

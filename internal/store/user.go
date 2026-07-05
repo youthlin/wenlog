@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 	"gorm.io/gorm"
 )
 

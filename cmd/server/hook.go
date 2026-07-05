@@ -12,14 +12,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/plugin"
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/theme"
-	"github.com/youthlin/blog/web"
-	"github.com/youthlin/blog/web/plugins"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/plugin"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/theme"
+	"github.com/youthlin/wenlog/web"
+	"github.com/youthlin/wenlog/web/plugins"
 	"gopkg.in/yaml.v3"
 )
 

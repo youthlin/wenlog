@@ -5,7 +5,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 // MaxRevisionsPerPost 每篇文章最多保留的修订版本数。

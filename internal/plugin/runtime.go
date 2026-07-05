@@ -5,8 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/traefik/yaegi/interp"
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/script"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/script"
 )
 
 // FunctionsScript 表示一个已编译的插件 functions 脚本。

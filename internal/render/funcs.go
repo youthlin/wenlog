@@ -11,11 +11,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
-	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/internal/wxr"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/internal/wxr"
 )
 
 // hookInvoke 在模板中使用 {{hook_invoke "FuncName" "argName" argValue ...}}

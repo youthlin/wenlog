@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 func TestPost(t *testing.T) {

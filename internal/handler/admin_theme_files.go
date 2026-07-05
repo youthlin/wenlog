@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/i18n"
 )
 
 const maxThemeFileSize = 100 << 10 // 100KB

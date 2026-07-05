@@ -35,7 +35,7 @@ require_cmd xtemplate
 mkdir -p "$APP_I18N_DIR"
 mkdir -p "$THEME_ROOT_DIR"
 
-TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/blog-i18n.XXXXXX")"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/wenlog-i18n.XXXXXX")"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 GO_POT="$TMP_DIR/go.pot"
@@ -72,7 +72,7 @@ fi
     --add-comments=TRANSLATORS: \
     --force-po \
     --sort-by-file \
-    --package-name=blog \
+    --package-name=wenlog \
     --keyword=T:1 \
     --keyword=N:1,2 \
     --keyword=N1:1,1 \

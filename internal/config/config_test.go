@@ -7,15 +7,15 @@ import (
 
 func TestLoadDefaults(t *testing.T) {
 	// 清除相关环境变量，确保测试默认值
-	for _, key := range []string{"BLOG_ADDR", "BLOG_DB", "BLOG_PUBLIC_DIR", "BLOG_LOG_JSON"} {
+	for _, key := range []string{"WENLOG_ADDR", "WENLOG_DB", "WENLOG_PUBLIC_DIR", "WENLOG_LOG_JSON"} {
 		os.Unsetenv(key)
 	}
 	cfg := Load()
 	if cfg.Addr != ":8888" {
 		t.Errorf("Addr = %q, want :8888", cfg.Addr)
 	}
-	if cfg.DBPath != "data/blog.db" {
-		t.Errorf("DBPath = %q, want data/blog.db", cfg.DBPath)
+	if cfg.DBPath != "data/wenlog.db" {
+		t.Errorf("DBPath = %q, want data/wenlog.db", cfg.DBPath)
 	}
 	if cfg.PublicDir != "public" {
 		t.Errorf("PublicDir = %q, want public", cfg.PublicDir)
@@ -26,12 +26,12 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadFromEnv(t *testing.T) {
-	os.Setenv("BLOG_ADDR", ":9090")
-	os.Setenv("BLOG_DB", "/tmp/test.db")
-	os.Setenv("BLOG_PUBLIC_DIR", "/var/www/public")
-	os.Setenv("BLOG_LOG_JSON", "true")
+	os.Setenv("WENLOG_ADDR", ":9090")
+	os.Setenv("WENLOG_DB", "/tmp/test.db")
+	os.Setenv("WENLOG_PUBLIC_DIR", "/var/www/public")
+	os.Setenv("WENLOG_LOG_JSON", "true")
 	defer func() {
-		for _, key := range []string{"BLOG_ADDR", "BLOG_DB", "BLOG_PUBLIC_DIR", "BLOG_LOG_JSON"} {
+		for _, key := range []string{"WENLOG_ADDR", "WENLOG_DB", "WENLOG_PUBLIC_DIR", "WENLOG_LOG_JSON"} {
 			os.Unsetenv(key)
 		}
 	}()

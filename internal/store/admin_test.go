@@ -7,7 +7,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 func TestUpdateUserProfileAndUserExistsByUsername(t *testing.T) {

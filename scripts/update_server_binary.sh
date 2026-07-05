@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 从 GitHub Release 下载并替换服务器上的 blog 二进制。
+# 从 GitHub Release 下载并替换服务器上的 wenlog 二进制。
 #
 # 示例：
 #   scripts/update_server_binary.sh v1.0.0
-#   BLOG_BIN=/opt/blog/blog BLOG_REPO=youthlin/blog scripts/update_server_binary.sh latest
+#   WENLOG_BIN=/opt/wenlog/wenlog WENLOG_REPO=youthlin/wenlog scripts/update_server_binary.sh latest
 #   GITHUB_TOKEN=ghp_xxx scripts/update_server_binary.sh latest  # 私有仓库/私有 Release
 #
-# 默认使用当前脚本上级目录中的 ./blog 作为目标二进制，并用 `blog restart` 重启。
+# 默认使用当前脚本上级目录中的 ./wenlog 作为目标二进制，并用 `wenlog restart` 重启。
 
-REPO="${BLOG_REPO:-youthlin/blog}"
+REPO="${WENLOG_REPO:-youthlin/wenlog}"
 VERSION="${1:-latest}"
-BIN_PATH="${BLOG_BIN:-}"
-RESTART_CMD="${BLOG_RESTART_CMD:-}"
-KEEP_BACKUP="${BLOG_KEEP_BACKUP:-true}"
-WORKDIR="${BLOG_WORKDIR:-}"
+BIN_PATH="${WENLOG_BIN:-}"
+RESTART_CMD="${WENLOG_RESTART_CMD:-}"
+KEEP_BACKUP="${WENLOG_KEEP_BACKUP:-true}"
+WORKDIR="${WENLOG_WORKDIR:-}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 
 require_cmd() {
@@ -49,7 +49,7 @@ detect_bin_path() {
   fi
   local root
   root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-  printf '%s/blog\n' "$root"
+  printf '%s/wenlog\n' "$root"
 }
 
 resolve_version() {
@@ -109,7 +109,7 @@ restart_service() {
   local bin="$1"
   if [ -n "$RESTART_CMD" ]; then
     # shellcheck disable=SC2086
-    BLOG_BIN="$bin" $RESTART_CMD
+    WENLOG_BIN="$bin" $RESTART_CMD
     return
   fi
   (cd "${WORKDIR:-$(dirname -- "$bin")}" && "$bin" restart)
@@ -124,7 +124,7 @@ install_binary() {
 }
 
 health_check() {
-  local url="${BLOG_HEALTH_URL:-http://127.0.0.1:8888/healthz}"
+  local url="${WENLOG_HEALTH_URL:-http://127.0.0.1:8888/healthz}"
   local i
   for i in $(seq 1 20); do
     if curl -fsS --max-time 2 "$url" >/dev/null 2>&1; then
@@ -152,12 +152,12 @@ main() {
     exit 1
   fi
 
-  asset="blog-${version}-${os}-${arch}.tar.gz"
+  asset="wenlog-${version}-${os}-${arch}.tar.gz"
   download_url="https://github.com/${REPO}/releases/download/${version}/${asset}"
   checksum_url="${download_url}.sha256"
   bin_path="$(detect_bin_path)"
   bin_dir="$(dirname -- "$bin_path")"
-  tmp="$(mktemp -d "${TMPDIR:-/tmp}/blog-update.XXXXXX")"
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/wenlog-update.XXXXXX")"
   trap 'rm -rf "${tmp:-}"' EXIT
 
   printf '准备更新 %s 到 %s (%s/%s)\n' "$bin_path" "$version" "$os" "$arch"
@@ -167,7 +167,7 @@ main() {
   download_github_asset "$checksum_url" "$tmp/$asset.sha256"
   (cd "$tmp" && sha256sum -c "$asset.sha256")
   tar -xzf "$tmp/$asset" -C "$tmp"
-  chmod +x "$tmp/blog"
+  chmod +x "$tmp/wenlog"
 
   if [ -f "$bin_path" ]; then
     backup="${bin_path}.bak.$(date +%Y%m%d%H%M%S)"
@@ -177,7 +177,7 @@ main() {
     backup=""
   fi
 
-  install_binary "$tmp/blog" "$bin_path"
+  install_binary "$tmp/wenlog" "$bin_path"
   printf '已替换二进制，准备重启。\n'
 
   if ! restart_service "$bin_path" || ! health_check; then

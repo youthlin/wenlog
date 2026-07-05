@@ -1,10 +1,10 @@
 # Spread — 宽屏杂志主题
 name: "spread"
-version: "20260704193010"
+version: "20260705141547"
 description: "宽屏满幅色块、杂志目录式列表和大胆触摸交互的主题"
 author: "youthlin"
 author_uri: "https://github.com/youthlin"
-theme_uri: "https://github.com/youthlin/blog"
+theme_uri: "https://github.com/youthlin/wenlog"
 license: "MIT"
 tags: ["宽屏", "杂志", "满幅", "响应式"]
 
@@ -32,4 +32,4 @@ options:
     type: text
     label: "页脚文字"
     description: "显示在页面底部"
-    default: "Published with Blog"
+    default: "Published with WenLog"

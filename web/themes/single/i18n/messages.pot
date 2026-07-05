@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-04 14:59:25+0800\n"
+"POT-Creation-Date: 2026-07-05 14:15:34+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,104 +20,96 @@ msgstr ""
 "xtemplate)\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "X-Xtemplate-Input: /data00/home/youthlin.chen/go/src/github.com/youthlin/"
-"blog/web/themes/single/templates/*.gohtml\n"
+"wenlog/web/themes/single/templates/*.gohtml\n"
 "X-Xtemplate-Left: {{\n"
 "X-Xtemplate-Right: }}\n"
 "X-Xtemplate-Keywords: T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;"
 "XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2\n"
 "X-Xtemplate-Functions: \n"
-"X-Xtemplate-Output: /tmp/blog-i18n.pOgE5s/theme_single_templates.pot\n"
+"X-Xtemplate-Output: /tmp/wenlog-i18n.ptuVRp/theme_single_templates.pot\n"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:4
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:4
 msgid "评论已提交,等待审核后显示。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:5
 msgid "提交失败,请稍后重试。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:6
 msgid "网络错误,请稍后重试。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:7
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:7
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:41
 msgid "打开菜单"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:8
 msgid "收起菜单"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:23
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:23
 msgid "跳到主要内容"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:33
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:34
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:34
 msgid "语言"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:67
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:67
 msgid "回顶部"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:68
 msgid "到底部"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:74
 msgid "SQL 执行详情 (%d 条)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:104
-msgid "上一页"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:106
-msgid "下一页"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:114
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:193
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:106
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:192
 msgid "%d 条评论"
 msgid_plural "%d 条评论"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:130
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:129
 msgid "返回首页"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:153
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:152
 msgid "草稿预览"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:158
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:190
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:157
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:189
 msgid "%d 次阅读"
 msgid_plural "%d 次阅读"
 msgstr[0] ""
 msgstr[1] ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:159
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:194
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:158
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:193
 msgid "编辑"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:191
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:190
 msgid "评论已关闭"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:192
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:191
 msgid "暂无评论"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:197
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:196
 msgid "阅读全文 →"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/single/templates/index.gohtml:200
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:199
 msgid "没有找到匹配的文章。"
 msgstr ""
 

@@ -14,11 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/web"
 )
 
 func setupAuthHandlerTest(t *testing.T) (*gin.Engine, *Auth, *store.Store) {

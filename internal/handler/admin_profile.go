@@ -13,11 +13,11 @@ import (
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // ProfilePage 后台个人资料页(所有角色可访问)。

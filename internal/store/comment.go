@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 func (s *Store) AdminListComments(ctx context.Context, status string, postID uint, page, pageSize int) ([]model.Comment, int64, error) {

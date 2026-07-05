@@ -14,12 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/internal/email"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/email"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // 评论限制常量。

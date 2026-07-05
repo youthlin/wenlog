@@ -15,14 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/youthlin/blog/internal/config"
-	"github.com/youthlin/blog/internal/handler"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/internal/config"
+	"github.com/youthlin/wenlog/internal/handler"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/web"
 )
 
 // serve 启动 web 服务器

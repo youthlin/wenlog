@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - feat/plugin
+      - feat/*
     tags:
       - 'v*'
   pull_request:
@@ -79,27 +79,27 @@ jobs:
           version="${GITHUB_REF_NAME//\//-}"
           commit="${GITHUB_SHA}"
           date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          ldflags="-s -w -X github.com/youthlin/blog/internal/version.Version=${version} -X github.com/youthlin/blog/internal/version.Commit=${commit} -X github.com/youthlin/blog/internal/version.Date=${date}"
+          ldflags="-s -w -X github.com/youthlin/wenlog/internal/version.Version=${version} -X github.com/youthlin/wenlog/internal/version.Commit=${commit} -X github.com/youthlin/wenlog/internal/version.Date=${date}"
           printf '%s\n' "${version}" > dist/package/VERSION
-          go build -trimpath -ldflags="${ldflags}" -o "dist/package/blog${{ matrix.ext }}" ./cmd/server
+          go build -trimpath -ldflags="${ldflags}" -o "dist/package/wenlog${{ matrix.ext }}" ./cmd/server
 
       - name: Package binary
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME//\//-}"
-          base="blog-${version}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          base="wenlog-${version}-${{ matrix.goos }}-${{ matrix.goarch }}"
           cd dist
           if [ '${{ matrix.archive }}' = 'zip' ]; then
-            (cd package && zip "../${base}.zip" "blog${{ matrix.ext }}" VERSION)
+            (cd package && zip "../${base}.zip" "wenlog${{ matrix.ext }}" VERSION)
           else
-            tar -czf "${base}.tar.gz" -C package "blog${{ matrix.ext }}" VERSION
+            tar -czf "${base}.tar.gz" -C package "wenlog${{ matrix.ext }}" VERSION
           fi
           sha256sum "${base}.${{ matrix.archive }}" > "${base}.${{ matrix.archive }}.sha256"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: blog-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: wenlog-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
             dist/*.tar.gz
             dist/*.zip

@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/render"
-	internalscript "github.com/youthlin/blog/internal/script"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/render"
+	internalscript "github.com/youthlin/wenlog/internal/script"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // FunctionsScript 表示一个已编译的 functions.go 脚本。

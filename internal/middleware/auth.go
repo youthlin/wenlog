@@ -7,7 +7,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // SessionUserKey 是 session 中存储用户 ID 的键。

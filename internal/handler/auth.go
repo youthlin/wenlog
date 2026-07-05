@@ -11,9 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/email"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/email"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // randomHexToken 生成 n 字节随机 hex 令牌。

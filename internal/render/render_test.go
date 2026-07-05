@@ -13,9 +13,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/web"
 )
 
 func TestAvatarURL(t *testing.T) {

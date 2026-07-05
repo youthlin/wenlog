@@ -11,14 +11,15 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/youthlin/blog/internal/handler"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/web"
-	bundledplugins "github.com/youthlin/blog/web/plugins"
 	gettext "github.com/youthlin/t"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/youthlin/wenlog/internal/handler"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/web"
+	"github.com/youthlin/wenlog/web/plugins"
 )
 
 func newTestStore(t *testing.T) *store.Store {
@@ -124,7 +125,7 @@ func TestEnsureInitialContent(t *testing.T) {
 	if len(posts) != 2 {
 		t.Fatalf("post count = %d, want 2", len(posts))
 	}
-	if posts[0].Title != "Welcome to my blog" || posts[0].PostType != model.PostTypePost {
+	if posts[0].Title != "Welcome to WenLog" || posts[0].PostType != model.PostTypePost {
 		t.Fatalf("first post = %+v", posts[0])
 	}
 	var categories []model.Category
@@ -221,7 +222,7 @@ func TestEnsurePluginsOnDiskReleasesBundledPlugins(t *testing.T) {
 
 	ensurePluginsOnDisk()
 
-	wantYAML, err := fs.ReadFile(bundledplugins.Plugins, "comment-smilies/plugin.yaml")
+	wantYAML, err := fs.ReadFile(plugins.Plugins, "comment-smilies/plugin.yaml")
 	if err != nil {
 		t.Fatalf("read bundled plugin yaml: %v", err)
 	}
@@ -233,7 +234,7 @@ func TestEnsurePluginsOnDiskReleasesBundledPlugins(t *testing.T) {
 		t.Fatalf("plugin yaml not released: got %q want %q", gotYAML, wantYAML)
 	}
 
-	wantWidget, err := fs.ReadFile(bundledplugins.Plugins, "common-widgets/widgets/saying.gohtml")
+	wantWidget, err := fs.ReadFile(plugins.Plugins, "common-widgets/widgets/saying.gohtml")
 	if err != nil {
 		t.Fatalf("read bundled plugin widget: %v", err)
 	}
@@ -272,7 +273,7 @@ func TestEnsurePluginsOnDiskRefreshesBundledPluginWhenVersionChanged(t *testing.
 
 	ensurePluginsOnDisk()
 
-	wantYAML, err := fs.ReadFile(bundledplugins.Plugins, "common-widgets/plugin.yaml")
+	wantYAML, err := fs.ReadFile(plugins.Plugins, "common-widgets/plugin.yaml")
 	if err != nil {
 		t.Fatalf("read bundled plugin yaml: %v", err)
 	}
@@ -284,7 +285,7 @@ func TestEnsurePluginsOnDiskRefreshesBundledPluginWhenVersionChanged(t *testing.
 		t.Fatalf("plugin yaml not refreshed: got %q want %q", gotYAML, wantYAML)
 	}
 
-	wantWidget, err := fs.ReadFile(bundledplugins.Plugins, "common-widgets/widgets/saying.gohtml")
+	wantWidget, err := fs.ReadFile(plugins.Plugins, "common-widgets/widgets/saying.gohtml")
 	if err != nil {
 		t.Fatalf("read bundled plugin widget: %v", err)
 	}

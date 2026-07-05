@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/i18n"
 )
 
 // DebugPage 是只读 SQL 调试页,以 JSON 展示结果集。

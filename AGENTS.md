@@ -153,8 +153,8 @@ go test ./...
 ### 构建生产二进制
 
 ```bash
-go build -o blog ./cmd/server
-./blog
+go build -o wenlog ./cmd/server
+./wenlog
 ```
 
 部署时通常还需要：
@@ -392,14 +392,14 @@ go build -o blog ./cmd/server
 
 | 变量 | 默认值 | 用途 |
 |---|---|---|
-| `BLOG_ADDR` | `:8888` | HTTP 监听地址 |
-| `BLOG_DB` | `data/blog.db` | SQLite 路径 |
-| `BLOG_PUBLIC_DIR` | `public` | 历史图片与上传文件根目录 |
-| `BLOG_LOG_JSON` | `false` | 是否输出 JSON 日志 |
+| `WENLOG_ADDR` | `:8888` | HTTP 监听地址 |
+| `WENLOG_DB` | `data/wenlog.db` | SQLite 路径 |
+| `WENLOG_PUBLIC_DIR` | `public` | 历史图片与上传文件根目录 |
+| `WENLOG_LOG_JSON` | `false` | 是否输出 JSON 日志 |
 
 ### 配置上的关键行为
 
-- RSS 与导出里的绝对链接基于当前请求 Host 生成，不再单独读取 `BLOG_SITE_URL`。
+- RSS 与导出里的绝对链接基于当前请求 Host 生成，无需 SITE_URL 这种 ENV。
 - 前台列表分页数量、feed 输出数量、session secret 都可以在后台设置页修改；其中 session secret 修改后所有登录用户都需要重新登录。
 - 启动服务时 `store.Open` 会自动创建数据库目录并执行自动迁移。
 - 开发环境下模板与静态资源优先读磁盘，生产环境则通常依赖 embed 资源。

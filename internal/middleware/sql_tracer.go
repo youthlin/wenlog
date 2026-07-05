@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // SQLTracer 在请求前向 context 注入 SQLDetails 收集器，

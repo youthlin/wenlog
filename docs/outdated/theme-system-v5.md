@@ -50,7 +50,7 @@ options:
   - id: footer_text
     type: text
     label: "页脚文字"
-    default: "Powered by Blog"
+    default: "Powered by WenLog"
 
   - id: footer_html
     type: html

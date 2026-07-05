@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
 )
 
 const MenuItemTypePage = "page"

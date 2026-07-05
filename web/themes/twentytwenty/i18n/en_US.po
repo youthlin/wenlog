@@ -1,115 +1,107 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: blog\n"
+"Project-Id-Version: wenlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-03 23:25:16+0800\n"
+"POT-Creation-Date: 2026-07-05 14:03:47+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/comments.gohtml:3
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:15
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/comments.gohtml:3
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/index.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/list.gohtml:16
 msgid "%d 条评论"
 msgid_plural "%d 条评论"
 msgstr[0] "%d comment"
 msgstr[1] "%d comments"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/error.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/error.gohtml:6
 msgid "返回首页"
 msgstr "Back to home"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/footer.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/footer.gohtml:5
 msgid "回顶部"
 msgstr "Back to top"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/footer.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/footer.gohtml:6
 msgid "到底部"
 msgstr "Go to bottom"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/footer.gohtml:20
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/footer.gohtml:20
 msgid "SQL 执行详情 (%d 条)"
 msgstr "SQL Details (%d items)"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:3
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:3
 msgid "评论已提交,等待审核后显示。"
 msgstr "Comment submitted and awaiting moderation."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:4
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:4
 msgid "提交失败,请稍后重试。"
 msgstr "Submission failed. Please try again later."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:5
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:5
 msgid "网络错误,请稍后重试。"
 msgstr "Network error. Please try again later."
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:6
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:6
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:44
 msgid "打开菜单"
 msgstr "Open menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:7
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:7
 msgid "收起菜单"
 msgstr "Collapse menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:27
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:27
 msgid "跳到主要内容"
 msgstr "Skip to main content"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:38
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:38
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:39
 msgid "切换主题"
 msgstr "Switch theme"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:40
 msgid "明亮"
 msgstr "Light"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/header.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/header.gohtml:41
 msgid "暗黑"
 msgstr "Dark"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:12
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/page.gohtml:8
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/index.gohtml:12
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/list.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/page.gohtml:8
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/post.gohtml:9
 msgid "%d 次阅读"
 msgid_plural "%d 次阅读"
 msgstr[0] "%d view"
 msgstr[1] "%d views"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:13
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/index.gohtml:13
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/list.gohtml:14
 msgid "评论已关闭"
 msgstr "Comments are closed"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:14
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:15
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/index.gohtml:14
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/list.gohtml:15
 msgid "暂无评论"
 msgstr "No comments"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:16
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:17
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/page.gohtml:9
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/post.gohtml:10
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/index.gohtml:16
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/list.gohtml:17
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/page.gohtml:9
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/post.gohtml:10
 msgid "编辑"
 msgstr "Edit"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/index.gohtml:19
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/index.gohtml:19
 msgid "阅读全文 →"
 msgstr "Read more →"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/list.gohtml:21
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/twentytwenty/templates/list.gohtml:21
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/pagination.gohtml:6
-msgid "上一页"
-msgstr "Previous"
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/blog/web/themes/twentytwenty/templates/pagination.gohtml:15
-msgid "下一页"
-msgstr "Next"
 
 #: theme.yaml:description
 msgid "Twenty Twenty 风格，居中单栏布局，暖米色背景，Inter 字体，支持暗色模式"

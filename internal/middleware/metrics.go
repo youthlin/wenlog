@@ -14,19 +14,19 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 var (
 	reqTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "blog_http_requests_total",
+		Name: "wenlog_http_requests_total",
 		Help: "HTTP 请求总数",
 	}, []string{"method", "path", "status"})
 
 	reqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "blog_http_request_duration_seconds",
+		Name:    "wenlog_http_request_duration_seconds",
 		Help:    "HTTP 请求耗时(秒)",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"method", "path", "status"})

@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/youthlin/blog/internal/config"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/middleware"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/config"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 func main() {

@@ -30,8 +30,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 type tokenSpec struct {

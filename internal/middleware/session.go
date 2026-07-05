@@ -10,9 +10,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	gsessions "github.com/gorilla/sessions"
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 func Session(st *store.Store) func() gin.HandlerFunc {
@@ -28,7 +28,7 @@ func Session(st *store.Store) func() gin.HandlerFunc {
 		SameSite: http.SameSiteLaxMode,
 	})
 	return func() gin.HandlerFunc {
-		return sessions.Sessions("blog_session", sessionStore)
+		return sessions.Sessions("wenlog_session", sessionStore)
 	}
 }
 

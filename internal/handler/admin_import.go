@@ -12,10 +12,10 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/i18n"
-	wpimport "github.com/youthlin/blog/internal/importer"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/i18n"
+	wpimport "github.com/youthlin/wenlog/internal/importer"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 const maxImportXMLSize = 50 << 20
@@ -180,7 +180,7 @@ func saveImportXMLPreview(c *gin.Context, xmlBytes []byte, defaultUserID uint, f
 	if oldPath, _ := s.Get(importXMLPathSessionKey).(string); oldPath != "" {
 		_ = os.Remove(oldPath)
 	}
-	tmp, err := os.CreateTemp("", "blog-import-*.xml")
+	tmp, err := os.CreateTemp("", "wenlog-import-*.xml")
 	if err != nil {
 		return err
 	}

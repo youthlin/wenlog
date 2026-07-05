@@ -14,8 +14,8 @@ import (
 	gettext "github.com/youthlin/t"
 	"golang.org/x/text/language"
 
-	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/web"
 )
 
 const (
@@ -52,7 +52,7 @@ func loadTranslations() error {
 	gettext.SetSourceCodeLocale("zh_CN")
 	// 不强制固定成中文, 让空值走系统默认语言匹配。
 	// 这样启动阶段插入的初始内容也能跟随服务器默认语言做翻译。
-	// $ LANG=zh_CN ./blog start
+	// $ LANG=zh_CN ./wenlog start
 	gettext.SetLocale("")
 	return bindDefaultDomain()
 }

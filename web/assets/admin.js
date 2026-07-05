@@ -271,7 +271,7 @@
     if (!form) return "";
     var id = (form.querySelector('input[name="id"]') || {}).value || "new";
     var type = (form.querySelector('input[name="post_type"]') || {}).value || "post";
-    return "blog:post-draft:" + type + ":" + id;
+    return "wenlog:post-draft:" + type + ":" + id;
   }
 
   function initDraftRestore() {

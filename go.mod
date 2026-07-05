@@ -1,4 +1,4 @@
-module github.com/youthlin/blog
+module github.com/youthlin/wenlog
 
 go 1.25.0
 

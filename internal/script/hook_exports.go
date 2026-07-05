@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/traefik/yaegi/interp"
-	"github.com/youthlin/blog/hook"
+	"github.com/youthlin/wenlog/hook"
 )
 
 // HookAPIExports 返回主题和插件脚本共用的 hook API yaegi 导出表。

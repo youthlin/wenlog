@@ -4,8 +4,8 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/web"
 )
 
 func TestTemplatesParse(t *testing.T) {

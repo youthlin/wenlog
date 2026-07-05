@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/youthlin/blog/hook"
+	"github.com/youthlin/wenlog/hook"
 )
 
 // TemplateRuntime 保存主题模板函数需要调用的运行时能力。

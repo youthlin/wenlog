@@ -1,8 +1,8 @@
 package theme
 
 import (
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 type ThemeFunc = hook.Func

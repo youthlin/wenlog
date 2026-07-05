@@ -1,7 +1,13 @@
-# 霖博客 (Go 单体应用)
+# WenLog（文录）
 
-将原 WordPress 博客 [youthlin.com](https://youthlin.com) 复刻为 Go 单体应用(Go Web + SQLite),
-抛弃 WordPress 插件体系,只保留个人博客核心功能,**保持原有永久链接不变**。
+WenLog（文录）是一个轻量级 Go 个人发布系统（Go Web + SQLite），用于承载博客、页面、评论、主题与插件，并支持从 WordPress 迁移历史内容。
+
+本项目最初用于将原 WordPress 博客 [youthlin.com](https://youthlin.com) 迁移为 Go 单体应用，目标是在保留个人博客核心功能的同时，**保持原有永久链接不变**。
+
+- 项目名称：`WenLog`
+- 中文名：`文录`
+- 项目目录 / 命令 / Go module：`wenlog`
+- Go module：`github.com/youthlin/wenlog`
 
 ## 技术栈
 
@@ -42,7 +48,7 @@ web/
   templates     *.gohtml(嵌入二进制)
   assets        css/js(嵌入二进制)
 public/wp-content/uploads   历史图片(原路径静态服务)
-data/blog.db    SQLite(运行时生成)
+data/wenlog.db    SQLite(运行时生成)
 ```
 
 ## 快速开始
@@ -56,13 +62,14 @@ go run ./cmd/server
 
 - 若数据库中还没有任何用户，程序会自动创建一个 `admin` 用户，并把随机密码打印到控制台
 - 前台:http://localhost:8888/
-- 后台:http://localhost:8888/admin/login
-- 监控:http://localhost:8888/metrics
+- 后台:http://localhost:8888/admin
+
+管理员可在后台 设置-用户 修改用户名。
 
 ### 2. 可选:手动重置管理员密码
 
 ```bash
-go run ./cmd/server -reset-password "youthlin:你的密码"
+go run ./cmd/server -reset-password "${adminUserName}:<NewPassword>"
 ```
 
 ### 3. 在后台导入 / 导出 WordPress 数据
@@ -79,10 +86,10 @@ go run ./cmd/server -reset-password "youthlin:你的密码"
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `BLOG_ADDR` | `:8888` | 监听地址 |
-| `BLOG_DB` | `data/blog.db` | SQLite 路径 |
-| `BLOG_PUBLIC_DIR` | `public` | 静态图片目录(含 wp-content) |
-| `BLOG_LOG_JSON` | `false` | 是否 JSON 日志 |
+| `WENLOG_ADDR` | `:8888` | 监听地址 |
+| `WENLOG_DB` | `data/wenlog.db` | SQLite 路径 |
+| `WENLOG_PUBLIC_DIR` | `public` | 静态图片目录(含 wp-content) |
+| `WENLOG_LOG_JSON` | `false` | 是否 JSON 日志 |
 
 说明:
 
@@ -104,8 +111,8 @@ go run ./cmd/server -reset-password "youthlin:你的密码"
 单一二进制 + `data/` 目录 + `public/` 目录即可运行:
 
 ```bash
-go build -o blog ./cmd/server
-./blog
+go build -o wenlog ./cmd/server
+./wenlog
 ```
 
 模板与 css/js 已通过 `embed` 打包进二进制,无需随附。

@@ -12,9 +12,9 @@ import (
 	"github.com/cockroachdb/errors"
 	"gorm.io/gorm"
 
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 const exportTimeLayout = "2006-01-02 15:04:05"
@@ -175,7 +175,7 @@ type exportXMLChannel struct {
 	Authors    []exportXMLAuthor   `xml:"wp:author,omitempty"`
 	Categories []exportXMLCategory `xml:"wp:category,omitempty"`
 	Tags       []exportXMLTag      `xml:"wp:tag,omitempty"`
-	Settings   []exportXMLSetting  `xml:"blog_setting,omitempty"`
+	Settings   []exportXMLSetting  `xml:"wenlog_setting,omitempty"`
 	Items      []exportXMLItem     `xml:"item,omitempty"`
 }
 
@@ -201,8 +201,8 @@ type exportXMLTag struct {
 }
 
 type exportXMLSetting struct {
-	Key   string `xml:"blog_key"`
-	Value string `xml:"blog_value"`
+	Key   string `xml:"wenlog_key"`
+	Value string `xml:"wenlog_value"`
 }
 
 type exportXMLCategoryRef struct {
@@ -255,7 +255,7 @@ func buildExportRSS(ctx *exportContext, opts ExportOptions) exportRSS {
 		Link:  strings.TrimSpace(opts.SiteURL),
 	}
 	if ch.Title == "" {
-		ch.Title = "blog export"
+		ch.Title = "wenlog export"
 	}
 	for _, c := range ctx.categories {
 		ch.Categories = append(ch.Categories, exportXMLCategory{
@@ -386,5 +386,5 @@ func formatWPTime(t time.Time) string {
 }
 
 func ExportFilename() string {
-	return fmt.Sprintf("blog-export-%s.xml", time.Now().Format("20060102-150405"))
+	return fmt.Sprintf("wenlog-export-%s.xml", time.Now().Format("20060102-150405"))
 }

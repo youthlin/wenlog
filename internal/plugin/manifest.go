@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/script"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/script"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,12 +24,12 @@ type Plugin struct {
 	Description string `yaml:"description" json:"description"`
 	Author      string `yaml:"author" json:"author"`
 	// DefaultEnabled 表示尚未保存启用列表时是否默认启用该插件。
-	DefaultEnabled bool         `yaml:"default_enabled" json:"default_enabled"`
-	Dir            string       `yaml:"-" json:"-"`
-	Hooks          HookDecl     `yaml:"hooks" json:"hooks"`
-	Widgets        []WidgetDecl `yaml:"widgets" json:"widgets"`
-	Options []hook.OptionDecl `yaml:"options" json:"options"`
-	Assets         AssetDecl    `yaml:"assets" json:"assets"`
+	DefaultEnabled bool              `yaml:"default_enabled" json:"default_enabled"`
+	Dir            string            `yaml:"-" json:"-"`
+	Hooks          HookDecl          `yaml:"hooks" json:"hooks"`
+	Widgets        []WidgetDecl      `yaml:"widgets" json:"widgets"`
+	Options        []hook.OptionDecl `yaml:"options" json:"options"`
+	Assets         AssetDecl         `yaml:"assets" json:"assets"`
 }
 
 // HookDecl 描述插件声明会使用的标准 hook/slot。

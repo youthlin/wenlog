@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 // newTestStore 建一个临时文件 SQLite(:memory: 在 glebarez 下连接复用有坑,用临时文件)。

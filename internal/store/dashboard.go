@@ -4,7 +4,7 @@ package store
 import (
 	"context"
 
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 func (s *Store) DashboardStats(ctx context.Context) DashboardStats {

@@ -15,10 +15,10 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/plugin"
-	"github.com/youthlin/blog/internal/theme"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/plugin"
+	"github.com/youthlin/wenlog/internal/theme"
 )
 
 const (
@@ -32,17 +32,17 @@ const (
 // pluginView 是后台插件列表页的展示模型。
 type pluginView struct {
 	*plugin.Plugin
-	Name         string
-	Description  string
-	Enabled      bool
-	HasAssets    bool
-	LoadError    string
-	ActionNames  []string
-	FilterNames  []string
-	SlotNames    []string
-	WidgetNames  []string
+	Name        string
+	Description string
+	Enabled     bool
+	HasAssets   bool
+	LoadError   string
+	ActionNames []string
+	FilterNames []string
+	SlotNames   []string
+	WidgetNames []string
 	OptionNames []string
-	Source       string
+	Source      string
 }
 
 type pluginOptionData struct {
@@ -323,18 +323,18 @@ func toPluginView(tr *gettext.Translations, p *plugin.Plugin, enabled bool, load
 		}
 	}
 	return &pluginView{
-		Plugin:       p,
-		Name:         name,
-		Description:  desc,
-		Enabled:      enabled,
-		HasAssets:    p.HasAssets(),
-		LoadError:    loadError,
-		ActionNames:  append([]string(nil), p.Hooks.Actions...),
-		FilterNames:  append([]string(nil), p.Hooks.Filters...),
-		SlotNames:    append([]string(nil), p.Hooks.Slots...),
-		WidgetNames:  pluginWidgetNames(p.Widgets),
+		Plugin:      p,
+		Name:        name,
+		Description: desc,
+		Enabled:     enabled,
+		HasAssets:   p.HasAssets(),
+		LoadError:   loadError,
+		ActionNames: append([]string(nil), p.Hooks.Actions...),
+		FilterNames: append([]string(nil), p.Hooks.Filters...),
+		SlotNames:   append([]string(nil), p.Hooks.Slots...),
+		WidgetNames: pluginWidgetNames(p.Widgets),
 		OptionNames: pluginOptionNames(p.Options),
-		Source:       "plugin:" + p.ID,
+		Source:      "plugin:" + p.ID,
 	}
 }
 

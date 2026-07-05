@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 func newTestStore(t *testing.T) *store.Store {
@@ -41,7 +41,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
     <title>test</title>
     <link>https://example.com</link>
     <wp:author><wp:author_id>5</wp:author_id><wp:author_login>someone</wp:author_login><wp:author_email>someone@example.com</wp:author_email><wp:author_display_name>Someone</wp:author_display_name></wp:author>
-    <blog_setting><blog_key>site_name</blog_key><blog_value>测试站</blog_value></blog_setting>
+    <wenlog_setting><wenlog_key>site_name</wenlog_key><wenlog_value>测试站</wenlog_value></wenlog_setting>
     <wp:category><wp:term_id>10</wp:term_id><wp:category_nicename>go</wp:category_nicename><wp:cat_name>Go</wp:cat_name><wp:category_parent></wp:category_parent><wp:category_description></wp:category_description></wp:category>
     <wp:tag><wp:term_id>20</wp:term_id><wp:tag_slug>backend</wp:tag_slug><wp:tag_name>Backend</wp:tag_name></wp:tag>
     <item>

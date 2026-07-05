@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/store"
-	"github.com/youthlin/blog/internal/util"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/store"
+	"github.com/youthlin/wenlog/internal/util"
 )
 
 func startCronJob(st *store.Store) func() {

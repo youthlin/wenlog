@@ -16,23 +16,23 @@ import (
 
 var (
 	sqlTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "blog_sql_total",
+		Name: "wenlog_sql_total",
 		Help: "SQL 执行总数",
 	}, []string{"sql_type", "error"})
 
 	sqlDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "blog_sql_duration_seconds",
+		Name:    "wenlog_sql_duration_seconds",
 		Help:    "SQL 执行耗时(秒)",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"sql_type", "error"})
 
 	cacheHits = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "blog_dataloader_cache_hits_total",
+		Name: "wenlog_dataloader_cache_hits_total",
 		Help: "DataLoader 缓存命中次数",
 	})
 
 	cacheMisses = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "blog_dataloader_cache_misses_total",
+		Name: "wenlog_dataloader_cache_misses_total",
 		Help: "DataLoader 缓存未命中次数（触发全量加载）",
 	})
 )

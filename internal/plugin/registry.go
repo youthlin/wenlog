@@ -9,7 +9,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/youthlin/blog/hook"
+	"github.com/youthlin/wenlog/hook"
 )
 
 const (

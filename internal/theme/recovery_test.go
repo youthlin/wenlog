@@ -9,7 +9,7 @@ import (
 
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/i18n"
 )
 
 type testSettingStore struct{}

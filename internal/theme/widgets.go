@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/render"
 	gettext "github.com/youthlin/t"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/render"
 )
 
 const (

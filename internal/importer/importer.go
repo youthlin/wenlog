@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/wxr"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/wxr"
 )
 
 // Options 是导入选项。

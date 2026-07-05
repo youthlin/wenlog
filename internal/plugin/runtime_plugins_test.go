@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/youthlin/blog/hook"
+	"github.com/youthlin/wenlog/hook"
 )
 
 type testSettingStore struct{}

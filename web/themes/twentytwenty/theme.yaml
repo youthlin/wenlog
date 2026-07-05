@@ -1,10 +1,10 @@
 # Twenty Twenty 风格主题 — 复刻 WordPress Twenty Twenty 子主题
 name: "twentytwenty"
-version: "20260704193010"
+version: "20260705141547"
 description: "Twenty Twenty 风格，居中单栏布局，暖米色背景，Inter 字体，支持暗色模式"
 author: "youthlin"
 author_uri: "https://youthlin.com"
-theme_uri: "https://github.com/youthlin/blog"
+theme_uri: "https://github.com/youthlin/wenlog"
 license: "MIT"
 tags: ["单栏", "响应式", "暗色模式", "TwentyTwenty"]
 
@@ -29,4 +29,4 @@ options:
     type: text
     label: "页脚文字"
     description: "显示在页面底部"
-    default: "Powered by Blog"
+    default: "Powered by WenLog"

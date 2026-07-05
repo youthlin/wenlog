@@ -15,11 +15,11 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/internal/consts"
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/permalink"
-	"github.com/youthlin/blog/internal/util"
-	"github.com/youthlin/blog/web"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/web"
 )
 
 func settingsPageURL(section string) string {

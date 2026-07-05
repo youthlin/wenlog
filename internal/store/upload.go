@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/internal/model"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 func (s *Store) SaveUpload(ctx context.Context, u *model.Upload) error {

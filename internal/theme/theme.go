@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/i18n"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/i18n"
 	"gopkg.in/yaml.v3"
 )
 

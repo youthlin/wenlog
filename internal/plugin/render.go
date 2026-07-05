@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/script"
 	gettext "github.com/youthlin/t"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/script"
 )
 
 // RenderWidget 渲染插件组件。优先执行 widget.render action；如果 action 没有输出，回退到插件 widgets/<id>.gohtml 模板。

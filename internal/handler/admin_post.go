@@ -14,10 +14,10 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/model"
-	"github.com/youthlin/blog/internal/permalink"
-	renderx "github.com/youthlin/blog/internal/render"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
+	renderx "github.com/youthlin/wenlog/internal/render"
 )
 
 // --- 文章/页面 ---

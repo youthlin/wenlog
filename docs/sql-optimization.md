@@ -46,7 +46,7 @@ ctx = store.CtxWithSQLHint(ctx, "custom hint")
 1. **浏览器访问页面**，从响应头获取 `X-Trace-Id`
 2. **从日志 grep SQL**：
    ```bash
-   grep "<trace_id>" data/blog.log | grep "sql details"
+   grep "<trace_id>" data/wenlog.log | grep "sql details"
    ```
    日志中每条 SQL 都带有序号和 hint，可直接定位来源
 3. **按 hint 分组统计**，找出重复查询和可优化点
@@ -235,10 +235,10 @@ func (s *Store) InvalidateCache() {
 
 | 指标 | 说明 |
 |------|------|
-| `blog_sql_total` | SQL 执行总数（按 sql_type + error 分组） |
-| `blog_sql_duration_seconds` | SQL 执行耗时分布 |
-| `blog_dataloader_cache_hits_total` | 缓存命中次数 |
-| `blog_dataloader_cache_misses_total` | 缓存未命中次数 |
+| `wenlog_sql_total` | SQL 执行总数（按 sql_type + error 分组） |
+| `wenlog_sql_duration_seconds` | SQL 执行耗时分布 |
+| `wenlog_dataloader_cache_hits_total` | 缓存命中次数 |
+| `wenlog_dataloader_cache_misses_total` | 缓存未命中次数 |
 
 ### 4.5 Handler 层改造
 

@@ -115,13 +115,13 @@ type xmlChannel struct {
 	Authors    []xmlAuthor   `xml:"http://wordpress.org/export/1.2/ author"`
 	Categories []xmlCategory `xml:"http://wordpress.org/export/1.2/ category"`
 	Tags       []xmlTag      `xml:"http://wordpress.org/export/1.2/ tag"`
-	Settings   []xmlSetting  `xml:"blog_setting"`
+	Settings   []xmlSetting  `xml:"wenlog_setting"`
 	Items      []xmlItem     `xml:"item"`
 }
 
 type xmlSetting struct {
-	Key   string `xml:"blog_key"`
-	Value string `xml:"blog_value"`
+	Key   string `xml:"wenlog_key"`
+	Value string `xml:"wenlog_value"`
 }
 
 type xmlAuthor struct {

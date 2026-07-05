@@ -3,7 +3,7 @@ package hook
 import (
 	"context"
 
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 type loaderContextKey struct{}

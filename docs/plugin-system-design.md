@@ -151,9 +151,9 @@ name: "评论表情"
 version: "1.0.0"
 description: "为评论表单和评论正文提供表情支持"
 author: "youthlin"
-plugin_uri: "https://github.com/youthlin/blog"
+plugin_uri: "https://github.com/youthlin/wenlog"
 license: "MIT"
-requires_blog: ">=0.1.0"
+requires_wenlog: ">=0.1.0"
 
 assets:
   styles:
@@ -192,7 +192,7 @@ widgets:
 |---|---|
 | `id` | 插件唯一 ID，只允许小写字母、数字、短横线、下划线；用于目录名、设置 key 和资源 URL。 |
 | `name/version/description/author/license` | 后台展示与升级判断用元数据。 |
-| `requires_blog` | 可选，声明最低宿主版本，避免旧版本加载不兼容插件。 |
+| `requires_wenlog` | 可选，声明最低宿主版本，避免旧版本加载不兼容插件。 |
 | `settings` | 插件全局设置声明，复用主题 `OptionDecl` 的类型体系。 |
 | `hooks` | 可选，声明插件会注册或依赖的 action/filter/slot，便于后台展示和冲突检查；实际注册仍由脚本完成。 |
 | `widgets` | 可选，插件提供的全局组件声明，不依赖当前主题，也不绑定具体区域。没有组件的插件可以完全省略。 |

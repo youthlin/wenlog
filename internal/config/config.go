@@ -21,10 +21,10 @@ type Config struct {
 // Load 从环境变量读取配置,缺省时使用默认值。
 func Load() *Config {
 	return &Config{
-		Addr:      env("BLOG_ADDR", ":8888"),
-		DBPath:    env("BLOG_DB", "data/blog.db"),
-		PublicDir: env("BLOG_PUBLIC_DIR", "public"),
-		LogJSON:   envBool("BLOG_LOG_JSON", false),
+		Addr:      env("WENLOG_ADDR", ":8888"),
+		DBPath:    env("WENLOG_DB", "data/wenlog.db"),
+		PublicDir: env("WENLOG_PUBLIC_DIR", "public"),
+		LogJSON:   envBool("WENLOG_LOG_JSON", false),
 	}
 }
 

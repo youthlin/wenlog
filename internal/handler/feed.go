@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/permalink"
 )
 
 // rss 是 RSS 2.0 文档结构。
@@ -74,13 +74,13 @@ func (h *Public) Feed(c *gin.Context) {
 
 // atomFeed 是 Atom 1.0 文档结构(RFC 4287)。
 type atomFeed struct {
-	XMLName xml.Name   `xml:"http://www.w3.org/2005/Atom feed"`
-	Title   string     `xml:"title"`
-	Subtitle string    `xml:"subtitle,omitempty"`
-	ID      string     `xml:"id"`
-	Updated string     `xml:"updated"`
-	Link    []atomLink `xml:"link"`
-	Entries []atomEntry `xml:"entry"`
+	XMLName  xml.Name    `xml:"http://www.w3.org/2005/Atom feed"`
+	Title    string      `xml:"title"`
+	Subtitle string      `xml:"subtitle,omitempty"`
+	ID       string      `xml:"id"`
+	Updated  string      `xml:"updated"`
+	Link     []atomLink  `xml:"link"`
+	Entries  []atomEntry `xml:"entry"`
 }
 
 type atomLink struct {
@@ -89,11 +89,11 @@ type atomLink struct {
 }
 
 type atomEntry struct {
-	Title   string    `xml:"title"`
-	ID      string    `xml:"id"`
-	Updated string    `xml:"updated"`
-	Link    atomLink  `xml:"link"`
-	Summary string    `xml:"summary,omitempty"`
+	Title   string     `xml:"title"`
+	ID      string     `xml:"id"`
+	Updated string     `xml:"updated"`
+	Link    atomLink   `xml:"link"`
+	Summary string     `xml:"summary,omitempty"`
 	Author  atomAuthor `xml:"author"`
 }
 

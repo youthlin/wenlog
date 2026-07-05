@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/youthlin/blog/internal/config"
+	"github.com/youthlin/wenlog/internal/config"
 )
 
 func TestRunMode(t *testing.T) {
@@ -58,7 +58,7 @@ func TestReadRunningPIDRemovesStaleKernelPID(t *testing.T) {
 		t.Skip("requires /proc")
 	}
 	dir := t.TempDir()
-	pidFile := filepath.Join(dir, "blog.pid")
+	pidFile := filepath.Join(dir, "wenlog.pid")
 	if err := os.WriteFile(pidFile, []byte("1"), 0o644); err != nil {
 		t.Fatalf("write pid file: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestReadRunningPIDRemovesStaleKernelPID(t *testing.T) {
 		t.Fatalf("readRunningPID: %v", err)
 	}
 	if running {
-		t.Fatal("pid 1 should not be treated as this blog daemon")
+		t.Fatal("pid 1 should not be treated as this wenlog daemon")
 	}
 	if _, err := os.Stat(pidFile); !os.IsNotExist(err) {
 		t.Fatalf("stale pid file should be removed, stat err=%v", err)

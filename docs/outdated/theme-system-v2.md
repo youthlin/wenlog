@@ -569,7 +569,7 @@ fallbackToDefault():
 ## 9. 示例：完整主题
 
 ```
-themes/my-blog/
+themes/my-theme/
 ├── theme.yaml
 ├── functions.go
 ├── templates/
@@ -585,7 +585,7 @@ themes/my-blog/
 
 **theme.yaml**:
 ```yaml
-name: "my-blog"
+name: "my-theme"
 version: "2.0"
 description: "自定义博客主题"
 author: "youthlin"

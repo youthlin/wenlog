@@ -42,7 +42,7 @@ func (s *Store) BackupDB() (string, error) {
 	}
 
 	now := time.Now()
-	name := fmt.Sprintf("blog-%s.db", now.Format("20060102-150405"))
+	name := fmt.Sprintf("wenlog-%s.db", now.Format("20060102-150405"))
 	dst := filepath.Join(dir, name)
 
 	if err := copyFile(s.dbPath, dst); err != nil {
@@ -62,7 +62,7 @@ func (s *Store) RestoreDB(backupPath string) error {
 	}
 
 	// 2. 创建紧急备份（恢复前的当前数据库）
-	emergencyName := fmt.Sprintf("blog-emergency-%s.db", time.Now().Format("20060102-150405"))
+	emergencyName := fmt.Sprintf("wenlog-emergency-%s.db", time.Now().Format("20060102-150405"))
 	emergencyPath := filepath.Join(s.backupDir(), emergencyName)
 	if err := os.MkdirAll(s.backupDir(), 0o755); err != nil {
 		return errors.Wrap(err, "create backup dir for emergency")

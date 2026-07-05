@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/i18n"
-	"github.com/youthlin/blog/internal/theme"
+	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/theme"
 )
 
 // configuredWidget 是模板中一个已配置组件的展示数据。

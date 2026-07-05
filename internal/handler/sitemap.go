@@ -7,13 +7,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/youthlin/blog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/permalink"
 )
 
 // sitemapindex 是 sitemap 索引文件结构。
 type sitemapindex struct {
-	XMLName xml.Name  `xml:"urlset"`
-	Xmlns   string    `xml:"xmlns,attr"`
+	XMLName xml.Name     `xml:"urlset"`
+	Xmlns   string       `xml:"xmlns,attr"`
 	URLs    []sitemapURL `xml:"url"`
 }
 

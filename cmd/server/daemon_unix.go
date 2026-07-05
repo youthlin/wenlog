@@ -17,7 +17,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/youthlin/blog/internal/config"
+	"github.com/youthlin/wenlog/internal/config"
 )
 
 var daemonChild = flag.Bool("daemon-child", false, "内部参数: 后台子进程模式")
@@ -29,7 +29,7 @@ const (
 	run     = "run"
 
 	// daemonEnvToken 是启动子进程时注入的环境变量，用于在 /proc 中识别本服务进程。
-	daemonEnvToken = "BLOG_DAEMON=1"
+	daemonEnvToken = "WENLOG_DAEMON=1"
 )
 
 func runDaemon(cfg *config.Config) bool {
@@ -123,11 +123,11 @@ func ensureRuntimeDir(cfg *config.Config) error {
 }
 
 func daemonPIDFile(cfg *config.Config) string {
-	return filepath.Join(filepath.Dir(cfg.DBPath), "blog.pid")
+	return filepath.Join(filepath.Dir(cfg.DBPath), "wenlog.pid")
 }
 
 func daemonLogFile(cfg *config.Config) string {
-	return filepath.Join(filepath.Dir(cfg.DBPath), "blog.log")
+	return filepath.Join(filepath.Dir(cfg.DBPath), "wenlog.log")
 }
 
 func readRunningPID(pidFile string) (pid int, running bool, err error) {

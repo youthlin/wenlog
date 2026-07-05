@@ -21,16 +21,16 @@ type ThumbSize struct {
 
 // ThumbSizes WordPress 兼容的缩略图尺寸。
 var ThumbSizes = []ThumbSize{
-	{150, 150, true},  // 裁剪为正方形
-	{300, 300, true},  // 裁剪为正方形
-	{768, 0, false},   // 等比缩放，不限高
+	{150, 150, true}, // 裁剪为正方形
+	{300, 300, true}, // 裁剪为正方形
+	{768, 0, false},  // 等比缩放，不限高
 }
 
 // ThumbInfo 单个缩略图信息。
 type ThumbInfo struct {
-	Width  int
-	Path   string // 相对于原图目录的文件名，如 xxx-150x150.png
-	URL    string // 站内 URL，如 /wp-content/uploads/2026/06/xxx-150x150.png
+	Width int
+	Path  string // 相对于原图目录的文件名，如 xxx-150x150.png
+	URL   string // 站内 URL，如 /wp-content/uploads/2026/06/xxx-150x150.png
 }
 
 // GenerateThumbnails 为指定图片生成多尺寸缩略图（WordPress 命名兼容）。

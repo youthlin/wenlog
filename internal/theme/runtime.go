@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/cockroachdb/errors"
-	"github.com/youthlin/blog/hook"
-	"github.com/youthlin/blog/internal/render"
-	"github.com/youthlin/blog/internal/store"
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/render"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 // RecoveryInfo 记录主题加载失败时的恢复信息。
