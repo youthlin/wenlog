@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout source codes
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: sync to gitee
         if: github.event_name == 'push'
@@ -83,12 +85,19 @@ jobs:
 
           if [ -z "${release_id}" ]; then
             echo "Gitee Git tag ${tag} exists, but Release object is missing or empty; creating Release..."
-            curl -fsS -X POST "${api}/releases" \
+            target_commitish="$(git rev-list -n 1 "${tag}")"
+            create_http_code="$(curl -sS -o "${release_json}" -w '%{http_code}' -X POST "${api}/releases" \
               --data-urlencode "access_token=${GITEE_TOKEN}" \
               --data-urlencode "tag_name=${tag}" \
               --data-urlencode "name=${tag}" \
               --data-urlencode "body=同步自 GitHub Release ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${tag}" \
-              --data-urlencode "prerelease=false" > "${release_json}"
+              --data-urlencode "prerelease=false" \
+              --data-urlencode "target_commitish=${target_commitish}")"
+            if [ "${create_http_code}" != "200" ] && [ "${create_http_code}" != "201" ]; then
+              echo "Create Gitee release failed, status=${create_http_code}" >&2
+              cat "${release_json}" >&2 || true
+              exit 1
+            fi
             release_id="$(python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); print(data.get("id", "") if isinstance(data, dict) else "")' "${release_json}")"
           fi
 
