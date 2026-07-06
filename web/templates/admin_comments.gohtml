@@ -28,8 +28,16 @@
 	    {{range .Comments}}
 	    {{$postID := .PostID}}
 	    {{$postTitle := index $.CommentPostTitles $postID}}
-	    {{$postLink := index $.CommentPostLinks $postID}}
-	    <tr class="comments-row">
+	    {{$commentLink := index $.CommentLinks .ID}}
+	    {{$commentTimeText := fmtDateTime .CreatedAt}}
+	    {{$commentTime := printf "<time class=\"comment-date-time\" datetime=\"%s\">%s</time>" (escapeHTML $commentTimeText) (escapeHTML $commentTimeText)}}
+	    {{$postAnchor := printf "《%s》" (escapeHTML $postTitle)}}
+	    {{- if $commentLink}}
+	    {{$postAnchor = printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">《%s》</a>" (escapeHTML $commentLink) (escapeHTML $postTitle)}}
+	    {{- end}}
+	    {{$replyTargetID := index $.CommentReplyTargetIDs .ID}}
+	    {{$replyTarget := index $.CommentReplyTargets $replyTargetID}}
+	    <tr class="comments-row" id="comment-admin-{{.ID}}">
       {{if not $.Mine}}<td class="comment-check-cell" data-label="{{$.t.T "选择"}}"><input type="checkbox" name="ids" value="{{.ID}}" form="batch-form" class="row-check"></td>{{end}}
 	      <td class="editable-cell comment-author-cell" data-label="{{$.t.T "作者"}}">
 	        <div class="c-display">
@@ -62,10 +70,14 @@
 	      </td>
 	      <td class="editable-cell comment-cell" data-label="{{$.t.T "内容"}}">
 	        <div class="c-display">
-	          <time class="comment-date-time" datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time>
 	          <div class="comment-post-line">
-	            {{$.t.T "发表在"}}{{if $postLink}}<a href="{{$postLink}}" target="_blank" rel="noreferrer">《{{$postTitle}}》</a>{{else}}《{{$postTitle}}》{{end}}：
+	            {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $commentTime $postAnchor)}}：
 	          </div>
+	          {{- if $replyTarget}}
+	          <div class="comment-reply-to-line">
+	            {{$.t.T "回复给"}} <a href="#comment-admin-{{$replyTarget.ID}}">{{$replyTarget.Author}}</a>：<span>{{$replyTarget.Content}}</span>
+	          </div>
+	          {{- end}}
 	          <div class="comment-body comment-body-clamp" data-comment-body>{{.Content}}</div>
 	          <button type="button" class="comment-body-toggle" data-comment-toggle hidden>{{$.t.T "展开"}}</button>
 	        </div>
@@ -77,7 +89,22 @@
 	            <button type="button" class="c-edit-cancel">{{$.t.T "取消"}}</button>
 	          </div>
 	        </form>
-	        <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
+	        <div class="comment-cell-actions">
+	          <button type="button" class="c-edit-btn">{{$.t.T "编辑"}}</button>
+	          {{- if not $.Mine}}
+	          <button type="button" class="c-reply-btn">{{$.t.T "回复"}}</button>
+	          {{- end}}
+	        </div>
+	        {{- if not $.Mine}}
+	        <form class="c-reply" method="post" action="/admin/comments/reply/{{.ID}}" hidden>
+	          {{template "csrf_field" $}}
+	          <label>{{$.t.T "回复给"}} {{.Author}}<textarea name="content" rows="3" required></textarea></label>
+	          <div class="c-edit-actions">
+	            <button type="submit">{{$.t.T "发送回复"}}</button>
+	            <button type="button" class="c-reply-cancel">{{$.t.T "取消"}}</button>
+	          </div>
+	        </form>
+	        {{- end}}
 	      </td>
 	      <td class="actions comment-actions-cell" data-label="{{$.t.T "操作"}}">
 	        {{if $.Mine}}

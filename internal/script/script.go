@@ -1,6 +1,7 @@
 package script
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -38,7 +39,7 @@ type CompileOptions struct {
 
 // CompileFromDir 从目录中查找并编译 functions 脚本，返回解释器实例和源码内容。
 // 如果目录中没有 functions 文件，返回 nil, "", nil。
-func CompileFromDir(dir string, options CompileOptions) (*interp.Interpreter, string, error) {
+func CompileFromDir(ctx context.Context, dir string, options CompileOptions) (*interp.Interpreter, string, error) {
 	path := FindFunctionsPath(dir)
 	if path == "" {
 		return nil, "", nil
@@ -48,7 +49,7 @@ func CompileFromDir(dir string, options CompileOptions) (*interp.Interpreter, st
 		return nil, "", errors.Wrapf(err, "读取%s函数文件失败: %s", options.Subject, path)
 	}
 	source := string(data)
-	i, err := CompileAndRegister(source, options)
+	i, err := CompileAndRegister(ctx, source, options)
 	if err != nil {
 		return nil, "", err
 	}
@@ -56,7 +57,7 @@ func CompileFromDir(dir string, options CompileOptions) (*interp.Interpreter, st
 }
 
 // CompileAndRegister 编译脚本源码，并调用脚本包中的 Register 函数。
-func CompileAndRegister(source string, options CompileOptions) (*interp.Interpreter, error) {
+func CompileAndRegister(ctx context.Context, source string, options CompileOptions) (*interp.Interpreter, error) {
 	subject := options.Subject
 	if subject == "" {
 		subject = "脚本"
@@ -79,7 +80,7 @@ func CompileAndRegister(source string, options CompileOptions) (*interp.Interpre
 			return nil, errors.Wrapf(err, "注入%sAPI失败", subject)
 		}
 	}
-	prog, err := safeEval(i, source)
+	prog, err := safeEval(ctx, i, source)
 	if err != nil {
 		return nil, errors.Wrapf(err, "执行%s函数失败", subject)
 	}
@@ -103,11 +104,14 @@ func CompileAndRegister(source string, options CompileOptions) (*interp.Interpre
 }
 
 // safeEval 调用 i.Eval，捕获 yaegi 内部可能的 panic（如 Go 版本不兼容）。
-func safeEval(i *interp.Interpreter, source string) (prog any, err error) {
+func safeEval(ctx context.Context, i *interp.Interpreter, source string) (prog any, err error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.Errorf("yaegi 编译脚本时 panic: %v", r)
-			slog.Error("执行脚本panic", slog.Any("error", err))
+			slog.ErrorContext(ctx, "执行脚本panic", slog.Any("error", err))
 		}
 	}()
 	v, evalErr := i.Eval(source)

@@ -41,7 +41,7 @@ func (h *Auth) Store() *store.Store { return h.st }
 func (h *Auth) base(c *gin.Context, title string) gin.H {
 	settings, err := h.st.GetSettings(c, consts.SettingsSiteName, consts.SettingsRegistrationOpen)
 	if err != nil && h.log != nil {
-		h.log.Error("get settings for auth base", "error", err)
+		h.log.ErrorContext(c, "get settings for auth base", "error", err)
 	}
 	siteName := util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, settings[consts.SettingsSiteName])
 	data := gin.H{
@@ -79,9 +79,20 @@ func (h *Auth) Login(c *gin.Context) {
 	}
 	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil || err != nil {
 		data := h.base(c, tr.T("登录"))
-		data["Error"] = tr.T("用户名或密码错误。")
+		data["Error"] = tr.T("用户名或密码/两步验证码错误。")
+		data["LoginUsername"] = username
 		c.HTML(http.StatusUnauthorized, "auth_login.gohtml", data)
 		return
+	}
+	if u.TwoFactorEnabled {
+		code := strings.TrimSpace(c.PostForm("two_factor_code"))
+		if !verifyTOTPCode(u.TwoFactorSecret, code, time.Now()) {
+			data := h.base(c, tr.T("登录"))
+			data["Error"] = tr.T("用户名或密码/两步验证码错误。")
+			data["LoginUsername"] = username
+			c.HTML(http.StatusUnauthorized, "auth_login.gohtml", data)
+			return
+		}
 	}
 	middleware.SetSessionUser(c, u.ID, u.Role, u.SessionVersion)
 	c.Redirect(http.StatusSeeOther, "/admin/")
@@ -188,7 +199,7 @@ func (h *Auth) Register(c *gin.Context) {
 	body = mailBodyWithSiteDomain(tr, body, siteURL)
 	if err := smtpCfg.Send(emailAddr, subject, body); err != nil {
 		if h.log != nil {
-			h.log.Error("send registration verification email", "error", err, "to", emailAddr)
+			h.log.ErrorContext(c, "send registration verification email", "error", err, "to", emailAddr)
 		}
 		data["Error"] = tr.T("验证邮件发送失败，请稍后重试或联系管理员。")
 		c.HTML(http.StatusInternalServerError, "auth_register.gohtml", data)
@@ -332,7 +343,7 @@ func (h *Auth) ForgotPassword(c *gin.Context) {
 	siteURL, ok := configuredSiteURL(c, h.st)
 	if !ok {
 		if err := h.st.ClearResetToken(c, u.ID); err != nil && h.log != nil {
-			h.log.Error("clear reset token", "error", err, "user_id", u.ID)
+			h.log.ErrorContext(c, "clear reset token", "error", err, "user_id", u.ID)
 		}
 		data := h.base(c, tr.T("忘记密码"))
 		data["Error"] = tr.T("站点 URL 未配置，无法发送安全重置链接，请联系管理员。")
@@ -346,9 +357,9 @@ func (h *Auth) ForgotPassword(c *gin.Context) {
 	subject := tr.T("[%s] 密码重置", siteName)
 
 	if err := smtpCfg.Send(emailAddr, subject, body); err != nil {
-		h.log.Error("send reset email", "error", err, "to", emailAddr)
+		h.log.ErrorContext(c, "send reset email", "error", err, "to", emailAddr)
 		if err2 := h.st.ClearResetToken(c, u.ID); err2 != nil && h.log != nil {
-			h.log.Error("clear reset token", "error", err2, "user_id", u.ID)
+			h.log.ErrorContext(c, "clear reset token", "error", err2, "user_id", u.ID)
 		}
 		data := h.base(c, tr.T("忘记密码"))
 		data["Error"] = tr.T("邮件发送失败，请稍后重试或联系管理员。")
@@ -432,14 +443,14 @@ func (h *Auth) ResetPassword(c *gin.Context) {
 		return
 	}
 	if err := h.st.ClearResetToken(c, u.ID); err != nil && h.log != nil {
-		h.log.Error("clear reset token", "error", err, "user_id", u.ID)
+		h.log.ErrorContext(c, "clear reset token", "error", err, "user_id", u.ID)
 	}
 
 	siteName := siteNameFromStore(c, h.st)
 	subject := tr.T("[%s] 密码已变更", siteName)
 	body := tr.T("您好 %s，\n\n你的账户密码刚刚通过重置链接被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
 	body = mailBodyWithSiteDomain(tr, body, siteURLFromRequest(h.st, c))
-	sendPasswordChangeNotification(h.st, h.log, u, subject, body)
+	sendPasswordChangeNotification(detachedRequestContext(c), h.st, h.log, u, subject, body)
 
 	data := h.base(c, tr.T("重置密码"))
 	data["Success"] = tr.T("密码已重置，请使用新密码登录。")
@@ -450,7 +461,7 @@ func (h *Auth) ResetPassword(c *gin.Context) {
 func (h *Auth) isRegistrationOpen(ctx context.Context) bool {
 	settings, err := h.st.GetSettings(ctx, consts.SettingsRegistrationOpen)
 	if err != nil && h.log != nil {
-		h.log.Error("get registration open setting", "error", err)
+		h.log.ErrorContext(ctx, "get registration open setting", "error", err)
 	}
 	return settings[consts.SettingsRegistrationOpen] == "true"
 }
@@ -458,20 +469,28 @@ func (h *Auth) isRegistrationOpen(ctx context.Context) bool {
 // serverError 处理服务端错误。
 func (h *Auth) serverError(c *gin.Context, err error) {
 	if h.log != nil {
-		h.log.Error("auth server error", "error", err)
+		h.log.ErrorContext(c, "auth server error", "error", err)
 	}
 	c.String(http.StatusInternalServerError, "Internal Server Error")
 }
 
+// detachedRequestContext 返回可在请求结束后继续用于异步日志的标准 context。
+func detachedRequestContext(c *gin.Context) context.Context {
+	if c == nil || c.Request == nil {
+		return context.Background()
+	}
+	return context.WithoutCancel(c.Request.Context())
+}
+
 // sendPasswordChangeNotification 发送密码变更通知邮件（包级辅助函数）。
-func sendPasswordChangeNotification(st *store.Store, log *slog.Logger, u *model.User, subject, body string) {
+func sendPasswordChangeNotification(ctx context.Context, st *store.Store, log *slog.Logger, u *model.User, subject, body string) {
 	smtpCfg := smtpConfigFromStore(context.Background(), st)
 	if !smtpCfg.Configured() || u.Email == "" {
 		return
 	}
 	go func() {
 		if err := smtpCfg.Send(u.Email, subject, body); err != nil && log != nil {
-			log.Error("send password change notification", "error", err, "to", u.Email, "user_id", u.ID)
+			log.ErrorContext(ctx, "send password change notification", "error", err, "to", u.Email, "user_id", u.ID)
 		}
 	}()
 }

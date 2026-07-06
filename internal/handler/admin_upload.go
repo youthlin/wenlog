@@ -106,7 +106,7 @@ func (h *Admin) UploadFile(c *gin.Context) {
 	// 生成缩略图
 	thumbs, err := imageutil.GenerateThumbnails(absPath, urlPath)
 	if err != nil && h.log != nil {
-		h.log.Warn("generate thumbnails", slog.String("path", absPath), slog.Any("error", err))
+		h.log.WarnContext(c, "generate thumbnails", slog.String("path", absPath), slog.Any("error", err))
 	}
 	for _, t := range thumbs {
 		switch t.Width {

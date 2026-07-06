@@ -68,7 +68,7 @@ func (h *Public) Feed(c *gin.Context) {
 	enc := xml.NewEncoder(c.Writer)
 	enc.Indent("", "  ")
 	if err := enc.Encode(doc); err != nil {
-		h.log.Error("feed xml encode", "error", err)
+		h.log.ErrorContext(c, "feed xml encode", "error", err)
 	}
 }
 
@@ -156,6 +156,6 @@ func (h *Public) AtomFeed(c *gin.Context) {
 	enc := xml.NewEncoder(c.Writer)
 	enc.Indent("", "  ")
 	if err := enc.Encode(feed); err != nil {
-		h.log.Error("atom feed xml encode", "error", err)
+		h.log.ErrorContext(c, "atom feed xml encode", "error", err)
 	}
 }

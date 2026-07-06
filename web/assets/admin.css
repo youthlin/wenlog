@@ -581,6 +581,17 @@ body.admin.nav-open { overflow: hidden; }
 .dashboard-user-name { text-decoration: none; }
 .dashboard-user-name:hover { color: var(--accent); }
 .dashboard-user-main p { margin: 6px 0 0; color: var(--muted); }
+.two-factor-setup { display: grid; gap: 10px; justify-items: start; margin: 12px 0 16px; }
+.two-factor-setup p { margin: 0; }
+.two-factor-qr { padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.two-factor-secret { max-width: 100%; overflow-x: auto; }
+.two-factor-secret code { display: inline-block; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); letter-spacing: 0.08em; }
+.passkey-register-panel { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.passkey-register-panel label { flex: 1 1 260px; margin: 0; }
+.passkey-register-panel input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font: inherit; box-sizing: border-box; }
+.passkey-register-panel button { flex: 0 0 auto; }
+.passkeys-table { margin-top: 12px; }
+.passkey-login-btn { width: 100%; }
 
 /* 7.8 表格通用 */
 .data-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 6px; overflow: hidden; }
@@ -592,13 +603,18 @@ body.admin.nav-open { overflow: hidden; }
 .editable-cell .c-display > * + * { margin-top: 4px; }
 .editable-cell .c-edit { display: grid; gap: 8px; }
 .editable-cell .c-edit[hidden] { display: none !important; }
+.editable-cell .c-reply { display: grid; gap: 8px; margin-top: 10px; }
+.editable-cell .c-reply[hidden] { display: none !important; }
 .editable-cell .c-edit label { display: grid; gap: 4px; font-weight: 600; }
+.editable-cell .c-reply label { display: grid; gap: 4px; font-weight: 600; }
 .editable-cell .c-edit input,
-.editable-cell .c-edit textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font: inherit; }
+.editable-cell .c-edit textarea,
+.editable-cell .c-reply textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); font: inherit; }
 .editable-cell .c-edit textarea { min-height: 96px; resize: vertical; }
 .editable-cell .c-edit-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .editable-cell .c-edit-actions button { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--fg); cursor: pointer; padding: 4px 10px; }
-.editable-cell .c-edit-btn { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 2px 0; font-size: 13px; }
+.editable-cell .c-edit-btn,
+.editable-cell .c-reply-btn { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 2px 0; font-size: 13px; }
 .comment-author-cell { min-width: 240px; }
 .comment-cell { min-width: 380px; max-width: 560px; }
 .comment-author-line,
@@ -635,6 +651,8 @@ body.admin.nav-open { overflow: hidden; }
 .comment-date-time { display: block; margin-bottom: 6px; color: var(--muted); font-size: 13px; white-space: nowrap; }
 .comment-post-line { margin-bottom: 8px; color: var(--muted); font-size: 13px; }
 .comment-post-line a { color: var(--accent); }
+.comment-reply-to-line { margin-bottom: 10px; padding: 8px 10px; border-left: 3px solid color-mix(in srgb, var(--accent) 45%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, var(--card)); color: var(--muted); font-size: 13px; line-height: 1.6; }
+.comment-reply-to-line span { display: inline-block; max-width: 100%; vertical-align: bottom; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .comment-body { line-height: 1.75; }
 .comment-body-clamp {
   display: -webkit-box;
@@ -658,8 +676,11 @@ body.admin.nav-open { overflow: hidden; }
   cursor: pointer;
 }
 .comment-cell .c-edit textarea { min-height: 128px; }
+.comment-cell .c-reply textarea { min-height: 112px; resize: vertical; }
 .comment-cell .c-edit-btn,
+.comment-cell .c-reply-btn,
 .comment-author-cell .c-edit-btn { margin-top: 10px; }
+.comment-cell-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .comment-actions-cell { min-width: 150px; }
 .comment-actions-cell .inline { display: block; }
 .comment-actions-cell .inline + .inline { margin-top: 8px; }
@@ -1359,13 +1380,12 @@ body.admin.nav-open { overflow: hidden; }
 .login-box button:disabled { opacity: .55; cursor: not-allowed; }
 .login-box .login-links { text-align: center; color: var(--muted); font-size: 13px; }
 /* 7.3 提示横幅 */
-.err-banner { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: 6px; padding: 10px 12px; }
+.err-banner { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: 6px; padding: 10px 12px; word-break: break-all; }
 .notice-banner { color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 6px; padding: 10px 12px; }
 .warn-banner { color: var(--warning); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 6px; padding: 10px 12px; }
 /* ============================================================
    18. 设置页 (Settings)
    ============================================================ */
-.settings-main { width: min(100%, 960px); }
 .themes-main,
 .themes-main .settings-stack,
 .themes-main .settings-card { width: 100%; max-width: 100%; min-width: 0; }
@@ -1918,15 +1938,46 @@ body.admin.nav-open { overflow: hidden; }
   .admin-home-link { min-height: 36px; }
 }
 
-/* 后台实例版本 footer */
+/* 后台实例信息 footer */
 .admin-instance-footer {
   margin: 0;
   padding: 42px 0 12px;
   color: var(--muted);
   background: var(--bg);
-  text-align: end;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   font-style: italic;
 }
+.admin-instance-about { position: relative; }
+.admin-instance-about summary {
+  list-style: none;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+}
+.admin-instance-about summary::-webkit-details-marker { display: none; }
+.admin-instance-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 40;
+  min-width: 260px;
+  max-width: min(360px, 86vw);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: var(--surface-shadow-lg);
+  color: var(--fg);
+  font-style: normal;
+  line-height: 1.7;
+  text-align: left;
+}
+.admin-instance-tooltip a { color: var(--accent); text-decoration: none; word-break: break-all; }
+.admin-instance-tooltip a:hover { text-decoration: underline; }
 
 /* SQL 执行详情 footer */
 .sql-details-footer {

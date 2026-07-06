@@ -34,9 +34,12 @@
   <h1>{{.t.T "%s · 登录" .SiteName}}</h1>
   {{- if .Error}}<p class="err">{{.Error}}</p>{{end}}
   {{- if .Notice}}<p class="notice">{{.Notice}}</p>{{end}}
-  <p><label class="sr-only" for="login-username">{{.t.T "用户名"}}</label><input id="login-username" type="text" name="username" placeholder="{{.t.T "用户名"}}" required autofocus></p>
+  <p><label class="sr-only" for="login-username">{{.t.T "用户名"}}</label><input id="login-username" type="text" name="username" value="{{.LoginUsername}}" placeholder="{{.t.T "用户名"}}" required autofocus></p>
   <p><label class="sr-only" for="login-password">{{.t.T "密码"}}</label><input id="login-password" type="password" name="password" placeholder="{{.t.T "密码"}}" required></p>
+  <p><label class="sr-only" for="login-two-factor-code">{{.t.T "两步验证码"}}</label><input id="login-two-factor-code" type="text" name="two_factor_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="{{.t.T "两步验证码（已开启时填写）"}}"></p>
   <p><button type="submit">{{.t.T "登录"}}</button></p>
+  <p data-passkey-supported hidden><button type="button" class="btn-secondary passkey-login-btn" data-passkey-login data-passkey-username="#login-username">{{.t.T "使用 Passkey 登录"}}</button></p>
+  <p class="form-hint" data-passkey-status></p>
   <p class="login-links">
   {{safeHTML (.t.T "← 返回 <a href=\"/\">%s</a>" (escapeHTML .SiteName))}}  
   {{- if .RegistrationOpen}} | <a href="/auth/register">{{.t.T "注册"}}</a>{{end}}
@@ -44,6 +47,7 @@
   </p>
 </form>
 <script src="/assets/theme.js?v={{.AssetVersion}}"></script>
+<script src="/assets/common.js?v={{.AssetVersion}}"></script>
 </body>
 </html>
 {{- end}}

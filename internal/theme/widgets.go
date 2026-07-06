@@ -161,7 +161,7 @@ type WidgetConfigItem struct {
 }
 
 // ResolveWidgetsWithDecls 根据用户配置和已过滤的组件声明解析区域组件列表。
-func ResolveWidgetsWithDecls(userConfigJSON string, t *Theme, area string, decls []WidgetDecl) []WidgetInfo {
+func ResolveWidgetsWithDecls(ctx context.Context, userConfigJSON string, t *Theme, area string, decls []WidgetDecl) []WidgetInfo {
 	if t == nil {
 		return nil
 	}
@@ -179,14 +179,14 @@ func ResolveWidgetsWithDecls(userConfigJSON string, t *Theme, area string, decls
 	for i, item := range items {
 		decl, ok := resolveWidgetDecl(available, item)
 		if !ok {
-			slog.Info("widget resolve failed", "area", area, "item_id", item.ID, "item_source", item.Source)
+			slog.InfoContext(ctx, "widget resolve failed", "area", area, "item_id", item.ID, "item_source", item.Source)
 			continue
 		}
 		if decl.Source != WidgetSourcePlugin && !widgetTemplateExists(t, decl.ID) && !IsBuiltinWidget(decl.ID) {
-			slog.Info("widget template missing", "area", area, "id", decl.ID, "source", decl.Source)
+			slog.InfoContext(ctx, "widget template missing", "area", area, "id", decl.ID, "source", decl.Source)
 			continue
 		}
-		slog.Info("widget resolved", "area", area, "id", decl.ID, "source", decl.Source, "plugin_id", decl.PluginID)
+		slog.InfoContext(ctx, "widget resolved", "area", area, "id", decl.ID, "source", decl.Source, "plugin_id", decl.PluginID)
 		result = append(result, WidgetInfo{
 			InstanceID:   widgetInstanceID(item, i),
 			ID:           decl.ID,
@@ -204,15 +204,6 @@ func widgetInstanceID(item WidgetConfigItem, index int) string {
 		return item.InstanceID
 	}
 	return strings.ReplaceAll(widgetConfigKey(item.Source, item.ID), ":", "-") + "-" + strconv.Itoa(index)
-}
-
-// ResolveWidgets 根据用户配置和主题声明，解析某个区域应渲染的组件列表。
-// userConfigJSON 是 Setting 表中存储的 JSON, 格式:
-//   - 对象数组格式: `[{"id":"search"},{"id":"recent_posts","opts":{"count":"10"}}]`
-//
-// 为空表示用户尚未配置该区域，不渲染任何组件。
-func ResolveWidgets(userConfigJSON string, t *Theme, area string) []WidgetInfo {
-	return ResolveWidgetsWithDecls(userConfigJSON, t, area, WidgetDeclsWithBuiltins(t))
 }
 
 func widgetsInAreaFromDecls(t *Theme, area string, decls []WidgetDecl) map[string]WidgetDecl {

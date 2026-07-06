@@ -3,10 +3,13 @@ package store
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
+	webauthn "github.com/go-webauthn/webauthn/webauthn"
 	"github.com/youthlin/wenlog/internal/model"
 	"gorm.io/gorm"
 )
@@ -31,6 +34,13 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*model.User, 
 		return nil, err
 	}
 	return &u, nil
+}
+func (s *Store) GetUserByPasskeyCredentialID(ctx context.Context, credentialID []byte) (*model.User, error) {
+	var passkey model.PasskeyCredential
+	if err := s.DB(ctx).Where("credential_id = ?", base64.RawURLEncoding.EncodeToString(credentialID)).First(&passkey).Error; err != nil {
+		return nil, err
+	}
+	return s.GetUserByID(ctx, passkey.UserID)
 }
 func (s *Store) SetResetToken(ctx context.Context, userID uint, token string, expiry time.Time) error {
 	return errors.Wrap(
@@ -245,6 +255,63 @@ func (s *Store) UpdateUserPassword(ctx context.Context, id uint, passwordHash st
 			Updates(map[string]any{"password_hash": passwordHash, "session_version": gorm.Expr("session_version + 1")}).Error,
 		"update user password")
 }
+
+func (s *Store) UpdateUserTwoFactor(ctx context.Context, id uint, enabled bool, secret string) error {
+	return errors.Wrap(
+		s.DB(ctx).Model(&model.User{}).Where("id = ?", id).
+			Updates(map[string]any{"two_factor_enabled": enabled, "two_factor_secret": secret, "session_version": gorm.Expr("session_version + 1")}).Error,
+		"update user two factor")
+}
+
+func (s *Store) ListPasskeysByUserID(ctx context.Context, userID uint) ([]model.PasskeyCredential, error) {
+	var passkeys []model.PasskeyCredential
+	err := s.DB(ctx).Where("user_id = ?", userID).Order("created_at ASC").Find(&passkeys).Error
+	return passkeys, errors.Wrap(err, "list passkeys by user")
+}
+
+func (s *Store) UserPasskeyCount(ctx context.Context, userID uint) (int64, error) {
+	var count int64
+	err := s.DB(ctx).Model(&model.PasskeyCredential{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, errors.Wrap(err, "count user passkeys")
+}
+
+func (s *Store) CreatePasskey(ctx context.Context, userID uint, name string, credential *webauthn.Credential) error {
+	if credential == nil {
+		return errors.New("credential is nil")
+	}
+	data, err := json.Marshal(credential)
+	if err != nil {
+		return errors.Wrap(err, "marshal passkey credential")
+	}
+	passkey := model.PasskeyCredential{
+		UserID:         userID,
+		Name:           name,
+		CredentialID:   base64.RawURLEncoding.EncodeToString(credential.ID),
+		CredentialJSON: string(data),
+	}
+	return errors.Wrap(s.DB(ctx).Create(&passkey).Error, "create passkey")
+}
+
+func (s *Store) DeletePasskey(ctx context.Context, userID, id uint) error {
+	result := s.DB(ctx).Where("id = ? AND user_id = ?", id, userID).Delete(&model.PasskeyCredential{})
+	if result.Error != nil {
+		return errors.Wrap(result.Error, "delete passkey")
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (s *Store) TouchPasskeyUsed(ctx context.Context, credentialID []byte) error {
+	now := time.Now()
+	return errors.Wrap(
+		s.DB(ctx).Model(&model.PasskeyCredential{}).
+			Where("credential_id = ?", base64.RawURLEncoding.EncodeToString(credentialID)).
+			Update("last_used_at", &now).Error,
+		"touch passkey used")
+}
+
 func (s *Store) AdminListUsers(ctx context.Context, page, pageSize int) ([]model.User, int64, error) {
 	q := s.DB(ctx).Model(&model.User{})
 	var total int64
@@ -294,6 +361,9 @@ func (s *Store) DeleteUser(ctx context.Context, id uint) error {
 		if err := tx.Model(&model.Comment{}).Where("user_id = ?", id).
 			Update("user_id", nil).Error; err != nil {
 			return errors.Wrap(err, "anonymize user comments")
+		}
+		if err := tx.Where("user_id = ?", id).Delete(&model.PasskeyCredential{}).Error; err != nil {
+			return errors.Wrap(err, "delete user passkeys")
 		}
 		if err := tx.Delete(&model.User{}, id).Error; err != nil {
 			return errors.Wrap(err, "delete user")

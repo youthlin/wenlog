@@ -147,11 +147,15 @@
       <li class="dashboard-recent-comment-item">
         {{- $postURL := index $.CommentPostURLs .PostID}}
         {{- $postTitle := index $.CommentPostTitles .PostID}}
+        {{- $postText := $postTitle}}
+        {{- if not $postText}}
+        {{- $postText = printf "#%d" .PostID}}
+        {{- end}}
+        {{- $author := printf "<span class=\"dashboard-comment-author\">%s</span>" (escapeHTML .Author)}}
+        {{- $postAnchor := printf "<span class=\"dashboard-comment-post-title\">《%s》</span>" (escapeHTML $postText)}}
         <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{.Content}}</a>
         <span class="dashboard-list-meta dashboard-comment-meta">
-          <span class="dashboard-comment-author">{{.Author}}</span>
-          <span>{{$.t.T "发表在"}}</span>
-          <span class="dashboard-comment-post-title">《{{if $postTitle}}{{$postTitle}}{{else}}#{{.PostID}}{{end}}》</span>
+          {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
         </span>
       </li>
       {{- end}}

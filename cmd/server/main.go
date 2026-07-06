@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"github.com/youthlin/wenlog/internal/middleware"
 	"github.com/youthlin/wenlog/internal/store"
 )
+
+var bg = context.Background()
 
 func main() {
 	// 解析命令行参数
@@ -26,11 +29,11 @@ func main() {
 	// 初始化
 	st, err := store.Open(cfg.DBPath)
 	if err != nil {
-		slog.Error("初始化数据库失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "初始化数据库失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	if err = i18n.Init(); err != nil {
-		slog.Error("加载i18n资源失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "加载i18n资源失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -40,12 +43,12 @@ func main() {
 	}
 	// 自动创建管理员
 	if err = ensureInitialAdmin(st); err != nil {
-		slog.Error("自动创建管理员账号失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "自动创建管理员账号失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	// 自动创建初始内容
 	if err = ensureInitialContent(st); err != nil {
-		slog.Error("自动插入初始内容失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "自动插入初始内容失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -55,7 +58,7 @@ func main() {
 	defer startCronJob(st)()
 	// 启动 web 服务器监听
 	if err := serve(cfg, st); err != nil {
-		slog.Error("服务监听失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "服务监听失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 }

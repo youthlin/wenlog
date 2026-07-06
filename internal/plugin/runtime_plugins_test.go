@@ -24,7 +24,7 @@ func TestBundledPluginFunctionsCompile(t *testing.T) {
 				t.Fatal(err)
 			}
 			hooks := NewRegistry()
-			if _, err := CompileFunctions(p, hooks, nil); err != nil {
+			if _, err := CompileFunctions(context.Background(), p, hooks, nil); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -119,7 +119,7 @@ func TestCommentSmiliesHooksRenderPanelAndContent(t *testing.T) {
 		t.Fatal(err)
 	}
 	hooks := NewRegistry()
-	if _, err := CompileFunctions(p, hooks, nil); err != nil {
+	if _, err := CompileFunctions(context.Background(), p, hooks, nil); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -24,12 +25,12 @@ type FunctionsScript struct {
 
 // CompileFunctions 编译主题目录下的 functions.go 或 functions.goyaegi 文件。
 // 返回编译后的脚本实例；如果文件不存在则返回 nil, nil。
-func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsScript, error) {
+func CompileFunctions(ctx context.Context, themeDir string, api *API, log *slog.Logger) (*FunctionsScript, error) {
 	var rootAPI *hook.API
 	if api != nil {
 		rootAPI = api.API
 	}
-	_, source, err := internalscript.CompileFromDir(themeDir, internalscript.CompileOptions{
+	_, source, err := internalscript.CompileFromDir(ctx, themeDir, internalscript.CompileOptions{
 		Subject:      "主题",
 		PackageName:  "theme",
 		Exports:      internalscript.HookAPIExports(),
@@ -41,13 +42,13 @@ func CompileFunctions(themeDir string, api *API, log *slog.Logger) (*FunctionsSc
 	if source == "" {
 		return nil, nil
 	}
-	return newFunctionsScript(source, api, log), nil
+	return newFunctionsScript(ctx, source, api, log), nil
 }
 
-func newFunctionsScript(source string, api *API, log *slog.Logger) *FunctionsScript {
+func newFunctionsScript(ctx context.Context, source string, api *API, log *slog.Logger) *FunctionsScript {
 	hash := hashString(source)
 	if log != nil {
-		log.Info("主题函数functions.go编译执行成功",
+		log.InfoContext(ctx, "主题函数functions.go编译执行成功",
 			"funcs", api.FuncNames(),
 		)
 	}
@@ -104,11 +105,11 @@ func hookInvokeFunc(script *FunctionsScript, api *API) func(ctx *render.RequestC
 		if ctx != nil {
 			loader, _ = ctx.ThemeLoader.(*store.DataLoader)
 		}
-		return callThemeFuncWithTimeout(script, api, loader, name, parsed)
+		return callThemeFuncWithTimeout(renderContext(ctx), script, api, loader, name, parsed)
 	}
 }
 
-func (script *FunctionsScript) acquireRunner(baseAPI *API, loader *store.DataLoader) (*FunctionsScript, error) {
+func (script *FunctionsScript) acquireRunner(ctx context.Context, baseAPI *API, loader *store.DataLoader) (*FunctionsScript, error) {
 	if v := script.pool.Get(); v != nil {
 		runner, _ := v.(*FunctionsScript)
 		if runner != nil && runner.api != nil {
@@ -122,7 +123,7 @@ func (script *FunctionsScript) acquireRunner(baseAPI *API, loader *store.DataLoa
 	if requestAPI != nil {
 		rootAPI = requestAPI.API
 	}
-	if _, err := internalscript.CompileAndRegister(script.source, internalscript.CompileOptions{
+	if _, err := internalscript.CompileAndRegister(ctx, script.source, internalscript.CompileOptions{
 		Subject:      "主题",
 		PackageName:  "theme",
 		Exports:      internalscript.HookAPIExports(),
@@ -130,7 +131,7 @@ func (script *FunctionsScript) acquireRunner(baseAPI *API, loader *store.DataLoa
 	}); err != nil {
 		return nil, err
 	}
-	return newFunctionsScript(script.source, requestAPI, nil), nil
+	return newFunctionsScript(ctx, script.source, requestAPI, nil), nil
 }
 
 func (script *FunctionsScript) releaseRunner(runner *FunctionsScript) {
@@ -141,8 +142,8 @@ func (script *FunctionsScript) releaseRunner(runner *FunctionsScript) {
 	script.pool.Put(runner)
 }
 
-func callThemeFuncWithTimeout(script *FunctionsScript, baseAPI *API, loader *store.DataLoader, name string, args map[string]any) any {
-	runner, err := script.acquireRunner(baseAPI, loader)
+func callThemeFuncWithTimeout(ctx context.Context, script *FunctionsScript, baseAPI *API, loader *store.DataLoader, name string, args map[string]any) any {
+	runner, err := script.acquireRunner(ctx, baseAPI, loader)
 	if err != nil || runner == nil {
 		return nil
 	}

@@ -209,7 +209,7 @@ func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations,
 	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
 	cnt, err := h.st.RecentCommentCountByIP(c, ip, since)
 	if err != nil {
-		h.log.Error("评论限频", "error", err, "ip", ip)
+		h.log.ErrorContext(c, "评论限频", "error", err, "ip", ip)
 		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
 		return false
 	}
@@ -250,7 +250,27 @@ func notifyApprovedCommentReply(ctx context.Context, st *store.Store, log *slog.
 	subject, body := commentReplyMail(tr, siteName, post.Title, target.Author, reply.Author, reply.Content, commentURL)
 	go func() {
 		if err := smtpCfg.Send(target.Email, subject, body); err != nil && log != nil {
-			log.Error("send comment reply email", "error", err, "to", target.Email, "comment_id", reply.ID)
+			log.ErrorContext(ctx, "send comment reply email", "error", err, "to", target.Email, "comment_id", reply.ID)
+		}
+	}()
+}
+
+func notifyCommentApproved(ctx context.Context, st *store.Store, log *slog.Logger, smtpCfg email.Config, siteURL string, siteName string, comment *model.Comment, tr *gettext.Translations) {
+	if st == nil || comment == nil || comment.Status != model.CommentApproved || !smtpCfg.Configured() || strings.TrimSpace(comment.Email) == "" {
+		return
+	}
+	if _, err := mail.ParseAddress(comment.Email); err != nil {
+		return
+	}
+	post, err := st.PostMeta(ctx, comment.PostID)
+	if err != nil {
+		return
+	}
+	commentURL := strings.TrimRight(siteURL, "/") + commentAnchorURL(post, comment.ID)
+	subject, body := commentApprovedMail(tr, siteName, comment.Author, comment.Content, commentURL)
+	go func() {
+		if err := smtpCfg.Send(comment.Email, subject, body); err != nil && log != nil {
+			log.ErrorContext(ctx, "send comment approved email", "error", err, "to", comment.Email, "comment_id", comment.ID)
 		}
 	}()
 }
@@ -260,16 +280,31 @@ func sameEmail(a, b string) bool {
 }
 
 func commentAnchorURL(p *model.Post, commentID uint) string {
+	return commentAnchorURLWithPage(p, commentID, 1)
+}
+
+func commentAnchorURLWithPage(p *model.Post, commentID uint, page int) string {
+	base := permalink.Post(p)
 	if p.PostType == model.PostTypePage {
-		return permalink.Page(p) + "#comment-" + strconv.FormatUint(uint64(commentID), 10)
+		base = permalink.Page(p)
 	}
-	return permalink.Post(p) + "#comment-" + strconv.FormatUint(uint64(commentID), 10)
+	if page > 1 {
+		base += "?cpage=" + strconv.Itoa(page)
+	}
+	return base + "#comment-" + strconv.FormatUint(uint64(commentID), 10)
 }
 
 func commentReplyMail(tr *gettext.Translations, siteName, postTitle, targetAuthor, replyAuthor, replyContent, commentURL string) (string, string) {
 	subject := tr.T("[%s] 你的评论有新回复", siteName)
 	body := tr.T("您好 %s，\n\n%s 回复了你在《%s》下的评论：\n\n%s\n\n查看回复：\n%s\n\n如果你不想再收到通知，可联系站点管理员关闭该评论的回复通知。\n",
 		targetAuthor, replyAuthor, postTitle, replyContent, commentURL)
+	body = mailBodyWithSiteDomain(tr, body, commentURL)
+	return subject, body
+}
+
+func commentApprovedMail(tr *gettext.Translations, siteName, author, commentContent, commentURL string) (string, string) {
+	subject := tr.T("[%s] 你的评论已通过审核", siteName)
+	body := tr.T("您好 %s，\n\n你的评论已通过审核：\n\n%s\n\n查看评论：\n%s\n", author, commentContent, commentURL)
 	body = mailBodyWithSiteDomain(tr, body, commentURL)
 	return subject, body
 }

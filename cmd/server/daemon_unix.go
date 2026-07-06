@@ -190,12 +190,12 @@ func healthBaseURL(cfg *config.Config) string {
 func writePidFile(cfg *config.Config) func() {
 	if *daemonChild {
 		if err := ensureRuntimeDir(cfg); err != nil {
-			slog.Error("创建数据目录失败", slog.Any("error", err))
+			slog.ErrorContext(bg, "创建数据目录失败", slog.Any("error", err))
 			os.Exit(1)
 		}
 		pidFile := daemonPIDFile(cfg)
 		if err := os.WriteFile(pidFile, []byte(strconv.Itoa(os.Getpid())), 0o644); err != nil {
-			slog.Error("写入pid文件失败", slog.Any("error", err), slog.String("file", pidFile))
+			slog.ErrorContext(bg, "写入pid文件失败", slog.Any("error", err), slog.String("file", pidFile))
 			os.Exit(1)
 		}
 		return func() {

@@ -19,7 +19,7 @@ type FunctionsScript struct {
 
 // CompileFunctions 编译插件目录下的 functions.go 或 functions.goyaegi 文件。
 // 如果插件没有 functions 文件，返回 nil, nil。
-func CompileFunctions(p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsScript, error) {
+func CompileFunctions(ctx context.Context, p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsScript, error) {
 	if p == nil {
 		return nil, nil
 	}
@@ -33,7 +33,7 @@ func CompileFunctions(p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsS
 		func(name string) { hooks.RemoveAction(name, source) },
 		func(name string) { hooks.RemoveFilter(name, source) },
 	)
-	i, src, err := script.CompileFromDir(p.Dir, script.CompileOptions{
+	i, src, err := script.CompileFromDir(ctx, p.Dir, script.CompileOptions{
 		Subject:      "插件",
 		PackageName:  "plugin",
 		Exports:      script.HookAPIExports(),
@@ -46,7 +46,7 @@ func CompileFunctions(p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsS
 		return nil, nil
 	}
 	if log != nil {
-		log.Info("插件函数functions.goyaegi编译执行成功",
+		log.InfoContext(ctx, "插件函数functions.goyaegi编译执行成功",
 			"plugin", p.ID,
 		)
 	}

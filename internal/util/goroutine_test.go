@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -9,7 +10,7 @@ import (
 func TestGo_NormalExecution(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	Go(func() {
+	Go(context.Background(), func() {
 		wg.Done()
 	})
 	// 等待 goroutine 完成，最多等 1 秒
@@ -30,7 +31,7 @@ func TestGo_PanicRecovery(t *testing.T) {
 	// Go() 应该捕获 panic 而不让进程崩溃
 	var wg sync.WaitGroup
 	wg.Add(1)
-	Go(func() {
+	Go(context.Background(), func() {
 		defer wg.Done()
 		panic("test panic in goroutine")
 	})
@@ -52,7 +53,7 @@ func TestGo_MultipleGoroutines(t *testing.T) {
 	n := 10
 	wg.Add(n)
 	for i := 0; i < n; i++ {
-		Go(func() {
+		Go(context.Background(), func() {
 			wg.Done()
 		})
 	}

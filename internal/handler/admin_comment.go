@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/model"
-	"github.com/youthlin/wenlog/internal/permalink"
 )
 
 // --- 评论 ---
@@ -56,8 +56,18 @@ func (h *Admin) ListComments(c *gin.Context) {
 		data["Title"] = tr.T("我的评论")
 	}
 	postIDs := make([]uint, 0, len(comments))
+	replyToIDs := make([]uint, 0, len(comments))
+	commentReplyTargetIDs := make(map[uint]uint, len(comments))
 	for _, comment := range comments {
 		postIDs = append(postIDs, comment.PostID)
+		replyTargetID := comment.ReplyToID
+		if replyTargetID == 0 {
+			replyTargetID = comment.ParentID
+		}
+		if replyTargetID > 0 {
+			commentReplyTargetIDs[comment.ID] = replyTargetID
+			replyToIDs = append(replyToIDs, replyTargetID)
+		}
 	}
 	postsByID, err := h.st.AdminPostsByIDs(c, postIDs)
 	if err != nil {
@@ -65,14 +75,32 @@ func (h *Admin) ListComments(c *gin.Context) {
 		return
 	}
 	commentPostTitles := make(map[uint]string, len(postsByID))
-	commentPostLinks := make(map[uint]string, len(postsByID))
+	commentLinks := make(map[uint]string, len(comments))
 	for id, post := range postsByID {
 		commentPostTitles[id] = post.Title
-		commentPostLinks[id] = permalink.Post(&post)
+	}
+	commentPtrs := make([]*model.Comment, 0, len(comments))
+	for i := range comments {
+		commentPtrs = append(commentPtrs, &comments[i])
+	}
+	commentPages := h.st.CommentPagesForComments(c, commentPtrs, commentPageSize)
+	for i := range comments {
+		post, ok := postsByID[comments[i].PostID]
+		if !ok {
+			continue
+		}
+		commentLinks[comments[i].ID] = commentAnchorURLWithPage(&post, comments[i].ID, commentPages[comments[i].ID])
+	}
+	replyTargetsByID, err := h.commentReplyTargetsByID(c, replyToIDs)
+	if err != nil {
+		h.serverError(c, err)
+		return
 	}
 	data["Comments"] = comments
 	data["CommentPostTitles"] = commentPostTitles
-	data["CommentPostLinks"] = commentPostLinks
+	data["CommentLinks"] = commentLinks
+	data["CommentReplyTargets"] = replyTargetsByID
+	data["CommentReplyTargetIDs"] = commentReplyTargetIDs
 	data["Total"] = total
 	data["FilterStatus"] = status
 	data["FilterPostID"] = postID
@@ -225,7 +253,7 @@ func (h *Admin) BatchComments(c *gin.Context) {
 	if action == "approve" {
 		comments, _ := h.st.CommentsByIDs(c, h.filterManageableCommentIDs(c, ids))
 		for _, comment := range comments {
-			if comment.Status != model.CommentApproved {
+			if comment.Status == model.CommentPending {
 				notifyCandidates = append(notifyCandidates, comment)
 			}
 		}
@@ -254,7 +282,7 @@ func (h *Admin) BatchComments(c *gin.Context) {
 		return
 	}
 	if action == "approve" {
-		h.notifyApprovedCommentReplies(c, notifyCandidates)
+		h.notifyNewlyApprovedComments(c, notifyCandidates)
 	}
 	safeRedirect(c, "/admin/comments")
 }
@@ -273,7 +301,7 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 	action := c.Param("action")
 	var notifyCandidate *model.Comment
 	if action == "approve" {
-		if comment, e := h.st.GetCommentByID(c, id); e == nil && comment.Status != model.CommentApproved {
+		if comment, e := h.st.GetCommentByID(c, id); e == nil && comment.Status == model.CommentPending {
 			notifyCandidate = comment
 		}
 	}
@@ -296,9 +324,87 @@ func (h *Admin) ModerateComment(c *gin.Context) {
 		return
 	}
 	if action == "approve" && notifyCandidate != nil {
-		h.notifyApprovedCommentReplies(c, []model.Comment{*notifyCandidate})
+		h.notifyNewlyApprovedComments(c, []model.Comment{*notifyCandidate})
 	}
 	safeRedirect(c, "/admin/comments")
+}
+
+// ReplyComment 在后台直接回复一条评论。回复默认已批准，并复用前台回复通知逻辑通知被回复者。
+func (h *Admin) ReplyComment(c *gin.Context) {
+	id, err := parseUintParam(c.Param("id"))
+	if err != nil {
+		h.notFound(c)
+		return
+	}
+	if !h.canManageComment(c, id) {
+		c.String(http.StatusForbidden, "Forbidden")
+		return
+	}
+	target, err := h.st.GetCommentByID(c, id)
+	if err != nil || target == nil || target.Status == model.CommentDeleted {
+		h.notFound(c)
+		return
+	}
+	content := strings.TrimSpace(c.PostForm("content"))
+	if content == "" {
+		safeRedirect(c, "/admin/comments")
+		return
+	}
+	if n := len([]rune(content)); n < commentMinLen || n > commentMaxLen {
+		safeRedirect(c, "/admin/comments")
+		return
+	}
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	author := strings.TrimSpace(u.DisplayName)
+	if author == "" {
+		author = strings.TrimSpace(u.Username)
+	}
+	parentID := target.ID
+	if target.ParentID != 0 {
+		parentID = target.ParentID
+	}
+	reply := &model.Comment{
+		PostID:        target.PostID,
+		ParentID:      parentID,
+		ReplyToID:     target.ID,
+		UserID:        &u.ID,
+		Author:        author,
+		Email:         strings.TrimSpace(u.Email),
+		URL:           strings.TrimSpace(u.Website),
+		IP:            c.ClientIP(),
+		Content:       content,
+		Status:        model.CommentApproved,
+		NotifyOnReply: false,
+		CreatedAt:     time.Now(),
+	}
+	if err := h.st.CreateComment(c, reply); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	h.notifyApprovedCommentReplies(c, []model.Comment{*reply})
+	safeRedirect(c, "/admin/comments")
+}
+
+func (h *Admin) notifyNewlyApprovedComments(c *gin.Context, comments []model.Comment) {
+	if len(comments) == 0 {
+		return
+	}
+	smtpCfg := smtpConfigFromStore(c, h.st)
+	if !smtpCfg.Configured() {
+		return
+	}
+	siteURL := siteURLFromRequest(h.st, c)
+	siteName := siteNameFromStore(c, h.st)
+	tr := i18n.Get(c)
+	for i := range comments {
+		comments[i].Status = model.CommentApproved
+		notifyCommentApproved(c, h.st, h.log, smtpCfg, siteURL, siteName, &comments[i], tr)
+		notifyApprovedCommentReply(c, h.st, h.log, smtpCfg, siteURL, siteName, &comments[i], tr)
+	}
 }
 
 func (h *Admin) notifyApprovedCommentReplies(c *gin.Context, comments []model.Comment) {
@@ -316,6 +422,22 @@ func (h *Admin) notifyApprovedCommentReplies(c *gin.Context, comments []model.Co
 		comments[i].Status = model.CommentApproved
 		notifyApprovedCommentReply(c, h.st, h.log, smtpCfg, siteURL, siteName, &comments[i], tr)
 	}
+}
+
+func (h *Admin) commentReplyTargetsByID(c *gin.Context, ids []uint) (map[uint]*model.Comment, error) {
+	if len(ids) == 0 {
+		return map[uint]*model.Comment{}, nil
+	}
+	comments, err := h.st.CommentsByIDs(c, ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[uint]*model.Comment, len(comments))
+	for i := range comments {
+		comment := comments[i]
+		out[comment.ID] = &comment
+	}
+	return out, nil
 }
 
 // DeleteMyComment 删除当前用户的评论。

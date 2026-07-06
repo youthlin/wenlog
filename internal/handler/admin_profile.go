@@ -22,15 +22,12 @@ import (
 
 // ProfilePage 后台个人资料页(所有角色可访问)。
 func (h *Admin) ProfilePage(c *gin.Context) {
-	tr := i18n.Get(c)
 	u := h.currentUser(c)
 	if u == nil {
 		h.notFound(c)
 		return
 	}
-	data := h.base(c, tr.T("个人资料"))
-	data["CurrentUser"] = u
-	data["CanEditUsername"] = canEditOwnUsername(u)
+	data := h.profileData(c, u)
 	applyProfileMessage(c, data)
 	c.HTML(http.StatusOK, "admin_profile.gohtml", data)
 }
@@ -58,6 +55,10 @@ func applyProfileMessage(c *gin.Context, data gin.H) {
 		data["Notice"] = tr.T("邮箱已验证并更新。")
 	case "password-saved":
 		data["Notice"] = tr.T("密码已修改。")
+	case "two-factor-enabled":
+		data["Notice"] = tr.T("两步验证已开启。")
+	case "two-factor-disabled":
+		data["Notice"] = tr.T("两步验证已关闭。")
 	}
 }
 
@@ -167,7 +168,7 @@ func (h *Admin) handleEmailChange(c *gin.Context, tr *gettext.Translations, u *m
 	body = mailBodyWithSiteDomain(tr, body, siteURL)
 	if err := smtpCfg.Send(email, subject, body); err != nil {
 		if h.log != nil {
-			h.log.Error("send profile email verification", "error", err, "to", email, "user_id", u.ID)
+			h.log.ErrorContext(c, "send profile email verification", "error", err, "to", email, "user_id", u.ID)
 		}
 		data := h.profileData(c, u)
 		data["Error"] = tr.T("邮箱验证邮件发送失败，请稍后重试或联系管理员。")
@@ -259,9 +260,96 @@ func (h *Admin) SavePasswordSettings(c *gin.Context) {
 	subject := tr.T("[%s] 密码已变更", siteName)
 	body := tr.T("您好 %s，\n\n你的账户密码刚刚被修改。如果这不是你本人操作，请立即联系站点管理员。\n", u.DisplayName)
 	body = mailBodyWithSiteDomain(tr, body, siteURLFromRequest(h.st, c))
-	sendPasswordChangeNotification(h.st, h.log, u, subject, body)
+	sendPasswordChangeNotification(detachedRequestContext(c), h.st, h.log, u, subject, body)
 	middleware.ClearSession(c)
 	c.Redirect(http.StatusSeeOther, "/auth/login")
+}
+
+// EnableTwoFactor 开启当前用户两步验证。
+func (h *Admin) EnableTwoFactor(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	if u.TwoFactorEnabled {
+		c.Redirect(http.StatusSeeOther, "/admin/profile")
+		return
+	}
+	currentPassword := c.PostForm("current_password")
+	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("原密码不正确。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	secret := normalizeTOTPSecret(c.PostForm("secret"))
+	if !validTOTPSecret(secret) {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("两步验证密钥无效，请刷新页面后重试。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	if !verifyTOTPCode(secret, c.PostForm("code"), time.Now()) {
+		data := h.profileData(c, u)
+		setupURL := totpSetupURL(siteNameFromStore(c, h.st), u.Username, secret)
+		data["TwoFactorSetupSecret"] = secret
+		data["TwoFactorSetupURL"] = setupURL
+		if qr, err := totpQRCodeDataURI(setupURL); err == nil {
+			data["TwoFactorQRCode"] = qr
+		}
+		data["Error"] = tr.T("两步验证码不正确。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	if err := h.st.UpdateUserTwoFactor(c, u.ID, true, secret); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	h.refreshCurrentSession(c, u.ID)
+	c.Redirect(http.StatusSeeOther, profileRedirectURL("two-factor-enabled"))
+}
+
+// DisableTwoFactor 关闭当前用户两步验证。
+func (h *Admin) DisableTwoFactor(c *gin.Context) {
+	tr := i18n.Get(c)
+	u := h.currentUser(c)
+	if u == nil {
+		h.notFound(c)
+		return
+	}
+	if !u.TwoFactorEnabled {
+		c.Redirect(http.StatusSeeOther, "/admin/profile")
+		return
+	}
+	currentPassword := c.PostForm("current_password")
+	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(currentPassword)) != nil {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("原密码不正确。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	if !verifyTOTPCode(u.TwoFactorSecret, c.PostForm("code"), time.Now()) {
+		data := h.profileData(c, u)
+		data["Error"] = tr.T("两步验证码不正确。")
+		c.HTML(http.StatusBadRequest, "admin_profile.gohtml", data)
+		return
+	}
+	if err := h.st.UpdateUserTwoFactor(c, u.ID, false, ""); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	h.refreshCurrentSession(c, u.ID)
+	c.Redirect(http.StatusSeeOther, profileRedirectURL("two-factor-disabled"))
+}
+
+func (h *Admin) refreshCurrentSession(c *gin.Context, userID uint) {
+	u, err := h.st.GetUserByID(c, userID)
+	if err != nil || u == nil {
+		return
+	}
+	middleware.SetSessionUser(c, u.ID, u.Role, u.SessionVersion)
 }
 
 // profileData 构建个人资料页数据。
@@ -270,6 +358,24 @@ func (h *Admin) profileData(c *gin.Context, u *model.User) gin.H {
 	data := h.base(c, tr.T("个人资料"))
 	data["CurrentUser"] = u
 	data["CanEditUsername"] = canEditOwnUsername(u)
+	if u != nil {
+		h.profilePasskeyData(c, data, u)
+	}
+	if u != nil && !u.TwoFactorEnabled {
+		secret, err := newTOTPSecret()
+		if err == nil {
+			setupURL := totpSetupURL(siteNameFromStore(c, h.st), u.Username, secret)
+			data["TwoFactorSetupSecret"] = secret
+			data["TwoFactorSetupURL"] = setupURL
+			if qr, err := totpQRCodeDataURI(setupURL); err == nil {
+				data["TwoFactorQRCode"] = qr
+			} else if h.log != nil {
+				h.log.ErrorContext(c, "generate two factor qr", "error", err, "user_id", u.ID)
+			}
+		} else if h.log != nil {
+			h.log.ErrorContext(c, "generate two factor secret", "error", err, "user_id", u.ID)
+		}
+	}
 	return data
 }
 
@@ -305,7 +411,7 @@ func (h *Admin) ExportData(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 	c.Header("Content-Disposition", "attachment; filename=personal-data.json")
 	if err := json.NewEncoder(c.Writer).Encode(data); err != nil {
-		h.log.Error("export data", "err", err)
+		h.log.ErrorContext(c, "export data", "err", err)
 	}
 }
 

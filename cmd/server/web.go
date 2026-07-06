@@ -34,17 +34,17 @@ func serve(cfg *config.Config, st *store.Store) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(quit)
-	util.Go(func() {
+	util.Go(bg, func() {
 		<-quit
-		slog.Info("系统正在退出...")
+		slog.InfoContext(bg, "系统正在退出...")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			slog.Error("系统退出异常", slog.Any("error", err))
+			slog.ErrorContext(bg, "系统退出异常", slog.Any("error", err))
 		}
 	})
 
-	slog.Info("服务监听中...", slog.String("addr", cfg.Addr))
+	slog.InfoContext(bg, "服务监听中...", slog.String("addr", cfg.Addr))
 	err := srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return err
@@ -97,7 +97,7 @@ func register(r *gin.Engine, cfg *config.Config, st *store.Store) {
 	// 静态资源仍然直接读磁盘即时生效。缺失时统一回退到 embed。
 	renderer, err := templateRenderer()
 	if err != nil {
-		slog.Error("加载模板失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "加载模板失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	r.HTMLRender = renderer

@@ -24,7 +24,7 @@ func (h *Admin) BackupPage(c *gin.Context) {
 
 	backups, err := h.st.ListBackups()
 	if err != nil && h.log != nil {
-		h.log.Error("list backups", "error", err)
+		h.log.ErrorContext(c, "list backups", "error", err)
 	}
 	data["Backups"] = backups
 	data["DBPath"] = h.st.DBPath()
@@ -193,7 +193,7 @@ func (h *Admin) backupSuccess(c *gin.Context, msg string) {
 func (h *Admin) injectBackupSettings(c *gin.Context, data gin.H) {
 	settings, err := h.st.GetSettings(c, consts.SettingsAutoBackupEnabled, consts.SettingsAutoBackupTime, consts.SettingsAutoBackupKeep)
 	if err != nil && h.log != nil {
-		h.log.Error("get backup settings", "error", err)
+		h.log.ErrorContext(c, "get backup settings", "error", err)
 	}
 	enabled := true
 	if strings.EqualFold(settings[consts.SettingsAutoBackupEnabled], "false") {

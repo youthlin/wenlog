@@ -153,7 +153,16 @@
 {{- end}}
 
 {{- define "admin_footer" -}}
-  <footer class="admin-instance-footer">{{.t.T "当前版本"}}: {{.InstanceVersion}}</footer>
+  <footer class="admin-instance-footer">
+    <details class="admin-instance-about">
+      <summary>{{.t.T "感谢使用 WenLog（文录）进行创作"}}</summary>
+      <div class="admin-instance-tooltip" role="tooltip">
+        <div>{{.t.T "程序版本: %s" .InstanceVersion}}</div>
+        <div>{{.t.T "构建日期: %s" .InstanceBuildDate}}</div>
+        <div>{{safeHTML (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escapeHTML .RepositoryURL) (escapeHTML .RepositoryURL)))}}</div>
+      </div>
+    </details>
+  </footer>
   </main>
 </div><!-- .admin-shell -->
 {{- if .SQLDetails}}
