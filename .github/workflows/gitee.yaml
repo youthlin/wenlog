@@ -14,6 +14,6 @@ jobs:
           src: github/youthLin
           dst: gitee/youthlin
           dst_key: ${{ secrets.dst_key }}
-          # dst_token: ${{ secrets.dst_token }}
+          dst_token: ${{ secrets.dst_token }}
           static_list: 'wenlog'
           debug: true
