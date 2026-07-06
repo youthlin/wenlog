@@ -61,36 +61,39 @@ jobs:
 
           release_json="${tmp}/release.json"
           http_code="$(curl -sS -o "${release_json}" -w '%{http_code}' "${api}/releases/tags/${tag}?access_token=${GITEE_TOKEN}")"
-          if [ "${http_code}" = "404" ]; then
+          if [ "${http_code}" = "200" ]; then
+            release_id="$(python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); print(data.get("id", "") if isinstance(data, dict) else "")' "${release_json}")"
+          elif [ "${http_code}" = "404" ]; then
+            release_id=""
+          else
+            echo "Fetch Gitee release failed, status=${http_code}" >&2
+            cat "${release_json}" >&2 || true
+            exit 1
+          fi
+
+          if [ -z "${release_id}" ]; then
+            echo "Gitee release ${tag} does not exist, creating it..."
             curl -fsS -X POST "${api}/releases" \
               --data-urlencode "access_token=${GITEE_TOKEN}" \
               --data-urlencode "tag_name=${tag}" \
               --data-urlencode "name=${tag}" \
               --data-urlencode "body=同步自 GitHub Release ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${tag}" \
               --data-urlencode "prerelease=false" > "${release_json}"
-          elif [ "${http_code}" != "200" ]; then
-            echo "Fetch Gitee release failed, status=${http_code}" >&2
+            release_id="$(python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); print(data.get("id", "") if isinstance(data, dict) else "")' "${release_json}")"
+          fi
+
+          if [ -z "${release_id}" ]; then
+            echo "Gitee release response does not contain id:" >&2
             cat "${release_json}" >&2 || true
             exit 1
           fi
 
-          release_id="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "${release_json}")"
           echo "Gitee release id: ${release_id}"
 
           for file in dist/*; do
             [ -f "${file}" ] || continue
             name="$(basename "${file}")"
-            attach_id="$(python3 - "${release_json}" "${name}" <<'PY'
-          import json, sys
-          data = json.load(open(sys.argv[1]))
-          name = sys.argv[2]
-          for key in ("attach_files", "assets"):
-              for item in data.get(key) or []:
-                  if item.get("name") == name:
-                      print(item.get("id", ""))
-                      raise SystemExit
-          PY
-            )"
+            attach_id="$(python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); name=sys.argv[2]; items=sum([(data.get(k) or []) for k in ("attach_files", "assets")], []) if isinstance(data, dict) else []; print(next((str(item.get("id", "")) for item in items if item.get("name") == name), ""))' "${release_json}" "${name}")"
             if [ -n "${attach_id}" ]; then
               curl -fsS -X DELETE "${api}/releases/${release_id}/attach_files/${attach_id}" \
                 --data-urlencode "access_token=${GITEE_TOKEN}" >/dev/null || true
