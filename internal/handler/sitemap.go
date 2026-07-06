@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/xml"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -95,6 +96,6 @@ func (h *Public) Sitemap(c *gin.Context) {
 	enc := xml.NewEncoder(c.Writer)
 	enc.Indent("", "  ")
 	if err := enc.Encode(doc); err != nil && h.log != nil {
-		h.log.Error("sitemap xml encode", "error", err)
+		h.log.ErrorContext(c, "sitemap xml encode", slog.Any("error", err))
 	}
 }

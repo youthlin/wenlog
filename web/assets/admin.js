@@ -394,6 +394,26 @@
     });
   });
 
+  document.querySelectorAll(".c-reply-btn").forEach(function (btn) {
+    var cell = btn.closest(".editable-cell");
+    if (!cell) return;
+    var form = cell.querySelector(".c-reply");
+    if (!form) return;
+    btn.addEventListener("click", function () {
+      form.hidden = false;
+      btn.hidden = true;
+      var textarea = form.querySelector("textarea");
+      if (textarea) textarea.focus();
+    });
+    var cancel = form.querySelector(".c-reply-cancel");
+    if (cancel) {
+      cancel.addEventListener("click", function () {
+        form.hidden = true;
+        btn.hidden = false;
+      });
+    }
+  });
+
   document.querySelectorAll("[data-comment-body]").forEach(function (body) {
     var toggle = body.parentElement ? body.parentElement.querySelector("[data-comment-toggle]") : null;
     if (!toggle) return;

@@ -257,7 +257,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 	// 保存修订版本（仅编辑已有文章时）
 	if f.ID > 0 {
 		if err := h.st.CreateRevision(c, p); err != nil && h.log != nil {
-			h.log.Warn("create revision", "post_id", p.ID, "error", err)
+			h.log.WarnContext(c, "create revision", "post_id", p.ID, "error", err)
 		}
 	}
 

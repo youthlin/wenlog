@@ -78,7 +78,7 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 	// 批量查询设置，避免多次 GetSetting
 	settings, err := h.st.GetSettings(c, consts.SettingsSiteName, consts.SettingsDefaultAvatar, consts.SettingsShowSQLDetails)
 	if err != nil && h.log != nil {
-		h.log.Error("get settings", "error", err)
+		h.log.ErrorContext(c, "get settings", "error", err)
 	}
 	v := settings[consts.SettingsSiteName]
 	defaultAvatar := settings[consts.SettingsDefaultAvatar]
@@ -94,6 +94,8 @@ func (h *Admin) base(c *gin.Context, title string) gin.H {
 		"PostPermalinkPattern": currentPostPermalink,
 		"AssetVersion":         assetVersion(),
 		"InstanceVersion":      version.Display(),
+		"InstanceBuildDate":    version.Date,
+		"RepositoryURL":        "https://github.com/youthlin/wenlog",
 		"RoleAdmin":            model.RoleAdmin,
 		"RoleAuthor":           model.RoleAuthor,
 		"RoleSubscriber":       model.RoleSubscriber,
@@ -293,7 +295,10 @@ func (h *Admin) notFound(c *gin.Context) {
 }
 
 func (h *Admin) serverError(c *gin.Context, err error) {
-	h.log.Error("admin error", slog.Any("error", err), slog.String("path", c.Request.URL.Path))
+	h.log.ErrorContext(c, "admin error",
+		slog.String("path", c.Request.URL.Path),
+		slog.Any("error", err),
+	)
 	tr := i18n.Get(c)
 	c.HTML(http.StatusInternalServerError, "admin_error.gohtml", i18n.Inject(c, gin.H{
 		"Title":        "500",

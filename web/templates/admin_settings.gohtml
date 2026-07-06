@@ -18,6 +18,38 @@
 <div class="settings-main developer-settings-main">
   <div class="settings-stack">
     <section class="card settings-card">
+      <h3>{{.t.T "应用更新"}}</h3>
+      <p class="tip">{{.t.T "程序版本: %s" .InstanceVersion}}</p>
+      <p class="tip">{{.t.T "构建日期: %s" .InstanceBuildDate}}</p>
+      <p class="tip">{{safeHTML (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escapeHTML .RepositoryURL) (escapeHTML .RepositoryURL)))}}</p>
+      <p class="tip">{{.t.T "优先通过 Go Module Proxy 检查最新版本，避免调用 GitHub API；一键更新会由 Go 程序直接下载、校验并替换当前二进制，然后自动重启服务。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/update">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "下载镜像"}}
+          <input type="url" name="update_download_mirror" value="{{.UpdateDownloadMirrorValue}}" placeholder="https://gh-proxy.example.com/">
+        </label>
+        <p class="tip">{{.t.T "留空则直接从 GitHub 下载。镜像可填写前缀地址，也可使用 {raw_url} 插入原始下载地址，或使用 {url} 插入 URL 编码后的下载地址。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "保存更新设置"}}</button></p>
+      </form>
+      {{- if .LatestRelease}}
+      <p class="tip">{{.t.T "最新版本：%s" .LatestRelease.TagName}}{{if .LatestRelease.HTMLURL}} · <a href="{{.LatestRelease.HTMLURL}}" target="_blank" rel="noreferrer">{{.t.T "查看 Release"}}</a>{{end}}</p>
+      {{- if .UpdateAvailable}}
+      <p class="notice-banner">{{.t.T "发现新版本，可以更新。"}}</p>
+      <form class="edit-form" method="post" action="/admin/settings/update/apply" onsubmit="return confirm('{{.t.T "确认开始后台更新？服务会在更新完成后自动重启。"}}')">
+        {{template "csrf_field" .}}
+        <p class="tip">{{.t.T "更新日志：%s" .UpdateLogPath}}</p>
+        <p><button type="submit" class="btn">{{.t.T "一键更新到最新版本"}}</button></p>
+      </form>
+      {{- else}}
+      <p class="notice-banner">{{.t.T "当前已经是最新版本。"}}</p>
+      {{- end}}
+      {{- else if .UpdateCheckError}}
+      <p class="err-banner">{{.t.T "检查更新失败: %s" .UpdateCheckError}}</p>
+      {{- end}}
+      <p class="form-actions"><a class="btn-secondary" href="/admin/settings/update/check">{{.t.T "检查最新版本"}}</a></p>
+    </section>
+
+    <section class="card settings-card">
       <h3>{{.t.T "模板设置"}}</h3>
       <p class="tip">{{if .TemplateHotReload}}{{.t.T "当前模板模式：hot（本地模板 + 手动重新解析）"}}{{else}}{{.t.T "当前模板模式：static（embed 内置模板）"}}{{end}}</p>
       {{if .TemplateHotReload}}

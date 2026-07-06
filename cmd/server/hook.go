@@ -45,12 +45,12 @@ func initHook(r *gin.Engine, st *store.Store, renderer *render.Renderer) (
 	// 1. 初始化主题和插件管理器（仅创建实例，不配置 renderer）
 	tm, err = initThemeManager(st, renderer)
 	if err != nil {
-		slog.Error("初始化主题管理器失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "初始化主题管理器失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 	pm, err = initPluginManager(st)
 	if err != nil {
-		slog.Error("初始化插件管理器失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "初始化插件管理器失败", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -65,7 +65,7 @@ func initHook(r *gin.Engine, st *store.Store, renderer *render.Renderer) (
 	// 4. 加载当前主题的模板和 functions.goyaegi
 	//    必须在 Hook Registry 注入之后执行，否则主题脚本注册 hook 会失败
 	if err := tm.LoadTheme(ctx, ""); err != nil {
-		slog.Error("加载主题 hook 失败", slog.Any("error", err))
+		slog.ErrorContext(bg, "加载主题 hook 失败", slog.Any("error", err))
 	}
 
 	// 5. 构建统一组件注册表：内置 → 主题 → 插件，注入 renderer
@@ -123,7 +123,7 @@ func initPluginManager(st *store.Store) (*plugin.Manager, error) {
 func ensureThemesOnDisk() {
 	entries, err := fs.ReadDir(web.Themes, "themes")
 	if err != nil {
-		slog.Warn("读取内嵌主题失败", "error", err)
+		slog.WarnContext(bg, "读取内嵌主题失败", "error", err)
 		return
 	}
 	for _, entry := range entries {
@@ -137,12 +137,12 @@ func ensureThemesOnDisk() {
 				continue // 已存在且版本不低于内嵌版本，保留用户可能做过的本地调整
 			}
 			if err := os.RemoveAll(filepath.Join("themes", themeName)); err != nil {
-				slog.Warn("清理旧运行时主题失败", "theme", themeName, "error", err)
+				slog.WarnContext(bg, "清理旧运行时主题失败", "theme", themeName, "error", err)
 				continue
 			}
 		}
 		if err := releaseBundledTheme(themeName); err != nil {
-			slog.Warn("释放内嵌主题失败", "theme", themeName, "error", err)
+			slog.WarnContext(bg, "释放内嵌主题失败", "theme", themeName, "error", err)
 		}
 	}
 }
@@ -234,7 +234,7 @@ func releaseBundledTheme(themeName string) error {
 func ensurePluginsOnDisk() {
 	entries, err := fs.ReadDir(plugins.Plugins, ".")
 	if err != nil {
-		slog.Warn("读取内嵌插件失败", "error", err)
+		slog.WarnContext(bg, "读取内嵌插件失败", "error", err)
 		return
 	}
 	for _, entry := range entries {
@@ -248,12 +248,12 @@ func ensurePluginsOnDisk() {
 				continue // 已存在且版本不低于内嵌版本，保留用户可能做过的本地调整
 			}
 			if err := os.RemoveAll(filepath.Join("plugins", pluginID)); err != nil {
-				slog.Warn("清理旧运行时插件失败", "plugin", pluginID, "error", err)
+				slog.WarnContext(bg, "清理旧运行时插件失败", "plugin", pluginID, "error", err)
 				continue
 			}
 		}
 		if err := releaseBundledPlugin(pluginID); err != nil {
-			slog.Warn("释放内嵌插件失败", "plugin", pluginID, "error", err)
+			slog.WarnContext(bg, "释放内嵌插件失败", "plugin", pluginID, "error", err)
 		}
 	}
 }

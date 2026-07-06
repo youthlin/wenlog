@@ -236,7 +236,7 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 	}
 	if p.Status == model.StatusPublished {
 		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
-			h.log.Error("增加页面浏览量失败", "error", err, "post_id", p.ID)
+			h.log.ErrorContext(c, "增加页面浏览量失败", "error", err, "post_id", p.ID)
 		}
 		p.Views++
 	}
@@ -335,7 +335,7 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 	}
 	if p.Status == model.StatusPublished {
 		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
-			h.log.Error("增加文章浏览量失败", "error", err, "post_id", p.ID)
+			h.log.ErrorContext(c, "增加文章浏览量失败", "error", err, "post_id", p.ID)
 		}
 		p.Views++
 	}
@@ -539,7 +539,7 @@ func (h *Public) loadSettings(ctx context.Context) publicSettings {
 		consts.SettingsShowSQLDetails,
 	)
 	if err != nil && h.log != nil {
-		h.log.Error("load public settings", "error", err)
+		h.log.ErrorContext(ctx, "load public settings", slog.Any("error", err))
 	}
 	return h.buildSettings(settings)
 }

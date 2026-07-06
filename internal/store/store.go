@@ -58,6 +58,7 @@ func (s *Store) migrate() error {
 		&model.User{},
 		&model.PendingRegistration{},
 		&model.PendingEmailChange{},
+		&model.PasskeyCredential{},
 		&model.Post{},
 		&model.Category{},
 		&model.Tag{},

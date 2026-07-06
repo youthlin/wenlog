@@ -41,6 +41,8 @@ type User struct {
 	Website          string `gorm:"size:255"`
 	Role             string `gorm:"size:16;default:subscriber"`
 	SessionVersion   int64  `gorm:"default:0"`
+	TwoFactorEnabled bool   `gorm:"default:false"`
+	TwoFactorSecret  string `gorm:"size:64"`
 	ResetToken       string `gorm:"size:128;index"`
 	ResetTokenExpiry time.Time
 	CreatedAt        time.Time
@@ -68,6 +70,18 @@ type PendingEmailChange struct {
 	TokenExpiry time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+// PasskeyCredential 保存用户注册的 WebAuthn/Passkey 凭据。
+type PasskeyCredential struct {
+	ID             uint   `gorm:"primaryKey"`
+	UserID         uint   `gorm:"index"`
+	Name           string `gorm:"size:128"`
+	CredentialID   string `gorm:"uniqueIndex;size:512"`
+	CredentialJSON string `gorm:"type:text"`
+	LastUsedAt     *time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 // Post 既表示文章(post)也表示页面(page),由 PostType 区分。

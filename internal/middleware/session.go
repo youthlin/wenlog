@@ -18,7 +18,7 @@ import (
 func Session(st *store.Store) func() gin.HandlerFunc {
 	sessionStore, err := NewDynamicCookieStore(st)
 	if err != nil {
-		slog.Error("init session store", slog.Any("error", err))
+		slog.ErrorContext(context.Background(), "init session store", slog.Any("error", err))
 		os.Exit(1)
 	}
 	sessionStore.Options(sessions.Options{

@@ -89,7 +89,7 @@ func (h *Admin) RevisionRestore(c *gin.Context) {
 
 	// 回滚前先保存当前版本
 	if err := h.st.CreateRevision(c, p); err != nil && h.log != nil {
-		h.log.Warn("create revision before restore", "post_id", p.ID, "error", err)
+		h.log.WarnContext(c, "create revision before restore", "post_id", p.ID, "error", err)
 	}
 
 	// 用修订版本内容覆盖文章

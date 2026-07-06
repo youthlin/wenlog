@@ -127,7 +127,7 @@ func TestLogin_WrongPassword(t *testing.T) {
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", w.Code)
 	}
-	if !strings.Contains(w.Body.String(), "用户名或密码错误") {
+	if !strings.Contains(w.Body.String(), "用户名或密码/两步验证码错误") {
 		t.Error("should show error message")
 	}
 }

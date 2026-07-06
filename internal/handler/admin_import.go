@@ -160,7 +160,7 @@ func (h *Admin) importXMLConfirm(c *gin.Context, data gin.H) {
 		AuthorMapping: authorMapping,
 	})
 	if err != nil {
-		h.log.Error("import xml",
+		h.log.ErrorContext(c, "import xml",
 			slog.Any("error", err),
 			slog.String("file", fileName),
 		)
@@ -263,7 +263,7 @@ func (h *Admin) ExportXML(c *gin.Context) {
 	}
 	v, err := h.st.GetSetting(c, consts.SettingsSiteName)
 	if err != nil && h.log != nil {
-		h.log.Error("get site name for export", "error", err)
+		h.log.ErrorContext(c, "get site name for export", "error", err)
 	}
 	xmlData, _, err := wpimport.ExportXML(h.st.DB(c), wpimport.ExportOptions{
 		Posts:     includePosts,

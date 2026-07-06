@@ -1,15 +1,25 @@
 package handler
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"io"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -19,8 +29,16 @@ import (
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/permalink"
 	"github.com/youthlin/wenlog/internal/util"
+	"github.com/youthlin/wenlog/internal/version"
 	"github.com/youthlin/wenlog/web"
 )
+
+const githubLatestReleaseURL = "https://github.com/youthlin/wenlog/releases/latest"
+
+var goProxyLatestURLs = []string{
+	"https://goproxy.cn/github.com/youthlin/wenlog/@latest",
+	"https://proxy.golang.org/github.com/youthlin/wenlog/@latest",
+}
 
 func settingsPageURL(section string) string {
 	switch normalizeSettingsSection(section) {
@@ -92,9 +110,10 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsSiteURL,
 		consts.SettingsMetricsAuthPassword,
 		consts.SettingsShowSQLDetails,
+		consts.SettingsUpdateDownloadMirror,
 	)
 	if err != nil && h.log != nil {
-		h.log.Error("get settings for settings page", "error", err)
+		h.log.ErrorContext(c, "get settings for settings page", "error", err)
 	}
 	data["SiteNameValue"] = util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, settings[consts.SettingsSiteName])
 	data["SiteDescriptionValue"] = settings[consts.SettingsSiteDesc]
@@ -126,8 +145,21 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		data["EnabledPluginIDs"] = strings.Join(h.pluginManager.EnabledIDs(c), ", ")
 	}
 	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
+	data["UpdateDownloadMirrorValue"] = strings.TrimSpace(settings[consts.SettingsUpdateDownloadMirror])
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
+	data["InstanceRawVersion"] = version.Version
+	data["UpdateLogPath"] = h.updateLogPath()
+	data["UpdateAvailable"] = false
+	if c != nil && c.Query("check_update") == "1" {
+		latest, err := latestRelease(c.Request.Context(), h.log)
+		if err != nil {
+			data["UpdateCheckError"] = err.Error()
+		} else {
+			data["LatestRelease"] = latest
+			data["UpdateAvailable"] = latest.TagName != "" && latest.TagName != version.Version
+		}
+	}
 	// 主题信息
 	if h.themeManager != nil {
 		current := h.themeManager.Current(c)
@@ -170,11 +202,17 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	if c != nil && c.Query("message") == "sql-details-saved" {
 		data["Notice"] = tr.T("SQL 调试设置已保存。")
 	}
+	if c != nil && c.Query("message") == "update-settings-saved" {
+		data["Notice"] = tr.T("更新设置已保存。")
+	}
 	if c != nil && c.Query("message") == "theme-reloaded" {
 		data["Notice"] = tr.T("主题已重载。")
 	}
 	if c != nil && c.Query("message") == "plugins-reloaded" {
 		data["Notice"] = tr.T("插件资源已重载。")
+	}
+	if c != nil && c.Query("message") == "app-update-started" {
+		data["Notice"] = tr.T("后台更新已启动，请稍等片刻后刷新页面确认版本。")
 	}
 	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
 		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
@@ -183,6 +221,469 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		data["CurrentUser"] = u
 	}
 	return data
+}
+
+type latestReleaseInfo struct {
+	TagName string
+	Name    string
+	HTMLURL string
+}
+
+func latestRelease(ctx context.Context, log *slog.Logger) (*latestReleaseInfo, error) {
+	var errs []string
+	for _, endpoint := range goProxyLatestURLs {
+		attemptCtx, cancel := context.WithTimeout(ctx, 4*time.Second)
+		release, err := latestReleaseFromGoProxy(attemptCtx, endpoint)
+		cancel()
+		if err == nil {
+			return release, nil
+		}
+		errs = append(errs, err.Error())
+		if log != nil {
+			log.WarnContext(ctx, "check Go module proxy latest version failed", "url", endpoint, "error", err)
+		}
+	}
+	attemptCtx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	release, err := latestReleaseFromGitHubRedirect(attemptCtx, log)
+	cancel()
+	if err == nil {
+		return release, nil
+	}
+	errs = append(errs, err.Error())
+	return nil, fmt.Errorf("检查最新版本失败：%s", strings.Join(errs, "; "))
+}
+
+type goProxyLatestInfo struct {
+	Version string `json:"Version"`
+}
+
+func latestReleaseFromGoProxy(ctx context.Context, endpoint string) (*latestReleaseInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "wenlog-admin-updater")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Go Module Proxy 更新检查失败(%s): %w", endpoint, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return nil, fmt.Errorf("Go Module Proxy 更新检查失败(%s): 返回 %d %s", endpoint, resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	var latest goProxyLatestInfo
+	if err := json.NewDecoder(resp.Body).Decode(&latest); err != nil {
+		return nil, fmt.Errorf("解析 Go Module Proxy 响应失败(%s): %w", endpoint, err)
+	}
+	tag := strings.TrimSpace(latest.Version)
+	if tag == "" {
+		return nil, fmt.Errorf("Go Module Proxy 未返回版本号: %s", endpoint)
+	}
+	return &latestReleaseInfo{TagName: tag, Name: tag, HTMLURL: releaseHTMLURL(tag)}, nil
+}
+
+func latestReleaseFromGitHubRedirect(ctx context.Context, log *slog.Logger) (*latestReleaseInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, githubLatestReleaseURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "wenlog-admin-updater")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		if log != nil {
+			attrs := []any{
+				"url", githubLatestReleaseURL,
+				"resolved_url", resp.Request.URL.String(),
+				"status", resp.Status,
+				"status_code", resp.StatusCode,
+				"x_github_request_id", resp.Header.Get("X-GitHub-Request-Id"),
+				"body", strings.TrimSpace(string(body)),
+			}
+			if readErr != nil {
+				attrs = append(attrs, "body_read_error", readErr)
+			}
+			log.ErrorContext(ctx, "check GitHub release redirect failed", attrs...)
+		}
+		return nil, fmt.Errorf("GitHub Release 更新检查失败：返回 %d；详情请查看服务端日志", resp.StatusCode)
+	}
+	tag, err := releaseTagFromURL(resp.Request.URL)
+	if err != nil {
+		return nil, err
+	}
+	return &latestReleaseInfo{TagName: tag, Name: tag, HTMLURL: releaseHTMLURL(tag)}, nil
+}
+
+func releaseTagFromURL(u *url.URL) (string, error) {
+	if u == nil {
+		return "", fmt.Errorf("GitHub 最新 Release 跳转地址为空")
+	}
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	for i := 0; i+1 < len(parts); i++ {
+		if parts[i] == "releases" && parts[i+1] == "tag" && i+2 < len(parts) {
+			tag, err := url.PathUnescape(parts[i+2])
+			if err != nil {
+				return "", err
+			}
+			if strings.TrimSpace(tag) != "" {
+				return tag, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("GitHub 最新 Release 跳转地址未包含版本标签: %s", u.String())
+}
+
+func releaseHTMLURL(tag string) string {
+	return "https://github.com/youthlin/wenlog/releases/tag/" + url.PathEscape(tag)
+}
+
+// CheckAppUpdate 查询 GitHub 公开 Release 的最新版本并回到开发设置页展示结果。
+func (h *Admin) CheckAppUpdate(c *gin.Context) {
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "")+"?check_update=1")
+}
+
+// ApplyAppUpdate 使用 Go 原生逻辑下载 GitHub Release 资产，替换当前二进制并重启服务。
+func (h *Admin) ApplyAppUpdate(c *gin.Context) {
+	tr := i18n.Get(c)
+	logPath := h.updateLogPath()
+	if err := os.MkdirAll(filepath.Dir(logPath), 0o755); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	logf, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	tag, err := h.applyNativeUpdate(c.Request.Context(), logf)
+	if err != nil {
+		fprintfUpdateLog(logf, "更新失败: %v\n", err)
+		_ = logf.Close()
+		if h.log != nil {
+			h.log.ErrorContext(c, "native app update failed", "error", err, "log_path", logPath)
+		}
+		data := h.settingsDataForTab(c, "developer")
+		data["Error"] = tr.T("更新失败: %s", err.Error())
+		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+		return
+	}
+	_ = logf.Close()
+	h.scheduleRestartAfterUpdate(c)
+	if h.log != nil {
+		h.log.InfoContext(c, "native app update installed", "version", tag)
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "app-update-started"))
+}
+
+func (h *Admin) updateLogPath() string {
+	if h != nil && h.cfg != nil && strings.TrimSpace(h.cfg.DBPath) != "" {
+		return filepath.Join(filepath.Dir(h.cfg.DBPath), "wenlog-update.log")
+	}
+	return filepath.Join("data", "wenlog-update.log")
+}
+
+func (h *Admin) applyNativeUpdate(ctx context.Context, logw io.Writer) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	latest, err := latestRelease(ctx, h.log)
+	if err != nil {
+		return "", err
+	}
+	if latest.TagName == version.Version {
+		return latest.TagName, nil
+	}
+	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
+		return "", fmt.Errorf("当前平台暂不支持后台一键更新: %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+	asset := fmt.Sprintf("wenlog-%s-%s-%s.tar.gz", latest.TagName, runtime.GOOS, runtime.GOARCH)
+	settings, err := h.st.GetSettings(ctx, consts.SettingsUpdateDownloadMirror)
+	if err != nil && h.log != nil {
+		h.log.ErrorContext(ctx, "get update download mirror setting", "error", err)
+	}
+	mirror := strings.TrimSpace(settings[consts.SettingsUpdateDownloadMirror])
+	rawArchiveURL := fmt.Sprintf("https://github.com/youthlin/wenlog/releases/download/%s/%s", latest.TagName, asset)
+	archiveURL := mirroredDownloadURL(rawArchiveURL, mirror)
+	checksumURL := mirroredDownloadURL(rawArchiveURL+".sha256", mirror)
+	exe, err := currentUpdatableExecutablePath()
+	if err != nil {
+		return "", err
+	}
+	tmp, err := os.MkdirTemp("", "wenlog-update-*")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(tmp)
+	archivePath := filepath.Join(tmp, asset)
+	checksumPath := archivePath + ".sha256"
+	fprintfUpdateLog(logw, "准备更新到 %s (%s/%s)\n", latest.TagName, runtime.GOOS, runtime.GOARCH)
+	if mirror != "" {
+		fprintfUpdateLog(logw, "使用下载镜像：%s\n", mirror)
+	}
+	if err := downloadReleaseFile(ctx, archiveURL, archivePath); err != nil {
+		return "", err
+	}
+	if err := downloadReleaseFile(ctx, checksumURL, checksumPath); err != nil {
+		return "", err
+	}
+	if err := verifySHA256File(archivePath, checksumPath); err != nil {
+		return "", err
+	}
+	extracted, err := extractWenlogBinary(archivePath, tmp)
+	if err != nil {
+		return "", err
+	}
+	backup := fmt.Sprintf("%s.bak.%s", exe, time.Now().Format("20060102150405"))
+	if err := copyFile(exe, backup, 0o755); err != nil {
+		return "", fmt.Errorf("备份当前二进制失败: %w", err)
+	}
+	if err := installUpdatedBinary(extracted, exe); err != nil {
+		_ = installUpdatedBinary(backup, exe)
+		return "", fmt.Errorf("替换二进制失败，已尝试回滚: %w", err)
+	}
+	fprintfUpdateLog(logw, "更新完成: %s -> %s，备份: %s\n", exe, latest.TagName, backup)
+	return latest.TagName, nil
+}
+
+func fprintfUpdateLog(w io.Writer, format string, args ...any) {
+	if w == nil {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "%s ", time.Now().Format(time.RFC3339))
+	_, _ = fmt.Fprintf(w, format, args...)
+}
+
+func downloadReleaseFile(ctx context.Context, url, dest string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "wenlog-admin-updater")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("下载 %s 失败，状态码 %d", url, resp.StatusCode)
+	}
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
+func mirroredDownloadURL(rawURL, mirror string) string {
+	mirror = strings.TrimSpace(mirror)
+	if mirror == "" {
+		return rawURL
+	}
+	if strings.Contains(mirror, "{raw_url}") {
+		return strings.ReplaceAll(mirror, "{raw_url}", rawURL)
+	}
+	if strings.Contains(mirror, "{url}") {
+		return strings.ReplaceAll(mirror, "{url}", url.QueryEscape(rawURL))
+	}
+	if strings.Contains(mirror, "%s") {
+		return fmt.Sprintf(mirror, rawURL)
+	}
+	return strings.TrimRight(mirror, "/") + "/" + rawURL
+}
+
+// SaveUpdateSettings 保存后台更新相关设置。
+func (h *Admin) SaveUpdateSettings(c *gin.Context) {
+	tr := i18n.Get(c)
+	mirror := strings.TrimSpace(c.PostForm("update_download_mirror"))
+	if mirror != "" {
+		probeURL := mirroredDownloadURL("https://github.com/youthlin/wenlog/releases/download/v0.0.0/wenlog-v0.0.0-linux-amd64.tar.gz", mirror)
+		parsed, err := url.Parse(probeURL)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+			data := h.settingsDataForTab(c, "developer")
+			data["Error"] = tr.T("下载镜像地址不合法，请填写 https 地址。")
+			data["UpdateDownloadMirrorValue"] = mirror
+			c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
+			return
+		}
+	}
+	if err := h.st.SetSetting(c, consts.SettingsUpdateDownloadMirror, mirror); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "update-settings-saved"))
+}
+
+func verifySHA256File(filePath, checksumPath string) error {
+	checksumData, err := os.ReadFile(checksumPath)
+	if err != nil {
+		return err
+	}
+	fields := strings.Fields(string(checksumData))
+	if len(fields) == 0 {
+		return fmt.Errorf("checksum 文件为空")
+	}
+	want := strings.ToLower(strings.TrimSpace(fields[0]))
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	got := fmt.Sprintf("%x", h.Sum(nil))
+	if got != want {
+		return fmt.Errorf("checksum 不匹配: got %s, want %s", got, want)
+	}
+	return nil
+}
+
+func extractWenlogBinary(archivePath, targetDir string) (string, error) {
+	f, err := os.Open(archivePath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	gz, err := gzip.NewReader(f)
+	if err != nil {
+		return "", err
+	}
+	defer gz.Close()
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", err
+		}
+		if hdr.FileInfo().IsDir() || filepath.Base(hdr.Name) != "wenlog" {
+			continue
+		}
+		outPath := filepath.Join(targetDir, "wenlog")
+		out, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+		if err != nil {
+			return "", err
+		}
+		_, copyErr := io.Copy(out, tr)
+		closeErr := out.Close()
+		if copyErr != nil {
+			return "", copyErr
+		}
+		if closeErr != nil {
+			return "", closeErr
+		}
+		return outPath, nil
+	}
+	return "", fmt.Errorf("压缩包中未找到 wenlog 二进制")
+}
+
+func currentExecutablePath() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil && resolved != "" {
+		return resolved, nil
+	}
+	return exe, nil
+}
+
+func currentUpdatableExecutablePath() (string, error) {
+	exe, err := currentExecutablePath()
+	if err != nil {
+		return "", err
+	}
+	if looksLikeGoRunTempExecutable(exe) {
+		return "", fmt.Errorf("当前进程由 go run 临时二进制启动，无法原地替换；请先执行 go build -o wenlog ./cmd/server，再用 ./wenlog restart 启动后重试")
+	}
+	info, err := os.Stat(exe)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("当前二进制不存在，无法原地更新: %s；如果是 go run ./cmd/server restart 启动，请先执行 go build -o wenlog ./cmd/server，再用 ./wenlog restart 启动后重试", exe)
+		}
+		return "", err
+	}
+	if info.IsDir() {
+		return "", fmt.Errorf("当前可执行路径是目录，无法原地更新: %s", exe)
+	}
+	return exe, nil
+}
+
+func looksLikeGoRunTempExecutable(path string) bool {
+	clean := filepath.ToSlash(filepath.Clean(path))
+	return strings.Contains(clean, "/go-build") && strings.Contains(clean, "/exe/")
+}
+
+func installUpdatedBinary(src, dest string) error {
+	tmpDest := fmt.Sprintf("%s.new.%d", dest, time.Now().UnixNano())
+	if err := copyFile(src, tmpDest, 0o755); err != nil {
+		return err
+	}
+	return os.Rename(tmpDest, dest)
+}
+
+func copyFile(src, dest string, perm fs.FileMode) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	_, copyErr := io.Copy(out, in)
+	closeErr := out.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	if closeErr != nil {
+		return closeErr
+	}
+	return os.Chmod(dest, perm)
+}
+
+func (h *Admin) scheduleRestartAfterUpdate(ctx context.Context) {
+	go func() {
+		time.Sleep(1500 * time.Millisecond)
+		if runningUnderSystemd() {
+			os.Exit(3)
+		}
+		exe, err := currentExecutablePath()
+		if err == nil {
+			cmd := exec.Command(exe, "restart")
+			cmd.Dir = mustGetwdForUpdate()
+			cmd.Env = os.Environ()
+			if startErr := cmd.Start(); startErr == nil {
+				_ = cmd.Process.Release()
+				return
+			} else if h != nil && h.log != nil {
+				h.log.ErrorContext(ctx, "start self restart after update", "error", startErr)
+			}
+		}
+		os.Exit(3)
+	}()
+}
+
+func runningUnderSystemd() bool {
+	return strings.TrimSpace(os.Getenv("INVOCATION_ID")) != "" || strings.TrimSpace(os.Getenv("JOURNAL_STREAM")) != ""
+}
+
+func mustGetwdForUpdate() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	return wd
 }
 
 func (h *Admin) ensureMetricsAuthPassword(ctx context.Context, current string) string {
@@ -341,7 +842,7 @@ func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 	if strings.TrimSpace(smtpPassword) == "" {
 		settings, err := h.st.GetSettings(c, consts.SettingsSMTPPassword)
 		if err != nil && h.log != nil {
-			h.log.Error("get smtp password setting", "error", err)
+			h.log.ErrorContext(c, "get smtp password setting", "error", err)
 		}
 		smtpPassword = settings[consts.SettingsSMTPPassword]
 	}

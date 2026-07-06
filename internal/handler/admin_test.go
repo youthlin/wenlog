@@ -61,6 +61,76 @@ func TestValidatePageSlug(t *testing.T) {
 	}
 }
 
+func TestReleaseTagFromURL(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{name: "github release tag", raw: "https://github.com/youthlin/wenlog/releases/tag/v1.2.3", want: "v1.2.3"},
+		{name: "escaped tag", raw: "https://github.com/youthlin/wenlog/releases/tag/v1.2.3%2Bbuild", want: "v1.2.3+build"},
+	}
+	for _, tt := range tests {
+		u, err := url.Parse(tt.raw)
+		if err != nil {
+			t.Fatalf("parse url: %v", err)
+		}
+		got, err := releaseTagFromURL(u)
+		if err != nil {
+			t.Fatalf("%s: releaseTagFromURL err=%v", tt.name, err)
+		}
+		if got != tt.want {
+			t.Fatalf("%s: releaseTagFromURL()=%q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestReleaseTagFromURLRejectsLatestURL(t *testing.T) {
+	u, err := url.Parse("https://github.com/youthlin/wenlog/releases/latest")
+	if err != nil {
+		t.Fatalf("parse url: %v", err)
+	}
+	if _, err := releaseTagFromURL(u); err == nil {
+		t.Fatal("releaseTagFromURL() err=nil, want error")
+	}
+}
+
+func TestLatestReleaseFromGoProxy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/github.com/youthlin/wenlog/@latest" {
+			t.Fatalf("path=%s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"Version":"v1.2.3","Time":"2026-07-06T00:00:00Z"}`))
+	}))
+	defer srv.Close()
+
+	release, err := latestReleaseFromGoProxy(context.Background(), srv.URL+"/github.com/youthlin/wenlog/@latest")
+	if err != nil {
+		t.Fatalf("latestReleaseFromGoProxy err=%v", err)
+	}
+	if release.TagName != "v1.2.3" || release.HTMLURL != "https://github.com/youthlin/wenlog/releases/tag/v1.2.3" {
+		t.Fatalf("release=%+v", release)
+	}
+}
+
+func TestLooksLikeGoRunTempExecutable(t *testing.T) {
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{path: "/tmp/go-build1775786169/b001/exe/server", want: true},
+		{path: "/var/tmp/go-build123/b002/exe/wenlog", want: true},
+		{path: "/usr/local/bin/wenlog", want: false},
+		{path: "/tmp/wenlog", want: false},
+	}
+	for _, tt := range tests {
+		if got := looksLikeGoRunTempExecutable(tt.path); got != tt.want {
+			t.Fatalf("looksLikeGoRunTempExecutable(%q)=%v, want %v", tt.path, got, tt.want)
+		}
+	}
+}
+
 func TestReleaseDirFromFS(t *testing.T) {
 	targetDir := filepath.Join(t.TempDir(), "assets")
 	src := fstest.MapFS{

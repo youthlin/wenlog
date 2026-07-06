@@ -47,7 +47,7 @@ func NewManager(themesDir string, store hook.SettingStore, renderer *render.Rend
 		renderer:  renderer,
 		log:       slog.Default().With("component", "theme-manager"),
 	}
-	if err := m.scan(); err != nil {
+	if err := m.scan(context.Background()); err != nil {
 		return nil, err
 	}
 	return m, nil
@@ -70,7 +70,7 @@ func (m *Manager) SetPluginWidgetsProvider(provider hook.WidgetDeclProvider) {
 }
 
 // scan 扫描 themesDir 下所有子目录，加载 theme.yaml。
-func (m *Manager) scan() error {
+func (m *Manager) scan(ctx context.Context) error {
 	entries, err := os.ReadDir(m.themesDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -85,7 +85,7 @@ func (m *Manager) scan() error {
 		dir := filepath.Join(m.themesDir, entry.Name())
 		t, err := LoadTheme(dir)
 		if err != nil {
-			m.log.Warn("无效主题",
+			m.log.WarnContext(ctx, "无效主题",
 				slog.String("dir", dir),
 				slog.Any("err", err),
 			)

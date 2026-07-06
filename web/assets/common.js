@@ -21,6 +21,132 @@
   toggle();
 })();
 
+// Passkey 注册与登录。
+(function () {
+  function isPotentiallyTrustworthyOrigin() {
+    var protocol = window.location.protocol;
+    var host = window.location.hostname;
+    return protocol === 'https:' || host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1';
+  }
+
+  var supported = !!(window.PublicKeyCredential && navigator.credentials && isPotentiallyTrustworthyOrigin());
+  document.querySelectorAll('[data-passkey-supported]').forEach(function (el) {
+    el.hidden = !supported;
+  });
+  if (!supported) return;
+
+  function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? (meta.getAttribute('content') || '') : '';
+  }
+
+  function status(text) {
+    var el = document.querySelector('[data-passkey-status]');
+    if (el) el.textContent = text || '';
+  }
+
+  function b64ToBuf(value) {
+    if (!value) return new ArrayBuffer(0);
+    var s = String(value).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s);
+    var buf = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return buf.buffer;
+  }
+
+  function bufToB64(buf) {
+    if (!buf) return '';
+    var bytes = new Uint8Array(buf);
+    var s = '';
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function normalizeCreationOptions(options) {
+    var publicKey = options.publicKey || options.Response || options.response || options;
+    publicKey.challenge = b64ToBuf(publicKey.challenge);
+    if (publicKey.user && publicKey.user.id) publicKey.user.id = b64ToBuf(publicKey.user.id);
+    (publicKey.excludeCredentials || []).forEach(function (cred) { cred.id = b64ToBuf(cred.id); });
+    return publicKey;
+  }
+
+  function normalizeRequestOptions(options) {
+    var publicKey = options.publicKey || options.Response || options.response || options;
+    publicKey.challenge = b64ToBuf(publicKey.challenge);
+    (publicKey.allowCredentials || []).forEach(function (cred) { cred.id = b64ToBuf(cred.id); });
+    return publicKey;
+  }
+
+  function serializeCreate(cred) {
+    return {
+      id: cred.id,
+      rawId: bufToB64(cred.rawId),
+      type: cred.type,
+      authenticatorAttachment: cred.authenticatorAttachment,
+      response: {
+        clientDataJSON: bufToB64(cred.response.clientDataJSON),
+        attestationObject: bufToB64(cred.response.attestationObject)
+      },
+      clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {}
+    };
+  }
+
+  function serializeGet(cred) {
+    return {
+      id: cred.id,
+      rawId: bufToB64(cred.rawId),
+      type: cred.type,
+      authenticatorAttachment: cred.authenticatorAttachment,
+      response: {
+        clientDataJSON: bufToB64(cred.response.clientDataJSON),
+        authenticatorData: bufToB64(cred.response.authenticatorData),
+        signature: bufToB64(cred.response.signature),
+        userHandle: bufToB64(cred.response.userHandle)
+      },
+      clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {}
+    };
+  }
+
+  function postJSON(url, body, withCSRF) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (withCSRF) headers['X-CSRF-Token'] = csrfToken();
+    return fetch(url, { method: 'POST', headers: headers, body: body ? JSON.stringify(body) : '{}' })
+      .then(function (r) { return r.json().then(function (data) { if (!r.ok || data.ok === false) throw new Error(data.message || '请求失败'); return data; }); });
+  }
+
+  document.querySelectorAll('[data-passkey-register]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var nameInput = document.querySelector('[data-passkey-name]');
+      var name = nameInput ? nameInput.value.trim() : '';
+      btn.disabled = true;
+      status('正在创建 Passkey…');
+      postJSON('/admin/profile/passkeys/begin', {}, true)
+        .then(function (data) { return navigator.credentials.create({ publicKey: normalizeCreationOptions(data.options) }); })
+        .then(function (cred) { return postJSON('/admin/profile/passkeys/finish?name=' + encodeURIComponent(name), serializeCreate(cred), true); })
+        .then(function () { status('Passkey 已添加。'); window.location.reload(); })
+        .catch(function (err) { status(err.message || 'Passkey 操作失败。'); })
+        .finally(function () { btn.disabled = false; });
+    });
+  });
+
+  document.querySelectorAll('[data-passkey-login]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var selector = btn.getAttribute('data-passkey-username');
+      var usernameInput = selector ? document.querySelector(selector) : null;
+      var username = usernameInput ? usernameInput.value.trim() : '';
+      btn.disabled = true;
+      status('请使用 Passkey 完成验证…');
+      postJSON('/auth/passkey/begin?username=' + encodeURIComponent(username), {}, false)
+        .then(function (data) { return navigator.credentials.get({ publicKey: normalizeRequestOptions(data.options) }); })
+        .then(function (cred) { return postJSON('/auth/passkey/finish', serializeGet(cred), false); })
+        .then(function (data) { window.location.href = data.redirect || '/admin/'; })
+        .catch(function (err) { status(err.message || 'Passkey 登录失败。'); })
+        .finally(function () { btn.disabled = false; });
+    });
+  });
+})();
+
 // 下拉框搜索筛选（跨主题通用）
 (function () {
   document.querySelectorAll("select[data-searchable-select]").forEach(function (select, index) {

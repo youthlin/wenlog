@@ -47,6 +47,82 @@
         <p><button type="submit" class="btn">{{.t.T "修改密码"}}</button></p>
       </form>
     </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "两步验证"}}</h3>
+      {{- if and .CurrentUser .CurrentUser.TwoFactorEnabled}}
+      <p class="notice">{{.t.T "两步验证已开启。登录时需要同时输入密码和认证器中的 6 位验证码。"}}</p>
+      <form class="edit-form" method="post" action="/admin/profile/two-factor/disable">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "当前密码"}}<input type="password" name="current_password" required></label>
+        <label>{{.t.T "两步验证码"}}<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
+        <p class="form-hint">{{.t.T "关闭后，登录时将不再要求两步验证码。"}}</p>
+        <p><button type="submit" class="btn-secondary">{{.t.T "关闭两步验证"}}</button></p>
+      </form>
+      {{- else}}
+      <p class="form-hint">{{.t.T "开启后，登录时除了密码还需要输入认证器应用生成的 6 位验证码。"}}</p>
+      {{- if .TwoFactorSetupSecret}}
+      <div class="two-factor-setup">
+        <p>{{.t.T "请用认证器应用扫描下方二维码，或手动输入密钥。"}}</p>
+        {{- if .TwoFactorQRCode}}
+        <img class="two-factor-qr" src="{{.TwoFactorQRCode}}" alt="{{.t.T "两步验证二维码"}}" width="180" height="180">
+        {{- end}}
+        <p class="two-factor-secret"><code>{{.TwoFactorSetupSecret}}</code></p>
+      </div>
+      <form class="edit-form" method="post" action="/admin/profile/two-factor/enable">
+        {{template "csrf_field" .}}
+        <input type="hidden" name="secret" value="{{.TwoFactorSetupSecret}}">
+        <label>{{.t.T "当前密码"}}<input type="password" name="current_password" required></label>
+        <label>{{.t.T "两步验证码"}}<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
+        <p class="form-hint">{{.t.T "输入认证器中显示的验证码以完成开启。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "开启两步验证"}}</button></p>
+      </form>
+      {{- else}}
+      <p class="err">{{.t.T "两步验证密钥生成失败，请刷新页面后重试。"}}</p>
+      {{- end}}
+      {{- end}}
+    </section>
+
+    <section class="card settings-card">
+      <h3>{{.t.T "Passkey 登录"}}</h3>
+      <p class="form-hint">{{.t.T "添加 Passkey 后，可以使用系统密码、指纹、人脸或安全密钥登录。Passkey 需要 HTTPS 或 localhost 环境。"}}</p>
+      <div class="passkey-register-panel" data-passkey-supported hidden>
+        <label>{{.t.T "Passkey 名称"}}<input type="text" data-passkey-name value="{{.PasskeyDefaultName}}" placeholder="{{.t.T "例如：我的 MacBook"}}"></label>
+        <button type="button" class="btn" data-passkey-register>{{.t.T "添加 Passkey"}}</button>
+      </div>
+      <p class="form-hint" data-passkey-status></p>
+      {{- if .Passkeys}}
+      <div class="table-scroll table-scroll-compact">
+        <table class="data-table passkeys-table">
+          <thead>
+          <tr>
+            <th>{{.t.T "名称"}}</th>
+            <th>{{.t.T "添加时间"}}</th>
+            <th>{{.t.T "最后使用"}}</th>
+            <th>{{.t.T "操作"}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          {{- range .Passkeys}}
+          <tr>
+            <td data-label="{{$.t.T "名称"}}">{{.Name}}</td>
+            <td data-label="{{$.t.T "添加时间"}}">{{fmtDateTime .CreatedAt}}</td>
+            <td data-label="{{$.t.T "最后使用"}}">{{if .LastUsedAt}}{{fmtDateTime .LastUsedAt}}{{else}}-{{end}}</td>
+            <td class="actions" data-label="{{$.t.T "操作"}}">
+              <form class="inline" method="post" action="/admin/profile/passkeys/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确定要删除这个 Passkey 吗？"}}')">
+                {{template "csrf_field" $}}
+                <button type="submit" class="link-danger">{{$.t.T "删除"}}</button>
+              </form>
+            </td>
+          </tr>
+          {{- end}}
+          </tbody>
+        </table>
+      </div>
+      {{- else}}
+      <p class="empty-tip">{{.t.T "还没有添加 Passkey。"}}</p>
+      {{- end}}
+    </section>
   </div>
 </div>
 {{template "admin_footer" .}}

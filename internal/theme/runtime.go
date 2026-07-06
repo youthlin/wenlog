@@ -42,7 +42,8 @@ func (m *Manager) templateWidgets(ctx *render.RequestContext, area string) []ren
 		return nil
 	}
 	config := m.renderSetting(ctx, "widget_"+area)
-	return ResolveWidgetsWithDecls(config, t, area, m.WidgetDecls(renderContext(ctx), t, area))
+	rctx := renderContext(ctx)
+	return ResolveWidgetsWithDecls(rctx, config, t, area, m.WidgetDecls(rctx, t, area))
 }
 
 func (m *Manager) templateOption(ctx *render.RequestContext, optionID string) string {
@@ -141,7 +142,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	// 直接使用 m.hooks，Registry 实例稳定，插件重载时内部替换。
 	var reg hook.Registry = m.hooks
 	api.SetHookRegistry(reg, hook.Source{Type: "theme", ID: t.Name})
-	script, err := CompileFunctions(t.Dir, api, m.log)
+	script, err := CompileFunctions(ctx, t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")
 		return m.fallbackToDefault(ctx, name, err)
@@ -160,7 +161,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	}
 
 	if m.log != nil {
-		m.log.Info("主题加载成功",
+		m.log.InfoContext(ctx, "主题加载成功",
 			"name", name,
 			"has_functions", script != nil,
 		)
@@ -172,7 +173,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 // fallbackToDefault 回退到默认主题。
 func (m *Manager) fallbackToDefault(ctx context.Context, failedName string, err error) error {
 	if m.log != nil {
-		m.log.Error("theme load failed, falling back to default",
+		m.log.ErrorContext(ctx, "theme load failed, falling back to default",
 			"failed_theme", failedName,
 			"error", err,
 		)
@@ -193,13 +194,13 @@ func (m *Manager) fallbackToDefault(ctx context.Context, failedName string, err 
 
 	if m.renderer != nil {
 		if rerr := m.renderer.ResetToDefault(); rerr != nil && m.log != nil {
-			m.log.Error("reset to default theme failed", "error", rerr)
+			m.log.ErrorContext(ctx, "reset to default theme failed", "error", rerr)
 		}
 	}
 
 	// 持久化 current_theme 为 default
 	if serr := m.store.SetSetting(ctx, settingCurrentTheme, defaultThemeName); serr != nil && m.log != nil {
-		m.log.Error("persist default theme fallback failed", "error", serr)
+		m.log.ErrorContext(ctx, "persist default theme fallback failed", "error", serr)
 	}
 
 	return err

@@ -42,6 +42,8 @@ const (
 	SettingsSiteURL = "site_url"
 	// 是否在 HTML 响应中输出 SQL 执行详情(仅管理员登录时)
 	SettingsShowSQLDetails = "show_sql_details"
+	// GitHub Release 资产下载镜像;为空时直接从 GitHub 下载。
+	SettingsUpdateDownloadMirror = "update_download_mirror"
 	// 自动备份设置
 	SettingsAutoBackupEnabled     = "auto_backup_enabled"
 	SettingsAutoBackupTime        = "auto_backup_time"

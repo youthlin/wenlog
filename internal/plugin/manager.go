@@ -48,14 +48,14 @@ func NewManager(pluginsDir string, store hook.SettingStore) (*Manager, error) {
 		loadErrors: make(map[string]string),
 		log:        slog.Default().With("component", "plugin-manager"),
 	}
-	if err := m.scan(); err != nil {
+	if err := m.scan(context.Background()); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
 // scan 扫描 pluginsDir 下所有子目录，加载 plugin.yaml。
-func (m *Manager) scan() error {
+func (m *Manager) scan(ctx context.Context) error {
 	entries, err := os.ReadDir(m.pluginsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -70,7 +70,7 @@ func (m *Manager) scan() error {
 		dir := filepath.Join(m.pluginsDir, entry.Name())
 		p, err := LoadPlugin(dir)
 		if err != nil {
-			m.log.Warn("无效插件",
+			m.log.WarnContext(ctx, "无效插件",
 				slog.String("dir", dir),
 				slog.Any("err", err),
 			)
@@ -108,7 +108,7 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 		if p == nil {
 			continue
 		}
-		script, err := CompileFunctions(p, tmp, m.log)
+		script, err := CompileFunctions(ctx, p, tmp, m.log)
 		if err != nil {
 			loadErrors[id] = err.Error()
 			m.loadErrors = loadErrors
@@ -225,7 +225,7 @@ func (m *Manager) CallLifecycle(ctx context.Context, id, name string) error {
 	}
 
 	hooks := NewRegistry()
-	tmp, err := CompileFunctions(p, hooks, m.log)
+	tmp, err := CompileFunctions(ctx, p, hooks, m.log)
 	if err != nil {
 		return errors.Wrapf(err, "加载插件[%s]生命周期运行时失败", id)
 	}

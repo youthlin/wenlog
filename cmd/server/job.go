@@ -22,7 +22,7 @@ func startCronJob(st *store.Store) func() {
 }
 
 func publishScheduled(ctx context.Context, st *store.Store) {
-	util.Go(func() {
+	util.Go(ctx, func() {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 		for {
@@ -30,9 +30,9 @@ func publishScheduled(ctx context.Context, st *store.Store) {
 			case <-ticker.C:
 				n, err := st.PublishScheduled(ctx)
 				if err != nil {
-					slog.Error("检查定时发布文章失败", slog.Any("error", err))
+					slog.ErrorContext(bg, "检查定时发布文章失败", slog.Any("error", err))
 				} else if n > 0 {
-					slog.Info("检查定时发布文章成功", slog.Int64("count", n))
+					slog.InfoContext(bg, "检查定时发布文章成功", slog.Int64("count", n))
 				}
 			case <-ctx.Done():
 				return
@@ -42,11 +42,11 @@ func publishScheduled(ctx context.Context, st *store.Store) {
 }
 
 func autoBackupDB(ctx context.Context, st *store.Store) {
-	util.Go(func() {
+	util.Go(ctx, func() {
 		for {
 			enabled, hour, minute, keep := autoBackupSettings(ctx, st)
 			if !enabled {
-				slog.Info("定时自动备份数据库已关闭")
+				slog.InfoContext(ctx, "定时自动备份数据库已关闭")
 				select {
 				case <-time.After(1 * time.Hour):
 				case <-ctx.Done():
@@ -60,7 +60,7 @@ func autoBackupDB(ctx context.Context, st *store.Store) {
 				next = next.Add(24 * time.Hour)
 			}
 			d := next.Sub(now)
-			slog.Info("下次定时自动备份数据库", slog.Time("at", next), slog.Duration("in", d))
+			slog.InfoContext(ctx, "下次定时自动备份数据库", slog.Time("at", next), slog.Duration("in", d))
 			wait := d
 			if wait > time.Hour {
 				wait = time.Hour
@@ -75,9 +75,9 @@ func autoBackupDB(ctx context.Context, st *store.Store) {
 			}
 			path, err := st.BackupDB()
 			if err != nil {
-				slog.Error("备份数据库失败", slog.Any("error", err))
+				slog.ErrorContext(ctx, "备份数据库失败", slog.Any("error", err))
 			} else {
-				slog.Info("备份数据库成功", slog.String("path", path))
+				slog.InfoContext(ctx, "备份数据库成功", slog.String("path", path))
 				_ = st.CleanOldBackups(keep)
 			}
 		}

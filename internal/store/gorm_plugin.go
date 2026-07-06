@@ -210,10 +210,14 @@ func (g *GormSQLTracer) beforeDefault(db *gorm.DB) {
 
 // afterDefault 执行 SQL 之后运行的默认钩子：计算耗时、记录详情。
 func (g *GormSQLTracer) afterDefault(db *gorm.DB) {
+	ctx := db.Statement.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	defer func() {
 		if x := recover(); x != nil {
 			if g.Log != nil {
-				g.Log.Warn("SQL tracer panic recovered", slog.Any("panic", x))
+				g.Log.WarnContext(ctx, "SQL tracer panic recovered", slog.Any("panic", x))
 			}
 		}
 	}()
@@ -226,11 +230,6 @@ func (g *GormSQLTracer) afterDefault(db *gorm.DB) {
 	start, ok := val.(time.Time)
 	if !ok {
 		return
-	}
-
-	ctx := db.Statement.Context
-	if ctx == nil {
-		ctx = context.Background()
 	}
 
 	end := time.Now()

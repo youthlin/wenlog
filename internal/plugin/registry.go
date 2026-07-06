@@ -207,7 +207,7 @@ func (r *Registry) DoAction(ctx context.Context, name string, args ...any) {
 }
 
 func (r *Registry) safeDoAction(ctx context.Context, h Handler, args ...any) {
-	defer r.recoverHandler(h)
+	defer r.recoverHandler(ctx, h)
 	switch fn := h.Fn.(type) {
 	case ActionFunc:
 		fn(ctx, args...)
@@ -264,7 +264,7 @@ func (r *Registry) safeApplyFilter(ctx context.Context, h Handler, value any, ar
 	out = value
 	defer func() {
 		if rec := recover(); rec != nil {
-			r.logPanic(h, rec)
+			r.logPanic(ctx, h, rec)
 			out = value
 		}
 	}()
@@ -286,17 +286,17 @@ func (r *Registry) safeApplyFilter(ctx context.Context, h Handler, value any, ar
 	}
 }
 
-func (r *Registry) recoverHandler(h Handler) {
+func (r *Registry) recoverHandler(ctx context.Context, h Handler) {
 	if rec := recover(); rec != nil {
-		r.logPanic(h, rec)
+		r.logPanic(ctx, h, rec)
 	}
 }
 
-func (r *Registry) logPanic(h Handler, rec any) {
+func (r *Registry) logPanic(ctx context.Context, h Handler, rec any) {
 	if r == nil || r.log == nil {
 		return
 	}
-	r.log.Warn("hook处理器执行失败",
+	r.log.WarnContext(ctx, "hook处理器执行失败",
 		slog.String("hook", h.Name),
 		slog.Int("priority", h.Priority),
 		slog.String("source_type", h.Source.Type),

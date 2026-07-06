@@ -383,12 +383,12 @@ func (api *API) InvokeFunc(ctx context.Context, name string, args map[string]any
 	}
 	fn := api.funcs[name]
 	if fn == nil {
-		slog.Info("InvokeFunc: function not found", "name", name, "available", api.FuncNames())
+		slog.InfoContext(ctx, "InvokeFunc: function not found", "name", name, "available", api.FuncNames())
 		return nil
 	}
 	defer func() { _ = recover() }()
 	result := fn(api.WithContext(ctx), Args(args))
-	slog.Info("InvokeFunc: done", "name", name, "result_nil", result == nil)
+	slog.InfoContext(ctx, "InvokeFunc: done", "name", name, "result_nil", result == nil)
 	return result
 }
 

@@ -23,16 +23,16 @@ func (m *Manager) RenderWidget(ctx context.Context, pluginID, widgetID string, o
 	}
 	p := m.Get(pluginID)
 	if p == nil {
-		slog.Info("RenderWidget: plugin not found", "plugin_id", pluginID)
+		slog.InfoContext(ctx, "RenderWidget: plugin not found", "plugin_id", pluginID)
 		return "", false
 	}
 	if options == nil {
 		options = map[string]string{}
 	}
-	slog.Info("RenderWidget: rendering plugin widget", "plugin_id", pluginID, "widget_id", widgetID)
+	slog.InfoContext(ctx, "RenderWidget: rendering plugin widget", "plugin_id", pluginID, "widget_id", widgetID)
 	renderCtx := hook.WidgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
 	if html, ok := m.renderWidgetByAction(ctx, renderCtx); ok {
-		slog.Info("RenderWidget: rendered by action", "plugin_id", pluginID, "widget_id", widgetID)
+		slog.InfoContext(ctx, "RenderWidget: rendered by action", "plugin_id", pluginID, "widget_id", widgetID)
 		return html, true
 	}
 	return m.renderWidgetByTemplate(ctx, p, renderCtx)
@@ -70,7 +70,7 @@ func (m *Manager) RegisterPluginWidgets(ctx context.Context, widgetRegistry *hoo
 			d.PluginID = p.ID
 			w := &pluginWidget{m: m, decl: d, pluginID: p.ID}
 			widgetRegistry.Register(w)
-			slog.Info("RegisterPluginWidgets: registered", "plugin", p.ID, "widget", d.ID)
+			slog.InfoContext(ctx, "RegisterPluginWidgets: registered", "plugin", p.ID, "widget", d.ID)
 		}
 	}
 }
@@ -94,17 +94,17 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 	}
 	path := filepath.Join(p.WidgetsDir(), renderCtx.WidgetID+".gohtml")
 	if _, err := os.Stat(path); err != nil {
-		slog.Info("renderWidgetByTemplate: template file not found", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
+		slog.InfoContext(ctx, "renderWidgetByTemplate: template file not found", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
 		return "", false
 	}
 	api := m.pluginAPI(ctx, p)
-	slog.Info("renderWidgetByTemplate: got plugin API", "plugin", p.ID, "widget", renderCtx.WidgetID, "api_has_funcs", api != nil && len(api.FuncNames()) > 0)
+	slog.InfoContext(ctx, "renderWidgetByTemplate: got plugin API", "plugin", p.ID, "widget", renderCtx.WidgetID, "api_has_funcs", api != nil && len(api.FuncNames()) > 0)
 	tpl, err := template.New(filepath.Base(path)).
 		Funcs(pluginTemplateFuncs(ctx, renderCtx.Options, api)).
 		ParseFiles(path)
 	if err != nil {
 		if m.log != nil {
-			m.log.Warn("解析插件组件模板失败", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
+			m.log.WarnContext(ctx, "解析插件组件模板失败", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
 		}
 		return "", false
 	}
@@ -120,12 +120,12 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 	for _, name := range []string{"widget_" + renderCtx.WidgetID, filepath.Base(path)} {
 		var buf bytes.Buffer
 		if err := tpl.ExecuteTemplate(&buf, name, data); err == nil {
-			slog.Info("renderWidgetByTemplate: template executed successfully", "plugin", p.ID, "widget", renderCtx.WidgetID, "html_len", buf.Len())
+			slog.InfoContext(ctx, "renderWidgetByTemplate: template executed successfully", "plugin", p.ID, "widget", renderCtx.WidgetID, "html_len", buf.Len())
 			return template.HTML(buf.String()), true
 		}
-		slog.Info("renderWidgetByTemplate: template execute failed", "plugin", p.ID, "widget", renderCtx.WidgetID, "name", name, "error", err)
+		slog.InfoContext(ctx, "renderWidgetByTemplate: template execute failed", "plugin", p.ID, "widget", renderCtx.WidgetID, "name", name, "error", err)
 	}
-	slog.Info("renderWidgetByTemplate: all template names failed", "plugin", p.ID, "widget", renderCtx.WidgetID)
+	slog.InfoContext(ctx, "renderWidgetByTemplate: all template names failed", "plugin", p.ID, "widget", renderCtx.WidgetID)
 	return "", false
 }
 
@@ -138,10 +138,10 @@ func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *hook.API {
 	m.mu.RUnlock()
 	if script != nil && script.api != nil {
 		api := script.api.WithContext(ctx)
-		slog.Info("pluginAPI: found script api", "plugin", p.ID, "funcs", api.FuncNames())
+		slog.InfoContext(ctx, "pluginAPI: found script api", "plugin", p.ID, "funcs", api.FuncNames())
 		return api
 	}
-	slog.Info("pluginAPI: no script/api, returning empty API", "plugin", p.ID, "has_script", script != nil, "has_api", script != nil && script.api != nil)
+	slog.InfoContext(ctx, "pluginAPI: no script/api, returning empty API", "plugin", p.ID, "has_script", script != nil, "has_api", script != nil && script.api != nil)
 	return hook.New(nil, nil, p.PluginDomain()).WithContext(ctx)
 }
 
@@ -151,11 +151,11 @@ func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *ho
 		"plugin_option": func(key string) string { return options[key] },
 		"hook_invoke": func(name string, args ...any) any {
 			if api == nil {
-				slog.Info("hookInvoke: api is nil", "name", name)
+				slog.InfoContext(ctx, "hookInvoke: api is nil", "name", name)
 				return nil
 			}
 			result := api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
-			slog.Info("hookInvoke: called", "name", name, "result_nil", result == nil)
+			slog.InfoContext(ctx, "hookInvoke: called", "name", name, "result_nil", result == nil)
 			return result
 		},
 	})

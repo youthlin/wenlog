@@ -12,8 +12,15 @@
           <a href="{{$item.CommentURL}}">{{$item.Snippet}}</a>
         </div>
         <div class="widget-comment-meta">
-          {{if $item.AuthorURL}}<a href="{{$item.AuthorURL}}" target="_blank" rel="nofollow noopener">{{$item.Comment.Author}}</a>{{else}}{{$item.Comment.Author}}{{end}}
-          {{$.t.T "发表在"}} <a href="{{$item.CommentURL}}">{{$item.Post.Title}}</a>
+          {{if $item.AuthorURL}}
+          {{$author := printf "<a href=\"%s\" target=\"_blank\" rel=\"nofollow noopener\">%s</a>" (escapeHTML $item.AuthorURL) (escapeHTML $item.Comment.Author)}}
+          {{$postAnchor := printf "<a href=\"%s\">%s</a>" (escapeHTML $item.CommentURL) (escapeHTML $item.Post.Title)}}
+          {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
+          {{else}}
+          {{$author := escapeHTML $item.Comment.Author}}
+          {{$postAnchor := printf "<a href=\"%s\">%s</a>" (escapeHTML $item.CommentURL) (escapeHTML $item.Post.Title)}}
+          {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
+          {{end}}
         </div>
       </div>
     </li>
