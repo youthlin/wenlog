@@ -131,6 +131,35 @@ func TestLooksLikeGoRunTempExecutable(t *testing.T) {
 	}
 }
 
+func TestUpdateDownloadSourcesPreferGiteeThenGitHub(t *testing.T) {
+	sources := updateDownloadSources("v1.2.3", "wenlog-v1.2.3-linux-amd64.tar.gz", "")
+	if len(sources) != 2 {
+		t.Fatalf("len(sources)=%d, want 2", len(sources))
+	}
+	if sources[0].Name != "Gitee" || sources[0].ArchiveURL != "https://gitee.com/youthlin/wenlog/releases/download/v1.2.3/wenlog-v1.2.3-linux-amd64.tar.gz" {
+		t.Fatalf("first source=%+v", sources[0])
+	}
+	if sources[1].Name != "GitHub" || sources[1].ArchiveURL != "https://github.com/youthlin/wenlog/releases/download/v1.2.3/wenlog-v1.2.3-linux-amd64.tar.gz" {
+		t.Fatalf("second source=%+v", sources[1])
+	}
+	if sources[0].ChecksumURL != sources[0].ArchiveURL+".sha256" || sources[1].ChecksumURL != sources[1].ArchiveURL+".sha256" {
+		t.Fatalf("sources=%+v", sources)
+	}
+}
+
+func TestUpdateDownloadSourcesUseMirrorOnly(t *testing.T) {
+	sources := updateDownloadSources("v1.2.3", "wenlog-v1.2.3-linux-amd64.tar.gz", "https://mirror.example.com/?url={url}")
+	if len(sources) != 1 {
+		t.Fatalf("len(sources)=%d, want 1", len(sources))
+	}
+	if sources[0].Name != "下载镜像" {
+		t.Fatalf("source=%+v", sources[0])
+	}
+	if !strings.HasPrefix(sources[0].ArchiveURL, "https://mirror.example.com/?url=") {
+		t.Fatalf("archive url=%s", sources[0].ArchiveURL)
+	}
+}
+
 func TestReleaseDirFromFS(t *testing.T) {
 	targetDir := filepath.Join(t.TempDir(), "assets")
 	src := fstest.MapFS{

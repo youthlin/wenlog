@@ -33,7 +33,11 @@ import (
 	"github.com/youthlin/wenlog/web"
 )
 
-const githubLatestReleaseURL = "https://github.com/youthlin/wenlog/releases/latest"
+const (
+	githubLatestReleaseURL = "https://github.com/youthlin/wenlog/releases/latest"
+	githubReleaseBaseURL   = "https://github.com/youthlin/wenlog/releases/download"
+	giteeReleaseBaseURL    = "https://gitee.com/youthlin/wenlog/releases/download"
+)
 
 var goProxyLatestURLs = []string{
 	"https://goproxy.cn/github.com/youthlin/wenlog/@latest",
@@ -406,9 +410,7 @@ func (h *Admin) applyNativeUpdate(ctx context.Context, logw io.Writer) (string, 
 		h.log.ErrorContext(ctx, "get update download mirror setting", "error", err)
 	}
 	mirror := strings.TrimSpace(settings[consts.SettingsUpdateDownloadMirror])
-	rawArchiveURL := fmt.Sprintf("https://github.com/youthlin/wenlog/releases/download/%s/%s", latest.TagName, asset)
-	archiveURL := mirroredDownloadURL(rawArchiveURL, mirror)
-	checksumURL := mirroredDownloadURL(rawArchiveURL+".sha256", mirror)
+	downloadSources := updateDownloadSources(latest.TagName, asset, mirror)
 	exe, err := currentUpdatableExecutablePath()
 	if err != nil {
 		return "", err
@@ -424,13 +426,7 @@ func (h *Admin) applyNativeUpdate(ctx context.Context, logw io.Writer) (string, 
 	if mirror != "" {
 		fprintfUpdateLog(logw, "使用下载镜像：%s\n", mirror)
 	}
-	if err := downloadReleaseFile(ctx, archiveURL, archivePath); err != nil {
-		return "", err
-	}
-	if err := downloadReleaseFile(ctx, checksumURL, checksumPath); err != nil {
-		return "", err
-	}
-	if err := verifySHA256File(archivePath, checksumPath); err != nil {
+	if err := downloadAndVerifyUpdateAsset(ctx, downloadSources, archivePath, checksumPath, logw); err != nil {
 		return "", err
 	}
 	extracted, err := extractWenlogBinary(archivePath, tmp)
@@ -478,6 +474,57 @@ func downloadReleaseFile(ctx context.Context, url, dest string) error {
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+type updateDownloadSource struct {
+	Name        string
+	ArchiveURL  string
+	ChecksumURL string
+}
+
+func updateDownloadSources(tag, asset, mirror string) []updateDownloadSource {
+	githubArchiveURL := releaseDownloadURL(githubReleaseBaseURL, tag, asset)
+	if strings.TrimSpace(mirror) != "" {
+		return []updateDownloadSource{{
+			Name:        "下载镜像",
+			ArchiveURL:  mirroredDownloadURL(githubArchiveURL, mirror),
+			ChecksumURL: mirroredDownloadURL(githubArchiveURL+".sha256", mirror),
+		}}
+	}
+	giteeArchiveURL := releaseDownloadURL(giteeReleaseBaseURL, tag, asset)
+	return []updateDownloadSource{
+		{Name: "Gitee", ArchiveURL: giteeArchiveURL, ChecksumURL: giteeArchiveURL + ".sha256"},
+		{Name: "GitHub", ArchiveURL: githubArchiveURL, ChecksumURL: githubArchiveURL + ".sha256"},
+	}
+}
+
+func releaseDownloadURL(baseURL, tag, asset string) string {
+	return strings.TrimRight(baseURL, "/") + "/" + url.PathEscape(tag) + "/" + url.PathEscape(asset)
+}
+
+func downloadAndVerifyUpdateAsset(ctx context.Context, sources []updateDownloadSource, archivePath, checksumPath string, logw io.Writer) error {
+	var errs []string
+	for _, source := range sources {
+		fprintfUpdateLog(logw, "尝试从 %s 下载更新包\n", source.Name)
+		if err := downloadReleaseFile(ctx, source.ArchiveURL, archivePath); err != nil {
+			errs = append(errs, fmt.Sprintf("%s 下载压缩包失败: %v", source.Name, err))
+			fprintfUpdateLog(logw, "%s 下载压缩包失败: %v\n", source.Name, err)
+			continue
+		}
+		if err := downloadReleaseFile(ctx, source.ChecksumURL, checksumPath); err != nil {
+			errs = append(errs, fmt.Sprintf("%s 下载校验文件失败: %v", source.Name, err))
+			fprintfUpdateLog(logw, "%s 下载校验文件失败: %v\n", source.Name, err)
+			continue
+		}
+		if err := verifySHA256File(archivePath, checksumPath); err != nil {
+			errs = append(errs, fmt.Sprintf("%s 校验更新包失败: %v", source.Name, err))
+			fprintfUpdateLog(logw, "%s 校验更新包失败: %v\n", source.Name, err)
+			continue
+		}
+		fprintfUpdateLog(logw, "已从 %s 下载更新包\n", source.Name)
+		return nil
+	}
+	return fmt.Errorf("下载更新包失败：%s", strings.Join(errs, "; "))
 }
 
 func mirroredDownloadURL(rawURL, mirror string) string {

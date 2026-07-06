@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wenlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-06 18:29+0800\n"
+"POT-Creation-Date: 2026-07-06 20:56+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1655,8 +1655,8 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:25
 msgid ""
-"优先通过 Go Module Proxy 检查最新版本，避免调用 GitHub API；一键更新会由 Go "
-"程序直接下载、校验并替换当前二进制，然后自动重启服务。"
+"优先通过 Go Module Proxy 检查最新版本；一键更新默认优先从 Gitee Release 下载"
+"已同步产物，并回退到 GitHub Release。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:28
@@ -1665,8 +1665,10 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:31
 msgid ""
-"留空则直接从 GitHub 下载。镜像可填写前缀地址，也可使用 {raw_url} 插入原始下载"
-"地址，或使用 {url} 插入 URL 编码后的下载地址。"
+"留空则优先从 Gitee Release 下载，失败后自动回退到 GitHub Release。若服务器访"
+"问 GitHub/Gitee 慢，可填写能代理 GitHub Release 产物的镜像；镜像可填写前缀地"
+"址，也可使用 {raw_url} 插入原始下载地址，或使用 {url} 插入 URL 编码后的下载地"
+"址。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:32
@@ -3179,134 +3181,134 @@ msgstr ""
 msgid "查看修订版本"
 msgstr ""
 
-#: internal/handler/admin_settings.go:87
+#: internal/handler/admin_settings.go:91
 msgid "常规设置"
 msgstr ""
 
-#: internal/handler/admin_settings.go:90
+#: internal/handler/admin_settings.go:94
 msgid "开发设置"
 msgstr ""
 
-#: internal/handler/admin_settings.go:173
+#: internal/handler/admin_settings.go:177
 msgid "模板已重新解析。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:176
+#: internal/handler/admin_settings.go:180
 msgid ""
 "已切换到本地模板 hot 模式；若 `web/templates` 已存在，则会直接复用现有文件，"
 "不覆盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:179
+#: internal/handler/admin_settings.go:183
 msgid "已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:182
+#: internal/handler/admin_settings.go:186
 msgid ""
 "已切换到本地资源 hot 模式；若 `web/assets` 已存在，则会直接复用现有文件，不覆"
 "盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:185
+#: internal/handler/admin_settings.go:189
 msgid "已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:188
+#: internal/handler/admin_settings.go:192
 msgid ""
 "已切换到本地翻译资源 hot 模式；若 `web/i18n` 已存在，则会直接复用现有文件，不"
 "覆盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:191
+#: internal/handler/admin_settings.go:195
 msgid "已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:194
+#: internal/handler/admin_settings.go:198
 msgid "SMTP 设置已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:197
+#: internal/handler/admin_settings.go:201
 msgid "测试邮件已发送，请检查收件箱。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:200
+#: internal/handler/admin_settings.go:204
 msgid "Metrics Basic Auth 密码已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:203
+#: internal/handler/admin_settings.go:207
 msgid "SQL 调试设置已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:206
+#: internal/handler/admin_settings.go:210
 msgid "更新设置已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:209
+#: internal/handler/admin_settings.go:213
 msgid "主题已重载。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:212
+#: internal/handler/admin_settings.go:216
 msgid "插件资源已重载。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:215
+#: internal/handler/admin_settings.go:219
 msgid "后台更新已启动，请稍等片刻后刷新页面确认版本。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:218
+#: internal/handler/admin_settings.go:222
 msgid "开放注册需要先配置 SMTP 邮件设置。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:367
+#: internal/handler/admin_settings.go:375
 #, c-format
 msgid "更新失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:504
+#: internal/handler/admin_settings.go:556
 msgid "下载镜像地址不合法，请填写 https 地址。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:735
+#: internal/handler/admin_settings.go:813
 #, c-format
 msgid "固定链接结构不合法: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:742
+#: internal/handler/admin_settings.go:820
 #, c-format
 msgid "分类目录前缀不合法: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:750
+#: internal/handler/admin_settings.go:828
 #, c-format
 msgid "标签前缀不合法: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:760
+#: internal/handler/admin_settings.go:838
 msgid "分类目录前缀和标签前缀不能相同。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:784
+#: internal/handler/admin_settings.go:862
 msgid "Metrics Basic Auth 密码至少需要 12 个字符。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:854
+#: internal/handler/admin_settings.go:932
 msgid "测试收件人不能为空。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:860
+#: internal/handler/admin_settings.go:938
 msgid "测试收件人邮箱格式不正确。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:868
+#: internal/handler/admin_settings.go:946
 msgid "SMTP 未配置完整，请填写服务器、端口和发件人地址。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:875
+#: internal/handler/admin_settings.go:953
 #, c-format
 msgid "[%s] SMTP 测试邮件"
 msgstr ""
 
-#: internal/handler/admin_settings.go:876
+#: internal/handler/admin_settings.go:954
 #, c-format
 msgid ""
 "这是一封来自 %s 的 SMTP 测试邮件。\n"
@@ -3314,122 +3316,122 @@ msgid ""
 "如果你收到这封邮件，说明 SMTP 配置已生效。\n"
 msgstr ""
 
-#: internal/handler/admin_settings.go:880
+#: internal/handler/admin_settings.go:958
 #, c-format
 msgid "测试邮件发送失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:894
+#: internal/handler/admin_settings.go:972
 msgid "Session Secret 不能为空。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:913
+#: internal/handler/admin_settings.go:991
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:919
+#: internal/handler/admin_settings.go:997
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:931
+#: internal/handler/admin_settings.go:1009
 msgid "当前模板渲染器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:937
+#: internal/handler/admin_settings.go:1015
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:944
+#: internal/handler/admin_settings.go:1022
 #, c-format
 msgid "切换到本地模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:953
+#: internal/handler/admin_settings.go:1031
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:965
+#: internal/handler/admin_settings.go:1043
 msgid "当前不是 hot 模式，不能切回内嵌模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:971
+#: internal/handler/admin_settings.go:1049
 #, c-format
 msgid "切换回内嵌模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:983
+#: internal/handler/admin_settings.go:1061
 msgid "当前资源管理器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:989
+#: internal/handler/admin_settings.go:1067
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1001
+#: internal/handler/admin_settings.go:1079
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1007
+#: internal/handler/admin_settings.go:1085
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1020
+#: internal/handler/admin_settings.go:1098
 msgid "当前不是 hot 模式，不能切回内嵌资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1033
+#: internal/handler/admin_settings.go:1111
 msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1041
+#: internal/handler/admin_settings.go:1119
 #, c-format
 msgid "读取内嵌翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1047
+#: internal/handler/admin_settings.go:1125
 #, c-format
 msgid "释放翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1055
-#: internal/handler/admin_settings.go:1082
+#: internal/handler/admin_settings.go:1133
+#: internal/handler/admin_settings.go:1160
 #, c-format
 msgid "重新加载翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1062
-#: internal/handler/admin_settings.go:1089
+#: internal/handler/admin_settings.go:1140
+#: internal/handler/admin_settings.go:1167
 #, c-format
 msgid "重新加载主题翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1075
+#: internal/handler/admin_settings.go:1153
 msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1122
+#: internal/handler/admin_settings.go:1200
 msgid "主题管理器未初始化。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1128
+#: internal/handler/admin_settings.go:1206
 #, c-format
 msgid "重载主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1140
+#: internal/handler/admin_settings.go:1218
 msgid "插件管理器未初始化。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1146
+#: internal/handler/admin_settings.go:1224
 #, c-format
 msgid "重载插件资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1152
+#: internal/handler/admin_settings.go:1230
 #, c-format
 msgid "重载插件翻译资源失败: %s"
 msgstr ""
