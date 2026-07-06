@@ -72,7 +72,7 @@ jobs:
           fi
 
           if [ -z "${release_id}" ]; then
-            echo "Gitee release ${tag} does not exist, creating it..."
+            echo "Gitee Git tag ${tag} exists, but Release object is missing or empty; creating Release..."
             curl -fsS -X POST "${api}/releases" \
               --data-urlencode "access_token=${GITEE_TOKEN}" \
               --data-urlencode "tag_name=${tag}" \
