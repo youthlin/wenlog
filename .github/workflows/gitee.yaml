@@ -81,16 +81,16 @@ jobs:
             [ -f "${file}" ] || continue
             name="$(basename "${file}")"
             attach_id="$(python3 - "${release_json}" "${name}" <<'PY'
-import json, sys
-data = json.load(open(sys.argv[1]))
-name = sys.argv[2]
-for key in ("attach_files", "assets"):
-    for item in data.get(key) or []:
-        if item.get("name") == name:
-            print(item.get("id", ""))
-            raise SystemExit
-PY
-)"
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          name = sys.argv[2]
+          for key in ("attach_files", "assets"):
+              for item in data.get(key) or []:
+                  if item.get("name") == name:
+                      print(item.get("id", ""))
+                      raise SystemExit
+          PY
+            )"
             if [ -n "${attach_id}" ]; then
               curl -fsS -X DELETE "${api}/releases/${release_id}/attach_files/${attach_id}" \
                 --data-urlencode "access_token=${GITEE_TOKEN}" >/dev/null || true
