@@ -1,19 +1,11 @@
 {{- /* 本文件定义了 admin_header, admin_footer 等模板 */ -}}
 {{- define "csrf_field"}}{{if .CSRFToken}}<input type="hidden" name="_csrf" value="{{.CSRFToken}}">{{end}}{{end -}}
+{{- define "js_i18n" -}}
+<script>window.WenLogI18n = {{.JSI18nJSON}};</script>
+{{- end -}}
 {{- define "admin_header" -}}
 <!DOCTYPE html>
-<html lang="{{.htmlLang}}" data-theme="dark"
-      data-uploading="{{.t.T "上传中..."}}"
-      data-upload-failed="{{.t.T "上传失败"}}"
-      data-image-inserted="{{.t.T "已插入图片 Markdown"}}"
-      data-existing-image-inserted="{{.t.T "已插入已有图片"}}"
-      data-load-files-failed="{{.t.T "加载文件失败"}}"
-      data-preview-label="{{.t.T "预览"}}"
-      data-continue-editing-label="{{.t.T "继续编辑"}}"
-      data-expand-label="{{.t.T "展开"}}"
-      data-collapse-label="{{.t.T "收起"}}"
-      data-nav-open-label="{{.t.T "打开菜单"}}"
-      data-nav-close-label="{{.t.T "收起菜单"}}">
+<html lang="{{.htmlLang}}" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -175,6 +167,7 @@
 </footer>
 {{- end}}
 {{- end}}
+{{template "js_i18n" .}}
 <script src="/assets/theme.js?v={{.AssetVersion}}"></script>
 <script src="/assets/common.js?v={{.AssetVersion}}"></script>
 </body>

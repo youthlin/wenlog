@@ -23,6 +23,7 @@
 </footer>
 {{- end}}
 {{- end}}
+{{template "js_i18n" .}}
 <script src="/theme-assets/theme.js?theme={{.ThemeName}}&v={{.ThemeVersion}}"></script>
 <script src="/assets/common.js?v={{.AssetVersion}}"></script>
 {{- slot "body.end" .}}

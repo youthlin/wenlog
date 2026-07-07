@@ -1620,14 +1620,23 @@ body.admin.nav-open { overflow: hidden; }
 }
 
 @media (max-width: 760px) {
-  .table-scroll:has(.comments-table) { overflow: visible; }
-  .table-scroll:has(.posts-table) { overflow: visible; }
-  .table-scroll:has(.users-table) { overflow: visible; }
-  .table-scroll:has(.terms-table) { overflow: visible; }
-  .table-scroll:has(.uploads-table) { overflow: visible; }
-  .table-scroll:has(.themes-table) { overflow: visible; }
-  .table-scroll:has(.backup-table) { overflow: visible; }
-  .table-scroll:has(.menu-items-table) { overflow: visible; }
+  .table-scroll:has(.data-table:not(.import-stats-table)) { overflow: visible; }
+  .data-table:not(.import-stats-table),
+  .data-table:not(.import-stats-table) thead,
+  .data-table:not(.import-stats-table) tbody,
+  .data-table:not(.import-stats-table) tr,
+  .data-table:not(.import-stats-table) th,
+  .data-table:not(.import-stats-table) td { display: block; width: 100%; }
+  .data-table:not(.import-stats-table) { min-width: 0 !important; background: transparent; border-spacing: 0; }
+  .data-table:not(.import-stats-table) thead { display: none; }
+  .data-table:not(.import-stats-table) tbody { display: grid; gap: 14px; }
+  .data-table:not(.import-stats-table) tbody tr { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--surface-shadow); overflow: hidden; }
+  .data-table:not(.import-stats-table) tbody tr td { border-bottom: 0; padding: 12px 14px; min-width: 0; max-width: none; overflow-wrap: anywhere; }
+  .data-table:not(.import-stats-table) tbody tr td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .data-table:not(.import-stats-table) .actions { display: grid !important; gap: 8px; }
+  .data-table:not(.import-stats-table) .actions .inline { margin: 0; }
+  .data-table:not(.import-stats-table) .actions button { width: 100%; }
+
   .comments-table,
   .comments-table thead,
   .comments-table tbody,

@@ -1,11 +1,6 @@
 {{- define "header" -}}
 <!DOCTYPE html>
-<html lang="{{.htmlLang}}"
-      data-comment-success="{{.th.T "评论已提交,等待审核后显示。"}}"
-      data-comment-fail="{{.th.T "提交失败,请稍后重试。"}}"
-      data-comment-network="{{.th.T "网络错误,请稍后重试。"}}"
-      data-nav-open-label="{{.th.T "打开菜单"}}"
-      data-nav-close-label="{{.th.T "收起菜单"}}">
+<html lang="{{.htmlLang}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -77,17 +72,18 @@
 </footer>
 {{- end}}
 {{- end}}
+{{template "js_i18n" .}}
 <script>
 (function(){
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
   var toggle = document.querySelector('[data-nav-toggle]');
   var nav = document.getElementById('site-nav-menu');
   if (!toggle || !nav) return;
   toggle.addEventListener('click', function(){
     var open = nav.classList.toggle('is-open');
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    toggle.setAttribute('aria-label', open
-      ? document.documentElement.getAttribute('data-nav-close-label') || '收起菜单'
-      : document.documentElement.getAttribute('data-nav-open-label') || '打开菜单');
+    toggle.setAttribute('aria-label', open ? t('navCloseLabel', 'Collapse menu') : t('navOpenLabel', 'Open menu'));
   });
 })();
 </script>

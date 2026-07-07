@@ -1,4 +1,6 @@
 (function () {
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
   var navToggle = document.querySelector('[data-nav-toggle]');
   var navPanel = document.querySelector('[data-nav-panel]');
   if (navToggle && navPanel) {
@@ -6,7 +8,7 @@
       navPanel.classList.toggle('is-open', open);
       document.body.classList.toggle('nav-is-open', open);
       navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      navToggle.setAttribute('aria-label', open ? document.documentElement.dataset.navCloseLabel : document.documentElement.dataset.navOpenLabel);
+      navToggle.setAttribute('aria-label', open ? t('navCloseLabel', 'Collapse menu') : t('navOpenLabel', 'Open menu'));
       navToggle.textContent = open ? '×' : '☰';
     }
 

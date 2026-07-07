@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-06 20:56:06+0800\n"
+"POT-Creation-Date: 2026-07-07 12:14:28+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgstr ""
 "X-Xtemplate-Keywords: T;N:1,2;N1:1,1;N64:1,2;N1_64:1,1;X:1c,2;XN:1c,2,3;"
 "XN1:1c,2,2;XN64:1c,2,3;XN1_64:1c,2,2\n"
 "X-Xtemplate-Functions: \n"
-"X-Xtemplate-Output: /tmp/wenlog-i18n.A5k5u8/theme_default_templates.pot\n"
+"X-Xtemplate-Output: /tmp/wenlog-i18n.u2o0U8/theme_default_templates.pot\n"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/comments.gohtml:3
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/index.gohtml:15
@@ -52,83 +52,66 @@ msgstr ""
 msgid "SQL 执行详情 (%d 条)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:4
-msgid "评论已提交,等待审核后显示。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:5
-msgid "提交失败,请稍后重试。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:6
-msgid "网络错误,请稍后重试。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:7
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:60
-msgid "打开菜单"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:8
-msgid "收起菜单"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:28
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:23
 msgid "跳到主要内容"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:31
 msgid "界面设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:38
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:39
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:34
 msgid "语言"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:35
 msgid "中文"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:36
 msgid "English"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:45
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:46
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:40
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:41
 msgid "切换主题"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:47
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:42
 msgid "暗黑"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:48
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:43
 msgid "明亮"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:49
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:44
 msgid "红梅"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:50
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:45
 msgid "绿竹"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:46
 msgid "藕粉"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:52
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:47
 msgid "橙黄"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:53
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:48
 msgid "蔚蓝"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:54
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:49
 msgid "韵紫"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/header.gohtml:55
+msgid "打开菜单"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/default/templates/index.gohtml:12

@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"log/slog"
@@ -228,7 +226,8 @@ func (h *Admin) FinishPasskeyRegistration(c *gin.Context) {
 	}
 	name := strings.TrimSpace(c.Query("name"))
 	if name == "" {
-		name = "Passkey"
+		passkeyError(c, http.StatusBadRequest, "请输入便于识别的 Passkey 名称。")
+		return
 	}
 	if err := h.st.CreatePasskey(c, u.ID, name, credential); err != nil {
 		h.serverError(c, err)
@@ -385,14 +384,6 @@ func sessionUserIDValue(v any) uint {
 	}
 }
 
-func passkeyRandomName() string {
-	var b [4]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		return "Passkey"
-	}
-	return "Passkey-" + base64.RawURLEncoding.EncodeToString(b[:])
-}
-
 func (h *Admin) profilePasskeyData(c *gin.Context, data gin.H, u *model.User) {
 	passkeys, err := h.st.ListPasskeysByUserID(c, u.ID)
 	if err != nil {
@@ -405,7 +396,6 @@ func (h *Admin) profilePasskeyData(c *gin.Context, data gin.H, u *model.User) {
 		return
 	}
 	data["Passkeys"] = passkeys
-	data["PasskeyDefaultName"] = passkeyRandomName()
 	settings, _ := h.st.GetSettings(c, consts.SettingsSiteName)
 	data["PasskeyRPName"] = util.FirstNonEmptyOr(consts.SettingsSiteNameDefault, settings[consts.SettingsSiteName])
 }
