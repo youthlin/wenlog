@@ -1,0 +1,40 @@
+id: post-comment-enhance
+name: "文章评论增强"
+version: "20260705141547"
+description: "为评论和文章正文提供表情短码插入与渲染，后台编辑器提供表情面板，支持文章尾部自定义 HTML。"
+author: "youthlin"
+default_enabled: true
+
+assets:
+  dir: assets
+
+hooks:
+  actions:
+    - head.end
+    - comment.form.after_textarea
+    - admin.post.form.after_textarea
+  filters:
+    - comment.render_html
+    - post.content_html
+  slots:
+    - comment.form.after_textarea
+    - admin.post.form.after_textarea
+
+options:
+  - id: enabled
+    type: bool
+    label: "启用表情"
+    default: "true"
+  - id: enable_post_smilies
+    type: bool
+    label: "启用文章表情"
+    default: "true"
+  - id: enable_admin_smiley_panel
+    type: bool
+    label: "后台编辑器显示表情面板"
+    default: "true"
+  - id: post_footer_html
+    type: textarea
+    label: "文章尾部 HTML"
+    description: "每篇文章正文末尾追加的 HTML，支持 {{.Post.ID}} {{.Post.Title}} 等模板变量"
+    default: ""

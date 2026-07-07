@@ -97,6 +97,8 @@ func hookDataForSlot(name string, data any) any {
 		return hook.BodyEndData{Data: data}
 	case hook.HookCommentFormAfterTextarea:
 		return hook.CommentFormAfterTextareaData{Data: data}
+	case hook.HookAdminPostFormAfterTextarea:
+		return hook.AdminPostFormAfterTextareaData{Data: data}
 	default:
 		return data
 	}

@@ -1,25 +1,25 @@
-.comment-smiley {
+.smiley {
   display: inline-block;
   width: 1em;
   height: 1em;
   vertical-align: -0.12em;
 }
 
-.comment-smilies {
+.smilies {
   margin: -4px 0 12px;
   padding: 0;
   border: 0;
   background: transparent;
 }
 
-.comment-smilies-label {
+.smilies-label {
   margin-bottom: 8px;
   color: var(--muted, #6b7280);
   font-size: 14px;
   font-weight: 600;
 }
 
-.comment-smilies-label.sr-only {
+.smilies-label.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -31,14 +31,14 @@
   border: 0;
 }
 
-.comment-smilies-list {
+.smilies-list {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
 }
 
-.comment-form button.comment-smiley-btn {
+.comment-form button.smiley-btn {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -57,21 +57,21 @@
   transition: border-color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
 }
 
-.comment-form button.comment-smiley-btn:hover,
-.comment-form button.comment-smiley-btn:focus-visible {
+.comment-form button.smiley-btn:hover,
+.comment-form button.smiley-btn:focus-visible {
   border-color: var(--border, #d1d5db);
   background: transparent;
   opacity: 0.9;
   outline: none;
 }
 
-.comment-form button.comment-smiley-btn img {
+.comment-form button.smiley-btn img {
   display: block;
   width: 24px;
   height: 24px;
 }
 
 @media (max-width: 640px) {
-  .comment-smilies-list { gap: 4px; }
-  .comment-form button.comment-smiley-btn { width: auto; padding: 1px; }
+  .smilies-list { gap: 4px; }
+  .comment-form button.smiley-btn { width: auto; padding: 1px; }
 }

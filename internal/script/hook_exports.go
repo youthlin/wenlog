@@ -31,18 +31,9 @@ func HookAPIExports() interp.Exports {
 			"HeadEndData":                  reflect.ValueOf((*hook.HeadEndData)(nil)),
 			"BodyEndData":                  reflect.ValueOf((*hook.BodyEndData)(nil)),
 			"CommentFormAfterTextareaData": reflect.ValueOf((*hook.CommentFormAfterTextareaData)(nil)),
-			"PriorityEarly":                reflect.ValueOf(hook.PriorityEarly),
-			"PriorityDefault":              reflect.ValueOf(hook.PriorityDefault),
-			"PriorityLate":                 reflect.ValueOf(hook.PriorityLate),
-			"HookHeadEnd":                  reflect.ValueOf(hook.HookHeadEnd),
-			"HookBodyEnd":                  reflect.ValueOf(hook.HookBodyEnd),
-			"HookCommentFormAfterTextarea": reflect.ValueOf(hook.HookCommentFormAfterTextarea),
-			"HookWidgetRender":             reflect.ValueOf(hook.HookWidgetRender),
-			"HookPostTitle":                reflect.ValueOf(hook.HookPostTitle),
-			"HookPostExcerptHTML":          reflect.ValueOf(hook.HookPostExcerptHTML),
-			"HookPostContentHTML":          reflect.ValueOf(hook.HookPostContentHTML),
-			"HookCommentContentHTML":       reflect.ValueOf(hook.HookCommentContentHTML),
-			"HookWidgetRenderHTML":         reflect.ValueOf(hook.HookWidgetRenderHTML),
+			"AdminPostFormAfterTextareaData": reflect.ValueOf((*hook.AdminPostFormAfterTextareaData)(nil)),
+			// Consts 聚合所有 hook 名称常量和优先级值，新增 hook 时只需修改 hook.Consts 而无需逐个导出。
+			"Consts": reflect.ValueOf(hook.Consts),
 		},
 	}
 }

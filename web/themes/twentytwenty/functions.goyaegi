@@ -3,5 +3,5 @@ package theme
 import "hook"
 
 // Register 保留主题运行时入口。
-// 评论表情已迁移到 comment-smilies 插件，主题只保留标准 hook/slot 调用。
+// 评论表情已迁移到 post-comment-enhance 插件，主题只保留标准 hook/slot 调用。
 func Register(api *hook.API) {}

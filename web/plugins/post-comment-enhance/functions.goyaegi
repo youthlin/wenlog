@@ -1,0 +1,188 @@
+package plugin
+
+import (
+	"encoding/json"
+	"net/url"
+	"strings"
+
+	"hook"
+)
+
+const assetVersion = "20260705141547"
+
+var smileyNames = []string{
+	"微笑",
+	"呲牙",
+	"偷笑",
+	"调皮",
+	"可爱",
+	"亲亲",
+	"鼓掌",
+	"坏笑",
+	"得意",
+	"大兵",
+	"白眼",
+	"疑问",
+	"惊讶",
+	"吓到",
+	"流汗",
+	"流泪",
+	"难过",
+	"发怒",
+	"发呆",
+	"撇嘴",
+	"抠鼻",
+}
+
+// Register 注册评论表情插件的 hook。
+func Register(api *hook.API) {
+	api.AddAction(hook.Consts.HookHeadEnd, func(api *hook.API, data hook.HeadEndData) {
+		renderAssets(api)
+	})
+	api.AddAction(hook.Consts.HookCommentFormAfterTextarea, func(api *hook.API, data hook.CommentFormAfterTextareaData) {
+		renderSmileyPanel(api, "comment")
+	})
+	api.AddFilter(hook.Consts.HookCommentContentHTML, func(api *hook.API, value any, args ...any) any {
+		return renderSmilies(api, value, args...)
+	})
+	// 后台文章编辑器的表情面板
+	api.AddAction(hook.Consts.HookAdminPostFormAfterTextarea, func(api *hook.API, data hook.AdminPostFormAfterTextareaData) {
+		renderSmileyPanel(api, "admin")
+	})
+	// 文章正文的表情渲染
+	api.AddFilter(hook.Consts.HookPostContentHTML, func(api *hook.API, value any, args ...any) any {
+		content := value
+		if postSmiliesEnabled(api) {
+			content = renderSmilies(api, content, args...)
+		}
+		return appendPostFooter(api, content, args...)
+	})
+}
+
+func renderAssets(api *hook.API) {
+	if !enabled(api) {
+		return
+	}
+	api.Printf(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`, assetVersion)
+}
+
+func renderSmileyPanel(api *hook.API, mode string) {
+	if !enabled(api) {
+		return
+	}
+	if mode == "admin" && api.PluginOption("enable_admin_smiley_panel", "true") == "false" {
+		return
+	}
+	api.Printf(`<div class="smilies" data-smilies data-smilies-mode="%s">`, mode)
+	api.Printf(`<div class="smilies-label sr-only">%s</div>`, api.EscapeHTML(api.T("表情")))
+	api.Printf(`<div class="smilies-list">`)
+	for _, name := range smileyNames {
+		code := "[/" + name + "]"
+		escapedName := api.EscapeHTML(name)
+		escapedCode := api.EscapeHTML(code)
+		api.Printf(`<button type="button" class="smiley-btn" data-smiley-code="%s" title="%s" aria-label="%s">`, escapedCode, escapedName, escapedName)
+		api.Printf(`<img src="%s" alt="%s" width="24" height="24">`, smileySrc(name), escapedName)
+		api.Printf(`</button>`)
+	}
+	api.Printf(`</div></div>`)
+	if mode == "admin" {
+		api.Printf(`<script>(function(){var ta=document.getElementById("content_md");if(!ta)return;document.querySelectorAll('[data-smilies-mode="admin"] [data-smiley-code]').forEach(function(b){if(b.dataset.boundSmileyAdmin==="1")return;b.dataset.boundSmileyAdmin="1";b.addEventListener("click",function(){var c=b.getAttribute("data-smiley-code")||"";if(!c)return;var s=ta.selectionStart||0,e=ta.selectionEnd||0;ta.value=ta.value.slice(0,s)+c+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+c.length;ta.focus();ta.dispatchEvent(new Event("input",{bubbles:true}))})})})();</script>`)
+	}
+}
+
+func renderSmilies(api *hook.API, value any, args ...any) any {
+	content, ok := value.(string)
+	if !ok || content == "" {
+		return value
+	}
+	if !enabled(api) {
+		return value
+	}
+	for _, name := range smileyNames {
+		code := "[/" + name + "]"
+		img := `<img class="smiley" src="` + smileySrc(name) + `" alt="` + api.EscapeHTML(name) + `" title="` + api.EscapeHTML(name) + `" width="24" height="24">`
+		content = strings.ReplaceAll(content, code, img)
+	}
+	return content
+}
+
+// appendPostFooter 在文章正文末尾追加配置的 HTML 尾部内容。
+func appendPostFooter(api *hook.API, value any, args ...any) any {
+	content, ok := value.(string)
+	if !ok || content == "" {
+		return value
+	}
+	footerHTML := api.PluginOption("post_footer_html", "")
+	if footerHTML == "" {
+		return content
+	}
+	// 从 args 中提取 post 对象，用其字段替换模板变量
+	post := extractPost(args)
+	if post != nil {
+		footerHTML = replacePostVars(api, footerHTML, post)
+	}
+	return content + footerHTML
+}
+
+// extractPost 从 filter args 中提取 post 对象字段。
+// 通过 JSON 序列化/反序列化处理，因为 Yaegi 无法直接访问 *model.Post 类型。
+func extractPost(args []any) map[string]any {
+	for _, arg := range args {
+		if arg == nil {
+			continue
+		}
+		b, err := json.Marshal(arg)
+		if err != nil {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal(b, &m); err != nil {
+			continue
+		}
+		return m
+	}
+	return nil
+}
+
+// replacePostVars 替换字符串中的 {{.Post.XXX}} 模板变量。
+// 替换值经过 HTML 转义，防止文章标题等用户数据注入 XSS。
+func replacePostVars(api *hook.API, s string, post map[string]any) string {
+	for key, val := range post {
+		s = strings.ReplaceAll(s, "{{.Post."+key+"}}", api.EscapeHTML(anyToString(val)))
+	}
+	return s
+}
+
+func anyToString(v any) string {
+	switch t := v.(type) {
+	case string:
+		return t
+	case bool:
+		if t {
+			return "true"
+		}
+		return "false"
+	case float64:
+		// JSON 数字默认解为 float64，整数直接格式化为不带小数的字符串
+		if t == float64(int64(t)) {
+			b, _ := json.Marshal(int64(t))
+			return string(b)
+		}
+		b, _ := json.Marshal(t)
+		return string(b)
+	default:
+		return ""
+	}
+}
+
+func enabled(api *hook.API) bool {
+	return api.PluginOption("enabled", "true") != "false"
+}
+
+func postSmiliesEnabled(api *hook.API) bool {
+	return api.PluginOption("enable_post_smilies", "true") != "false"
+}
+
+func smileySrc(name string) string {
+	return "/plugin-assets/post-comment-enhance/smilies/" + url.PathEscape(name) + ".gif"
+}

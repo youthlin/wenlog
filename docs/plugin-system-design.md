@@ -7,7 +7,7 @@
 当前项目已经支持主题切换、主题选项和组件区域，但部分“功能”仍绑定在具体主题里：
 
 - `default` 主题内置了“博主动态”组件：主题在 `theme.yaml` 声明 `saying` 组件，并通过 `functions.goyaegi` 注册 `saying` 数据函数，再由组件模板渲染，见 `web/themes/default/theme.yaml:17`、`web/themes/default/functions.goyaegi:24`、`web/themes/default/widgets/saying.gohtml:1`。
-- `twentytwenty` 主题实现了评论表情：主题模板调用 `themeInvoke "render_comment"` 渲染评论正文，并调用 `themeInvoke "smilies"` 输出表情按钮，见 `web/themes/twentytwenty/templates/comments.gohtml:21`、`web/themes/twentytwenty/templates/comments.gohtml:72`；实际表情列表与替换逻辑在 `web/themes/twentytwenty/functions.goyaegi:36`、`web/themes/twentytwenty/functions.goyaegi:48`。
+- `twentytwenty` 主题实现了评论表情：主题模板调用 `themeInvoke "render_comment"` 渲染评论正文，并调用 `themeInvoke "post-comment-enhance"` 输出表情按钮，见 `web/themes/twentytwenty/templates/comments.gohtml:21`、`web/themes/twentytwenty/templates/comments.gohtml:72`；实际表情列表与替换逻辑在 `web/themes/twentytwenty/functions.goyaegi:36`、`web/themes/twentytwenty/functions.goyaegi:48`。
 
 这些能力从用户视角看并不属于“外观主题”，而属于“站点功能”：使用任意主题时都希望继续可用。插件系统要解决的核心问题就是：**功能归插件，外观归主题；主题可以适配插件外观，但不应独占插件能力。**
 
@@ -126,11 +126,11 @@ WordPress 的小组件体系可以拆成三段：
 
 ```text
 plugins/
-├── comment-smilies/
+├── post-comment-enhance/
 │   ├── plugin.yaml
 │   ├── functions.goyaegi
 │   └── assets/
-│       ├── comment-smilies.css
+│       ├── style.css
 │       └── smilies/*.gif
 └── saying/
     ├── plugin.yaml
@@ -146,7 +146,7 @@ plugins/
 建议格式：
 
 ```yaml
-id: "comment-smilies"
+id: "post-comment-enhance"
 name: "评论表情"
 version: "1.0.0"
 description: "为评论表单和评论正文提供表情支持"
@@ -157,7 +157,7 @@ requires_wenlog: ">=0.1.0"
 
 assets:
   styles:
-    - comment-smilies.css
+    - style.css
 
 hooks:
   filters:
@@ -232,7 +232,7 @@ type Registry struct {
 生命周期：
 
 1. 启动时扫描 `plugins/` 目录，读取所有 `plugin.yaml`。
-2. 从 Setting 表读取启用列表，例如 `plugins_enabled = ["comment-smilies", "saying"]`。
+2. 从 Setting 表读取启用列表，例如 `plugins_enabled = ["post-comment-enhance", "saying"]`。
 3. 仅编译启用插件的 `functions.goyaegi`，并注册 hooks、widgets、shortcodes、assets 等能力。
 4. 插件加载失败时：记录错误、后台展示故障、跳过该插件，不影响核心站点启动。
 5. 插件停用后：不再注册 hooks 与 widgets，但保留 `plugin_<id>_*` 设置。
@@ -442,7 +442,7 @@ type WidgetInfo struct {
 func Register() {
     pluginapi.Api.AddAction("comment_form.after_textarea", func(args map[string]any) {
         label := pluginapi.Api.T("表情")
-        pluginapi.Api.WriteHTML(`<div class="comment-smilies-label">` + pluginapi.Api.EscapeHTML(label) + `</div>`)
+        pluginapi.Api.WriteHTML(`<div class="smilies-label">` + pluginapi.Api.EscapeHTML(label) + `</div>`)
     })
 }
 ```
@@ -523,25 +523,23 @@ plugins/saying/
 - 评论摘要必须 HTML 转义或使用安全摘要函数，避免把评论原文 HTML 注入到侧边栏。
 - 主题不需要知道 `saying` 存在，只需要声明组件区域并调用 `renderWidgets`。
 
-### 9.2 评论表情插件：`comment-smilies`
+### 9.2 评论表情插件：`post-comment-enhance`
 
 目标：把 `twentytwenty` 主题里的评论表情按钮和评论正文表情渲染变成任意主题可用。
 
 插件包：
 
 ```text
-plugins/comment-smilies/
+plugins/post-comment-enhance/
 ├── plugin.yaml
 ├── functions.goyaegi
-├── templates/comment_smilies.gohtml
-├── assets/comment-smilies.css
-├── assets/comment-smilies.js
+├── assets/style.css
 └── assets/smilies/*.gif
 ```
 
 实现方式：
 
-1. `comment.render_html` filter：接收已转义或待渲染的评论正文，替换 `[/微笑]` 这类短码为 `<img class="comment-smiley" ...>`。
+1. `comment.render_html` filter：接收已转义或待渲染的评论正文，替换 `[/微笑]` 这类短码为 `<img class="smiley" ...>`。
 2. `comment_form.after_textarea` slot：在评论 textarea 后注入表情按钮片段，按钮写入短码到 textarea。
 3. `frontend.assets` filter：仅在文章/页面详情且评论开启时注入 CSS/JS。
 4. 插件设置声明启用哪些表情、是否显示表情面板、图片尺寸等。
@@ -750,7 +748,7 @@ plugins/comment-smilies/
 
 1. 实现 `Hooks`：action/filter 注册、优先级、错误隔离、超时。
 2. 增加 `comment.render_html`、`comment_form.after_textarea`、`frontend.assets` 等 hook/slot。
-3. 将 `twentytwenty` 评论表情迁移成 `comment-smilies` 插件。
+3. 将 `twentytwenty` 评论表情迁移成 `post-comment-enhance` 插件。
 4. 核心评论模板补 slot；现有主题逐步适配 slot。
 
 验收：切换到任意主题后，评论正文表情渲染保持可用；支持 slot 的主题显示表情面板。
@@ -778,8 +776,8 @@ plugins/comment-smilies/
 
 - 默认主题启用 `saying` 插件，侧边栏显示博主动态。
 - `twentytwenty`、`spread`、`single` 切换后，插件组件配置不丢失。
-- 启用 `comment-smilies` 后评论表单出现表情按钮，提交后正文渲染为图片。
-- 停用 `comment-smilies` 后历史评论仍显示短码文本，不报错。
+- 启用 `post-comment-enhance` 后评论表单出现表情按钮，提交后正文渲染为图片。
+- 停用 `post-comment-enhance` 后历史评论仍显示短码文本，不报错。
 - 插件加载失败时前台仍可访问，后台插件页显示错误详情。
 
 ## 18. 风险与权衡
@@ -1140,9 +1138,9 @@ widgets:
 
 1. 主题评论模板按推荐写法输出评论正文：`{{commentContent .}}`。
 2. `commentContent` 先对评论原文做 HTML 转义，再应用 `comment.render_html` filter。
-3. `comment-smilies` 插件把 `[/微笑]` 替换成受控 `/plugin-assets/comment-smilies/smilies/微笑.gif` 图片。
+3. `post-comment-enhance` 插件把 `[/微笑]` 替换成受控 `/plugin-assets/post-comment-enhance/smilies/微笑.gif` 图片。
 4. 主题评论表单 textarea 后调用：`{{pluginSlot "comment_form.after_textarea" .}}`。
-5. `comment-smilies` 插件在该 slot 输出表情按钮面板。
+5. `post-comment-enhance` 插件在该 slot 输出表情按钮面板。
 6. `head.end/body.end` 注入插件 CSS/JS。
 
 ### 20.8 编码顺序
@@ -1160,7 +1158,7 @@ widgets:
 | done | 7 | **组件声明 filter**：后台组件页和前台解析都接入 `widgets.available`。 | 已完成：后台组件列表和前台解析都会应用 `widgets.available`；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
 | done | 8 | **插件组件渲染**：支持 plugin widget 的模板执行或 `widget.render`。 | 已完成：`renderWidgets` 会按 `Source=plugin` 分流到插件渲染器；插件组件支持 `widget.render` action 输出，未输出时回退到 `plugins/<id>/widgets/<widget_id>.gohtml` 模板；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
 | done | 9 | **迁移 saying**：把 default 主题里的 saying 能力迁到 `plugins/saying`。 | 已完成：新增 `plugins/saying`，通过 manifest 声明组件和默认启用，组件模板由插件自带；default 主题已移除 saying 声明和模板。 |
-| done | 10 | **评论表情**：实现 `comment.render_html` + `comment_form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/comment-smilies`，通过 `comment.render_html` 渲染短码图片、通过 `comment_form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
+| done | 10 | **评论表情**：实现 `comment.render_html` + `comment_form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/post-comment-enhance`，通过 `comment.render_html` 渲染短码图片、通过 `comment_form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
 | done | 11 | **i18n 完整化**：插件文本域绑定、`.tp.T`、`pluginapi.Api.T/N/X/XN`。 | 已完成：`pluginapi.Api.T/N/X/XN`、插件文本域绑定、插件模板 `.tp.T` 都已接入。 |
 | done | 12 | **后台插件页**：最小列表页展示启用状态、加载错误、hook/source 信息。 | 已完成：新增 `/admin/plugins` 插件列表、启用/停用/重载操作、hook/source/组件/设置展示、加载错误展示，并支持 `/admin/plugin/:id/settings` 配置插件全局选项。 |
 

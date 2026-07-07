@@ -37,6 +37,8 @@ const (
 	HookBodyEnd = "body.end"
 	// HookCommentFormAfterTextarea 在评论表单 textarea 后触发，扩展可写入表情、附件等控件。
 	HookCommentFormAfterTextarea = "comment.form.after_textarea"
+	// HookAdminPostFormAfterTextarea 在后台文章编辑表单 textarea 后触发，扩展可写入表情、附件等控件。
+	HookAdminPostFormAfterTextarea = "admin.post.form.after_textarea"
 	// HookWidgetRender 允许插件直接渲染自己的组件；未输出时回退到 widgets/<id>.gohtml。
 	HookWidgetRender = "widget.render"
 	// HookPostTitle 过滤文章/页面标题文本，运行于 postTitle 模板函数内部。
@@ -53,6 +55,30 @@ const (
 	// 插件可改写、追加或清空 meta 标签（返回空字符串即清除）。
 	HookHeadMeta = "head.meta"
 )
+
+// Consts 聚合所有 hook 名称常量和优先级值，供 yaegi 解释器一次性导出。
+// 新增 hook 常量和优先级时只需修改此结构体，无需在 hook_exports.go 中逐个添加导出项。
+var Consts = struct {
+	HookHeadEnd, HookBodyEnd, HookCommentFormAfterTextarea, HookAdminPostFormAfterTextarea string
+	HookWidgetRender, HookPostTitle, HookPostExcerptHTML, HookPostContentHTML               string
+	HookCommentContentHTML, HookWidgetRenderHTML, HookHeadMeta                              string
+	PriorityEarly, PriorityDefault, PriorityLate                                            int
+}{
+	HookHeadEnd:                  HookHeadEnd,
+	HookBodyEnd:                  HookBodyEnd,
+	HookCommentFormAfterTextarea: HookCommentFormAfterTextarea,
+	HookAdminPostFormAfterTextarea: HookAdminPostFormAfterTextarea,
+	HookWidgetRender:             HookWidgetRender,
+	HookPostTitle:                HookPostTitle,
+	HookPostExcerptHTML:          HookPostExcerptHTML,
+	HookPostContentHTML:          HookPostContentHTML,
+	HookCommentContentHTML:       HookCommentContentHTML,
+	HookWidgetRenderHTML:         HookWidgetRenderHTML,
+	HookHeadMeta:                 HookHeadMeta,
+	PriorityEarly:                PriorityEarly,
+	PriorityDefault:              PriorityDefault,
+	PriorityLate:                 PriorityLate,
+}
 
 // actionWriterKey 用于在 context 中存储当前 action 的输出 writer。
 type actionWriterKey struct{}
@@ -106,6 +132,12 @@ type BodyEndData struct {
 
 // CommentFormAfterTextareaData 是 comment.form.after_textarea action 的参数。
 type CommentFormAfterTextareaData struct {
+	Data any
+}
+
+// AdminPostFormAfterTextareaData 是 admin.post.form.after_textarea action 的参数。
+// Data 是渲染 admin_post_edit.gohtml 时传入的模板数据（包含 Post 等字段）。
+type AdminPostFormAfterTextareaData struct {
 	Data any
 }
 

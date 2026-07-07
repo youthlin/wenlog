@@ -739,8 +739,8 @@ body.nav-open { overflow: hidden; }
   .comment-children { padding-left: 16px; }
   .comment .comment-form-box { margin-left: 0; }
   .comment .comment-form { margin-left: 0; }
-  .comment-smilies-list { gap: 4px; }
-  .comment-smiley-btn { padding: 1px; }
+  .smilies-list { gap: 4px; }
+  .smiley-btn { padding: 1px; }
   .comment-form-actions button { width: 100%; }
 }
 

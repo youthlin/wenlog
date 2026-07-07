@@ -222,11 +222,11 @@ func TestEnsurePluginsOnDiskReleasesBundledPlugins(t *testing.T) {
 
 	ensurePluginsOnDisk()
 
-	wantYAML, err := fs.ReadFile(plugins.Plugins, "comment-smilies/plugin.yaml")
+	wantYAML, err := fs.ReadFile(plugins.Plugins, "post-comment-enhance/plugin.yaml")
 	if err != nil {
 		t.Fatalf("read bundled plugin yaml: %v", err)
 	}
-	gotYAML, err := os.ReadFile(filepath.Join("plugins", "comment-smilies", "plugin.yaml"))
+	gotYAML, err := os.ReadFile(filepath.Join("plugins", "post-comment-enhance", "plugin.yaml"))
 	if err != nil {
 		t.Fatalf("read released plugin yaml: %v", err)
 	}
