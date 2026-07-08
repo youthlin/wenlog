@@ -216,7 +216,7 @@ func (r *Hooks) safeDoAction(ctx context.Context, h Handler, args ...any) {
 		fn()
 	default:
 		// 这里保留反射是为了兼容 yaegi 脚本里声明的具体函数签名。
-		callByReflection(h.Fn, ctx, nil, args...)
+		callByReflection(h.Fn, ctx, false, nil, args...)
 	}
 }
 
@@ -297,7 +297,7 @@ func (r *Hooks) safeApplyFilter(ctx context.Context, h Handler, value any, args 
 		return fn(value)
 	default:
 		// 同 safeDoAction：filter 也允许插件/主题使用具体签名。
-		result, ok := callByReflection(h.Fn, ctx, value, args...)
+		result, ok := callByReflection(h.Fn, ctx, true, value, args...)
 		if !ok {
 			return value
 		}
@@ -324,16 +324,22 @@ func (r *Hooks) logPanic(ctx context.Context, h Handler, rec any) {
 	)
 }
 
-func callByReflection(fn any, ctx context.Context, value any, args ...any) (any, bool) {
+func callByReflection(fn any, ctx context.Context, includeValue bool, value any, args ...any) (any, bool) {
 	rv := reflect.ValueOf(fn)
 	if !rv.IsValid() || rv.Kind() != reflect.Func {
 		return value, false
 	}
 	rt := rv.Type()
-	if !rt.IsVariadic() && rt.NumIn() < fixedArgCount(ctx, value) {
-		return value, false
+	values := make([]any, 0, len(args)+2)
+	if shouldInjectContext(rt) {
+		values = append(values, ctx)
 	}
-	in := buildReflectArgs(rt, ctx, value, args...)
+	if includeValue {
+		values = append(values, value)
+	}
+	values = append(values, args...)
+
+	in := buildReflectArgs(rt, values)
 	if in == nil {
 		return value, false
 	}
@@ -347,27 +353,20 @@ func callByReflection(fn any, ctx context.Context, value any, args ...any) (any,
 	return outs[0].Interface(), true
 }
 
-func fixedArgCount(ctx context.Context, value any) int {
-	n := 0
-	if ctx != nil {
-		n++
+var contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
+
+func shouldInjectContext(rt reflect.Type) bool {
+	if rt.NumIn() == 0 {
+		return false
 	}
-	if value != nil {
-		n++
+	if rt.IsVariadic() && rt.NumIn() == 1 {
+		return false
 	}
-	return n
+	first := rt.In(0)
+	return first == contextType || (first.Kind() == reflect.Interface && first.NumMethod() > 0 && contextType.Implements(first))
 }
 
-func buildReflectArgs(rt reflect.Type, ctx context.Context, value any, args ...any) []reflect.Value {
-	values := make([]any, 0, len(args)+2)
-	if ctx != nil {
-		values = append(values, ctx)
-	}
-	if value != nil {
-		values = append(values, value)
-	}
-	values = append(values, args...)
-
+func buildReflectArgs(rt reflect.Type, values []any) []reflect.Value {
 	if !rt.IsVariadic() && len(values) != rt.NumIn() {
 		return nil
 	}

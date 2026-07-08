@@ -70,6 +70,78 @@ func Register(api *hook.API) {
 	}
 }
 
+func TestCompileFunctionsExportsHookViewTypes(t *testing.T) {
+	p := writeTestPlugin(t, "view-types", `package plugin
+
+import "hook"
+
+func Register(api *hook.API) error {
+	api.AddFilter(hook.Consts.FilterPostTitle, func(value string, post hook.PostView) string {
+		return value + ":" + post.Title
+	})
+	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(value string, comment hook.CommentView) string {
+		return value + ":" + comment.Author
+	})
+	api.AddFilter(hook.Consts.FilterWidgetRenderHTML, func(value string, widget hook.WidgetRenderView) string {
+		return value + ":" + widget.ID
+	})
+	api.AddFilter(hook.Consts.FilterHeadMeta, func(value string, meta hook.HeadMetaView) string {
+		return value + ":" + meta.Title
+	})
+	return api.RegistrationError()
+}
+`)
+	hooks := hook.NewRegistry()
+	if _, err := CompileFunctions(context.Background(), p, hooks, nil); err != nil {
+		t.Fatalf("CompileFunctions: %v", err)
+	}
+
+	cases := []struct {
+		name   string
+		filter string
+		value  string
+		arg    any
+		want   string
+	}{
+		{
+			name:   "post view",
+			filter: hook.FilterPostTitle,
+			value:  "title",
+			arg:    hook.PostView{Title: "Hello"},
+			want:   "title:Hello",
+		},
+		{
+			name:   "comment view",
+			filter: hook.FilterCommentContentHTML,
+			value:  "comment",
+			arg:    hook.CommentView{Author: "Alice"},
+			want:   "comment:Alice",
+		},
+		{
+			name:   "widget render view",
+			filter: hook.FilterWidgetRenderHTML,
+			value:  "widget",
+			arg:    hook.WidgetRenderView{ID: "recent_posts"},
+			want:   "widget:recent_posts",
+		},
+		{
+			name:   "head meta view",
+			filter: hook.FilterHeadMeta,
+			value:  "meta",
+			arg:    hook.HeadMetaView{Title: "About"},
+			want:   "meta:About",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := hooks.ApplyFilters(context.Background(), tc.filter, tc.value, tc.arg)
+			if got != tc.want {
+				t.Fatalf("ApplyFilters(%s) = %v, want %s", tc.filter, got, tc.want)
+			}
+		})
+	}
+}
+
 func writeTestPlugin(t *testing.T, id, functions string) *Plugin {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), id)

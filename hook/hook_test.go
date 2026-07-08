@@ -170,6 +170,48 @@ func TestWithDataLoader(t *testing.T) {
 	}
 }
 
+func TestReflectHookSignaturesInjectContextOnlyWhenRequested(t *testing.T) {
+	hooks := NewRegistry()
+	hooks.AddFilter("post.title", func(value string, post PostView) string {
+		return value + ":" + post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+	hooks.AddFilter("post.title.ctx", func(ctx context.Context, value string, post PostView) string {
+		if CurrentHook(ctx) != "" {
+			return value + ":unexpected-hook"
+		}
+		return value + ":" + post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+
+	post := PostView{Title: "Hello"}
+	if got := hooks.ApplyFilters(context.Background(), "post.title", "title", post); got != "title:Hello" {
+		t.Fatalf("concrete filter without context = %v, want title:Hello", got)
+	}
+	if got := hooks.ApplyFilters(context.Background(), "post.title.ctx", "title", post); got != "title:Hello" {
+		t.Fatalf("concrete filter with context = %v, want title:Hello", got)
+	}
+}
+
+func TestReflectActionSignaturesInjectContextOnlyWhenRequested(t *testing.T) {
+	hooks := NewRegistry()
+	var withoutCtx, withCtx string
+	hooks.AddAction("post.render", func(post PostView) {
+		withoutCtx = post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+	hooks.AddAction("post.render.ctx", func(ctx context.Context, post PostView) {
+		withCtx = CurrentHook(ctx) + ":" + post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+
+	post := PostView{Title: "Hello"}
+	hooks.DoAction(context.Background(), "post.render", io.Discard, post)
+	hooks.DoAction(context.Background(), "post.render.ctx", io.Discard, post)
+	if withoutCtx != "Hello" {
+		t.Fatalf("concrete action without context = %q, want Hello", withoutCtx)
+	}
+	if withCtx != "post.render.ctx:Hello" {
+		t.Fatalf("concrete action with context = %q, want post.render.ctx:Hello", withCtx)
+	}
+}
+
 // ========== Source 测试 ==========
 
 func TestSource(t *testing.T) {
