@@ -164,7 +164,8 @@ assets:
 hooks:
   filters:
     - comment.content_html
-    - frontend.assets
+  actions:
+    - head.end
   slots:
     - comment.form.after_textarea
 
@@ -199,7 +200,7 @@ widgets:
 | `hooks` | 可选，声明插件会注册或依赖的 action/filter/slot，便于后台展示和冲突检查；实际注册仍由脚本完成。 |
 | `widgets` | 可选，插件提供的全局组件声明，不依赖当前主题，也不绑定具体区域。没有组件的插件可以完全省略。 |
 | `templates` / `widgets` 目录 | 可选，仅当插件需要提供默认片段模板或组件模板时存在。 |
-| `assets` | 可选，插件默认需要注入的 CSS/JS；通常通过 `frontend.assets` filter 按页面条件注入。 |
+| `assets` | 可选，插件默认需要注入的 CSS/JS；通常通过 `head.end` / `body.end` action 按页面条件注入。 |
 
 ### 5.2 插件运行时
 
@@ -268,7 +269,7 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 | `plugin.deactivate` | action | 后台停用插件后 | 清理缓存、临时状态。 |
 | `plugin.uninstall` | action | 后台删除插件时 | 删除插件设置和插件数据。 |
 | `template.data` | filter | `Public.base()` 组装完模板数据后 | 给所有前台页面增加插件数据。 |
-| `frontend.assets` | filter | 渲染 `<head>` 或 footer 前 | 注入插件 CSS/JS。 |
+| `head.end` / `body.end` | action | 主题模板 `<head>` 结束前或 `</body>` 前 | 注入插件 CSS/JS。 |
 | `widget.render_html` | filter | 单个组件渲染后 | 包装组件外层、追加样式标记。 |
 | `comment.form.after_textarea` | slot | 评论表单 textarea 后 | 在 textarea 后注入表情按钮、Markdown 工具栏、验证码入口等。 |
 | `comment.content_html` | filter | 评论正文输出前 | 表情替换、@ 提及、Markdown 子集等。 |
@@ -280,7 +281,7 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 
 ### 6.3 Hook 命名约定
 
-- 使用小写点分命名：`comment.content_html`、`frontend.assets`。
+- 使用小写点分命名：`comment.content_html`、`head.end`。
 - 名称表达“领域 + 事件/数据”，避免 `before_xxx` 滥用。
 - Filter 名称应体现返回值语义，例如 `comment.content_html` 返回可信 HTML。
 - 每个 hook 必须文档化：触发时机、参数、返回值、安全要求、是否允许错误中断主流程。
@@ -548,7 +549,7 @@ plugins/post-comment-enhance/
 
 1. `comment.content_html` filter：接收已转义或待渲染的评论正文，替换 `[/微笑]` 这类短码为 `<img class="smiley" ...>`。
 2. `comment.form.after_textarea` slot：在评论 textarea 后注入表情按钮片段，按钮写入短码到 textarea。
-3. `frontend.assets` filter：仅在文章/页面详情且评论开启时注入 CSS/JS。
+3. `head.end` action：仅在需要时注入 CSS/JS。
 4. 插件设置声明启用哪些表情、是否显示表情面板、图片尺寸等。
 
 评论渲染安全建议：
@@ -576,7 +577,7 @@ plugins/post-comment-enhance/
 | Hook / 函数 | 类型 | 建议调用方 | 说明 |
 |---|---|---|---|
 | `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。filter 扩展参数传 `hook.PostView`。 |
-| `post.excerpt_html` / `postExcerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。filter 扩展参数传 `hook.PostView`。 |
+| `post.excerpt_html` / `post_excerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。filter 扩展参数传 `hook.PostView`。 |
 | `page.content_html` | filter | 宿主模板函数 | 页面正文渲染。可与 `post.content_html` 共用实现，但 hook 名称可保留语义。 |
 | `comment.content_html` / `comment_content` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。filter 扩展参数传 `hook.CommentView`。 |
 
@@ -752,7 +753,7 @@ plugins/post-comment-enhance/
 ### P2：核心 Hooks 与评论表情
 
 1. 实现 `Hooks`：action/filter 注册、优先级、错误隔离、超时。
-2. 增加 `comment.content_html`、`comment.form.after_textarea`、`frontend.assets` 等 hook/slot。
+2. 增加 `comment.content_html`、`comment.form.after_textarea`、`head.end` 等 hook/slot。
 3. 将 `twentytwenty` 评论表情迁移成 `post-comment-enhance` 插件。
 4. 核心评论模板补 slot；现有主题逐步适配 slot。
 
