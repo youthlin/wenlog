@@ -28,7 +28,7 @@ type FuncRegistry interface {
 type RenderAPI interface {
 	Print(args ...any)
 	Printf(format string, args ...any)
-	Println(format string, args ...any)
+	Println(args ...any)
 	EscapeHTML(s string) string
 }
 

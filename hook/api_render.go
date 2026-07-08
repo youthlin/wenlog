@@ -31,9 +31,16 @@ func (api *API) Printf(format string, args ...any) {
 	_, _ = fmt.Fprintf(w, format, args...)
 }
 
-// Println 向当前 action 的输出 writer 写入格式化字符串并自动换行。
-func (api *API) Println(format string, args ...any) {
-	api.Printf(format+"\n", args...)
+// Println 向当前 action 的输出 writer 写入参数并自动换行。
+func (api *API) Println(args ...any) {
+	if api == nil || api.ctx == nil {
+		return
+	}
+	w := GetActionWriter(api.ctx)
+	if w == nil {
+		return
+	}
+	_, _ = fmt.Fprintln(w, args...)
 }
 
 // EscapeHTML 转义 HTML 特殊字符。

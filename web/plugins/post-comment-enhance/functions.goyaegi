@@ -72,7 +72,7 @@ func renderAssets(api *hook.API) {
 	if !enabled(api) {
 		return
 	}
-	api.Println(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`, assetVersion)
+	api.Printf(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`+"\n", assetVersion)
 }
 
 func enabled(api *hook.API) bool {
@@ -87,8 +87,8 @@ func renderSmileyPanel(api *hook.API, mode string) {
 		return
 	}
 	api.Println("")
-	api.Println(`<div class="smilies" data-smilies data-smilies-mode="%s">`, mode)
-	api.Println(`  <div class="smilies-label sr-only">%s</div>`, api.EscapeHTML(api.T("表情")))
+	api.Printf(`<div class="smilies" data-smilies data-smilies-mode="%s">`+"\n", mode)
+	api.Printf(`  <div class="smilies-label sr-only">%s</div>`+"\n", api.EscapeHTML(api.T("表情")))
 	api.Println(`  <div class="smilies-list">`)
 	for _, name := range smileyNames {
 		code := "[/" + name + "]"

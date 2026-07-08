@@ -994,7 +994,7 @@ func (api *API) XN(ctx, singular, plural string, n int, args ...any) string
 func (api *API) EscapeHTML(s string) string
 func (api *API) Print(args ...any)
 func (api *API) Printf(format string, args ...any)
-func (api *API) Println(format string, args ...any)
+func (api *API) Println(args ...any)
 ```
 
 注意：
