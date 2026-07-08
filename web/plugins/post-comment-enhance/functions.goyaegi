@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -41,8 +42,8 @@ func Register(api *hook.API) {
 		renderAssets(api)
 	})
 	// 评论内容的表情渲染
-	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(api *hook.API, value any, args ...any) any {
-		return renderSmilies(api, value, args...)
+	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(ctx context.Context, value string, comment hook.CommentView) string {
+		return renderSmilies(api.WithContext(ctx), value)
 	})
 	// 在前台评论框后 插入表情面板
 	api.AddAction(hook.Consts.ActionCommentFormAfterTextarea, func(api *hook.API, args ...any) {
@@ -53,16 +54,17 @@ func Register(api *hook.API) {
 		renderSmileyPanel(api, "admin")
 	})
 	// 文章正文的表情渲染
-	api.AddFilter(hook.Consts.FilterPostContentHTML, func(api *hook.API, value any, args ...any) any {
+	api.AddFilter(hook.Consts.FilterPostContentHTML, func(ctx context.Context, value string, post hook.PostView) string {
+		reqAPI := api.WithContext(ctx)
 		content := value
-		if postSmiliesEnabled(api) {
-			content = renderSmilies(api, content, args...)
+		if postSmiliesEnabled(reqAPI) {
+			content = renderSmilies(reqAPI, content)
 		}
 		return content
 	})
 	// 文章尾部 HTML（版权声明等）
-	api.AddFilter(hook.Consts.FilterPostFooterHTML, func(api *hook.API, value any, args ...any) any {
-		return appendPostFooter(api, value, args...)
+	api.AddFilter(hook.Consts.FilterPostFooterHTML, func(ctx context.Context, value string, post hook.PostView) string {
+		return appendPostFooter(api.WithContext(ctx), value, post)
 	})
 }
 
@@ -103,13 +105,12 @@ func renderSmileyPanel(api *hook.API, mode string) {
 	}
 }
 
-func renderSmilies(api *hook.API, value any, args ...any) any {
-	content, ok := value.(string)
-	if !ok || content == "" {
-		return value
+func renderSmilies(api *hook.API, content string) string {
+	if content == "" {
+		return content
 	}
 	if !enabled(api) {
-		return value
+		return content
 	}
 	for _, name := range smileyNames {
 		code := "[/" + name + "]"
@@ -120,34 +121,16 @@ func renderSmilies(api *hook.API, value any, args ...any) any {
 }
 
 // appendPostFooter 在文章正文末尾追加配置的 HTML 尾部内容。
-func appendPostFooter(api *hook.API, value any, args ...any) any {
-	content, ok := value.(string)
-	if !ok || content == "" {
-		return value
+func appendPostFooter(api *hook.API, content string, post hook.PostView) string {
+	if content == "" {
+		return content
 	}
 	footerHTML := api.PluginOption("post_footer_html", "")
 	if footerHTML == "" {
 		return content
 	}
-	// 从 args 中提取 post 对象，用其字段替换模板变量
-	post := extractPost(args)
-	if post != nil {
-		footerHTML = replacePostVars(api, footerHTML, post)
-	}
+	footerHTML = replacePostVars(api, footerHTML, &post)
 	return content + footerHTML
-}
-
-// extractPost 从 filter args 中提取稳定的 PostView。
-func extractPost(args []any) *hook.PostView {
-	for _, arg := range args {
-		switch post := arg.(type) {
-		case hook.PostView:
-			return &post
-		case *hook.PostView:
-			return post
-		}
-	}
-	return nil
 }
 
 // replacePostVars 替换字符串中的 %var% 变量，风格与固定链接配置一致。
