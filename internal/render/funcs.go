@@ -14,6 +14,7 @@ import (
 	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/model"
 	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/internal/util"
 	"github.com/youthlin/wenlog/internal/wxr"
 )
@@ -55,7 +56,8 @@ func widgetOption(ctx *RequestContext, key string) string {
 func postTitle(ctx *RequestContext, post any) template.HTML {
 	title := reflectStringField(post, "Title")
 	if h := hooks(ctx.Runtime); h != nil {
-		v := h.ApplyFilters(requestContext(ctx), hook.FilterPostTitle, title, post)
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterPostTitle, title, postViewPayload(ctx, post))
 		title = stringFromFilterValue(v, title)
 	}
 	title = html.EscapeString(title)
@@ -93,7 +95,8 @@ func stringFromFilterValue(v any, fallback string) string {
 func postExcerpt(ctx *RequestContext, post any) template.HTML {
 	html := postExcerptHTMLAny(post)
 	if h := hooks(ctx.Runtime); h != nil {
-		v := h.ApplyFilters(requestContext(ctx), hook.FilterPostExcerptHTML, string(html), post)
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterPostExcerptHTML, string(html), postViewPayload(ctx, post))
 		html = htmlFromFilterValue(v)
 	}
 	return html
@@ -130,9 +133,10 @@ func postContent(r *RequestContext, post any) template.HTML {
 	html := postContentHTML(post)
 	if h := hooks(r.Runtime); h != nil {
 		ctx := requestContext(r)
-		v := h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), post)
+		payload := postViewPayload(r, post)
+		v := h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload)
 		html = htmlFromFilterValue(v)
-		v = h.ApplyFilters(requestContext(r), hook.FilterPostFooterHTML, string(html), post)
+		v = h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload)
 		html = htmlFromFilterValue(v)
 	}
 	return html
@@ -161,10 +165,33 @@ func postContentHTML(post any) template.HTML {
 func commentContent(ctx *RequestContext, comment any) template.HTML {
 	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
 	if h := hooks(ctx.Runtime); h != nil {
-		v := h.ApplyFilters(requestContext(ctx), hook.FilterCommentContentHTML, string(html), comment)
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterCommentContentHTML, string(html), commentViewPayload(comment))
 		html = htmlFromFilterValue(v)
 	}
 	return html
+}
+
+func postViewPayload(ctx *RequestContext, post any) any {
+	if view := hook.PostViewOf(post, dataLoader(ctx)); view != nil {
+		return *view
+	}
+	return post
+}
+
+func dataLoader(ctx *RequestContext) *store.DataLoader {
+	if ctx == nil || ctx.ThemeLoader == nil {
+		return nil
+	}
+	loader, _ := ctx.ThemeLoader.(*store.DataLoader)
+	return loader
+}
+
+func commentViewPayload(comment any) any {
+	if view := hook.CommentViewOf(comment); view != nil {
+		return *view
+	}
+	return comment
 }
 
 func htmlFromFilterValue(v any) template.HTML {

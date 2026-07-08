@@ -1,7 +1,7 @@
 package plugin
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -137,22 +137,15 @@ func appendPostFooter(api *hook.API, value any, args ...any) any {
 	return content + footerHTML
 }
 
-// extractPost 从 filter args 中提取 post 对象字段。
-// 通过 JSON 序列化/反序列化处理，因为 Yaegi 无法直接访问 *model.Post 类型。
-func extractPost(args []any) map[string]any {
+// extractPost 从 filter args 中提取稳定的 PostView。
+func extractPost(args []any) *hook.PostView {
 	for _, arg := range args {
-		if arg == nil {
-			continue
+		switch post := arg.(type) {
+		case hook.PostView:
+			return &post
+		case *hook.PostView:
+			return post
 		}
-		b, err := json.Marshal(arg)
-		if err != nil {
-			continue
-		}
-		var m map[string]any
-		if err := json.Unmarshal(b, &m); err != nil {
-			continue
-		}
-		return m
 	}
 	return nil
 }
@@ -165,17 +158,17 @@ func extractPost(args []any) map[string]any {
 //	%postAuthor% / %postAuthorUsername% — 作者字段
 //
 // 替换值经过 HTML 转义，防止用户数据注入 XSS。
-func replacePostVars(api *hook.API, s string, post map[string]any) string {
+func replacePostVars(api *hook.API, s string, post *hook.PostView) string {
 	s = replaceVar(s, "%siteURL%", api.EscapeHTML(api.Setting("site_url")))
 	s = replaceVar(s, "%siteName%", api.EscapeHTML(api.Setting("site_name")))
 	s = replaceVar(s, "%siteDesc%", api.EscapeHTML(api.Setting("site_description")))
 	s = replaceVar(s, "%postURL%", api.EscapeHTML(buildPostURL(api, post)))
-	s = replaceVar(s, "%postID%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"ID"}))))
-	s = replaceVar(s, "%postTitle%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Title"}))))
-	s = replaceVar(s, "%postSlug%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Slug"}))))
-	s = replaceVar(s, "%postExcerpt%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Excerpt"}))))
-	s = replaceVar(s, "%postAuthor%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Author", "DisplayName"}))))
-	s = replaceVar(s, "%postAuthorUsername%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Author", "Username"}))))
+	s = replaceVar(s, "%postID%", api.EscapeHTML(anyToString(post.ID)))
+	s = replaceVar(s, "%postTitle%", api.EscapeHTML(post.Title))
+	s = replaceVar(s, "%postSlug%", api.EscapeHTML(post.Slug))
+	s = replaceVar(s, "%postExcerpt%", api.EscapeHTML(post.Excerpt))
+	s = replaceVar(s, "%postAuthor%", api.EscapeHTML(post.Author.DisplayName))
+	s = replaceVar(s, "%postAuthorUsername%", api.EscapeHTML(post.Author.Username))
 	return s
 }
 
@@ -184,60 +177,23 @@ func replaceVar(s, old, replacement string) string {
 	return strings.ReplaceAll(s, old, replacement)
 }
 
-// resolveCaseInsensitive 在嵌套 map 中按大小写不敏感路径查找值。
-func resolveCaseInsensitive(m map[string]any, parts []string) any {
-	current := any(m)
-	for _, part := range parts {
-		cm, ok := current.(map[string]any)
-		if !ok {
-			return nil
-		}
-		found := false
-		for k, v := range cm {
-			if strings.EqualFold(k, part) {
-				current = v
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil
-		}
-	}
-	return current
-}
-
 // buildPostURL 根据文章字段构造永久链接。
-func buildPostURL(api *hook.API, post map[string]any) string {
+func buildPostURL(api *hook.API, post *hook.PostView) string {
 	siteURL := strings.TrimRight(api.Setting("site_url"), "/")
-	id := anyToString(resolveCaseInsensitive(post, []string{"ID"}))
-	postType := anyToString(resolveCaseInsensitive(post, []string{"PostType"}))
-	slug := anyToString(resolveCaseInsensitive(post, []string{"Slug"}))
-	if postType == "page" && slug != "" {
-		return siteURL + "/" + slug
+	if post.PostType == "page" && post.Slug != "" {
+		return siteURL + "/" + post.Slug
 	}
-	return siteURL + "/?p=" + id
+	return siteURL + "/?p=" + anyToString(post.ID)
 }
 
 func anyToString(v any) string {
 	switch t := v.(type) {
+	case nil:
+		return ""
 	case string:
 		return t
-	case bool:
-		if t {
-			return "true"
-		}
-		return "false"
-	case float64:
-		// JSON 数字默认解为 float64，整数直接格式化为不带小数的字符串
-		if t == float64(int64(t)) {
-			b, _ := json.Marshal(int64(t))
-			return string(b)
-		}
-		b, _ := json.Marshal(t)
-		return string(b)
 	default:
-		return ""
+		return fmt.Sprint(t)
 	}
 }
 

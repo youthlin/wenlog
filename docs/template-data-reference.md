@@ -89,15 +89,15 @@
 | `render_menu` | `func(string, ...any) template.HTML` | 渲染指定位置的导航菜单，如 `{{render_menu "primary" .}}`；支持多级下拉子菜单，自动从 `.Menus` 或 `.Menu` 取数据 |
 | `do_action` | `func(string, any) template.HTML` | 触发 action hook 并收集扩展输出 HTML，如 `{{do_action "head.end" .}}` |
 | `apply_filter` | `func(any, string, ...any) template.HTML` | 对输入值应用 filter 链，如 `{{apply_filter .Post.Title "post.title" .Post}}` |
-| `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter |
-| `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter |
-| `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter |
+| `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter；filter 扩展参数传 `hook.PostView` |
+| `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter；filter 扩展参数传 `hook.PostView` |
+| `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView` |
 | `post_tags` | `func(any) template.HTML` | 输出文章标签链接 |
 | `post_navigation` | `func(any, ...string) template.HTML` | 输出上一篇/下一篇文章导航 |
 | `body_class` | `func(any) string` | 生成 `<body>` CSS class |
 | `post_class` | `func(any, ...string) string` | 生成文章容器 CSS class |
 | `comment_class` | `func(any, ...string) string` | 生成评论项 CSS class |
-| `comment_content` | `func(any) template.HTML` | 输出评论正文并应用 `comment.content_html` filter |
+| `comment_content` | `func(any) template.HTML` | 输出评论正文并应用 `comment.content_html` filter；filter 扩展参数传 `hook.CommentView` |
 | `head_meta` | `func(any) template.HTML` | 输出 OpenGraph / Twitter Card meta 标签并应用 `head.meta` filter |
 | `list_comments` | `func(...any) template.HTML` | 渲染评论列表 |
 | `comment_form` | `func(any) template.HTML` | 渲染评论表单，内部会触发 `comment.form.after_textarea` action |

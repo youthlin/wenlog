@@ -369,6 +369,40 @@ func postModel(v any) *PostView {
 	}
 }
 
+// PostViewOf 将宿主文章模型或已有视图转换为扩展 API 的稳定只读视图。
+func PostViewOf(v any, loader *store.DataLoader) *PostView {
+	switch p := v.(type) {
+	case *PostView:
+		return p
+	case PostView:
+		return &p
+	case *model.Post:
+		return toPostView(p, loader)
+	case model.Post:
+		return toPostView(&p, loader)
+	default:
+		return nil
+	}
+}
+
+// CommentViewOf 将宿主评论模型或已有视图转换为扩展 API 的稳定只读视图。
+func CommentViewOf(v any) *CommentView {
+	switch c := v.(type) {
+	case *CommentView:
+		return c
+	case CommentView:
+		return &c
+	case *model.Comment:
+		view := toCommentView(c)
+		return &view
+	case model.Comment:
+		view := toCommentView(&c)
+		return &view
+	default:
+		return nil
+	}
+}
+
 func viewPostModel(p *PostView) *model.Post {
 	if p == nil {
 		return nil

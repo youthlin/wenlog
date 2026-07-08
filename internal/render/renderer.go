@@ -207,8 +207,12 @@ func (r *Renderer) Hooks() hook.Executor {
 func (r *Renderer) FilterPostContent(ctx context.Context, post *model.Post) template.HTML {
 	html := detailHTML(post)
 	if h := r.Hooks(); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), post))
-		html = htmlFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), post))
+		payload := any(post)
+		if view := hook.PostViewOf(post, nil); view != nil {
+			payload = *view
+		}
+		html = htmlFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload))
+		html = htmlFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload))
 	}
 	return html
 }

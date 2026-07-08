@@ -43,6 +43,60 @@ func TestPostNavigationSkipsTypedNilPosts(t *testing.T) {
 	}
 }
 
+func TestStandardContentFiltersReceiveStableViews(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var titlePost hook.PostView
+	var contentPost hook.PostView
+	var commentView hook.CommentView
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		titlePost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		contentPost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterCommentContentHTML, func(value any, args ...any) any {
+		commentView, _ = args[0].(hook.CommentView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{
+		Runtime: &TemplateRuntime{},
+	}
+	ctx.Runtime.providers.Hooks = hooks
+
+	post := &model.Post{ID: 7, Title: "Hello", Content: "body"}
+	_ = postTitle(ctx, post)
+	_ = postContent(ctx, post)
+	_ = commentContent(ctx, &model.Comment{ID: 9, PostID: 7, Content: "comment"})
+
+	if titlePost.ID != 7 || titlePost.Title != "Hello" {
+		t.Fatalf("post.title payload = %+v, want PostView", titlePost)
+	}
+	if contentPost.ID != 7 || contentPost.Content != "body" {
+		t.Fatalf("post.content_html payload = %+v, want PostView", contentPost)
+	}
+	if commentView.ID != 9 || commentView.PostID != 7 || commentView.Content != "comment" {
+		t.Fatalf("comment.content_html payload = %+v, want CommentView", commentView)
+	}
+}
+
+func TestFeedPostFiltersReceiveStableView(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var got hook.PostView
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		got, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r := &Renderer{}
+	r.themeRuntime.providers.Hooks = hooks
+
+	_ = r.FilterPostContent(context.Background(), &model.Post{ID: 11, Title: "Feed", Content: "body"})
+	if got.ID != 11 || got.Title != "Feed" || got.Content != "body" {
+		t.Fatalf("feed post.content_html payload = %+v, want PostView", got)
+	}
+}
+
 func TestHotRendererReload(t *testing.T) {
 	dir := t.TempDir()
 	file := filepath.Join(dir, "sample.gohtml")

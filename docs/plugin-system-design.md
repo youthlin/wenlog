@@ -570,10 +570,10 @@ plugins/post-comment-enhance/
 
 | Hook / 函数 | 类型 | 建议调用方 | 说明 |
 |---|---|---|---|
-| `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。 |
-| `post.excerpt_html` / `postExcerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。 |
+| `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。filter 扩展参数传 `hook.PostView`。 |
+| `post.excerpt_html` / `postExcerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。filter 扩展参数传 `hook.PostView`。 |
 | `page.content_html` | filter | 宿主模板函数 | 页面正文渲染。可与 `post.content_html` 共用实现，但 hook 名称可保留语义。 |
-| `comment.content_html` / `comment_content` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。 |
+| `comment.content_html` / `comment_content` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。filter 扩展参数传 `hook.CommentView`。 |
 
 建议：这些地方最好不要要求主题直接调用 `apply_filter`，而是提供稳定模板函数。主题作者只要按文档写 `post_content/comment_content`，插件就能工作。
 
@@ -1155,7 +1155,7 @@ widgets:
 | done | 2 | **Manifest + Manager**：实现插件扫描、启用列表读取、manifest 校验。 | 已实现 `plugin.yaml` 解析、插件 ID/目录校验、启用列表读取、启停保存、启用插件运行时加载。 |
 | done | 3 | **hook.API**：实现 `AddAction/AddFilter` 注入，先不做复杂 i18n。 | 已统一到 `hook.API`，支持 `AddAction/AddFilter`、`T/N/X/XN`、`EscapeHTML`。 |
 | done | 4 | **接入主题 functions**：让主题 `api.AddAction` / `api.AddFilter` 也注册到同一 registry，并记录来源 `theme:<name>`。 | 已接入主题和插件共用的 `hook.API`，启动时按“插件先、主题后”的顺序注册 hook。 |
-| done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 应用 `post.content_html`，`comment_content` 应用 `comment.content_html`。 |
+| done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 应用 `post.content_html`，`comment_content` 应用 `comment.content_html`；内容类标准 filter 的扩展参数使用 `hook.PostView` / `hook.CommentView`。 |
 | done | 6 | **插件资源路由**：实现 `/plugin-assets/*` 路径校验和静态输出。 | 已实现 `/plugin-assets/{plugin_id}/{path}`，只暴露已启用插件的资源，并做路径穿越校验。 |
 | done | 7 | **组件声明 filter**：后台组件页和前台解析都接入 `widgets.available`。 | 已完成：后台组件列表和前台解析都会应用 `widgets.available`；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
 | done | 8 | **插件组件渲染**：支持 plugin widget 的模板执行或 `widget.render`。 | 已完成：`render_widgets` 会按 `Source=plugin` 分流到插件渲染器；插件组件支持 `widget.render` action 输出，未输出时回退到 `plugins/<id>/widgets/<widget_id>.gohtml` 模板；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
