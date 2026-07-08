@@ -20,11 +20,6 @@ const (
 	// ActionAdminPostFormAfterTextarea 在后台文章编辑表单 textarea 后触发，扩展可写入表情、附件等控件。
 	// 后台文章编辑页面 {{- do_action "admin.post.form.after_textarea" $ -}} 调用
 	ActionAdminPostFormAfterTextarea = "admin.post.form.after_textarea"
-	// ActionWidgetRender 允许插件直接渲染自己的组件；未输出时回退到 widgets/<id>.gohtml。
-	// 主题模板中 {{render_widgets "<area>" .}} 时会触发,
-	// - 如果插件通过 AddAction 注册了该 action, 则会使用该 action 生成的 html 作为小组件
-	// - 否则会回退到使用 widgets/<id>.gohtml 模板文件
-	ActionWidgetRender = "widget.render"
 
 	// FilterWidgetRenderHTML 过滤单个组件渲染后的 HTML。
 	FilterWidgetRenderHTML = "widget.render_html"
@@ -57,7 +52,6 @@ var Consts = struct {
 	ActionBodyEnd,
 	ActionCommentFormAfterTextarea,
 	ActionAdminPostFormAfterTextarea,
-	ActionWidgetRender,
 	FilterPostTitle,
 	FilterPostExcerptHTML,
 	FilterPostContentHTML,
@@ -73,7 +67,6 @@ var Consts = struct {
 	ActionBodyEnd:                    ActionBodyEnd,
 	ActionCommentFormAfterTextarea:   ActionCommentFormAfterTextarea,
 	ActionAdminPostFormAfterTextarea: ActionAdminPostFormAfterTextarea,
-	ActionWidgetRender:               ActionWidgetRender,
 	FilterPostTitle:                  FilterPostTitle,
 	FilterPostExcerptHTML:            FilterPostExcerptHTML,
 	FilterPostContentHTML:            FilterPostContentHTML,

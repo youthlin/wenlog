@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"html/template"
-	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -23,32 +22,7 @@ func (s *stubHookInvoker) InvokeFunc(_ context.Context, name string, args map[st
 	return "called:" + name
 }
 
-func TestRenderWidgetUsesActionFirst(t *testing.T) {
-	hooks := hook.NewRegistry()
-	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
-		if len(args) < 1 {
-			return
-		}
-		out := hook.GetActionWriter(ctx)
-		renderCtx, _ := args[0].(hook.WidgetRenderContext)
-		if out == nil || renderCtx.PluginID != "demo" || renderCtx.WidgetID != "hello" {
-			return
-		}
-		_, _ = io.WriteString(out, "<p>from action</p>")
-	}, hook.Source{Type: hook.SourcePlugin, ID: "demo"})
-	m := &Manager{
-		log:     slog.Default().With("component", "plugin-manager"),
-		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: t.TempDir()}},
-		hooks:   hooks,
-	}
-
-	html, ok := m.RenderWidget(context.Background(), "demo", "hello", nil, nil)
-	if !ok || html != template.HTML("<p>from action</p>") {
-		t.Fatalf("RenderWidget(action)=(%q,%v), want action html", html, ok)
-	}
-}
-
-func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
+func TestRenderWidgetUsesTemplateRenderer(t *testing.T) {
 	dir := t.TempDir()
 	widgetsDir := filepath.Join(dir, "widgets")
 	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
@@ -57,6 +31,27 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(`{{define "widget_hello"}}<section>{{plugin_option "title"}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	hooks := hook.NewRegistry()
+	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
+		out := hook.GetActionWriter(ctx)
+		if out != nil {
+			t.Fatal("legacy widget.render action should not be called")
+		}
+	}, hook.Source{Type: hook.SourcePlugin, ID: "demo"})
+	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
+		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
+		hooks:   hooks,
+	}
+
+	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"title": "Hi"}, nil)
+	if !ok || html != template.HTML("<section>Hi</section>") {
+		t.Fatalf("RenderWidget(template)=(%q,%v), want template html", html, ok)
+	}
+}
+
+func TestRenderWidgetMissingTemplateReturnsFalse(t *testing.T) {
+	dir := t.TempDir()
 	m := &Manager{
 		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
@@ -64,8 +59,8 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 	}
 
 	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"title": "Hi"}, nil)
-	if !ok || html != template.HTML("<section>Hi</section>") {
-		t.Fatalf("RenderWidget(template)=(%q,%v), want template html", html, ok)
+	if ok || html != "" {
+		t.Fatalf("RenderWidget(missing template)=(%q,%v), want empty false", html, ok)
 	}
 }
 

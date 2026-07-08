@@ -269,8 +269,6 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 | `plugin.uninstall` | action | 后台删除插件时 | 删除插件设置和插件数据。 |
 | `template.data` | filter | `Public.base()` 组装完模板数据后 | 给所有前台页面增加插件数据。 |
 | `frontend.assets` | filter | 渲染 `<head>` 或 footer 前 | 注入插件 CSS/JS。 |
-| `widgets.available` | filter | 后台组件页和组件渲染前构建可用组件时 | 合并插件提供的组件声明。 |
-| `widget.render` | filter/action | 渲染某个来源为 plugin 的组件时 | 由插件按组件 ID 与实例选项返回组件 HTML。 |
 | `widget.render_html` | filter | 单个组件渲染后 | 包装组件外层、追加样式标记。 |
 | `comment.form.after_textarea` | slot | 评论表单 textarea 后 | 在 textarea 后注入表情按钮、Markdown 工具栏、验证码入口等。 |
 | `comment.content_html` | filter | 评论正文输出前 | 表情替换、@ 提及、Markdown 子集等。 |
@@ -300,21 +298,12 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 
 3. 启用插件声明组件：`plugins/*/plugin.yaml` 中的 `widgets`。
 
-但从机制上看，组件不需要成为插件 Manager 的硬编码核心能力。更干净的方式是：组件系统在“收集可用组件声明”时调用一个 filter，把当前已知组件列表交给插件修改：
-
-```go
-decls := theme.WidgetDeclsWithBuiltins(currentTheme)
-decls = hooks.ApplyFilter(ctx, "widgets.available", decls, plugin.Args{
-    "theme": currentTheme,
-})
-```
-
-这样插件只是普通 filter 参与者，组件系统不需要提前知道全部插件类型：
+当前实现采用显式声明和显式 renderer：插件在 `plugin.yaml` 的 `widgets` 中声明组件；插件启用/停用或重载时，宿主把启用插件的 widget 声明合并到主题/内置声明中，并把对应插件组件注册到统一 `WidgetRegistry`。
 
 - 不提供 widget 的插件，只注册自己的 action/filter 即可。
-- 想提供 widget 的插件，在 `widgets.available` filter 中 append 一个组件声明；声明只描述“有哪些 widget 类型”，不描述它属于哪个区域。
-- 一个 widget 如果来源是 `plugin:<id>`，就应由该插件负责渲染实现；插件可以通过 `widgets/{id}.gohtml` 模板渲染，也可以在 `widget.render` hook 中直接返回 HTML。
-- 后台组件页不需要知道“插件系统内部有一个 widget registry”，只需要消费 filter 后的声明列表；管理员把 widget 实例添加到某个区域时，才决定该实例最终在哪个区域渲染。
+- 想提供 widget 的插件，在 `plugin.yaml` 中声明组件 ID、标签和选项；声明只描述“有哪些 widget 类型”，不描述它属于哪个区域。
+- 一个 widget 如果来源是 `plugin:<id>`，就由注册表中的插件 renderer 负责渲染；当前 renderer 执行插件自带的 `widgets/{id}.gohtml` 模板。
+- 后台组件页消费合并后的声明列表；管理员把 widget 实例添加到某个区域时，才决定该实例最终在哪个区域渲染。
 
 后台组件页的可用组件类型合并顺序建议为：
 
@@ -325,7 +314,7 @@ decls = hooks.ApplyFilter(ctx, "widgets.available", decls, plugin.Args{
 同 ID 冲突时：
 
 - 主题声明优先用于 `label/options` 等展示与配置定义。
-- 插件通过 `widgets.available` filter 返回的声明优先于内置声明，允许内置能力逐步插件化。
+- 插件声明与主题/内置声明一起归一化；插件来源带 `PluginID`，允许和内置组件使用相同 ID 而不冲突。
 - 后台应显示组件来源：`theme` / `plugin:<id>` / `builtin`。
 
 区域只属于“实例配置”，不属于“widget 类型声明”。例如 `saying` 这个 widget 类型可以被管理员添加到 `sidebar`，也可以添加到 `footer`；插件声明不需要提前知道主题有哪些区域。
@@ -337,7 +326,7 @@ decls = hooks.ApplyFilter(ctx, "widgets.available", decls, plugin.Args{
 ```text
 builtin widget  -> web/widgets/{widget_id}.gohtml
 theme widget    -> 当前主题 widgets/{widget_id}.gohtml
-plugin widget   -> 对应插件 widgets/{widget_id}.gohtml 或 widget.render hook
+plugin widget   -> 对应插件 widgets/{widget_id}.gohtml
 ```
 
 原因：
@@ -384,7 +373,7 @@ type WidgetInfo struct {
 
 改造点建议是：
 
-1. **声明阶段**：`ResolveWidgets` 或其上游先得到主题/内置组件声明，再通过 `widgets.available` filter 让插件追加组件声明。
+1. **声明阶段**：`ResolveWidgets` 或其上游先得到主题/内置组件声明，再合并启用插件 manifest 中的 `widgets` 声明。
 2. **配置阶段**：后台组件页保存的仍然是区域下的 widget 实例数组，例如：
    ```json
    [{"id":"saying","source":"plugin:saying","opts":{"post_id":"456"}}]
@@ -394,7 +383,7 @@ type WidgetInfo struct {
 4. **渲染阶段**：
    - `Source == builtin`：执行内置模板。
    - `Source == theme`：执行主题模板。
-   - `Source == plugin`：调用插件渲染器；插件渲染器可执行插件自己的 `widgets/saying.gohtml`，或触发 `widget.render` 由插件返回 HTML。
+   - `Source == plugin`：调用插件渲染器；插件渲染器执行插件自己的 `widgets/saying.gohtml`。
 5. **后处理阶段**：可选执行 `widget.render_html` filter，对所有组件最终 HTML 做统一处理。
 
 ## 8. 插件 API 设计
@@ -502,21 +491,21 @@ plugins/saying/
 
 实现方式：
 
-1. `plugin.yaml` 声明插件元数据、`saying` widget 的 `post_id/count/title` 选项，以及它需要参与 `widgets.available` / `widget.render`。
-2. `functions.goyaegi` 在 `widgets.available` filter 中追加 `saying` 组件声明，来源标记为 `plugin:saying`。
-3. 后台组件页读取当前主题区域后，对可用组件列表应用 `widgets.available` filter，于是管理员能把 `saying` 放入 `sidebar/footer` 等区域。
+1. `plugin.yaml` 声明插件元数据，以及 `saying` widget 的 `post_id/count/title` 选项。
+2. 插件启用后，宿主把 `plugin.yaml` 的 widget 声明合并到可用组件列表，并将插件组件 renderer 注册进 `WidgetRegistry`。
+3. 后台组件页读取当前主题区域和合并后的可用组件列表，于是管理员能把 `saying` 放入 `sidebar/footer` 等区域。
 4. 后台保存区域配置，例如：
    ```json
    [{"id":"saying","source":"plugin:saying","opts":{"title":"博主动态","post_id":"456","count":"5"}}]
    ```
 5. 前台主题仍只写 `{{render_widgets "sidebar" .}}`。`render_widgets` 解析到这个实例来源是 `plugin:saying` 后，调用该插件渲染器。
-6. 插件渲染器通过只读 API 找到指定文章/页面的评论，生成 `CommentURL`、`Snippet`、`AuthorName`、`AuthorEmail`，再执行插件自己的 `widgets/saying.gohtml`，或通过 `widget.render` 返回 HTML。
+6. 插件渲染器通过只读 API 找到指定文章/页面的评论，生成 `CommentURL`、`Snippet`、`AuthorName`、`AuthorEmail`，再执行插件自己的 `widgets/saying.gohtml`。
 
 这个流程与 WordPress 的类比是：
 
-- `widgets.available` 近似插件在 `widgets_init` 上 `register_widget()`。
+- `plugin.yaml` 中的 `widgets` 近似插件在 `widgets_init` 上 `register_widget()`。
 - `render_widgets "sidebar" .` 近似主题调用 `dynamic_sidebar('sidebar')`。
-- 插件的 `widgets/saying.gohtml` / `widget.render` 近似 `WP_Widget::widget($args, $instance)`。
+- 插件的 `widgets/saying.gohtml` 近似 `WP_Widget::widget($args, $instance)`。
 
 注意点：
 
@@ -603,8 +592,6 @@ plugins/post-comment-enhance/
 
 | Hook | 类型 | 调用方 | 说明 |
 |---|---|---|---|
-| `widgets.available` | filter | 后台组件页、前台组件解析 | 插件向可用组件列表追加声明。 |
-| `widget.render` | filter/action | `render_widgets` | 对来源为 plugin 的组件，由插件返回 HTML。 |
 | `widget.render_html` | filter | `render_widgets` | 对任意组件最终 HTML 做后处理，例如统一埋点、外层包装。 |
 
 组件系统的原则：主题只声明区域并调用 `render_widgets`；插件组件由插件自行渲染；内置组件由内置模板渲染；主题组件由主题模板渲染。
@@ -624,7 +611,7 @@ plugins/post-comment-enhance/
 
 第一批不需要把所有 hook 都实现。建议按现有诉求优先实现：
 
-1. `widgets.available` + `widget.render`：支撑“博主动态”插件组件。
+1. 插件 manifest `widgets` + `WidgetRegistry`：支撑“博主动态”插件组件。
 2. `comment.content_html` + `comment.form.after_textarea` slot：支撑评论表情。
 3. `head.end` / `body.end`：支撑插件 CSS/JS 注入。
 4. `post.content_html` / `post_content`：建立类似 `the_content()` 的标准内容出口，后续短代码、目录、版权提示都能复用。
@@ -739,12 +726,12 @@ plugins/post-comment-enhance/
 
 ### P1：插件组件
 
-1. 在后台组件页和前台组件解析处增加 `widgets.available` filter，把当前组件声明列表交给启用插件调整。
-2. 插件如需新增组件，通过该 filter append 组件声明，并标记来源 `plugin:<id>`。
-3. 对来源为 plugin 的组件，`render_widgets` 调用对应插件的模板或 `widget.render` hook 完成渲染；纯 filter 插件不需要提供任何模板。
+1. 在后台组件页和前台组件解析处合并启用插件 manifest 中的 `widgets` 声明。
+2. 插件如需新增组件，通过 `plugin.yaml` 的 `widgets` 声明组件，并由宿主标记来源 `plugin:<id>`。
+3. 对来源为 plugin 的组件，`render_widgets` 通过 `WidgetRegistry` 调用对应插件 renderer，执行插件自带模板；纯 filter 插件不需要提供任何模板。
 4. 把 `default` 的 `saying` 迁成内置示例插件或仓库内置插件。
 
-验收：任意主题只要有组件区域，都能添加“博主动态”；该组件由 `saying` 插件自己的模板或渲染 hook 输出。
+验收：任意主题只要有组件区域，都能添加“博主动态”；该组件由插件自己的模板 renderer 输出。
 
 ### P2：核心 Hooks 与评论表情
 
@@ -816,8 +803,6 @@ plugins/post-comment-enhance/
 2. 统一 Hook Registry：支持 action/filter、priority、来源追踪、panic recover。
 3. 主题和插件 `functions.goyaegi` 都可以注册 action/filter，但记录不同来源。
 4. 最小 hook/slot：
-   - `widgets.available`
-   - `widget.render`
    - `widget.render_html`
    - `comment.content_html`
    - `comment.form.after_textarea`
@@ -870,7 +855,7 @@ hook/
 | `internal/render/theme.go` | 增加 hook provider / slot provider，或通过统一 runtime 调用 plugin.Manager。 |
 | `internal/theme/functions.go` | 主题 `functions.goyaegi` 注入 `hook.API`，允许 `api.AddAction` / `api.AddFilter`。 |
 | `internal/theme/widgets.go` | `WidgetInfo` 增加 `Source/PluginID`；解析组件时支持插件声明。 |
-| `internal/handler/admin_widgets.go` | 可用组件列表应用 `widgets.available` filter，显示来源。 |
+| `internal/handler/admin_widgets.go` | 可用组件列表合并插件 manifest widget 声明，显示来源。 |
 | `web/themes/*/templates/*.gohtml` | 把关键位置改成推荐写法，如 `post_content`、`comment_content`、`do_action`。 |
 
 ### 20.3 数据结构设计
@@ -1083,9 +1068,6 @@ version: 1.0.0
 description: 提供博主动态组件
 hooks:
   filters:
-    - widgets.available
-  actions:
-    - widget.render
 widgets:
   - id: saying
     label: 博主动态
@@ -1110,7 +1092,7 @@ widgets:
 
 1. 后台 `/admin/widgets` 读取当前主题区域。
 2. 构造当前可用组件：主题组件 + 内置组件。
-3. 调用：`widgets.available` filter。
+3. 启用插件后，宿主读取 manifest `widgets` 并注册插件 renderer。
 4. `saying` 插件 append 自己的 WidgetDecl，来源为 `plugin:saying`。
 5. 后台下拉列表出现“博主动态”，来源显示“插件：saying”。
 6. 管理员把它加入 `sidebar` 并保存选项。
@@ -1161,8 +1143,8 @@ widgets:
 | done | 4 | **接入主题 functions**：让主题 `api.AddAction` / `api.AddFilter` 也注册到同一 registry，并记录来源 `theme:<name>`。 | 已接入主题和插件共用的 `hook.API`，启动时按“插件先、主题后”的顺序注册 hook。 |
 | done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 应用 `post.content_html`，`comment_content` 应用 `comment.content_html`；内容类标准 filter 的扩展参数使用 `hook.PostView` / `hook.CommentView`。 |
 | done | 6 | **插件资源路由**：实现 `/plugin-assets/*` 路径校验和静态输出。 | 已实现 `/plugin-assets/{plugin_id}/{path}`，只暴露已启用插件的资源，并做路径穿越校验。 |
-| done | 7 | **组件声明 filter**：后台组件页和前台解析都接入 `widgets.available`。 | 已完成：后台组件列表和前台解析都会应用 `widgets.available`；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
-| done | 8 | **插件组件渲染**：支持 plugin widget 的模板执行或 `widget.render`。 | 已完成：`render_widgets` 会按 `Source=plugin` 分流到插件渲染器；插件组件支持 `widget.render` action 输出，未输出时回退到 `plugins/<id>/widgets/<widget_id>.gohtml` 模板；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
+| done | 7 | **组件声明合并**：后台组件页和前台解析都接入插件 manifest 的 `widgets` 声明。 | 已完成：后台组件列表和前台解析都会合并启用插件的 manifest widget 声明；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
+| done | 8 | **插件组件渲染**：支持 plugin widget 的显式 renderer 和模板执行。 | 已完成：`render_widgets` 通过 `WidgetRegistry` 找到来源为 plugin 的组件 renderer；插件组件直接执行 `plugins/<id>/widgets/<widget_id>.gohtml` 模板，不再经过全局 widget render action；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
 | done | 9 | **迁移 saying**：把 default 主题里的 saying 能力迁到 `plugins/saying`。 | 已完成：新增 `plugins/saying`，通过 manifest 声明组件和默认启用，组件模板由插件自带；default 主题已移除 saying 声明和模板。 |
 | done | 10 | **评论表情**：实现 `comment.content_html` + `comment.form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/post-comment-enhance`，通过 `comment.content_html` 渲染短码图片、通过 `comment.form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
 | done | 11 | **i18n 完整化**：插件文本域绑定、`.tp.T`、`api.T/N/X/XN`。 | 已完成：`hook.API` 的 `T/N/X/XN`、插件文本域绑定、插件模板 `.tp.T` 都已接入。 |

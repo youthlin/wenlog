@@ -337,7 +337,7 @@ func TestHookConstants(t *testing.T) {
 	// 确保所有 hook 名非空
 	hooks := []string{
 		ActionHeadEnd, ActionBodyEnd, ActionCommentFormAfterTextarea,
-		ActionWidgetRender, FilterPostTitle, FilterPostExcerptHTML,
+		FilterPostTitle, FilterPostExcerptHTML,
 		FilterPostContentHTML, FilterCommentContentHTML, FilterWidgetRenderHTML,
 		FilterHeadMeta,
 	}
@@ -356,20 +356,6 @@ func TestPriorityOrder(t *testing.T) {
 	}
 	if PriorityDefault >= PriorityLate {
 		t.Error("PriorityDefault should be less than PriorityLate")
-	}
-}
-
-// ========== WidgetRenderContext 测试 ==========
-
-func TestWidgetRenderContext(t *testing.T) {
-	ctx := WidgetRenderContext{
-		PluginID: "test-plugin",
-		WidgetID: "test-widget",
-		Options:  map[string]string{"key": "val"},
-		Data:     "data",
-	}
-	if ctx.PluginID != "test-plugin" {
-		t.Errorf("PluginID = %q", ctx.PluginID)
 	}
 }
 

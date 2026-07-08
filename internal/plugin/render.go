@@ -8,7 +8,6 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
-	"strings"
 
 	gettext "github.com/youthlin/t"
 	"github.com/youthlin/wenlog/hook"
@@ -16,7 +15,15 @@ import (
 	"github.com/youthlin/wenlog/internal/script"
 )
 
-// RenderWidget 渲染插件组件。优先执行 widget.render action；如果 action 没有输出，回退到插件 widgets/<id>.gohtml 模板。
+type widgetRenderContext struct {
+	PluginID string
+	WidgetID string
+	Options  map[string]string
+	Data     any
+}
+
+// RenderWidget 渲染插件组件。插件组件由 manifest 声明并注册为明确的 Widget renderer，
+// 渲染时执行插件 widgets/<id>.gohtml 模板。
 func (m *Manager) RenderWidget(ctx context.Context, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
 	if m == nil || pluginID == "" || widgetID == "" {
 		return "", false
@@ -30,15 +37,11 @@ func (m *Manager) RenderWidget(ctx context.Context, pluginID, widgetID string, o
 		options = map[string]string{}
 	}
 	slog.InfoContext(ctx, "RenderWidget: rendering plugin widget", "plugin_id", pluginID, "widget_id", widgetID)
-	renderCtx := hook.WidgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
-	if html, ok := m.renderWidgetByAction(ctx, renderCtx); ok {
-		slog.InfoContext(ctx, "RenderWidget: rendered by action", "plugin_id", pluginID, "widget_id", widgetID)
-		return html, true
-	}
+	renderCtx := widgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
 	return m.renderWidgetByTemplate(ctx, p, renderCtx)
 }
 
-// pluginWidget 是插件组件的 Widget 接口实现，组合了 action 和 template 两种渲染模式。
+// pluginWidget 是插件组件的 Widget 接口实现，负责将插件 manifest 中声明的组件绑定到模板 renderer。
 type pluginWidget struct {
 	m        *Manager
 	decl     hook.WidgetDecl
@@ -75,20 +78,7 @@ func (m *Manager) RegisterPluginWidgets(ctx context.Context, widgetRegistry *hoo
 	}
 }
 
-func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
-	hooks := m.GetRegistry()
-	if hooks == nil {
-		return "", false
-	}
-	var out strings.Builder
-	hooks.DoAction(ctx, hook.ActionWidgetRender, &out, renderCtx)
-	if out.Len() == 0 {
-		return "", false
-	}
-	return template.HTML(out.String()), true
-}
-
-func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
+func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderCtx widgetRenderContext) (template.HTML, bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

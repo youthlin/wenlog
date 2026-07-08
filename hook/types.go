@@ -86,14 +86,6 @@ func (a Args) Bool(key string, def bool) bool {
 // Func 是插件注册给模板调用的数据函数。
 type Func = func(api *API, args Args) any
 
-// WidgetRenderContext 是 widget.render action 接收的插件组件渲染上下文。
-type WidgetRenderContext struct {
-	PluginID string
-	WidgetID string
-	Options  map[string]string
-	Data     any
-}
-
 // SelectOpt 是 select 类型选项的一个可选项。
 type SelectOpt struct {
 	Value string `yaml:"value" json:"value"`
