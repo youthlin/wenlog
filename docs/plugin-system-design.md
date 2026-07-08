@@ -852,7 +852,11 @@ internal/plugin/
 
 hook/
 ├── registry.go       # Hook Registry、Action/Filter、priority、来源追踪
-└── api.go            # 暴露给主题和插件 functions.goyaegi 的统一 API
+├── api.go            # API 结构体、构造和请求级上下文绑定
+├── api_register.go   # AddAction/AddFilter/RegisterFunc 和注册期错误收集
+├── api_render.go     # action 输出和 HTML 转义辅助
+├── api_i18n.go       # 插件/主题文本域翻译辅助
+└── api_options.go    # 站点设置、插件选项和主题选项读取
 ```
 
 建议调整：

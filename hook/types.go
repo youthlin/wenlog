@@ -13,7 +13,7 @@ type ActionFunc = func(api *API, args ...any)
 // FilterFunc 是插件注册 filter 时推荐使用的函数签名。
 type FilterFunc = func(api *API, value any, args ...any) any
 
-// Args 是模板通过 hookInvoke 传给扩展函数的命名参数。
+// Args 是模板通过 hook_invoke 传给扩展函数的命名参数。
 //
 // 主题/插件作者可以直接用：
 //
