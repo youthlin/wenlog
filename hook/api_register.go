@@ -9,7 +9,10 @@ import (
 	"sort"
 )
 
-// AddAction 注册 action。插件可以使用 ActionFunc，也可以使用 func(context.Context, ...any)。
+// AddAction 注册 action。
+//
+// 推荐脚本使用 ActionFunc / func(*API, ...any) 获得请求级 API。
+// 也支持具体参数签名，例如 func(PostView) 或 func(context.Context, PostView)。
 func (api *API) AddAction(name string, fn any, priority ...int) {
 	if api == nil {
 		return
@@ -39,7 +42,11 @@ func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
 	return nil, false
 }
 
-// AddFilter 注册 filter。插件可以使用 FilterFunc，也可以使用 func(any, ...any) any。
+// AddFilter 注册 filter。
+//
+// 推荐脚本使用具体参数签名，例如 func(string, PostView) string；
+// 需要请求级 context 时可把 context.Context 放在第一参。
+// 需要完整 API 时使用 FilterFunc / func(*API, any, ...any) any。
 func (api *API) AddFilter(name string, fn any, priority ...int) {
 	if api == nil {
 		return
