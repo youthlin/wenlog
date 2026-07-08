@@ -60,6 +60,8 @@
 
 所有模板中可用的函数：
 
+会触发标准 action / filter 的函数，其 hook 名称、payload view、返回值安全语义和脚本签名见 `docs/hook-reference.md`。
+
 | 函数 | 签名 | 说明 |
 |---|---|---|
 | `postURL` | `func(any) string` | 文章或页面永久链接；支持 `model.Post`、`*model.Post` 和 `theme.PostView` |

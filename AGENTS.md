@@ -50,14 +50,15 @@
 - `internal/render.Renderer` 负责解析模板、模板函数、模板层级 fallback、预览模板缓存和组件渲染。页面类型到模板的 fallback 链在 `render.TemplateHierarchy` 中维护。
 - `theme.yaml` 当前不只是元数据，还声明 `widget_areas`、`widgets`、组件级 `options` 与主题全局 `options`。组件配置保存在 Setting 表的 `widget_<area>`，主题选项保存在 `option_<theme>_<option>`。
 - 前台请求通常先通过 `store.DataLoader` 全量预加载公开数据，再由 `Public.base()` 注入 `.RecentPosts`、`.Categories`、`.Tags`、`.ArchiveMonths`、`.RecentCommentItems`、`.Menu` 等通用模板数据。
-- 主题自定义逻辑通过 `functions.goyaegi` 的 `Register(api *hook.API)` 注册主题函数；模板侧通过 `themeInvoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
-- 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `renderWidgets "area" .` 渲染区域，用 `widgetOption "key"` 读取当前组件实例选项。
+- 主题自定义逻辑通过 `functions.goyaegi` 的 `Register(api *hook.API)` 注册主题函数；模板侧通过 `hook_invoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
+- 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `render_widgets "area" .` 渲染区域，用 `widget_option "key"` 读取当前组件实例选项。
 - 主题静态资源通过 `/theme-assets/...` 引用，当前/预览主题会自动解析到对应 `assets/` 目录。不要在主题模板里硬编码 `/web/themes/...`。
 
 **主题与插件设计文档：**
 - `docs/template-data-reference.md` — 模板数据字段、模板函数、数据模型、theme.yaml 配置参考（主题开发必读）
 - `docs/theme-system-optimization-plan.md` — 主题系统当前实现梳理与优化计划
 - `docs/plugin-system-design.md` — 插件系统设计（hook/Registry、组件注册、插件生命周期）
+- `docs/hook-reference.md` — 标准 action/filter 的触发点、payload view、返回值安全语义和脚本签名
 - `docs/outdated/` — 历史设计稿（v1~v6），仅供参考演进背景
 
 > **维护约定**：迭代插件或主题系统时，若变更影响模板数据字段、模板函数签名、theme.yaml 配置格式或插件 API，需同步更新 `docs/` 下对应文档。

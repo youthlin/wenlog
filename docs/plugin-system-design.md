@@ -2,7 +2,7 @@
 
 > 本文是插件系统的设计文档，目标是把"主题里顺手实现的功能"沉淀为可跨主题复用、可启停、可配置的能力。插件系统已按本文方案实现，代码位于 `internal/plugin/`、`hook/`、`cmd/server/hook.go`。
 >
-> 当前事实入口以 `AGENTS.md`、`docs/template-data-reference.md` 和代码为准。本文保留了部分历史设计推演，遇到旧的 `pluginapi` / `themeapi` 叙述时，应按当前统一的 `hook.API` 模型理解：主题和插件脚本都通过 `Register(api *hook.API)` 或 `Register(api *hook.API) error` 注册函数、action 和 filter。
+> 当前事实入口以 `AGENTS.md`、`docs/template-data-reference.md`、`docs/hook-reference.md` 和代码为准。本文保留了部分历史设计推演，遇到旧的 `pluginapi` / `themeapi` 叙述时，应按当前统一的 `hook.API` 模型理解：主题和插件脚本都通过 `Register(api *hook.API)` 或 `Register(api *hook.API) error` 注册函数、action 和 filter。
 
 ## 1. 背景
 
@@ -286,6 +286,8 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 - 每个 hook 必须文档化：触发时机、参数、返回值、安全要求、是否允许错误中断主流程。
 
 当前标准 filter 的返回值安全语义：
+
+完整标准 hook 清单、触发点、payload view 和推荐脚本签名见 `docs/hook-reference.md`。本节只保留安全语义摘要。
 
 | Filter | 返回值语义 | 宿主处理 |
 |---|---|---|
