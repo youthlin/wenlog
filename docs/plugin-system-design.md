@@ -985,19 +985,21 @@ type API struct {
     ctx    *RequestContext
 }
 
-func (api *API) AddAction(name string, fn ActionFunc, priority ...int)
-func (api *API) AddFilter(name string, fn FilterFunc, priority ...int)
+func (api *API) AddAction(name string, fn any, priority ...int)
+func (api *API) AddFilter(name string, fn any, priority ...int)
 func (api *API) T(msg string, args ...any) string
 func (api *API) N(singular, plural string, n int, args ...any) string
 func (api *API) X(ctx, msg string, args ...any) string
 func (api *API) XN(ctx, singular, plural string, n int, args ...any) string
 func (api *API) EscapeHTML(s string) string
+func (api *API) Printf(format string, args ...any)
+func (api *API) Println(format string, args ...any)
 ```
 
 注意：
 
-- `AddAction/AddFilter` 在插件/主题加载阶段使用。
-- `T/N/X/XN` 是请求级能力；执行 hook 时 API 要绑定当前请求 translator。
+- `AddAction/AddFilter` 在插件/主题加载阶段使用；推荐脚本使用具体参数签名，如 `func(string, hook.PostView) string`，需要完整 API 时使用 `func(*hook.API, any, ...any) any` / `func(*hook.API, ...any)`。
+- `T/N/X/XN` 和输出函数是请求级能力；执行 hook 时 API 要绑定当前请求 translator 和 writer。
 - 插件文本域为 `plugin_<plugin_id>`；主题文本域为 `theme_<theme_id>`。
 - 翻译函数只返回普通字符串，不自动 safeHTML。
 
