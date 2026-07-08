@@ -469,16 +469,16 @@ func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
 	}
 	widgets := provider(ctx, area)
 	if len(widgets) == 0 {
-		slog.InfoContext(ctx.Context, "renderWidgets: no widgets for area", "area", area)
+		slog.DebugContext(ctx.Context, "renderWidgets: no widgets for area", "area", area)
 		return ""
 	}
-	slog.InfoContext(ctx.Context, "renderWidgets: rendering widgets", "area", area, "count", len(widgets))
+	slog.DebugContext(ctx.Context, "renderWidgets: rendering widgets", "area", area, "count", len(widgets))
 	var result strings.Builder
 	for _, item := range widgets {
 		ctx.WidgetOptions = item.Options
 		html, ok := renderWidgetItem(ctx, item, data)
 		if !ok {
-			slog.InfoContext(ctx.Context, "renderWidgets: widget render failed", "area", area, "id", item.ID, "source", item.Source, "plugin_id", item.PluginID)
+			slog.DebugContext(ctx.Context, "renderWidgets: widget render failed", "area", area, "id", item.ID, "source", item.Source, "plugin_id", item.PluginID)
 			continue
 		}
 		if h := hooks(ctx.Runtime); h != nil {
@@ -505,15 +505,15 @@ func widgetRenderPayload(item WidgetInfo, area string) hook.WidgetRenderView {
 func renderWidgetItem(ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
 	resolver := ctx.Runtime.current().WidgetResolver
 	if resolver == nil {
-		slog.InfoContext(ctx.Context, "renderWidgetItem: no resolver")
+		slog.DebugContext(ctx.Context, "renderWidgetItem: no resolver")
 		return "", false
 	}
 	w := resolver(item.Source, item.ID, item.PluginID)
 	if w == nil {
-		slog.InfoContext(ctx.Context, "renderWidgetItem: widget not found in registry", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
+		slog.DebugContext(ctx.Context, "renderWidgetItem: widget not found in registry", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
 		return "", false
 	}
-	slog.InfoContext(ctx.Context, "renderWidgetItem: widget found, rendering", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
+	slog.DebugContext(ctx.Context, "renderWidgetItem: widget found, rendering", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
 	instance := hook.WidgetInstance{
 		InstanceID: item.InstanceID,
 		WidgetID:   item.ID,
@@ -521,7 +521,7 @@ func renderWidgetItem(ctx *RequestContext, item WidgetInfo, data any) (template.
 	}
 	html, err := w.Render(requestContext(ctx), ctx.Template, instance, data)
 	if err != nil || html == "" {
-		slog.InfoContext(ctx.Context, "renderWidgetItem: render returned empty/error", "id", item.ID, "error", err)
+		slog.DebugContext(ctx.Context, "renderWidgetItem: render returned empty/error", "id", item.ID, "error", err)
 		return "", false
 	}
 	return html, true
