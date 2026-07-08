@@ -150,6 +150,10 @@ const (
 	// 用法: {{post_title .Post}}
 	tplFuncPostTitle = "post_title"
 
+	// tplFuncPostTitleText 输出文章标题文本，应用 post.title filter。
+	// 用法: {{post_title_text .Post}}
+	tplFuncPostTitleText = "post_title_text"
+
 	// tplFuncPostExcerpt 输出文章摘要，应用 post.excerpt_html filter。
 	// 用法: {{post_excerpt .Post}}
 	tplFuncPostExcerpt = "post_excerpt"
@@ -252,6 +256,7 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext) (*temp
 		tplFuncDoAction:           func(name string, data any) template.HTML { return doAction(ctx, name, data) },
 		tplFuncApplyFilter:        func(value any, name string, args ...any) template.HTML { return applyFilter(ctx, value, name, args...) },
 		tplFuncPostTitle:          func(post any) template.HTML { return postTitle(ctx, post) },
+		tplFuncPostTitleText:      func(post any) string { return postTitleText(ctx, post) },
 		tplFuncPostExcerpt:        func(post any) template.HTML { return postExcerpt(ctx, post) },
 		tplFuncPostContent:        func(post any) template.HTML { return postContent(ctx, post) },
 		tplFuncPostTags:           func(post any) template.HTML { return postTags(post) },
@@ -282,6 +287,7 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncDoAction:           func(name string, data any) template.HTML { return "" },
 		tplFuncApplyFilter:        func(value any, name string, args ...any) template.HTML { return "" },
 		tplFuncPostTitle:          func(data any) template.HTML { return "" },
+		tplFuncPostTitleText:      func(data any) string { return "" },
 		tplFuncPostExcerpt:        func(post any) template.HTML { return "" },
 		tplFuncPostContent:        func(post any) template.HTML { return "" },
 		tplFuncPostTags:           func(post any) template.HTML { return "" },

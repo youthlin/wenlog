@@ -54,12 +54,7 @@ func widgetOption(ctx *RequestContext, key string) string {
 }
 
 func postTitle(ctx *RequestContext, post any) template.HTML {
-	title := reflectStringField(post, "Title")
-	if h := hooks(ctx.Runtime); h != nil {
-		reqCtx := requestContext(ctx)
-		v := h.ApplyFilters(reqCtx, hook.FilterPostTitle, title, postViewPayload(ctx, post))
-		title = textFromFilterValue(v, title)
-	}
+	title := postTitleText(ctx, post)
 	title = html.EscapeString(title)
 	if title == "" {
 		return ""
@@ -68,6 +63,16 @@ func postTitle(ctx *RequestContext, post any) template.HTML {
 		title += ` <span class="draft-badge">` + translate(ctx, "草稿预览") + `</span>`
 	}
 	return template.HTML(`<h1 class="post-title">` + title + `</h1>`)
+}
+
+func postTitleText(ctx *RequestContext, post any) string {
+	title := reflectStringField(post, "Title")
+	if h := hooks(ctx.Runtime); h != nil {
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterPostTitle, title, postViewPayload(ctx, post))
+		title = textFromFilterValue(v, title)
+	}
+	return title
 }
 
 func translate(ctx *RequestContext, msg string) string {

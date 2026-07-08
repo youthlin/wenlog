@@ -289,7 +289,7 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 
 | Filter | 返回值语义 | 宿主处理 |
 |---|---|---|
-| `post.title` | 纯文本 | 宿主在 `post_title` 中统一 HTML escape。 |
+| `post.title` | 纯文本 | 宿主在 `post_title` 中统一 HTML escape；在 `post_title_text` 中返回字符串并交给模板上下文自动转义。 |
 | `post.excerpt_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
 | `post.content_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
 | `post.footer_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
@@ -297,7 +297,7 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 | `widget.render_html` | 可信 HTML | 宿主按 `template.HTML` 输出，扩展参数传 `hook.WidgetRenderView`，插件负责只返回受控 HTML。 |
 | `head.meta` | 可信 HTML | 宿主按 `template.HTML` 输出，扩展参数传 `hook.HeadMetaView`，插件负责只返回受控 meta HTML。 |
 
-模板函数 `apply_filter` 是 HTML 出口：返回值会作为可信 HTML 输出。文本类扩展点应优先提供宿主封装函数（如 `post_title`），不要要求主题作者直接在模板中对文本调用 `apply_filter`。
+模板函数 `apply_filter` 是 HTML 出口：返回值会作为可信 HTML 输出。文本类扩展点应优先提供宿主封装函数（如 `post_title` / `post_title_text`），不要要求主题作者直接在模板中对文本调用 `apply_filter`。
 
 ## 7. 插件组件设计
 
@@ -1017,18 +1017,19 @@ func (api *API) EscapeHTML(s string) string
 | `render_widgets "area" .` | 渲染某个组件区域 | `dynamic_sidebar('area')` |
 | `siteHeader .` | 渲染标准 header，可内部触发 `head.end` / `body.start` slot | `get_header()` |
 | `siteFooter .` | 渲染标准 footer，可内部触发 `footer.before` / `body.end` slot | `get_footer()` |
-| `postTitle .Post` | 输出文章标题，可统一转义和过滤 | `the_title()` |
-| `postExcerpt .Post` | 输出摘要并应用 `post.excerpt_html` filter | `the_excerpt()` |
-| `postNavigation .Post` | 输出上一篇/下一篇导航 | `the_post_navigation()` |
+| `post_title .Post` | 输出文章标题块，可统一转义和过滤 | `the_title()` |
+| `post_title_text .Post` | 输出文章标题文本，可用于列表链接、归档列表、上一篇/下一篇标题 | `the_title()` |
+| `post_excerpt .Post` | 输出摘要并应用 `post.excerpt_html` filter | `the_excerpt()` |
+| `post_navigation .` | 输出上一篇/下一篇导航 | `the_post_navigation()` |
 | `commentsTemplate .` | 输出标准评论列表与评论表单 | `comments_template()` |
 
 推荐主题写法：
 
 ```gohtml
 {{do_action "post.before" .}}
-{{postTitle .Post}}
+{{post_title .Post}}
 {{post_content .Post}}
-{{postNavigation .Post}}
+{{post_navigation .}}
 {{do_action "post.after" .}}
 
 {{commentsTemplate .}}
@@ -1048,11 +1049,11 @@ func (api *API) EscapeHTML(s string) string
 
 <main class="site-main">
   <article class="post">
-    {{postTitle .Post}}
+    {{post_title .Post}}
     {{do_action "post.before" .}}
     {{post_content .Post}}
     {{do_action "post.after" .}}
-    {{postNavigation .Post}}
+    {{post_navigation .}}
   </article>
 
   {{commentsTemplate .}}

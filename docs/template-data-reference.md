@@ -90,6 +90,7 @@
 | `do_action` | `func(string, any) template.HTML` | 触发 action hook 并收集扩展输出 HTML，如 `{{do_action "head.end" .}}` |
 | `apply_filter` | `func(any, string, ...any) template.HTML` | 对输入值应用 HTML filter 链，返回值会作为可信 HTML 输出；文本类扩展优先使用宿主封装函数，如 `post_title` |
 | `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按纯文本转义 |
+| `post_title_text` | `func(any) string` | 输出文章标题文本并应用 `post.title` filter；适合列表链接、归档列表、上一篇/下一篇等已有结构内的标题文本；模板会按上下文自动转义 |
 | `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
 | `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
 | `post_tags` | `func(any) template.HTML` | 输出文章标签链接 |
@@ -482,7 +483,7 @@ themes/my-theme/
   <h3>{{.t.T "最新文章"}}</h3>
   <ul>
     {{range $i, $p := .RecentPosts}}{{if lt $i $n}}
-      <li><a href="{{postURL $p}}">{{$p.Title}}</a></li>
+      <li><a href="{{postURL $p}}">{{post_title_text $p}}</a></li>
     {{end}}{{end}}
   </ul>
 </section>
@@ -528,6 +529,6 @@ func Register(api *hook.API) error {
 
 ```gohtml
 {{range hook_invoke "PopularPosts" "n" 5}}
-  <a href="{{postURL .}}">{{.Title}}</a>
+  <a href="{{postURL .}}">{{post_title_text .}}</a>
 {{end}}
 ```

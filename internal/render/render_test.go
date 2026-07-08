@@ -98,6 +98,47 @@ func TestPostTitleFilterIsEscapedText(t *testing.T) {
 	}
 }
 
+func TestPostTitleTextFilterEscapesInTemplates(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}<a href="/post">{{post_title_text .Post}}</a>{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		return `<script>alert(1)</script>`
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r.themeRuntime.providers.Hooks = hooks
+
+	rr := httptest.NewRecorder()
+	data := map[string]any{"Post": &model.Post{ID: 1, Title: "Hello"}}
+	if err := r.Instance("index", data).Render(rr); err != nil {
+		t.Fatalf("render index: %v", err)
+	}
+	got := rr.Body.String()
+	if strings.Contains(got, `<script>`) {
+		t.Fatalf("post_title_text should be escaped by template output, got: %s", got)
+	}
+	if !strings.Contains(got, `&lt;script&gt;alert(1)&lt;/script&gt;`) {
+		t.Fatalf("post_title_text missing escaped filter result, got: %s", got)
+	}
+}
+
+func TestSingleThemeKeepsPageTitleInHTMLTitle(t *testing.T) {
+	content, err := fs.ReadFile(web.Themes, "themes/single/templates/index.gohtml")
+	if err != nil {
+		t.Fatalf("read single theme template: %v", err)
+	}
+	got := string(content)
+	if !strings.Contains(got, `<title>{{.Title}}</title>`) {
+		t.Fatalf("single theme header should use page Title in <title>, got: %s", got)
+	}
+	if strings.Contains(got, `<title>{{post_title_text .}}</title>`) {
+		t.Fatalf("single theme header should not call post_title_text on page data")
+	}
+}
+
 func TestHTMLFiltersRemainTrustedHTML(t *testing.T) {
 	hooks := hook.NewRegistry()
 	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {

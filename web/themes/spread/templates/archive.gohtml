@@ -4,7 +4,7 @@
   <header class="post-hero wide-shell">
     <div class="issue-mark" aria-hidden="true">Archive</div>
     <div class="post-hero-copy">
-      <h1 class="post-title">{{.Post.Title}}</h1>
+      <h1 class="post-title">{{post_title_text .Post}}</h1>
       {{if .Post.Content}}<div class="post-content archive-intro">{{safeHTML .Post.Content}}</div>{{end}}
     </div>
   </header>
@@ -14,7 +14,7 @@
       <h2 class="archive-year" id="{{.Year}}">{{.Year}}</h2>
       <ul class="archive-list">
         {{range .Posts}}
-        <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{.Title}}</a></li>
+        <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{post_title_text .}}</a></li>
         {{end}}
       </ul>
     </section>
