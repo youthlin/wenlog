@@ -145,16 +145,16 @@ func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *hook.API {
 	return hook.NewAPI().WithDomain(p.PluginDomain()).WithContext(ctx)
 }
 
-func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *hook.API) template.FuncMap {
+func pluginTemplateFuncs(ctx context.Context, options map[string]string, invoker hook.FuncInvoker) template.FuncMap {
 	funcs := render.CommonFuncMap()
 	maps.Copy(funcs, template.FuncMap{
 		"plugin_option": func(key string) string { return options[key] },
 		"hook_invoke": func(name string, args ...any) any {
-			if api == nil {
+			if invoker == nil {
 				slog.InfoContext(ctx, "hookInvoke: api is nil", "name", name)
 				return nil
 			}
-			result := api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
+			result := invoker.InvokeFunc(ctx, name, script.ParseKVArgs(args))
 			slog.InfoContext(ctx, "hookInvoke: called", "name", name, "result_nil", result == nil)
 			return result
 		},

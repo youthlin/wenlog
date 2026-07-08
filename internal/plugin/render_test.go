@@ -12,6 +12,17 @@ import (
 	"github.com/youthlin/wenlog/hook"
 )
 
+type stubHookInvoker struct {
+	called bool
+	args   map[string]any
+}
+
+func (s *stubHookInvoker) InvokeFunc(_ context.Context, name string, args map[string]any) any {
+	s.called = true
+	s.args = args
+	return "called:" + name
+}
+
 func TestRenderWidgetUsesActionFirst(t *testing.T) {
 	hooks := hook.NewRegistry()
 	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
@@ -82,6 +93,22 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"name": "Plugin"}, nil)
 	if !ok || html != template.HTML("<section>Hello, Plugin</section>") {
 		t.Fatalf("RenderWidget=(%q,%v), want invoked html", html, ok)
+	}
+}
+
+func TestPluginTemplateFuncsOnlyNeedHookInvoker(t *testing.T) {
+	invoker := &stubHookInvoker{}
+	funcs := pluginTemplateFuncs(context.Background(), map[string]string{"name": "Plugin"}, invoker)
+	call, ok := funcs["hook_invoke"].(func(string, ...any) any)
+	if !ok {
+		t.Fatalf("hook_invoke type = %T, want func(string, ...any) any", funcs["hook_invoke"])
+	}
+
+	if got := call("greeting", "name", "Plugin"); got != "called:greeting" {
+		t.Fatalf("hook_invoke = %v, want called:greeting", got)
+	}
+	if !invoker.called || invoker.args["name"] != "Plugin" {
+		t.Fatalf("invoker args = %#v, called=%v", invoker.args, invoker.called)
 	}
 }
 
