@@ -101,6 +101,28 @@ type CommentView struct {
 	CommenterRole string
 }
 
+// WidgetRenderView 是 widget.render_html filter 的稳定上下文。
+type WidgetRenderView struct {
+	Area         string
+	InstanceID   string
+	ID           string
+	Source       string
+	PluginID     string
+	TemplateName string
+	Options      map[string]string
+}
+
+// HeadMetaView 是 head.meta filter 的稳定上下文。
+type HeadMetaView struct {
+	Title        string
+	Description  string
+	CanonicalURL string
+	SiteName     string
+	SiteLogo     string
+	OGType       string
+	TwitterCard  string
+}
+
 // UserView 是扩展 API 暴露的用户只读视图。
 type UserView struct {
 	ID          uint

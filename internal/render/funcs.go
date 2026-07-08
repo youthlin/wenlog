@@ -556,7 +556,15 @@ func headMeta(ctx *RequestContext, data any) template.HTML {
 
 	html := template.HTML(b.String())
 	if h := hooks(ctx.Runtime); h != nil {
-		v := h.ApplyFilters(requestContext(ctx), hook.FilterHeadMeta, string(html), data)
+		v := h.ApplyFilters(requestContext(ctx), hook.FilterHeadMeta, string(html), hook.HeadMetaView{
+			Title:        title,
+			Description:  desc,
+			CanonicalURL: url,
+			SiteName:     siteName,
+			SiteLogo:     siteLogo,
+			OGType:       ogType,
+			TwitterCard:  card,
+		})
 		html = trustedHTMLFromFilterValue(v)
 	}
 	return html

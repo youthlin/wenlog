@@ -294,8 +294,8 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 | `post.content_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
 | `post.footer_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
 | `comment.content_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
-| `widget.render_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
-| `head.meta` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 meta HTML。 |
+| `widget.render_html` | 可信 HTML | 宿主按 `template.HTML` 输出，扩展参数传 `hook.WidgetRenderView`，插件负责只返回受控 HTML。 |
+| `head.meta` | 可信 HTML | 宿主按 `template.HTML` 输出，扩展参数传 `hook.HeadMetaView`，插件负责只返回受控 meta HTML。 |
 
 模板函数 `apply_filter` 是 HTML 出口：返回值会作为可信 HTML 输出。文本类扩展点应优先提供宿主封装函数（如 `post_title`），不要要求主题作者直接在模板中对文本调用 `apply_filter`。
 
@@ -606,7 +606,7 @@ plugins/post-comment-enhance/
 
 | Hook | 类型 | 调用方 | 说明 |
 |---|---|---|---|
-| `widget.render_html` | filter | `render_widgets` | 对任意组件最终 HTML 做后处理，例如统一埋点、外层包装。 |
+| `widget.render_html` | filter | `render_widgets` | 对任意组件最终 HTML 做后处理，例如统一埋点、外层包装；扩展参数传 `hook.WidgetRenderView`。 |
 
 组件系统的原则：主题只声明区域并调用 `render_widgets`；插件组件由插件自行渲染；内置组件由内置模板渲染；主题组件由主题模板渲染。
 

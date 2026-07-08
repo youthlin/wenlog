@@ -20,6 +20,8 @@ func HookAPIExports() interp.Exports {
 			"CategoryView":     reflect.ValueOf((*hook.CategoryView)(nil)),
 			"TagView":          reflect.ValueOf((*hook.TagView)(nil)),
 			"CommentView":      reflect.ValueOf((*hook.CommentView)(nil)),
+			"WidgetRenderView": reflect.ValueOf((*hook.WidgetRenderView)(nil)),
+			"HeadMetaView":     reflect.ValueOf((*hook.HeadMetaView)(nil)),
 			"UserView":         reflect.ValueOf((*hook.UserView)(nil)),
 			"ArchiveMonthView": reflect.ValueOf((*hook.ArchiveMonthView)(nil)),
 			"SelectOpt":        reflect.ValueOf((*hook.SelectOpt)(nil)),

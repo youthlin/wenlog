@@ -482,12 +482,24 @@ func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
 			continue
 		}
 		if h := hooks(ctx.Runtime); h != nil {
-			html = trustedHTMLFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.FilterWidgetRenderHTML, string(html), item, area, data))
+			html = trustedHTMLFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.FilterWidgetRenderHTML, string(html), widgetRenderPayload(item, area)))
 		}
 		util.WriteString(&result, string(html))
 	}
 	ctx.WidgetOptions = nil
 	return template.HTML(result.String())
+}
+
+func widgetRenderPayload(item WidgetInfo, area string) hook.WidgetRenderView {
+	return hook.WidgetRenderView{
+		Area:         area,
+		InstanceID:   item.InstanceID,
+		ID:           item.ID,
+		Source:       item.Source,
+		PluginID:     item.PluginID,
+		TemplateName: item.TemplateName,
+		Options:      item.Options,
+	}
 }
 
 func renderWidgetItem(ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {

@@ -112,6 +112,67 @@ func TestHTMLFiltersRemainTrustedHTML(t *testing.T) {
 	}
 }
 
+func TestWidgetRenderHTMLFilterReceivesStableView(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{render_widgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}alpha{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+	hooks := hook.NewRegistry()
+	var got hook.WidgetRenderView
+	hooks.AddFilter(hook.FilterWidgetRenderHTML, func(value any, args ...any) any {
+		got, _ = args[0].(hook.WidgetRenderView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r.themeRuntime.providers.Hooks = hooks
+	r.SetThemeWidgetsProvider(func(ctx *RequestContext, area string) []WidgetInfo {
+		return []WidgetInfo{{
+			InstanceID:   "inst-1",
+			Source:       "plugin",
+			PluginID:     "demo",
+			ID:           "alpha",
+			TemplateName: "widget_alpha",
+			Options:      map[string]string{"title": "Hello"},
+		}}
+	})
+	r.SetWidgetResolver(func(source, id, pluginID string) hook.Widget {
+		return &testTemplateWidget{id: id}
+	})
+
+	rr := httptest.NewRecorder()
+	if err := r.Instance("page", nil).Render(rr); err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+	if got.Area != "sidebar" || got.InstanceID != "inst-1" || got.ID != "alpha" || got.Source != "plugin" || got.PluginID != "demo" || got.TemplateName != "widget_alpha" || got.Options["title"] != "Hello" {
+		t.Fatalf("widget.render_html payload = %+v, want stable WidgetRenderView", got)
+	}
+}
+
+func TestHeadMetaFilterReceivesStableView(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var got hook.HeadMetaView
+	hooks.AddFilter(hook.FilterHeadMeta, func(value any, args ...any) any {
+		got, _ = args[0].(hook.HeadMetaView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	_ = headMeta(ctx, map[string]any{
+		"Title":        "Hello",
+		"Description":  "Desc",
+		"CanonicalURL": "https://example.com/hello",
+		"SiteName":     "WenLog",
+		"SiteLogo":     "/logo.png",
+		"Post":         &model.Post{ID: 1},
+	})
+	if got.Title != "Hello" || got.Description != "Desc" || got.CanonicalURL != "https://example.com/hello" || got.SiteName != "WenLog" || got.SiteLogo != "/logo.png" || got.OGType != "article" || got.TwitterCard != "summary_large_image" {
+		t.Fatalf("head.meta payload = %+v, want stable HeadMetaView", got)
+	}
+}
+
 func TestFeedPostFiltersReceiveStableView(t *testing.T) {
 	hooks := hook.NewRegistry()
 	var got hook.PostView

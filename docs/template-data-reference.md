@@ -98,7 +98,7 @@
 | `post_class` | `func(any, ...string) string` | 生成文章容器 CSS class |
 | `comment_class` | `func(any, ...string) string` | 生成评论项 CSS class |
 | `comment_content` | `func(any) template.HTML` | 输出评论正文并应用 `comment.content_html` filter；filter 扩展参数传 `hook.CommentView`；filter 返回值按可信 HTML 输出 |
-| `head_meta` | `func(any) template.HTML` | 输出 OpenGraph / Twitter Card meta 标签并应用 `head.meta` filter；filter 返回值按可信 HTML 输出 |
+| `head_meta` | `func(any) template.HTML` | 输出 OpenGraph / Twitter Card meta 标签并应用 `head.meta` filter；filter 扩展参数传 `hook.HeadMetaView`；filter 返回值按可信 HTML 输出 |
 | `list_comments` | `func(...any) template.HTML` | 渲染评论列表 |
 | `comment_form` | `func(any) template.HTML` | 渲染评论表单，内部会触发 `comment.form.after_textarea` action |
 | `comments_pagination` | `func(any, ...int) template.HTML` | 渲染评论分页导航，读取 `.CommentPager`；第二个可选参数为 `midSize`，控制当前页左右显示几个页码，默认 `2` |
