@@ -19,14 +19,14 @@ func (api *API) AddAction(name string, fn any, priority ...int) {
 			api.addRegistrationError(err)
 			return
 		}
-		api.addAction(name, wrapped, priority...)
+		api.registry.AddAction(name, wrapped, priority...)
 		return
 	}
 	if err := api.validateAction(name, fn); err != nil {
 		api.addRegistrationError(err)
 		return
 	}
-	api.addAction(name, fn, priority...)
+	api.registry.AddAction(name, fn, priority...)
 }
 
 func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
@@ -49,14 +49,14 @@ func (api *API) AddFilter(name string, fn any, priority ...int) {
 			api.addRegistrationError(err)
 			return
 		}
-		api.addFilter(name, wrapped, priority...)
+		api.registry.AddFilter(name, wrapped, priority...)
 		return
 	}
 	if err := api.validateFilter(name, fn); err != nil {
 		api.addRegistrationError(err)
 		return
 	}
-	api.addFilter(name, fn, priority...)
+	api.registry.AddFilter(name, fn, priority...)
 }
 
 func (api *API) wrapFilter(fn any) (func(context.Context, any, ...any) any, bool) {
@@ -71,18 +71,18 @@ func (api *API) wrapFilter(fn any) (func(context.Context, any, ...any) any, bool
 
 // RemoveAction 移除当前扩展注册的所有同名 action。
 func (api *API) RemoveAction(name string) {
-	if api == nil || api.removeAction == nil || name == "" {
+	if api == nil || api.registry.RemoveAction == nil || name == "" {
 		return
 	}
-	api.removeAction(name)
+	api.registry.RemoveAction(name)
 }
 
 // RemoveFilter 移除当前扩展注册的所有同名 filter。
 func (api *API) RemoveFilter(name string) {
-	if api == nil || api.removeFilter == nil || name == "" {
+	if api == nil || api.registry.RemoveFilter == nil || name == "" {
 		return
 	}
-	api.removeFilter(name)
+	api.registry.RemoveFilter(name)
 }
 
 // RegisterFunc 注册一个可在模板中通过 hook_invoke 调用的数据函数。
@@ -209,7 +209,7 @@ func (api *API) validateRegistration(kind, name string, fn any, wrapped bool) er
 	if fn == nil {
 		return fmt.Errorf("注册%s[%s]失败: 处理函数不能为空", kind, name)
 	}
-	if api == nil || (kind == "action" && api.addAction == nil) || (kind == "filter" && api.addFilter == nil) {
+	if api == nil || (kind == "action" && api.registry.AddAction == nil) || (kind == "filter" && api.registry.AddFilter == nil) {
 		return fmt.Errorf("注册%s[%s]失败: hook registry 未注入", kind, name)
 	}
 	if wrapped {

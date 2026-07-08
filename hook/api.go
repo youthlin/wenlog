@@ -10,20 +10,38 @@ import (
 
 // API 是暴露给插件脚本的宿主能力。
 type API struct {
-	log          *slog.Logger      // 打日志
-	funcs        map[string]Func   // 保存注册的函数
-	domain       string            // 翻译文本域
-	dataLoader   *store.DataLoader // 数据获取
-	ctx          context.Context   // 请求上下文
-	options      []OptionDecl      // 主题的选项声明
-	addAction    func(name string, fn any, priority ...int)
-	addFilter    func(name string, fn any, priority ...int)
-	removeAction func(name string)
-	removeFilter func(name string)
-	regErrors    []error
+	log        *slog.Logger      // 打日志
+	funcs      map[string]Func   // 保存注册的函数
+	domain     string            // 翻译文本域
+	dataLoader *store.DataLoader // 数据获取
+	ctx        context.Context   // 请求上下文
+	options    []OptionDecl      // 主题的选项声明
+	registry   RegistryBinding
+	regErrors  []error
 }
 
 // ========== ========== API 构造 ========== ==========
+
+// RegistryBinding 是 API 注册 action/filter 时使用的 Hook Registry 绑定。
+type RegistryBinding struct {
+	AddAction    func(name string, fn any, priority ...int)
+	AddFilter    func(name string, fn any, priority ...int)
+	RemoveAction func(name string)
+	RemoveFilter func(name string)
+}
+
+// NewRegistryBinding 创建绑定到指定来源的 Hook Registry 配置。
+func NewRegistryBinding(registry Registry, source Source) RegistryBinding {
+	if registry == nil {
+		return RegistryBinding{}
+	}
+	return RegistryBinding{
+		AddAction:    func(name string, fn any, priority ...int) { registry.AddAction(name, fn, source, priority...) },
+		AddFilter:    func(name string, fn any, priority ...int) { registry.AddFilter(name, fn, source, priority...) },
+		RemoveAction: func(name string) { registry.RemoveAction(name, source) },
+		RemoveFilter: func(name string) { registry.RemoveFilter(name, source) },
+	}
+}
 
 // NewAPI 创建一个 *API 实例
 func NewAPI() *API {
@@ -46,17 +64,9 @@ func (api *API) WithLoader(loader *store.DataLoader) *API {
 	return api
 }
 
-// SetHookRegistrars 设置当前扩展 hook 注册函数，由宿主在加载插件或主题时注入。
-func (api *API) SetHookRegistrars(addAction, addFilter func(name string, fn any, priority ...int)) *API {
-	api.addAction = addAction
-	api.addFilter = addFilter
-	return api
-}
-
-// SetRemoveHooks 设置当前扩展 hook 移除函数，由宿主在加载插件或主题时注入。
-func (api *API) SetRemoveHooks(removeAction, removeFilter func(name string)) *API {
-	api.removeAction = removeAction
-	api.removeFilter = removeFilter
+// WithRegistryBinding 设置当前扩展注册和移除 hook 使用的 Registry 绑定。
+func (api *API) WithRegistryBinding(binding RegistryBinding) *API {
+	api.registry = binding
 	return api
 }
 

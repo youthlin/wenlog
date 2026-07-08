@@ -386,9 +386,10 @@ func TestSelectOpt(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	var addActionCalled, addFilterCalled bool
-	addAction := func(name string, fn any, priority ...int) { addActionCalled = true }
-	addFilter := func(name string, fn any, priority ...int) { addFilterCalled = true }
-	api := NewAPI().SetHookRegistrars(addAction, addFilter).WithDomain("test-domain")
+	api := NewAPI().WithRegistryBinding(RegistryBinding{
+		AddAction: func(name string, fn any, priority ...int) { addActionCalled = true },
+		AddFilter: func(name string, fn any, priority ...int) { addFilterCalled = true },
+	}).WithDomain("test-domain")
 	if api == nil {
 		t.Fatal("New returned nil")
 	}
@@ -399,11 +400,11 @@ func TestNew(t *testing.T) {
 		t.Error("funcs map should be initialized")
 	}
 	// 验证闭包正确绑定
-	api.addAction("test", func() {})
+	api.registry.AddAction("test", func() {})
 	if !addActionCalled {
 		t.Error("addAction was not called")
 	}
-	api.addFilter("test", func() {})
+	api.registry.AddFilter("test", func() {})
 	if !addFilterCalled {
 		t.Error("addFilter was not called")
 	}
@@ -435,10 +436,10 @@ func TestAPICollectsRegistrationErrors(t *testing.T) {
 
 func TestAPIRejectsInvalidHookSignatures(t *testing.T) {
 	var actionCalled, filterCalled bool
-	api := NewAPI().SetHookRegistrars(
-		func(name string, fn any, priority ...int) { actionCalled = true },
-		func(name string, fn any, priority ...int) { filterCalled = true },
-	)
+	api := NewAPI().WithRegistryBinding(RegistryBinding{
+		AddAction: func(name string, fn any, priority ...int) { actionCalled = true },
+		AddFilter: func(name string, fn any, priority ...int) { filterCalled = true },
+	})
 
 	api.AddAction("bad_action", func() string { return "" })
 	api.AddFilter("bad_filter", func() {})

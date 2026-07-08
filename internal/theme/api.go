@@ -22,12 +22,5 @@ func (api *API) SetHookRegistry(hooks hook.Registry, source hook.Source) {
 	if api == nil || api.API == nil || hooks == nil {
 		return
 	}
-	api.API.SetHookRegistrars(
-		func(name string, fn any, priority ...int) { hooks.AddAction(name, fn, source, priority...) },
-		func(name string, fn any, priority ...int) { hooks.AddFilter(name, fn, source, priority...) },
-	)
-	api.API.SetRemoveHooks(
-		func(name string) { hooks.RemoveAction(name, source) },
-		func(name string) { hooks.RemoveFilter(name, source) },
-	)
+	api.API.WithRegistryBinding(hook.NewRegistryBinding(hooks, source))
 }
