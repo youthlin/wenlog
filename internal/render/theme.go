@@ -359,19 +359,19 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 	return &themeHTMLRender{tmpl: mainTpl, name: name, data: data, runtime: &r.themeRuntime}
 }
 
-func requestContext(ctx *RequestContext) context.Context {
-	var req context.Context
-	if ctx != nil && ctx.Context != nil {
-		req = ctx.Context
+func requestContext(r *RequestContext) context.Context {
+	var ctx context.Context
+	if r != nil && r.Context != nil {
+		ctx = r.Context
 	} else {
-		req = context.Background()
+		ctx = context.Background()
 	}
-	if ctx != nil && ctx.ThemeLoader != nil {
-		if loader, _ := ctx.ThemeLoader.(*store.DataLoader); loader != nil {
-			req = hook.WithDataLoader(req, loader)
+	if r != nil && r.ThemeLoader != nil {
+		if loader, _ := r.ThemeLoader.(*store.DataLoader); loader != nil {
+			ctx = hook.WithDataLoader(ctx, loader)
 		}
 	}
-	return req
+	return ctx
 }
 
 // 以下 reflect* 辅助集中服务于模板函数的“宽输入”能力：模板里传入的 post/comment/menu
@@ -482,7 +482,7 @@ func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
 			continue
 		}
 		if h := hooks(ctx.Runtime); h != nil {
-			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), item, area, data))
+			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.FilterWidgetRenderHTML, string(html), item, area, data))
 		}
 		util.WriteString(&result, string(html))
 	}

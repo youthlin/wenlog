@@ -55,7 +55,8 @@ func widgetOption(ctx *RequestContext, key string) string {
 func postTitle(ctx *RequestContext, post any) template.HTML {
 	title := reflectStringField(post, "Title")
 	if h := hooks(ctx.Runtime); h != nil {
-		title = stringFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostTitle, title, post), title)
+		v := h.ApplyFilters(requestContext(ctx), hook.FilterPostTitle, title, post)
+		title = stringFromFilterValue(v, title)
 	}
 	title = html.EscapeString(title)
 	if title == "" {
@@ -92,7 +93,8 @@ func stringFromFilterValue(v any, fallback string) string {
 func postExcerpt(ctx *RequestContext, post any) template.HTML {
 	html := postExcerptHTMLAny(post)
 	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostExcerptHTML, string(html), post))
+		v := h.ApplyFilters(requestContext(ctx), hook.FilterPostExcerptHTML, string(html), post)
+		html = htmlFromFilterValue(v)
 	}
 	return html
 }
@@ -123,11 +125,15 @@ func postExcerptHTMLAny(post any) template.HTML {
 	}
 }
 
-// postContent 输出文章正文，并应用 post.content_html filter。
-func postContent(ctx *RequestContext, post any) template.HTML {
+// postContent 输出文章正文，并应用 post.content_html 和 post.footer_html filter。
+func postContent(r *RequestContext, post any) template.HTML {
 	html := postContentHTML(post)
-	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostContentHTML, string(html), post))
+	if h := hooks(r.Runtime); h != nil {
+		ctx := requestContext(r)
+		v := h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), post)
+		html = htmlFromFilterValue(v)
+		v = h.ApplyFilters(requestContext(r), hook.FilterPostFooterHTML, string(html), post)
+		html = htmlFromFilterValue(v)
 	}
 	return html
 }
@@ -155,7 +161,8 @@ func postContentHTML(post any) template.HTML {
 func commentContent(ctx *RequestContext, comment any) template.HTML {
 	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
 	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookCommentContentHTML, string(html), comment))
+		v := h.ApplyFilters(requestContext(ctx), hook.FilterCommentContentHTML, string(html), comment)
+		html = htmlFromFilterValue(v)
 	}
 	return html
 }
@@ -518,7 +525,8 @@ func headMeta(ctx *RequestContext, data any) template.HTML {
 
 	html := template.HTML(b.String())
 	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookHeadMeta, string(html), data))
+		v := h.ApplyFilters(requestContext(ctx), hook.FilterHeadMeta, string(html), data)
+		html = htmlFromFilterValue(v)
 	}
 	return html
 }
@@ -781,7 +789,7 @@ func writeDefaultCommentItem(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, `</span>`)
 	// badges
 	if commenterRole != "" {
-		roleTitle := ""
+		var roleTitle string
 		switch commenterRole {
 		case "author":
 			roleTitle = ctx.T("文章作者")
@@ -1135,8 +1143,12 @@ func writeCommentForm(out *strings.Builder, ctx *RequestContext,
 	// slot: comment.form.after_textarea
 	if h := hooks(ctx.Runtime); h != nil {
 		var slotBuf strings.Builder
-		h.DoAction(requestContext(ctx), hook.HookCommentFormAfterTextarea, &slotBuf,
-			hook.CommentFormAfterTextareaData{Data: data})
+		h.DoAction(
+			requestContext(ctx),
+			hook.ActionCommentFormAfterTextarea,
+			&slotBuf,
+			data,
+		)
 		util.WriteString(out, slotBuf.String())
 	}
 

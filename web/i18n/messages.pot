@@ -1033,8 +1033,8 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:16
 msgid ""
-"插件可以通过 action/filter/slot 扩展站点能力。启用或停用后会立即重载插件运行"
-"时和当前主题 hooks。"
+"插件可以通过 action/filter 扩展站点能力，模板中使用 {{do_action}} 和 "
+"{{apply_filter}} 调用。启用或停用后会立即重载插件运行时和当前主题 hooks。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:17

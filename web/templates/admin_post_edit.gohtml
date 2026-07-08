@@ -57,7 +57,7 @@
     <textarea name="content_md" id="content_md" rows="20" required>{{if .Post}}{{.Post.ContentMD}}{{end}}</textarea>
     <div class="md-preview" id="md_preview"></div>
   </div>
-  {{- slot "admin.post.form.after_textarea" $ -}}
+  {{- do_action "admin.post.form.after_textarea" $ -}}
   <p><span class="tip" id="draft_status">{{.t.T "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"}}</span></p>
 
   <label>{{.t.T "摘要(可选)"}}<textarea name="excerpt" rows="3">{{if .Post}}{{.Post.Excerpt}}{{end}}</textarea></label>

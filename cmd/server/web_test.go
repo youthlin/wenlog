@@ -204,7 +204,7 @@ func TestEnsureThemesOnDiskRefreshesBundledThemeWhenVersionChanged(t *testing.T)
 	if string(gotHeader) != string(wantHeader) {
 		t.Fatalf("theme template not refreshed")
 	}
-	if !strings.Contains(string(gotHeader), `slot "head.end"`) {
+	if !strings.Contains(string(gotHeader), `do_action "head.end"`) {
 		t.Fatalf("refreshed header missing plugin hook: %s", gotHeader)
 	}
 }

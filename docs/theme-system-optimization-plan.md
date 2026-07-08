@@ -11,7 +11,7 @@
 主要可优化点不是“功能缺失”，而是**责任边界和并发模型不够清晰**：
 
 1. `internal/render` 的当前模板、当前组件选项、当前 loader 已在模板执行期串行化，避免并发请求相互覆盖。
-2. `themeapi.API` 不再由 `Public.base()` 提前写入共享 loader，而是在 `themeInvoke` 调用期间按当前渲染请求临时绑定 loader。
+2. `hook.API` 不再由 `Public.base()` 提前写入共享 loader，而是在 `hook_invoke` 调用期间按当前渲染请求临时绑定 loader。
 3. 主题初始化、模板函数注入、运行时资源路由已从 `createWebHandler` 拆成独立辅助函数。
 4. `docs/template-data-reference.md` 已更新为当前主题配置与模板数据参考。
 5. 主要历史版本注释已改为当前能力描述。

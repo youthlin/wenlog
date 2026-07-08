@@ -336,10 +336,10 @@ func TestWidgetDeclKey(t *testing.T) {
 func TestHookConstants(t *testing.T) {
 	// 确保所有 hook 名非空
 	hooks := []string{
-		HookHeadEnd, HookBodyEnd, HookCommentFormAfterTextarea,
-		HookWidgetRender, HookPostTitle, HookPostExcerptHTML,
-		HookPostContentHTML, HookCommentContentHTML, HookWidgetRenderHTML,
-		HookHeadMeta,
+		ActionHeadEnd, ActionBodyEnd, ActionCommentFormAfterTextarea,
+		ActionWidgetRender, FilterPostTitle, FilterPostExcerptHTML,
+		FilterPostContentHTML, FilterCommentContentHTML, FilterWidgetRenderHTML,
+		FilterHeadMeta,
 	}
 	for _, h := range hooks {
 		if h == "" {
@@ -356,31 +356,6 @@ func TestPriorityOrder(t *testing.T) {
 	}
 	if PriorityDefault >= PriorityLate {
 		t.Error("PriorityDefault should be less than PriorityLate")
-	}
-}
-
-// ========== HeadEndData / BodyEndData 测试 ==========
-
-func TestHeadEndData(t *testing.T) {
-	d := HeadEndData{Data: map[string]string{"key": "value"}}
-	if d.Data == nil {
-		t.Error("HeadEndData.Data should not be nil")
-	}
-}
-
-func TestBodyEndData(t *testing.T) {
-	d := BodyEndData{Data: "test"}
-	if d.Data != "test" {
-		t.Errorf("BodyEndData.Data = %v", d.Data)
-	}
-}
-
-// ========== CommentFormAfterTextareaData 测试 ==========
-
-func TestCommentFormAfterTextareaData(t *testing.T) {
-	d := CommentFormAfterTextareaData{Data: 42}
-	if d.Data != 42 {
-		t.Errorf("Data = %v", d.Data)
 	}
 }
 
@@ -413,7 +388,7 @@ func TestNew(t *testing.T) {
 	var addActionCalled, addFilterCalled bool
 	addAction := func(name string, fn any, priority ...int) { addActionCalled = true }
 	addFilter := func(name string, fn any, priority ...int) { addFilterCalled = true }
-	api := New(addAction, addFilter, "test-domain")
+	api := NewAPI().SetHookRegistrars(addAction, addFilter).WithDomain("test-domain")
 	if api == nil {
 		t.Fatal("New returned nil")
 	}

@@ -18,7 +18,7 @@ type FunctionsScript struct {
 	source     string
 	sourceHash string // 文件内容的简单 hash，用于检测变更
 	api        *API
-	funcs      map[string]ThemeFunc
+	funcs      map[string]hook.Func
 	mu         sync.RWMutex
 	pool       sync.Pool
 }
@@ -26,10 +26,7 @@ type FunctionsScript struct {
 // CompileFunctions 编译主题目录下的 functions.go 或 functions.goyaegi 文件。
 // 返回编译后的脚本实例；如果文件不存在则返回 nil, nil。
 func CompileFunctions(ctx context.Context, themeDir string, api *API, log *slog.Logger) (*FunctionsScript, error) {
-	var rootAPI *hook.API
-	if api != nil {
-		rootAPI = api.API
-	}
+	var rootAPI = api.API
 	_, source, err := internalscript.CompileFromDir(ctx, themeDir, internalscript.CompileOptions{
 		Subject:      "主题",
 		PackageName:  "theme",
@@ -60,12 +57,12 @@ func newFunctionsScript(ctx context.Context, source string, api *API, log *slog.
 	}
 }
 
-func snapshotFuncs(api *API) map[string]ThemeFunc {
+func snapshotFuncs(api *API) map[string]hook.Func {
 	if api == nil || api.API == nil {
 		return nil
 	}
 	names := api.FuncNames()
-	result := make(map[string]ThemeFunc, len(names))
+	result := make(map[string]hook.Func, len(names))
 	for _, name := range names {
 		result[name] = api.GetFunc(name)
 	}
@@ -86,13 +83,10 @@ func hashString(s string) string {
 // hookInvokeFunc 返回一个可在模板中调用的 hookInvoke 函数。
 // 用法：{{hookInvoke "func_name" "key1" value1 "key2" value2}}
 func hookInvokeFunc(script *FunctionsScript, api *API) func(ctx *render.RequestContext, name string, args ...any) any {
-	if script == nil {
+	if script == nil || api == nil {
 		return nil
 	}
 	return func(ctx *render.RequestContext, name string, args ...any) any {
-		if script == nil || api == nil {
-			return nil
-		}
 		script.mu.RLock()
 		_, exists := script.funcs[name]
 		script.mu.RUnlock()
@@ -113,21 +107,16 @@ func (script *FunctionsScript) acquireRunner(ctx context.Context, baseAPI *API, 
 	if v := script.pool.Get(); v != nil {
 		runner, _ := v.(*FunctionsScript)
 		if runner != nil && runner.api != nil {
-			runner.api.SetLoader(loader)
+			runner.api.WithLoader(loader)
 			return runner, nil
 		}
 	}
-	requestAPI := NewAPI(loader)
-	requestAPI.SetThemeOptions(baseAPI.themeOptions)
-	var rootAPI *hook.API
-	if requestAPI != nil {
-		rootAPI = requestAPI.API
-	}
+	requestAPI := NewAPI(baseAPI.Domain(), loader, baseAPI.themeOptions)
 	if _, err := internalscript.CompileAndRegister(ctx, script.source, internalscript.CompileOptions{
 		Subject:      "主题",
 		PackageName:  "theme",
 		Exports:      internalscript.HookAPIExports(),
-		RegisterArgs: []any{rootAPI},
+		RegisterArgs: []any{requestAPI.API},
 	}); err != nil {
 		return nil, err
 	}
@@ -138,7 +127,7 @@ func (script *FunctionsScript) releaseRunner(runner *FunctionsScript) {
 	if script == nil || runner == nil || runner.api == nil {
 		return
 	}
-	runner.api.SetLoader(nil)
+	runner.api.WithLoader(nil)
 	script.pool.Put(runner)
 }
 
@@ -166,7 +155,7 @@ func callThemeFuncWithTimeout(ctx context.Context, script *FunctionsScript, base
 	}
 }
 
-func safeCallThemeFunc(themeFunc ThemeFunc, api *hook.API, args map[string]any) (result any) {
+func safeCallThemeFunc(themeFunc hook.Func, api *hook.API, args map[string]any) (result any) {
 	defer func() {
 		if recover() != nil {
 			result = nil

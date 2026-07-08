@@ -110,8 +110,8 @@ func TestManagerEnabledIDsUsesMemoryCache(t *testing.T) {
 func TestSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	// 主题模板里直接用这个 slot 名称调用 slot；常量必须和模板/manifest 保持一致，
 	// 否则插件虽然成功注册 hook，但评论表单不会渲染表情面板。
-	if hook.HookCommentFormAfterTextarea != "comment.form.after_textarea" {
-		t.Fatalf("HookCommentFormAfterTextarea = %q, want comment.form.after_textarea", hook.HookCommentFormAfterTextarea)
+	if hook.ActionCommentFormAfterTextarea != "comment.form.after_textarea" {
+		t.Fatalf("ActionCommentFormAfterTextarea = %q, want comment.form.after_textarea", hook.ActionCommentFormAfterTextarea)
 	}
 
 	p, err := LoadPlugin(filepath.Join("..", "..", "web", "plugins", "post-comment-enhance"))
@@ -124,18 +124,18 @@ func TestSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	}
 
 	var head strings.Builder
-	hooks.DoAction(context.Background(), hook.HookHeadEnd, &head, nil)
+	hooks.DoAction(context.Background(), hook.ActionHeadEnd, &head, nil)
 	if got := head.String(); !strings.Contains(got, `/plugin-assets/post-comment-enhance/style.css?v=`) {
 		t.Fatalf("smiley css not rendered: %s", got)
 	}
 
 	var panel strings.Builder
-	hooks.DoAction(context.Background(), hook.HookCommentFormAfterTextarea, &panel, nil)
+	hooks.DoAction(context.Background(), hook.ActionCommentFormAfterTextarea, &panel, nil)
 	if got := panel.String(); !strings.Contains(got, `class="smilies"`) || !strings.Contains(got, `class="smilies-label sr-only"`) || !strings.Contains(got, `data-smiley-code="[/微笑]"`) {
 		t.Fatalf("smiley panel not rendered: %s", got)
 	}
 
-	filtered := hooks.ApplyFilters(context.Background(), hook.HookCommentContentHTML, "hello [/微笑]", nil)
+	filtered := hooks.ApplyFilters(context.Background(), hook.FilterCommentContentHTML, "hello [/微笑]", nil)
 	got, ok := filtered.(string)
 	if !ok {
 		t.Fatalf("filtered content type = %T", filtered)

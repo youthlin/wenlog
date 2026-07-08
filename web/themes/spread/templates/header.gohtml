@@ -15,7 +15,7 @@
 {{- end -}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
-{{slot "head.end" .}}
+{{do_action "head.end" .}}
 </head>
 <body class="{{body_class .}}">
 <a class="skip-link" href="#main-content">{{.th.T "跳到主要内容"}}</a>

@@ -36,26 +36,33 @@ var smileyNames = []string{
 
 // Register 注册评论表情插件的 hook。
 func Register(api *hook.API) {
-	api.AddAction(hook.Consts.HookHeadEnd, func(api *hook.API, data hook.HeadEndData) {
+	// 在 head 中注入 css
+	api.AddAction(hook.Consts.ActionHeadEnd, func(api *hook.API, args ...any) {
 		renderAssets(api)
 	})
-	api.AddAction(hook.Consts.HookCommentFormAfterTextarea, func(api *hook.API, data hook.CommentFormAfterTextareaData) {
-		renderSmileyPanel(api, "comment")
-	})
-	api.AddFilter(hook.Consts.HookCommentContentHTML, func(api *hook.API, value any, args ...any) any {
+	// 评论内容的表情渲染
+	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(api *hook.API, value any, args ...any) any {
 		return renderSmilies(api, value, args...)
 	})
+	// 在前台评论框后 插入表情面板
+	api.AddAction(hook.Consts.ActionCommentFormAfterTextarea, func(api *hook.API, args ...any) {
+		renderSmileyPanel(api, "comment")
+	})
 	// 后台文章编辑器的表情面板
-	api.AddAction(hook.Consts.HookAdminPostFormAfterTextarea, func(api *hook.API, data hook.AdminPostFormAfterTextareaData) {
+	api.AddAction(hook.Consts.ActionAdminPostFormAfterTextarea, func(api *hook.API, args ...any) {
 		renderSmileyPanel(api, "admin")
 	})
 	// 文章正文的表情渲染
-	api.AddFilter(hook.Consts.HookPostContentHTML, func(api *hook.API, value any, args ...any) any {
+	api.AddFilter(hook.Consts.FilterPostContentHTML, func(api *hook.API, value any, args ...any) any {
 		content := value
 		if postSmiliesEnabled(api) {
 			content = renderSmilies(api, content, args...)
 		}
-		return appendPostFooter(api, content, args...)
+		return content
+	})
+	// 文章尾部 HTML（版权声明等）
+	api.AddFilter(hook.Consts.FilterPostFooterHTML, func(api *hook.API, value any, args ...any) any {
+		return appendPostFooter(api, value, args...)
 	})
 }
 
@@ -64,6 +71,10 @@ func renderAssets(api *hook.API) {
 		return
 	}
 	api.Printf(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`, assetVersion)
+}
+
+func enabled(api *hook.API) bool {
+	return api.PluginOption("enabled", "true") != "false"
 }
 
 func renderSmileyPanel(api *hook.API, mode string) {
@@ -144,13 +155,66 @@ func extractPost(args []any) map[string]any {
 	return nil
 }
 
-// replacePostVars 替换字符串中的 {{.Post.XXX}} 模板变量。
-// 替换值经过 HTML 转义，防止文章标题等用户数据注入 XSS。
+// replacePostVars 替换字符串中的 %var% 变量，风格与固定链接配置一致。
+// 可用变量：
+//
+//	%siteURL% / %siteName% / %siteDesc% — 站点设置
+//	%postURL% / %postID% / %postTitle% / %postSlug% / %postExcerpt% — 文章字段
+//	%postAuthor% / %postAuthorUsername% — 作者字段
+//
+// 替换值经过 HTML 转义，防止用户数据注入 XSS。
 func replacePostVars(api *hook.API, s string, post map[string]any) string {
-	for key, val := range post {
-		s = strings.ReplaceAll(s, "{{.Post."+key+"}}", api.EscapeHTML(anyToString(val)))
-	}
+	s = replaceVar(s, "%siteURL%", api.EscapeHTML(api.Setting("site_url")))
+	s = replaceVar(s, "%siteName%", api.EscapeHTML(api.Setting("site_name")))
+	s = replaceVar(s, "%siteDesc%", api.EscapeHTML(api.Setting("site_description")))
+	s = replaceVar(s, "%postURL%", api.EscapeHTML(buildPostURL(api, post)))
+	s = replaceVar(s, "%postID%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"ID"}))))
+	s = replaceVar(s, "%postTitle%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Title"}))))
+	s = replaceVar(s, "%postSlug%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Slug"}))))
+	s = replaceVar(s, "%postExcerpt%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Excerpt"}))))
+	s = replaceVar(s, "%postAuthor%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Author", "DisplayName"}))))
+	s = replaceVar(s, "%postAuthorUsername%", api.EscapeHTML(anyToString(resolveCaseInsensitive(post, []string{"Author", "Username"}))))
 	return s
+}
+
+// replaceVar 替换所有出现的 old 为 replacement。
+func replaceVar(s, old, replacement string) string {
+	return strings.ReplaceAll(s, old, replacement)
+}
+
+// resolveCaseInsensitive 在嵌套 map 中按大小写不敏感路径查找值。
+func resolveCaseInsensitive(m map[string]any, parts []string) any {
+	current := any(m)
+	for _, part := range parts {
+		cm, ok := current.(map[string]any)
+		if !ok {
+			return nil
+		}
+		found := false
+		for k, v := range cm {
+			if strings.EqualFold(k, part) {
+				current = v
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil
+		}
+	}
+	return current
+}
+
+// buildPostURL 根据文章字段构造永久链接。
+func buildPostURL(api *hook.API, post map[string]any) string {
+	siteURL := strings.TrimRight(api.Setting("site_url"), "/")
+	id := anyToString(resolveCaseInsensitive(post, []string{"ID"}))
+	postType := anyToString(resolveCaseInsensitive(post, []string{"PostType"}))
+	slug := anyToString(resolveCaseInsensitive(post, []string{"Slug"}))
+	if postType == "page" && slug != "" {
+		return siteURL + "/" + slug
+	}
+	return siteURL + "/?p=" + id
 }
 
 func anyToString(v any) string {
@@ -173,10 +237,6 @@ func anyToString(v any) string {
 	default:
 		return ""
 	}
-}
-
-func enabled(api *hook.API) bool {
-	return api.PluginOption("enabled", "true") != "false"
 }
 
 func postSmiliesEnabled(api *hook.API) bool {

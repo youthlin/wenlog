@@ -77,31 +77,26 @@ func (r *Renderer) SetWidgetResolver(resolver hook.WidgetResolver) {
 	r.themeRuntime.mu.Unlock()
 }
 
-// slot 触发一个模板 slot action，并收集主题/插件写入的 HTML。
-func slot(ctx *RequestContext, name string, data any) template.HTML {
+// doAction 触发一个模板 action hook，并收集主题/插件写入的 HTML。
+// 相当于 WordPress 的 do_action()。
+func doAction(ctx *RequestContext, name string, data any) template.HTML {
 	h := hooks(ctx.Runtime)
 	if h == nil || name == "" {
 		return ""
 	}
 	var result strings.Builder
-	h.DoAction(requestContext(ctx), name, &result, hookDataForSlot(name, data))
+	h.DoAction(requestContext(ctx), name, &result, data)
 	return template.HTML(result.String())
 }
 
-// hookDataForSlot 根据 hook 名称构造对应的结构化参数。
-func hookDataForSlot(name string, data any) any {
-	switch name {
-	case hook.HookHeadEnd:
-		return hook.HeadEndData{Data: data}
-	case hook.HookBodyEnd:
-		return hook.BodyEndData{Data: data}
-	case hook.HookCommentFormAfterTextarea:
-		return hook.CommentFormAfterTextareaData{Data: data}
-	case hook.HookAdminPostFormAfterTextarea:
-		return hook.AdminPostFormAfterTextareaData{Data: data}
-	default:
-		return data
+// applyFilter 应用过滤器链到输入值，返回过滤后的结果。
+// 相当于 WordPress 的 apply_filters()。
+func applyFilter(ctx *RequestContext, value any, name string, args ...any) template.HTML {
+	h := hooks(ctx.Runtime)
+	if h == nil || name == "" {
+		return htmlFromFilterValue(value)
 	}
+	return htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), name, value, args...))
 }
 
 func hooks(runtime *TemplateRuntime) hook.Executor {

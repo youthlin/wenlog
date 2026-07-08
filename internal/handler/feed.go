@@ -50,7 +50,7 @@ func (h *Public) Feed(c *gin.Context) {
 	for i := range res.Posts {
 		p := &res.Posts[i]
 		link := baseURL + permalink.Post(p)
-		desc := p.Excerpt
+		desc := string(h.renderer.FilterPostContent(c, p))
 		if desc == "" {
 			desc = p.Title
 		}
@@ -93,8 +93,13 @@ type atomEntry struct {
 	ID      string     `xml:"id"`
 	Updated string     `xml:"updated"`
 	Link    atomLink   `xml:"link"`
-	Summary string     `xml:"summary,omitempty"`
+	Content atomContent `xml:"content"`
 	Author  atomAuthor `xml:"author"`
+}
+
+type atomContent struct {
+	Type string `xml:"type,attr"`
+	Body string `xml:",chardata"`
 }
 
 type atomAuthor struct {
@@ -126,9 +131,9 @@ func (h *Public) AtomFeed(c *gin.Context) {
 	for i := range res.Posts {
 		p := &res.Posts[i]
 		link := baseURL + permalink.Post(p)
-		summary := p.Excerpt
-		if summary == "" {
-			summary = p.Title
+		content := string(h.renderer.FilterPostContent(c, p))
+		if content == "" {
+			content = p.Title
 		}
 		authorName := ""
 		if p.Author.DisplayName != "" {
@@ -141,7 +146,7 @@ func (h *Public) AtomFeed(c *gin.Context) {
 			ID:      link,
 			Updated: p.PublishedAt.Format(time.RFC3339),
 			Link:    atomLink{Href: link, Rel: "alternate"},
-			Summary: summary,
+			Content: atomContent{Type: "html", Body: content},
 			Author:  atomAuthor{Name: authorName},
 		})
 	}

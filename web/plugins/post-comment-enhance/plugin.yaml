@@ -14,11 +14,9 @@ hooks:
     - comment.form.after_textarea
     - admin.post.form.after_textarea
   filters:
-    - comment.render_html
+    - comment.content_html
     - post.content_html
-  slots:
-    - comment.form.after_textarea
-    - admin.post.form.after_textarea
+    - post.footer_html
 
 options:
   - id: enabled
@@ -36,5 +34,5 @@ options:
   - id: post_footer_html
     type: textarea
     label: "文章尾部 HTML"
-    description: "每篇文章正文末尾追加的 HTML，支持 {{.Post.ID}} {{.Post.Title}} 等模板变量"
+    description: "每篇文章正文末尾追加的 HTML。可用变量：%siteURL% %siteName% %siteDesc% %postURL% %postID% %postTitle% %postSlug% %postExcerpt% %postAuthor% %postAuthorUsername%"
     default: ""

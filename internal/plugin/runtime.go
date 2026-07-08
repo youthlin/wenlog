@@ -24,15 +24,17 @@ func CompileFunctions(ctx context.Context, p *Plugin, hooks *Registry, log *slog
 		return nil, nil
 	}
 	source := Source{Type: SourcePlugin, ID: p.ID}
-	api := hook.New(
+	api := hook.NewAPI()
+	api.SetHookRegistrars(
 		func(name string, fn any, priority ...int) { hooks.AddAction(name, fn, source, priority...) },
 		func(name string, fn any, priority ...int) { hooks.AddFilter(name, fn, source, priority...) },
-		p.PluginDomain(),
 	)
 	api.SetRemoveHooks(
 		func(name string) { hooks.RemoveAction(name, source) },
 		func(name string) { hooks.RemoveFilter(name, source) },
 	)
+	api.WithDomain(p.PluginDomain())
+
 	i, src, err := script.CompileFromDir(ctx, p.Dir, script.CompileOptions{
 		Subject:      "插件",
 		PackageName:  "plugin",

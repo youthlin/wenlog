@@ -81,7 +81,7 @@ func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx hook.Widge
 		return "", false
 	}
 	var out strings.Builder
-	hooks.DoAction(ctx, hook.HookWidgetRender, &out, renderCtx)
+	hooks.DoAction(ctx, hook.ActionWidgetRender, &out, renderCtx)
 	if out.Len() == 0 {
 		return "", false
 	}
@@ -131,18 +131,18 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 
 func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *hook.API {
 	if p == nil {
-		return hook.New(nil, nil, "").WithContext(ctx)
+		return hook.NewAPI().WithContext(ctx)
 	}
 	m.mu.RLock()
 	script := m.scripts[p.ID]
 	m.mu.RUnlock()
 	if script != nil && script.api != nil {
 		api := script.api.WithContext(ctx)
-		slog.InfoContext(ctx, "pluginAPI: found script api", "plugin", p.ID, "funcs", api.FuncNames())
+		m.log.InfoContext(ctx, "pluginAPI: found script api", "plugin", p.ID, "funcs", api.FuncNames())
 		return api
 	}
 	slog.InfoContext(ctx, "pluginAPI: no script/api, returning empty API", "plugin", p.ID, "has_script", script != nil, "has_api", script != nil && script.api != nil)
-	return hook.New(nil, nil, p.PluginDomain()).WithContext(ctx)
+	return hook.NewAPI().WithDomain(p.PluginDomain()).WithContext(ctx)
 }
 
 func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *hook.API) template.FuncMap {

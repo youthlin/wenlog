@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"html/template"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,7 @@ func TestRenderWidgetUsesActionFirst(t *testing.T) {
 		out.WriteString("<p>from action</p>")
 	}, Source{Type: SourcePlugin, ID: "demo"})
 	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: t.TempDir()}},
 		hooks:   hooks,
 	}
@@ -45,6 +47,7 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
 		hooks:   NewRegistry(),
 	}
@@ -65,11 +68,12 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 		`{{define "widget_hello"}}<section>{{hook_invoke "greeting" "name" (plugin_option "name")}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	api := hook.New(nil, nil, "plugin_demo")
+	api := hook.NewAPI().WithDomain("plugin_demo")
 	api.RegisterFunc("greeting", func(args hook.Args) any {
 		return "Hello, " + args.String("name", "")
 	})
 	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
 		hooks:   NewRegistry(),
 		scripts: map[string]*FunctionsScript{"demo": {PluginID: "demo", api: api}},
@@ -82,10 +86,10 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 }
 
 func TestRegisterFuncSupportsCommonSignatures(t *testing.T) {
-	api := hook.New(nil, nil, "plugin_demo")
+	api := hook.NewAPI().WithDomain("plugin_demo")
 	api.RegisterFunc("args", func(args hook.Args) any { return args.Int("n", 0) + 1 })
 	api.RegisterFunc("api_args", func(api *hook.API, args hook.Args) any { return api.Snippet(args.String("text", ""), 2) })
-	api.RegisterFunc("legacy", func(api *hook.API, args map[string]any) any { return args["name"] })
+	api.RegisterFunc("legacy", func(api *hook.API, args hook.Args) any { return args["name"] })
 
 	ctx := context.Background()
 	if got := api.InvokeFunc(ctx, "args", map[string]any{"n": "2"}); got != 3 {

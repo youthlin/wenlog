@@ -13,7 +13,7 @@
 
 <section class="card settings-card plugins-card">
   <h3>{{.t.T "插件管理"}}</h3>
-  <p class="tip">{{.t.T "插件可以通过 action/filter/slot 扩展站点能力。启用或停用后会立即重载插件运行时和当前主题 hooks。"}}</p>
+  <p class="tip">{{.t.T "插件可以通过 action/filter 扩展站点能力，模板中使用 {{do_action}} 和 {{apply_filter}} 调用。启用或停用后会立即重载插件运行时和当前主题 hooks。"}}</p>
   {{if .EnabledPluginIDs}}<p class="tip">{{.t.T "当前启用"}}: <code>{{.EnabledPluginIDs}}</code></p>{{end}}
 
   <div class="table-scroll">

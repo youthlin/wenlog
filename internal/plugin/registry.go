@@ -33,12 +33,33 @@ type Source = hook.Source
 
 // Handler 是注册到某个 action/filter 上的处理器。
 type Handler struct {
-	Name     string
-	Priority int
-	Source   Source
-	Fn       any
+	Name     string // 名称
+	Priority int    // 优先级
+	Source   Source // 来源
+	Fn       any    // 函数实现
+	order    int64  // 相同优先级时 按添加顺序
+}
 
-	order int64
+var _ sort.Interface = (Handlers)(nil)
+
+type Handlers []Handler
+
+// Len implements [sort.Interface].
+func (h Handlers) Len() int {
+	return len(h)
+}
+
+// Less implements [sort.Interface].
+func (h Handlers) Less(i int, j int) bool {
+	if h[i].Priority != h[j].Priority {
+		return h[i].Priority < h[j].Priority
+	}
+	return h[i].order < h[j].order
+}
+
+// Swap implements [sort.Interface].
+func (h Handlers) Swap(i int, j int) {
+	h[i], h[j] = h[j], h[i]
 }
 
 // ActionFunc 是 action hook 的推荐函数签名。
@@ -54,8 +75,8 @@ var _ hook.Registry = (*Registry)(nil)
 // Registry 保存所有 action/filter 处理器。
 type Registry struct {
 	mu         sync.RWMutex
-	actions    map[string][]Handler
-	filters    map[string][]Handler
+	actions    map[string]Handlers
+	filters    map[string]Handlers
 	didActions map[string]int
 	next       int64
 	log        *slog.Logger
@@ -64,8 +85,8 @@ type Registry struct {
 // NewRegistry 创建一个空 Hook Registry。
 func NewRegistry() *Registry {
 	return &Registry{
-		actions:    make(map[string][]Handler),
-		filters:    make(map[string][]Handler),
+		actions:    make(map[string]Handlers),
+		filters:    make(map[string]Handlers),
 		didActions: make(map[string]int),
 		log:        slog.Default().With("component", "plugin-hooks"),
 	}
@@ -76,7 +97,7 @@ func (r *Registry) AddAction(name string, fn any, source Source, priority ...int
 	if r == nil || name == "" || fn == nil {
 		return
 	}
-	r.add(&r.actions, name, fn, source, firstPriority(priority))
+	r.add(r.actions, name, fn, source, firstPriority(priority))
 }
 
 // AddFilter 注册 filter 处理器。
@@ -84,7 +105,24 @@ func (r *Registry) AddFilter(name string, fn any, source Source, priority ...int
 	if r == nil || name == "" || fn == nil {
 		return
 	}
-	r.add(&r.filters, name, fn, source, firstPriority(priority))
+	r.add(r.filters, name, fn, source, firstPriority(priority))
+}
+
+func firstPriority(values []int) int {
+	if len(values) == 0 {
+		return PriorityDefault
+	}
+	return values[0]
+}
+
+func (r *Registry) add(target map[string]Handlers, name string, fn any, source Source, priority int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.next++
+	h := Handler{Name: name, Priority: priority, Source: source, Fn: fn, order: r.next}
+	handlers := append(target[name], h)
+	sort.Stable(handlers)
+	target[name] = handlers
 }
 
 // RemoveAction 移除指定 source 注册的所有同名 action 处理器。
@@ -93,7 +131,7 @@ func (r *Registry) RemoveAction(name string, source Source) int {
 	if r == nil || name == "" {
 		return 0
 	}
-	return r.remove(&r.actions, name, source)
+	return r.remove(r.actions, name, source)
 }
 
 // RemoveFilter 移除指定 source 注册的所有同名 filter 处理器。
@@ -102,19 +140,19 @@ func (r *Registry) RemoveFilter(name string, source Source) int {
 	if r == nil || name == "" {
 		return 0
 	}
-	return r.remove(&r.filters, name, source)
+	return r.remove(r.filters, name, source)
 }
 
-func (r *Registry) remove(target *map[string][]Handler, name string, source Source) int {
+func (r *Registry) remove(target map[string]Handlers, name string, source Source) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	items := (*target)[name]
-	if len(items) == 0 {
+	handlers := target[name]
+	if len(handlers) == 0 {
 		return 0
 	}
-	kept := items[:0]
+	kept := handlers[:0]
 	removed := 0
-	for _, h := range items {
+	for _, h := range handlers {
 		if h.Source.Type == source.Type && h.Source.ID == source.ID {
 			removed++
 		} else {
@@ -125,33 +163,11 @@ func (r *Registry) remove(target *map[string][]Handler, name string, source Sour
 		return 0
 	}
 	if len(kept) == 0 {
-		delete(*target, name)
+		delete(target, name)
 	} else {
-		(*target)[name] = kept
+		target[name] = kept
 	}
 	return removed
-}
-
-func (r *Registry) add(target *map[string][]Handler, name string, fn any, source Source, priority int) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.next++
-	h := Handler{Name: name, Priority: priority, Source: source, Fn: fn, order: r.next}
-	items := append((*target)[name], h)
-	sort.SliceStable(items, func(i, j int) bool {
-		if items[i].Priority != items[j].Priority {
-			return items[i].Priority < items[j].Priority
-		}
-		return items[i].order < items[j].order
-	})
-	(*target)[name] = items
-}
-
-func firstPriority(values []int) int {
-	if len(values) == 0 {
-		return PriorityDefault
-	}
-	return values[0]
 }
 
 // Actions 返回指定 action 当前注册的处理器快照。
@@ -249,7 +265,7 @@ func (r *Registry) DoingAction(ctx context.Context, name string) bool {
 
 // ReplaceAll 原子替换所有 hook 处理器，用于插件重载场景。
 // 编译到临时 Registry 成功后调用此方法，避免替换 Registry 实例本身。
-func (r *Registry) ReplaceAll(actions, filters map[string][]Handler, didActions map[string]int) {
+func (r *Registry) ReplaceAll(actions, filters map[string]Handlers, didActions map[string]int) {
 	if r == nil {
 		return
 	}
