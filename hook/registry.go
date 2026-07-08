@@ -190,7 +190,7 @@ func cloneHandlers(in []Handler) []Handler {
 }
 
 // DoAction 执行一个 action。单个处理器 panic 不会中断后续处理器。
-// w 是输出 writer，会自动注入 context 供 api.Printf 使用。
+// w 是输出 writer，会自动注入 context 供 api.Print/Printf/Println 使用。
 func (r *Hooks) DoAction(ctx context.Context, name string, w io.Writer, args ...any) {
 	if r == nil {
 		return

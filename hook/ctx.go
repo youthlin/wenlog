@@ -28,7 +28,7 @@ func getDataLoader(ctx context.Context) *store.DataLoader {
 // actionWriterKey 用于在 context 中存储当前 action 的输出 writer。
 type actionWriterKey struct{}
 
-// WithActionWriter 把输出 writer 注入 context，供 api.Printf 使用。
+// WithActionWriter 把输出 writer 注入 context，供 api.Print/Printf/Println 使用。
 func WithActionWriter(ctx context.Context, w io.Writer) context.Context {
 	return context.WithValue(ctx, actionWriterKey{}, w)
 }
