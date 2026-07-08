@@ -39,6 +39,9 @@ func CompileFunctions(ctx context.Context, themeDir string, api *API, log *slog.
 	if source == "" {
 		return nil, nil
 	}
+	if err := rootAPI.RegistrationError(); err != nil {
+		return nil, err
+	}
 	return newFunctionsScript(ctx, source, api, log), nil
 }
 
@@ -118,6 +121,9 @@ func (script *FunctionsScript) acquireRunner(ctx context.Context, baseAPI *API, 
 		Exports:      internalscript.HookAPIExports(),
 		RegisterArgs: []any{requestAPI.API},
 	}); err != nil {
+		return nil, err
+	}
+	if err := requestAPI.RegistrationError(); err != nil {
 		return nil, err
 	}
 	return newFunctionsScript(ctx, script.source, requestAPI, nil), nil

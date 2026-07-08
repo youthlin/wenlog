@@ -3,9 +3,11 @@ package hook
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html"
 	"log/slog"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -26,6 +28,7 @@ type API struct {
 	addFilter    func(name string, fn any, priority ...int)
 	removeAction func(name string)
 	removeFilter func(name string)
+	regErrors    []error
 }
 
 // ========== ========== API 构造 ========== ==========
@@ -79,11 +82,19 @@ func (api *API) WithContext(ctx context.Context) *API {
 
 // AddAction
 func (api *API) AddAction(name string, fn any, priority ...int) {
-	if api == nil || api.addAction == nil || name == "" || fn == nil {
+	if api == nil {
 		return
 	}
 	if wrapped, ok := api.wrapAction(fn); ok {
+		if err := api.validateRegistration("action", name, wrapped, true); err != nil {
+			api.addRegistrationError(err)
+			return
+		}
 		api.addAction(name, wrapped, priority...)
+		return
+	}
+	if err := api.validateAction(name, fn); err != nil {
+		api.addRegistrationError(err)
 		return
 	}
 	api.addAction(name, fn, priority...)
@@ -109,7 +120,15 @@ func (api *API) wrapAction(fn any) (func(context.Context, ...any), bool) {
 //   - func() any
 func (api *API) RegisterFunc(name string, fn any) {
 	wrapped := wrapTemplateFunc(fn)
-	if api == nil || name == "" || wrapped == nil {
+	if api == nil {
+		return
+	}
+	if name == "" {
+		api.addRegistrationError(errors.New("注册模板函数失败: name 不能为空"))
+		return
+	}
+	if wrapped == nil {
+		api.addRegistrationError(fmt.Errorf("注册模板函数[%s]失败: 签名不支持", name))
 		return
 	}
 	api.funcs[name] = wrapped
@@ -170,11 +189,19 @@ func (api *API) InvokeFunc(ctx context.Context, name string, args map[string]any
 
 // AddFilter 注册 filter。插件可以使用 FilterFunc，也可以使用 func(any, ...any) any。
 func (api *API) AddFilter(name string, fn any, priority ...int) {
-	if api == nil || api.addFilter == nil || name == "" || fn == nil {
+	if api == nil {
 		return
 	}
 	if wrapped, ok := api.wrapFilter(fn); ok {
+		if err := api.validateRegistration("filter", name, wrapped, true); err != nil {
+			api.addRegistrationError(err)
+			return
+		}
 		api.addFilter(name, wrapped, priority...)
+		return
+	}
+	if err := api.validateFilter(name, fn); err != nil {
+		api.addRegistrationError(err)
 		return
 	}
 	api.addFilter(name, fn, priority...)
@@ -222,6 +249,66 @@ func (api *API) RemoveFilter(name string) {
 		return
 	}
 	api.removeFilter(name)
+}
+
+// RegistrationError 返回脚本 Register 阶段收集到的注册错误。
+func (api *API) RegistrationError() error {
+	if api == nil || len(api.regErrors) == 0 {
+		return nil
+	}
+	return errors.Join(api.regErrors...)
+}
+
+func (api *API) addRegistrationError(err error) {
+	if api == nil || err == nil {
+		return
+	}
+	api.regErrors = append(api.regErrors, err)
+}
+
+func (api *API) validateAction(name string, fn any) error {
+	if err := api.validateRegistration("action", name, fn, false); err != nil {
+		return err
+	}
+	t := reflect.TypeOf(fn)
+	if t.NumOut() != 0 {
+		return fmt.Errorf("注册 action[%s]失败: 处理函数不能有返回值", name)
+	}
+	return nil
+}
+
+func (api *API) validateFilter(name string, fn any) error {
+	if err := api.validateRegistration("filter", name, fn, false); err != nil {
+		return err
+	}
+	t := reflect.TypeOf(fn)
+	if t.NumOut() != 1 {
+		return fmt.Errorf("注册 filter[%s]失败: 处理函数必须返回一个值", name)
+	}
+	if t.NumIn() == 0 {
+		return fmt.Errorf("注册 filter[%s]失败: 处理函数必须接收当前值", name)
+	}
+	return nil
+}
+
+func (api *API) validateRegistration(kind, name string, fn any, wrapped bool) error {
+	if name == "" {
+		return fmt.Errorf("注册%s失败: name 不能为空", kind)
+	}
+	if fn == nil {
+		return fmt.Errorf("注册%s[%s]失败: 处理函数不能为空", kind, name)
+	}
+	if api == nil || (kind == "action" && api.addAction == nil) || (kind == "filter" && api.addFilter == nil) {
+		return fmt.Errorf("注册%s[%s]失败: hook registry 未注入", kind, name)
+	}
+	if wrapped {
+		return nil
+	}
+	t := reflect.TypeOf(fn)
+	if t == nil || t.Kind() != reflect.Func {
+		return fmt.Errorf("注册%s[%s]失败: 处理函数必须是函数", kind, name)
+	}
+	return nil
 }
 
 // T 翻译普通消息。

@@ -47,6 +47,9 @@ func CompileFunctions(ctx context.Context, p *Plugin, hooks hook.Registry, log *
 	if i == nil {
 		return nil, nil
 	}
+	if err := api.RegistrationError(); err != nil {
+		return nil, err
+	}
 	if log != nil {
 		log.InfoContext(ctx, "插件函数functions.goyaegi编译执行成功",
 			"plugin", p.ID,

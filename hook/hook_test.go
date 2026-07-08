@@ -409,6 +409,58 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestAPICollectsRegistrationErrors(t *testing.T) {
+	api := NewAPI()
+	api.RegisterFunc("", func() any { return nil })
+	api.RegisterFunc("bad_template_func", func(string) {})
+	api.AddAction("bad_action", "not a func")
+	api.AddFilter("bad_filter", func() any { return nil })
+
+	err := api.RegistrationError()
+	if err == nil {
+		t.Fatal("RegistrationError() = nil, want error")
+	}
+	msg := err.Error()
+	for _, want := range []string{
+		"注册模板函数失败: name 不能为空",
+		"注册模板函数[bad_template_func]失败: 签名不支持",
+		"注册action[bad_action]失败: hook registry 未注入",
+		"注册filter[bad_filter]失败: hook registry 未注入",
+	} {
+		if !strings.Contains(msg, want) {
+			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
+		}
+	}
+}
+
+func TestAPIRejectsInvalidHookSignatures(t *testing.T) {
+	var actionCalled, filterCalled bool
+	api := NewAPI().SetHookRegistrars(
+		func(name string, fn any, priority ...int) { actionCalled = true },
+		func(name string, fn any, priority ...int) { filterCalled = true },
+	)
+
+	api.AddAction("bad_action", func() string { return "" })
+	api.AddFilter("bad_filter", func() {})
+
+	err := api.RegistrationError()
+	if err == nil {
+		t.Fatal("RegistrationError() = nil, want error")
+	}
+	msg := err.Error()
+	for _, want := range []string{
+		"注册 action[bad_action]失败: 处理函数不能有返回值",
+		"注册 filter[bad_filter]失败: 处理函数必须返回一个值",
+	} {
+		if !strings.Contains(msg, want) {
+			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
+		}
+	}
+	if actionCalled || filterCalled {
+		t.Fatalf("invalid hooks should not be registered, action=%v filter=%v", actionCalled, filterCalled)
+	}
+}
+
 // ========== io.Writer 接口验证 ==========
 
 func TestActionWriterInterface(t *testing.T) {

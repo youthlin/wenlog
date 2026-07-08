@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -29,6 +30,64 @@ func TestBundledPluginFunctionsCompile(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCompileFunctionsReturnsRegisterError(t *testing.T) {
+	p := writeTestPlugin(t, "bad-register", `package plugin
+
+import (
+	"errors"
+	"hook"
+)
+
+func Register(api *hook.API) error {
+	return errors.New("register failed")
+}
+`)
+	hooks := hook.NewRegistry()
+	_, err := CompileFunctions(context.Background(), p, hooks, nil)
+	if err == nil || !strings.Contains(err.Error(), "register failed") {
+		t.Fatalf("CompileFunctions error = %v, want register failed", err)
+	}
+}
+
+func TestCompileFunctionsReturnsRegistrationErrors(t *testing.T) {
+	p := writeTestPlugin(t, "bad-hook", `package plugin
+
+import "hook"
+
+func Register(api *hook.API) {
+	api.AddFilter("bad.filter", func() any { return "ignored" })
+}
+`)
+	hooks := hook.NewRegistry()
+	_, err := CompileFunctions(context.Background(), p, hooks, nil)
+	if err == nil || !strings.Contains(err.Error(), "注册 filter[bad.filter]失败") {
+		t.Fatalf("CompileFunctions error = %v, want registration error", err)
+	}
+	if len(hooks.Filters("bad.filter")) != 0 {
+		t.Fatalf("invalid filter should not be registered")
+	}
+}
+
+func writeTestPlugin(t *testing.T, id, functions string) *Plugin {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), id)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "id: " + id + "\nname: Test Plugin\nversion: 0.0.1\n"
+	if err := os.WriteFile(filepath.Join(dir, "plugin.yaml"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "functions.goyaegi"), []byte(functions), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p, err := LoadPlugin(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
 }
 
 func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {

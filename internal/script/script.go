@@ -146,23 +146,7 @@ func CallOptionalFunc(i *interp.Interpreter, packageName, funcName, subject stri
 	if err != nil {
 		return true, err
 	}
-	if len(outs) == 0 {
-		return true, nil
-	}
-	if len(outs) > 1 {
-		return true, errors.Errorf("%s函数中%s最多只能返回一个error", subject, funcName)
-	}
-	if !outs[0].IsValid() {
-		return true, nil
-	}
-	if isNilValue(outs[0]) {
-		return true, nil
-	}
-	errValue, ok := outs[0].Interface().(error)
-	if !ok {
-		return true, errors.Errorf("%s函数中%s返回值必须是error", subject, funcName)
-	}
-	return true, errValue
+	return true, optionalErrorResult(subject, funcName, outs)
 }
 
 func isNilValue(v reflect.Value) bool {
@@ -192,9 +176,12 @@ func validateRegisterArgs(subject string, registerFn reflect.Value, args []any) 
 	return nil
 }
 
-func callRegister(subject string, registerFn reflect.Value, args []any) (err error) {
-	_, err = callFunction(subject, "Register", registerFn, args)
-	return err
+func callRegister(subject string, registerFn reflect.Value, args []any) error {
+	outs, err := callFunction(subject, "Register", registerFn, args)
+	if err != nil {
+		return err
+	}
+	return optionalErrorResult(subject, "Register", outs)
 }
 
 func callFunction(subject, name string, fn reflect.Value, args []any) (outs []reflect.Value, err error) {
@@ -218,6 +205,23 @@ func callFunction(subject, name string, fn reflect.Value, args []any) (outs []re
 		in = append(in, v)
 	}
 	return fn.Call(in), nil
+}
+
+func optionalErrorResult(subject, name string, outs []reflect.Value) error {
+	if len(outs) == 0 {
+		return nil
+	}
+	if len(outs) > 1 {
+		return errors.Errorf("%s函数中%s最多只能返回一个error", subject, name)
+	}
+	if !outs[0].IsValid() || isNilValue(outs[0]) {
+		return nil
+	}
+	errValue, ok := outs[0].Interface().(error)
+	if !ok {
+		return errors.Errorf("%s函数中%s返回值必须是error", subject, name)
+	}
+	return errValue
 }
 
 // ParseKVArgs 解析 key-value 参数对为 map[string]any。

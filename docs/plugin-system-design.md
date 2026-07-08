@@ -2,7 +2,7 @@
 
 > 本文是插件系统的设计文档，目标是把"主题里顺手实现的功能"沉淀为可跨主题复用、可启停、可配置的能力。插件系统已按本文方案实现，代码位于 `internal/plugin/`、`hook/`、`cmd/server/hook.go`。
 >
-> 当前事实入口以 `AGENTS.md`、`docs/template-data-reference.md` 和代码为准。本文保留了部分历史设计推演，遇到旧的 `pluginapi` / `themeapi` 叙述时，应按当前统一的 `hook.API` 模型理解：主题和插件脚本都通过 `Register(api *hook.API)` 注册函数、action 和 filter。
+> 当前事实入口以 `AGENTS.md`、`docs/template-data-reference.md` 和代码为准。本文保留了部分历史设计推演，遇到旧的 `pluginapi` / `themeapi` 叙述时，应按当前统一的 `hook.API` 模型理解：主题和插件脚本都通过 `Register(api *hook.API)` 或 `Register(api *hook.API) error` 注册函数、action 和 filter。
 
 ## 1. 背景
 
@@ -27,7 +27,7 @@
 ### 2.2 主题脚本与 hook.API
 
 - 主题可以提供 `functions.go` 或 `functions.goyaegi`，由 `CompileFunctions` 编译执行，见 `internal/theme/functions.go:31`。
-- 脚本通过 `Register(api *hook.API)` 接收宿主 API，并用 `api.RegisterFunc` 注册可在模板中通过 `hook_invoke` 调用的函数。
+- 脚本通过 `Register(api *hook.API)` 或 `Register(api *hook.API) error` 接收宿主 API，并用 `api.RegisterFunc` 注册可在模板中通过 `hook_invoke` 调用的函数。
 - 主题脚本也可以用 `api.AddAction` / `api.AddFilter` 注册 hook，来源记录为 `hook.SourceTheme`。
 
 这说明项目已有“运行时脚本 + 宿主 API”的统一模型；主题和插件生命周期不同，但脚本侧 API 已收敛到同一套 `hook.API`。
@@ -401,7 +401,7 @@ type WidgetInfo struct {
 
 ### 8.1 当前统一 hook.API
 
-当前实现已经不再区分 `themeapi` / `pluginapi`。主题和插件脚本都通过 `Register(api *hook.API)` 获得同一个脚本侧 API，生命周期差异由 theme/plugin manager 处理，hook 来源通过 `hook.Source{Type, ID}` 记录。
+当前实现已经不再区分 `themeapi` / `pluginapi`。主题和插件脚本都通过 `Register(api *hook.API)` 或 `Register(api *hook.API) error` 获得同一个脚本侧 API，生命周期差异由 theme/plugin manager 处理，hook 来源通过 `hook.Source{Type, ID}` 记录。
 
 建议原则：
 
@@ -464,8 +464,8 @@ func Register(api *hook.API) {
 短期建议复用 yaegi 经验，但要比主题脚本更谨慎：
 
 1. 插件脚本文件名使用 `functions.goyaegi` 或 `plugin.goyaegi`。
-2. 脚本必须定义 `package plugin` 和无参 `Register()`。
-3. 宿主注入 `hook.API`，插件通过它注册 hooks/widgets。
+2. 脚本必须定义 `package plugin` 和 `Register(api *hook.API)`；如果初始化可能失败，推荐使用 `Register(api *hook.API) error`。
+3. 宿主注入 `hook.API`，插件通过它注册 hooks/widgets；`Register` 返回的 error、以及 `api.AddAction` / `api.AddFilter` / `api.RegisterFunc` 收集到的注册错误都会作为 load error 暴露。
 4. 第一阶段仍视插件为“管理员安装的可信代码”，不承诺强沙箱。
 5. 中长期可评估 WASM 插件或编译期 Go 插件接口，但不要作为第一阶段前置条件。
 

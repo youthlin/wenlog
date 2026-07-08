@@ -499,7 +499,7 @@ themes/my-theme/
 
 ## 主题自定义数据（functions.goyaegi）
 
-当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与 `Register(api *hook.API)` 函数，通过 `api.RegisterFunc` 注册可由模板调用的扩展函数：
+当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与 `Register(api *hook.API)` 函数，通过 `api.RegisterFunc` 注册可由模板调用的扩展函数。`Register` 也可以返回 `error`，用于在加载阶段显式暴露初始化失败：
 
 ```go
 package theme
@@ -510,7 +510,7 @@ import (
     "hook"
 )
 
-func Register(api *hook.API) {
+func Register(api *hook.API) error {
     api.RegisterFunc("PopularPosts", func(api *hook.API, args hook.Args) any {
         posts := api.Posts()
         sort.Slice(posts, func(i, j int) bool { return posts[i].Views > posts[j].Views })
@@ -520,6 +520,7 @@ func Register(api *hook.API) {
         }
         return posts
     })
+    return api.RegistrationError()
 }
 ```
 
