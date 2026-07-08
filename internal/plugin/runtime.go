@@ -19,11 +19,11 @@ type FunctionsScript struct {
 
 // CompileFunctions 编译插件目录下的 functions.go 或 functions.goyaegi 文件。
 // 如果插件没有 functions 文件，返回 nil, nil。
-func CompileFunctions(ctx context.Context, p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsScript, error) {
+func CompileFunctions(ctx context.Context, p *Plugin, hooks hook.Registry, log *slog.Logger) (*FunctionsScript, error) {
 	if p == nil {
 		return nil, nil
 	}
-	source := Source{Type: SourcePlugin, ID: p.ID}
+	source := hook.Source{Type: hook.SourcePlugin, ID: p.ID}
 	api := hook.NewAPI()
 	api.SetHookRegistrars(
 		func(name string, fn any, priority ...int) { hooks.AddAction(name, fn, source, priority...) },

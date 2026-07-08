@@ -1,13 +1,15 @@
 # 插件系统调研与设计
 
 > 本文是插件系统的设计文档，目标是把"主题里顺手实现的功能"沉淀为可跨主题复用、可启停、可配置的能力。插件系统已按本文方案实现，代码位于 `internal/plugin/`、`hook/`、`cmd/server/hook.go`。
+>
+> 当前事实入口以 `AGENTS.md`、`docs/template-data-reference.md` 和代码为准。本文保留了部分历史设计推演，遇到旧的 `pluginapi` / `themeapi` 叙述时，应按当前统一的 `hook.API` 模型理解：主题和插件脚本都通过 `Register(api *hook.API)` 注册函数、action 和 filter。
 
 ## 1. 背景
 
 当前项目已经支持主题切换、主题选项和组件区域，但部分“功能”仍绑定在具体主题里：
 
-- `default` 主题内置了“博主动态”组件：主题在 `theme.yaml` 声明 `saying` 组件，并通过 `functions.goyaegi` 注册 `saying` 数据函数，再由组件模板渲染，见 `web/themes/default/theme.yaml:17`、`web/themes/default/functions.goyaegi:24`、`web/themes/default/widgets/saying.gohtml:1`。
-- `twentytwenty` 主题实现了评论表情：主题模板调用 `themeInvoke "render_comment"` 渲染评论正文，并调用 `themeInvoke "post-comment-enhance"` 输出表情按钮，见 `web/themes/twentytwenty/templates/comments.gohtml:21`、`web/themes/twentytwenty/templates/comments.gohtml:72`；实际表情列表与替换逻辑在 `web/themes/twentytwenty/functions.goyaegi:36`、`web/themes/twentytwenty/functions.goyaegi:48`。
+- 历史上 `default` 主题内置了“博主动态”组件，后来已迁移为 `common-widgets` 插件，通过 `hook_invoke "SayingItems"` / `hook_invoke "PopularPosts"` 给插件组件模板提供数据。
+- 历史上 `twentytwenty` 主题实现过评论表情，后来已迁移为 `post-comment-enhance` 插件，通过 `comment.content_html` filter 渲染短码图片，并通过 `comment.form.after_textarea` action 输出表情面板。
 
 这些能力从用户视角看并不属于“外观主题”，而属于“站点功能”：使用任意主题时都希望继续可用。插件系统要解决的核心问题就是：**功能归插件，外观归主题；主题可以适配插件外观，但不应独占插件能力。**
 
@@ -18,17 +20,17 @@
 - 主题元数据由 `theme.Theme` 描述，包含 `WidgetAreas`、`Widgets`、`Options` 等字段，见 `internal/theme/theme.go:15`。
 - 内置组件目前是 Go 代码中的静态声明，列表在 `internal/theme/widgets.go:11`，声明在 `internal/theme/widgets.go:16`。
 - 后台组件页会把当前主题声明与内置组件合并后展示，见 `internal/handler/admin_widgets.go:32`；保存时将区域配置写入 `widget_<area>` 设置，见 `internal/handler/admin_widgets.go:129`。
-- 渲染时 `ResolveWidgets` 根据当前主题、区域和用户配置解析出组件列表，见 `internal/theme/widgets.go:87`；模板函数 `renderWidgets` 遍历组件并执行 `widget_<id>` 模板，见 `internal/render/theme.go:337`；组件实例选项通过 `widgetOption` 获取，见 `internal/render/theme.go:379`。
+- 渲染时 `ResolveWidgets` 根据当前主题、区域和用户配置解析出组件列表，见 `internal/theme/widgets.go:87`；模板函数 `render_widgets` 遍历组件并执行 `widget_<id>` 模板，见 `internal/render/theme.go:337`；组件实例选项通过 `widget_option` 获取，见 `internal/render/theme.go:379`。
 
 这说明当前组件系统已经有插件化雏形：组件声明、组件选项、组件模板、组件区域、用户配置已经分离，只是“组件来源”目前只有“内置”和“当前主题”。插件系统可以在此基础上增加第三种来源：`plugin`。
 
-### 2.2 主题脚本与 ThemeAPI
+### 2.2 主题脚本与 hook.API
 
 - 主题可以提供 `functions.go` 或 `functions.goyaegi`，由 `CompileFunctions` 编译执行，见 `internal/theme/functions.go:31`。
-- 脚本通过 `themeapi.Api.RegisterFunc` 注册可在模板中调用的函数，注册入口见 `themeapi/api.go:129`。
-- `themeInvoke` 的实际实现由主题运行时注入到渲染器，见 `internal/render/theme.go:288`。
+- 脚本通过 `Register(api *hook.API)` 接收宿主 API，并用 `api.RegisterFunc` 注册可在模板中通过 `hook_invoke` 调用的函数。
+- 主题脚本也可以用 `api.AddAction` / `api.AddFilter` 注册 hook，来源记录为 `hook.SourceTheme`。
 
-这说明项目已有“运行时脚本 + 宿主 API”的经验，但该能力现在挂在主题生命周期上。插件系统可以复用思路，但需要把 API 命名、生命周期、隔离边界从 theme runtime 中独立出来。
+这说明项目已有“运行时脚本 + 宿主 API”的统一模型；主题和插件生命周期不同，但脚本侧 API 已收敛到同一套 `hook.API`。
 
 ### 2.3 前台模板数据
 
@@ -100,7 +102,7 @@ WordPress 的小组件体系可以拆成三段：
 - 插件负责：注册 widget 类型、提供 `widget()` 前台输出、`form()` 后台表单、`update()` 保存清洗。
 - WordPress 负责：保存“哪个区域有哪些 widget 实例”的配置，并在 `dynamic_sidebar()` 中调度渲染。
 
-这个模型对本项目的启发是：`renderWidgets "area" .` 应该类似 `dynamic_sidebar('area')`；主题只调用区域渲染函数，插件组件如果被放入该区域，应由插件自己的模板或渲染 hook 输出。
+这个模型对本项目的启发是：`render_widgets "area" .` 应该类似 `dynamic_sidebar('area')`；主题只调用区域渲染函数，插件组件如果被放入该区域，应由插件自己的模板或渲染 hook 输出。
 
 ## 4. 设计目标与非目标
 
@@ -111,7 +113,7 @@ WordPress 的小组件体系可以拆成三段：
 3. **主题与插件低耦合**：主题只按标准写法调用内容函数、组件区域和 slot/hook 点；插件自行实现自己的组件渲染。
 4. **扩展点稳定**：核心流程提供 typed hooks，插件通过 hooks 介入，而不是复制整套主题模板。
 5. **安全边界清晰**：插件默认由管理员安装；运行能力受 API 白名单约束；前台输出默认走 HTML 转义。
-6. **兼容现有主题系统**：优先复用当前组件区域、`widgetOption`、模板解析和 ThemeAPI 的经验，避免推倒重来。
+6. **兼容现有主题系统**：优先复用当前组件区域、`widget_option`、模板解析和 ThemeAPI 的经验，避免推倒重来。
 
 ### 4.2 非目标
 
@@ -161,10 +163,10 @@ assets:
 
 hooks:
   filters:
-    - comment.render_html
+    - comment.content_html
     - frontend.assets
   slots:
-    - comment_form.after_textarea
+    - comment.form.after_textarea
 
 settings:
   - id: enabled_names
@@ -251,11 +253,11 @@ func (h *Hooks) DoAction(ctx *Context, name string, args Args)
 func (h *Hooks) ApplyFilter[T any](ctx *Context, name string, value T, args Args) T
 ```
 
-如果 Go 泛型让脚本侧接入复杂，可以在 `pluginapi` 层暴露非泛型包装：
+如果 Go 泛型让脚本侧接入复杂，可以在 `hook.API` 层暴露非泛型包装：
 
 ```go
-pluginapi.Api.AddAction("comment.submitted", func(args map[string]any) {})
-pluginapi.Api.AddFilter("comment.render_html", func(value any, args map[string]any) any { return value })
+api.AddAction("comment.submitted", func(api *hook.API, args ...any) {})
+api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any) any { return value })
 ```
 
 ### 6.2 建议第一批扩展点
@@ -270,19 +272,19 @@ pluginapi.Api.AddFilter("comment.render_html", func(value any, args map[string]a
 | `widgets.available` | filter | 后台组件页和组件渲染前构建可用组件时 | 合并插件提供的组件声明。 |
 | `widget.render` | filter/action | 渲染某个来源为 plugin 的组件时 | 由插件按组件 ID 与实例选项返回组件 HTML。 |
 | `widget.render_html` | filter | 单个组件渲染后 | 包装组件外层、追加样式标记。 |
-| `comment_form.after_textarea` | slot | 评论表单 textarea 后 | 在 textarea 后注入表情按钮、Markdown 工具栏、验证码入口等。 |
-| `comment.render_html` | filter | 评论正文输出前 | 表情替换、@ 提及、Markdown 子集等。 |
+| `comment.form.after_textarea` | slot | 评论表单 textarea 后 | 在 textarea 后注入表情按钮、Markdown 工具栏、验证码入口等。 |
+| `comment.content_html` | filter | 评论正文输出前 | 表情替换、@ 提及、Markdown 子集等。 |
 | `comment.submitted` | action | 评论保存后 | 通知、反垃圾、积分等副作用。 |
 
-更重要的是：需要先梳理宿主和主题的“标准扩展点”。类似 WordPress 主题调用 `the_content()` 时，宿主会在内部执行内容相关 filter；本项目也应让主题作者按推荐模板函数写法接入扩展点，而不是知道具体插件。比如主题写 `{{postContent .Post}}`，而不是直接输出 `.Post.Content`；`postContent` 内部再触发 `post.content_html` filter。
+更重要的是：需要先梳理宿主和主题的“标准扩展点”。类似 WordPress 主题调用 `the_content()` 时，宿主会在内部执行内容相关 filter；本项目也应让主题作者按推荐模板函数写法接入扩展点，而不是知道具体插件。比如主题写 `{{post_content .Post}}`，而不是直接输出 `.Post.Content`；`post_content` 内部再触发 `post.content_html` filter。
 
-`{{pluginSlot "comment_form.after_textarea" .}}` 对应 WordPress 里的典型写法是主题模板中的 `do_action('某个_slot_name', $context)`：主题只声明“这里有一个插槽”，插件用 `add_action()` 往这个位置输出内容。区别是本项目模板语言不是 PHP，所以建议提供 `pluginSlot` 模板函数来封装 `DoAction`，避免主题直接接触 Go hook 实现。
+`{{do_action "comment.form.after_textarea" .}}` 对应 WordPress 里的典型写法是主题模板中的 `do_action('某个_slot_name', $context)`：主题只声明“这里有一个插槽”，插件用 `add_action()` 往这个位置输出内容。区别是本项目模板语言不是 PHP，所以建议提供 `do_action` 模板函数来封装 `DoAction`，避免主题直接接触 Go hook 实现。
 
 ### 6.3 Hook 命名约定
 
-- 使用小写点分命名：`comment.render_html`、`frontend.assets`。
+- 使用小写点分命名：`comment.content_html`、`frontend.assets`。
 - 名称表达“领域 + 事件/数据”，避免 `before_xxx` 滥用。
-- Filter 名称应体现返回值语义，例如 `comment.render_html` 返回 HTML 字符串。
+- Filter 名称应体现返回值语义，例如 `comment.content_html` 返回 HTML 字符串。
 - 每个 hook 必须文档化：触发时机、参数、返回值、安全要求、是否允许错误中断主流程。
 
 ## 7. 插件组件设计
@@ -342,7 +344,7 @@ plugin widget   -> 对应插件 widgets/{widget_id}.gohtml 或 widget.render hoo
 
 - 主题作者开发主题时无法知道真实站点会启用哪些插件，不应被要求为插件组件写模板。
 - 插件组件要跨主题可用，就必须由插件自带默认实现。
-- 主题只负责输出标准组件区域，如 `{{renderWidgets "sidebar" .}}`，以及提供通用 CSS 容器样式。
+- 主题只负责输出标准组件区域，如 `{{render_widgets "sidebar" .}}`，以及提供通用 CSS 容器样式。
 - 如果以后需要“站点级覆盖插件模板”，也应作为站点管理员的高级能力，而不是主题作者的默认职责。
 
 但这不是所有插件的要求。纯 action/filter 插件（例如只处理评论正文、只做统计、只改 SEO meta）不需要任何 widget/template。
@@ -363,21 +365,21 @@ type WidgetInfo struct {
 
 渲染器据此定位插件模板和插件资源；后台据此展示来源和缺失插件提示。
 
-### 7.4 当前 `renderWidgets` 流程与插件化改造点
+### 7.4 当前 `render_widgets` 流程与插件化改造点
 
-当前主题模板中的 `{{renderWidgets "sidebar" .}}` 是一个 Go 模板函数调用。它的现有流程是：
+当前主题模板中的 `{{render_widgets "sidebar" .}}` 是一个 Go 模板函数调用。它的现有流程是：
 
 1. 模板解析阶段先注册占位函数，避免模板解析时报“函数不存在”，见 `internal/render/parse.go:60`。
-2. 每次请求渲染时，Renderer 会 clone 模板，并把真正的 `renderWidgets` 闭包绑定到本次请求上下文，见 `internal/render/render.go:76`、`internal/render/render.go:88`。
-3. `renderWidgets` 调用 `themeWidgetsProvider` 获取该区域要渲染的组件列表，见 `internal/render/theme.go:337`。
+2. 每次请求渲染时，Renderer 会 clone 模板，并把真正的 `render_widgets` 闭包绑定到本次请求上下文，见 `internal/render/render.go:76`、`internal/render/render.go:88`。
+3. `render_widgets` 调用 `themeWidgetsProvider` 获取该区域要渲染的组件列表，见 `internal/render/theme.go:337`。
 4. 当前 provider 由 `theme.Manager.BindTemplateFunctions()` 注入：读取当前主题、读取 `widget_<area>` 配置，然后调用 `ResolveWidgets(config, theme, area)`，见 `internal/theme/runtime.go:26`。
 5. `ResolveWidgets` 当前只从“当前主题声明 + 内置组件”中解析出 `[]WidgetInfo`，并把模板名固定为 `widget_<id>`，见 `internal/theme/widgets.go:92`、`internal/theme/widgets.go:112`。
-6. `renderWidgets` 遍历 `[]WidgetInfo`，把当前组件选项放入 `ctx.WidgetOptions`，再执行 `ctx.Template.ExecuteTemplate(&result, widget.TemplateName, data)`，见 `internal/render/theme.go:355`。
+6. `render_widgets` 遍历 `[]WidgetInfo`，把当前组件选项放入 `ctx.WidgetOptions`，再执行 `ctx.Template.ExecuteTemplate(&result, widget.TemplateName, data)`，见 `internal/render/theme.go:355`。
 
 要支持插件组件，可以尽量保持主题模板写法不变：
 
 ```gohtml
-{{renderWidgets "sidebar" .}}
+{{render_widgets "sidebar" .}}
 ```
 
 改造点建议是：
@@ -397,15 +399,15 @@ type WidgetInfo struct {
 
 ## 8. 插件 API 设计
 
-### 8.1 `pluginapi` 与 `themeapi` 的关系
+### 8.1 当前统一 hook.API
 
-`themeapi` 当前是主题脚本专用 API。插件应新增独立的 `pluginapi`，避免主题和插件生命周期混在一起。
+当前实现已经不再区分 `themeapi` / `pluginapi`。主题和插件脚本都通过 `Register(api *hook.API)` 获得同一个脚本侧 API，生命周期差异由 theme/plugin manager 处理，hook 来源通过 `hook.Source{Type, ID}` 记录。
 
 建议原则：
 
-- `themeapi`：给主题做展示辅助，偏只读、偏模板数据。
-- `pluginapi`：给插件注册能力，包含 hooks、settings、widgets、assets、有限数据访问。
-- 两者共用底层只读视图结构，避免重复定义 `PostView`、`CommentView`。
+- `hook.API` 脚本入口保持统一，降低主题和插件作者心智成本。
+- 内部实现可以继续按 `Registrar`、`DataAPI`、`RenderAPI`、`OptionAPI`、`I18nAPI` 等职责拆分，再组合成脚本入口。
+- 只读视图结构（`PostView`、`CommentView` 等）应保持稳定，避免脚本直接依赖 GORM model。
 
 ### 8.2 API 能力分层
 
@@ -424,7 +426,7 @@ type WidgetInfo struct {
 
 ### 8.3 i18n 能力
 
-插件和主题的 `functions.go/functions.goyaegi` 不一定只返回数据，也可能通过 action/slot/widget 渲染直接输出 UI 字符串，例如按钮文案、表单提示、组件标题、错误信息。因此 `themeapi` / `pluginapi` 都应该暴露请求级 i18n 能力。
+插件和主题的 `functions.go/functions.goyaegi` 不一定只返回数据，也可能通过 action/widget 渲染直接输出 UI 字符串，例如按钮文案、表单提示、组件标题、错误信息。因此 `hook.API` 应暴露请求级 i18n 能力。
 
 建议原则：
 
@@ -433,16 +435,16 @@ type WidgetInfo struct {
    - 插件文本域：`plugin_<plugin_id>`。
 2. **请求级语言**：翻译函数必须绑定当前请求语言，不能在插件加载阶段固定语言。
 3. **API 暴露常用翻译函数**：至少提供 `T`、`N`、`X`、`XN`，并支持格式化参数。
-4. **模板与脚本一致**：插件模板里可以用 `.tp.T` 或 `pluginT`；插件脚本里可以用 `pluginapi.Api.T(...)`。
+4. **模板与脚本一致**：插件模板里可以用 `.tp.T`；插件脚本里可以用 `api.T(...)`。
 5. **字面量标记**：插件 manifest、脚本和模板中的默认中文字符串应能被提取到 `.pot/.po`，后续需要给插件补提取工具。
 
 示例：
 
 ```go
-func Register() {
-    pluginapi.Api.AddAction("comment_form.after_textarea", func(args map[string]any) {
-        label := pluginapi.Api.T("表情")
-        pluginapi.Api.WriteHTML(`<div class="smilies-label">` + pluginapi.Api.EscapeHTML(label) + `</div>`)
+func Register(api *hook.API) {
+    api.AddAction("comment.form.after_textarea", func(api *hook.API, args ...any) {
+        label := api.T("表情")
+        api.Printf(`<div class="smilies-label">%s</div>`, api.EscapeHTML(label))
     })
 }
 ```
@@ -463,7 +465,7 @@ func Register() {
 
 1. 插件脚本文件名使用 `functions.goyaegi` 或 `plugin.goyaegi`。
 2. 脚本必须定义 `package plugin` 和无参 `Register()`。
-3. 宿主注入 `pluginapi.Api`，插件通过它注册 hooks/widgets。
+3. 宿主注入 `hook.API`，插件通过它注册 hooks/widgets。
 4. 第一阶段仍视插件为“管理员安装的可信代码”，不承诺强沙箱。
 5. 中长期可评估 WASM 插件或编译期 Go 插件接口，但不要作为第一阶段前置条件。
 
@@ -472,10 +474,10 @@ func Register() {
 ```go
 package plugin
 
-import "pluginapi"
+import "hook"
 
-func Register() {
-    pluginapi.Api.AddFilter("comment.render_html", func(value any, args map[string]any) any {
+func Register(api *hook.API) {
+    api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any) any {
         content, _ := value.(string)
         return renderSmilies(content)
     })
@@ -507,13 +509,13 @@ plugins/saying/
    ```json
    [{"id":"saying","source":"plugin:saying","opts":{"title":"博主动态","post_id":"456","count":"5"}}]
    ```
-5. 前台主题仍只写 `{{renderWidgets "sidebar" .}}`。`renderWidgets` 解析到这个实例来源是 `plugin:saying` 后，调用该插件渲染器。
+5. 前台主题仍只写 `{{render_widgets "sidebar" .}}`。`render_widgets` 解析到这个实例来源是 `plugin:saying` 后，调用该插件渲染器。
 6. 插件渲染器通过只读 API 找到指定文章/页面的评论，生成 `CommentURL`、`Snippet`、`AuthorName`、`AuthorEmail`，再执行插件自己的 `widgets/saying.gohtml`，或通过 `widget.render` 返回 HTML。
 
 这个流程与 WordPress 的类比是：
 
 - `widgets.available` 近似插件在 `widgets_init` 上 `register_widget()`。
-- `renderWidgets "sidebar" .` 近似主题调用 `dynamic_sidebar('sidebar')`。
+- `render_widgets "sidebar" .` 近似主题调用 `dynamic_sidebar('sidebar')`。
 - 插件的 `widgets/saying.gohtml` / `widget.render` 近似 `WP_Widget::widget($args, $instance)`。
 
 注意点：
@@ -521,7 +523,7 @@ plugins/saying/
 - `post_id` 默认值不应硬编码为个人站点 ID；插件启用后可以为空，后台提示用户选择。
 - 组件缺少 `post_id` 时前台静默不渲染，后台显示配置提示。
 - 评论摘要必须 HTML 转义或使用安全摘要函数，避免把评论原文 HTML 注入到侧边栏。
-- 主题不需要知道 `saying` 存在，只需要声明组件区域并调用 `renderWidgets`。
+- 主题不需要知道 `saying` 存在，只需要声明组件区域并调用 `render_widgets`。
 
 ### 9.2 评论表情插件：`post-comment-enhance`
 
@@ -539,8 +541,8 @@ plugins/post-comment-enhance/
 
 实现方式：
 
-1. `comment.render_html` filter：接收已转义或待渲染的评论正文，替换 `[/微笑]` 这类短码为 `<img class="smiley" ...>`。
-2. `comment_form.after_textarea` slot：在评论 textarea 后注入表情按钮片段，按钮写入短码到 textarea。
+1. `comment.content_html` filter：接收已转义或待渲染的评论正文，替换 `[/微笑]` 这类短码为 `<img class="smiley" ...>`。
+2. `comment.form.after_textarea` slot：在评论 textarea 后注入表情按钮片段，按钮写入短码到 textarea。
 3. `frontend.assets` filter：仅在文章/页面详情且评论开启时注入 CSS/JS。
 4. 插件设置声明启用哪些表情、是否显示表情面板、图片尺寸等。
 
@@ -553,9 +555,9 @@ plugins/post-comment-enhance/
 
 主题适配建议：
 
-- 核心评论模板应提供标准 slot，例如 `comment_form_after_textarea`。
-- 主题可以覆盖评论模板，但应按“推荐主题写法”调用统一 slot 函数，例如 `{{pluginSlot "comment_form_after_textarea" .}}`；主题不需要知道这个 slot 最终会被评论表情、验证码还是其它插件使用。
-- 若主题完全自定义评论模板且不调用 slot，插件仍能通过 `comment.render_html` 生效，但表情按钮不会自动出现；后台可提示“当前主题未声明评论表单 slot”。
+- 核心评论模板应提供标准 action，例如 `comment.form.after_textarea`。
+- 主题可以覆盖评论模板，但应按“推荐主题写法”调用统一 action 函数，例如 `{{do_action "comment.form.after_textarea" .}}`；主题不需要知道这个 action 最终会被评论表情、验证码还是其它插件使用。
+- 若主题完全自定义评论模板且不调用 slot，插件仍能通过 `comment.content_html` 生效，但表情按钮不会自动出现；后台可提示“当前主题未声明评论表单 slot”。
 
 ## 10. 标准 Hook 点梳理
 
@@ -568,12 +570,12 @@ plugins/post-comment-enhance/
 
 | Hook / 函数 | 类型 | 建议调用方 | 说明 |
 |---|---|---|---|
-| `post.content_html` / `postContent` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；主题应调用 `{{postContent .Post}}`，而不是直接 `safeHTML .Post.Content`。 |
+| `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。 |
 | `post.excerpt_html` / `postExcerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。 |
 | `page.content_html` | filter | 宿主模板函数 | 页面正文渲染。可与 `post.content_html` 共用实现，但 hook 名称可保留语义。 |
-| `comment.render_html` / `commentContent` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。 |
+| `comment.content_html` / `comment_content` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。 |
 
-建议：这些地方最好不要要求主题直接调用 `applyFilter`，而是提供稳定模板函数。主题作者只要按文档写 `postContent/commentContent`，插件就能工作。
+建议：这些地方最好不要要求主题直接调用 `apply_filter`，而是提供稳定模板函数。主题作者只要按文档写 `post_content/comment_content`，插件就能工作。
 
 ### 10.2 页面结构 slot
 
@@ -585,16 +587,16 @@ plugins/post-comment-enhance/
 | `post.before` | 文章正文前 | 文章提示、版权提示、广告。 |
 | `post.after` | 文章正文后 | 分享按钮、相关文章、版权提示。 |
 | `comment_form.before` | 评论表单前 | 登录提示、反垃圾提示。 |
-| `comment_form.after_textarea` | 评论 textarea 后 | 表情按钮、Markdown 工具栏、验证码入口。 |
+| `comment.form.after_textarea` | 评论 textarea 后 | 表情按钮、Markdown 工具栏、验证码入口。 |
 | `comment_form.after` | 评论表单后 | 额外说明、订阅入口。 |
 | `footer.before` | 页脚前 | 全站横幅、备案增强。 |
 
 这些 slot 需要主题模板显式调用，例如：
 
 ```gohtml
-{{pluginSlot "post.before" .}}
-{{postContent .Post}}
-{{pluginSlot "post.after" .}}
+{{do_action "post.before" .}}
+{{post_content .Post}}
+{{do_action "post.after" .}}
 ```
 
 ### 10.3 组件系统 hook
@@ -602,10 +604,10 @@ plugins/post-comment-enhance/
 | Hook | 类型 | 调用方 | 说明 |
 |---|---|---|---|
 | `widgets.available` | filter | 后台组件页、前台组件解析 | 插件向可用组件列表追加声明。 |
-| `widget.render` | filter/action | `renderWidgets` | 对来源为 plugin 的组件，由插件返回 HTML。 |
-| `widget.render_html` | filter | `renderWidgets` | 对任意组件最终 HTML 做后处理，例如统一埋点、外层包装。 |
+| `widget.render` | filter/action | `render_widgets` | 对来源为 plugin 的组件，由插件返回 HTML。 |
+| `widget.render_html` | filter | `render_widgets` | 对任意组件最终 HTML 做后处理，例如统一埋点、外层包装。 |
 
-组件系统的原则：主题只声明区域并调用 `renderWidgets`；插件组件由插件自行渲染；内置组件由内置模板渲染；主题组件由主题模板渲染。
+组件系统的原则：主题只声明区域并调用 `render_widgets`；插件组件由插件自行渲染；内置组件由内置模板渲染；主题组件由主题模板渲染。
 
 ### 10.4 数据与生命周期 hook
 
@@ -623,9 +625,9 @@ plugins/post-comment-enhance/
 第一批不需要把所有 hook 都实现。建议按现有诉求优先实现：
 
 1. `widgets.available` + `widget.render`：支撑“博主动态”插件组件。
-2. `comment.render_html` + `comment_form.after_textarea` slot：支撑评论表情。
+2. `comment.content_html` + `comment.form.after_textarea` slot：支撑评论表情。
 3. `head.end` / `body.end`：支撑插件 CSS/JS 注入。
-4. `post.content_html` / `postContent`：建立类似 `the_content()` 的标准内容出口，后续短代码、目录、版权提示都能复用。
+4. `post.content_html` / `post_content`：建立类似 `the_content()` 的标准内容出口，后续短代码、目录、版权提示都能复用。
 
 新增 hook 的原则：
 
@@ -633,7 +635,7 @@ plugins/post-comment-enhance/
 - **文档先行**：每个 hook/slot 必须在本文或后续专门的 hook reference 中记录名称、类型、调用位置、参数、返回值、安全约束和示例。
 - **稳定性分级**：第一批可标注为 experimental；一旦有插件依赖并发布，再提升为 stable，避免随意改名或改参数。
 - **主题推荐写法同步**：凡是需要主题调用的 slot，都必须同步到主题开发文档和内置主题模板中，避免主题作者漏掉标准出口。
-- **优先宿主函数封装**：内容类 filter 优先做成 `postContent/commentContent` 这类模板函数，由宿主内部触发 filter；只有视觉插入点才暴露为 `pluginSlot`。
+- **优先宿主函数封装**：内容类 filter 优先做成 `post_content/comment_content` 这类模板函数，由宿主内部触发 filter；只有视觉插入点才暴露为 `do_action`。
 
 ## 11. 后台管理设计
 
@@ -739,7 +741,7 @@ plugins/post-comment-enhance/
 
 1. 在后台组件页和前台组件解析处增加 `widgets.available` filter，把当前组件声明列表交给启用插件调整。
 2. 插件如需新增组件，通过该 filter append 组件声明，并标记来源 `plugin:<id>`。
-3. 对来源为 plugin 的组件，`renderWidgets` 调用对应插件的模板或 `widget.render` hook 完成渲染；纯 filter 插件不需要提供任何模板。
+3. 对来源为 plugin 的组件，`render_widgets` 调用对应插件的模板或 `widget.render` hook 完成渲染；纯 filter 插件不需要提供任何模板。
 4. 把 `default` 的 `saying` 迁成内置示例插件或仓库内置插件。
 
 验收：任意主题只要有组件区域，都能添加“博主动态”；该组件由 `saying` 插件自己的模板或渲染 hook 输出。
@@ -747,7 +749,7 @@ plugins/post-comment-enhance/
 ### P2：核心 Hooks 与评论表情
 
 1. 实现 `Hooks`：action/filter 注册、优先级、错误隔离、超时。
-2. 增加 `comment.render_html`、`comment_form.after_textarea`、`frontend.assets` 等 hook/slot。
+2. 增加 `comment.content_html`、`comment.form.after_textarea`、`frontend.assets` 等 hook/slot。
 3. 将 `twentytwenty` 评论表情迁移成 `post-comment-enhance` 插件。
 4. 核心评论模板补 slot；现有主题逐步适配 slot。
 
@@ -817,12 +819,12 @@ plugins/post-comment-enhance/
    - `widgets.available`
    - `widget.render`
    - `widget.render_html`
-   - `comment.render_html`
-   - `comment_form.after_textarea`
+   - `comment.content_html`
+   - `comment.form.after_textarea`
    - `head.end`
    - `body.end`
    - `post.content_html`
-5. 最小主题模板函数：`postContent`、`commentContent`、`pluginSlot`、`renderWidgets`。
+5. 最小主题模板函数：`post_content`、`comment_content`、`do_action`、`render_widgets`。
 6. 插件组件：支持 `saying` 这类由插件声明并自行渲染的组件。
 7. 插件 i18n：插件脚本和插件模板能按当前请求语言翻译字符串。
 8. 插件静态资源路由：`/plugin-assets/{plugin_id}/{path}`。
@@ -843,14 +845,14 @@ plugins/post-comment-enhance/
 internal/plugin/
 ├── manifest.go       # Plugin、WidgetDecl、AssetDecl、LoadPlugin
 ├── manager.go        # 扫描 plugins/、启用列表、加载/停用插件
-├── hooks.go          # Hook Registry、Action/Filter、priority、来源追踪
-├── runtime.go        # 编译插件 functions.goyaegi、注入 pluginapi
-├── render.go         # 插件组件模板渲染、pluginSlot 输出辅助
+├── runtime.go        # 编译插件 functions.goyaegi、注入 hook.API
+├── render.go         # 插件组件模板渲染、do_action 输出辅助
 ├── assets.go         # 插件静态资源路径校验
 └── i18n.go           # 插件文本域绑定与请求级 translator
 
-pluginapi/
-└── api.go            # 暴露给插件 functions.goyaegi 的 API
+hook/
+├── registry.go       # Hook Registry、Action/Filter、priority、来源追踪
+└── api.go            # 暴露给主题和插件 functions.goyaegi 的统一 API
 ```
 
 建议调整：
@@ -859,13 +861,13 @@ pluginapi/
 |---|---|
 | `cmd/server/web.go` | 初始化 plugin.Manager，注册 `/plugin-assets/*filepath`，把 plugin runtime 接入 render/theme。 |
 | `cmd/server/routes.go` | 增加 `/admin/plugins` 最小只读/启停路由；若第一阶段不做 UI，可先只初始化默认启用内置插件。 |
-| `internal/render/parse.go` | 增加模板占位函数：`pluginSlot`、`postContent`、`commentContent`。 |
-| `internal/render/render.go` | clone 模板时绑定真实 `pluginSlot/postContent/commentContent` 请求级闭包。 |
+| `internal/render/parse.go` | 增加模板占位函数：`do_action`、`post_content`、`comment_content`。 |
+| `internal/render/render.go` | clone 模板时绑定真实 `do_action/post_content/comment_content` 请求级闭包。 |
 | `internal/render/theme.go` | 增加 hook provider / slot provider，或通过统一 runtime 调用 plugin.Manager。 |
-| `internal/theme/functions.go` | 主题 `functions.goyaegi` 注入 hook 注册能力，允许 `themeapi.Api.AddAction/AddFilter`。 |
+| `internal/theme/functions.go` | 主题 `functions.goyaegi` 注入 `hook.API`，允许 `api.AddAction` / `api.AddFilter`。 |
 | `internal/theme/widgets.go` | `WidgetInfo` 增加 `Source/PluginID`；解析组件时支持插件声明。 |
 | `internal/handler/admin_widgets.go` | 可用组件列表应用 `widgets.available` filter，显示来源。 |
-| `web/themes/*/templates/*.gohtml` | 把关键位置改成推荐写法，如 `postContent`、`commentContent`、`pluginSlot`。 |
+| `web/themes/*/templates/*.gohtml` | 把关键位置改成推荐写法，如 `post_content`、`comment_content`、`do_action`。 |
 
 ### 20.3 数据结构设计
 
@@ -999,17 +1001,17 @@ func (api *API) EscapeHTML(s string) string
 
 建议把模板函数分两层：
 
-1. **第一阶段必须实现的 hook 出口函数**：直接服务插件系统，例如 `postContent/commentContent/pluginSlot/renderWidgets`。
+1. **第一阶段必须实现的 hook 出口函数**：直接服务插件系统，例如 `post_content/comment_content/do_action/render_widgets`。
 2. **第二阶段可逐步补齐的主题辅助函数**：减少主题样板，例如 `siteHeader/siteFooter/postNavigation/commentsTemplate`。
 
 新增/规划模板函数：
 
 | 模板函数 | 作用 | 类比 WordPress |
 |---|---|---|
-| `postContent .Post` | 输出文章正文并应用 `post.content_html` filter | `the_content()` |
-| `commentContent .` | 输出评论正文并应用 `comment.render_html` filter | 评论内容 filter |
-| `pluginSlot "slot.name" .` | 在模板中触发一个 action slot，收集 HTML 输出 | `do_action('slot_name', ...)` |
-| `renderWidgets "area" .` | 渲染某个组件区域 | `dynamic_sidebar('area')` |
+| `post_content .Post` | 输出文章正文并应用 `post.content_html` filter | `the_content()` |
+| `comment_content .` | 输出评论正文并应用 `comment.content_html` filter | 评论内容 filter |
+| `do_action "slot.name" .` | 在模板中触发一个 action slot，收集 HTML 输出 | `do_action('slot_name', ...)` |
+| `render_widgets "area" .` | 渲染某个组件区域 | `dynamic_sidebar('area')` |
 | `siteHeader .` | 渲染标准 header，可内部触发 `head.end` / `body.start` slot | `get_header()` |
 | `siteFooter .` | 渲染标准 footer，可内部触发 `footer.before` / `body.end` slot | `get_footer()` |
 | `postTitle .Post` | 输出文章标题，可统一转义和过滤 | `the_title()` |
@@ -1020,19 +1022,19 @@ func (api *API) EscapeHTML(s string) string
 推荐主题写法：
 
 ```gohtml
-{{pluginSlot "post.before" .}}
+{{do_action "post.before" .}}
 {{postTitle .Post}}
-{{postContent .Post}}
+{{post_content .Post}}
 {{postNavigation .Post}}
-{{pluginSlot "post.after" .}}
+{{do_action "post.after" .}}
 
 {{commentsTemplate .}}
 
 <textarea id="comment-content" name="content"></textarea>
-{{pluginSlot "comment_form.after_textarea" .}}
+{{do_action "comment.form.after_textarea" .}}
 
 <aside class="sidebar">
-  {{renderWidgets "sidebar" .}}
+  {{render_widgets "sidebar" .}}
 </aside>
 ```
 
@@ -1044,22 +1046,22 @@ func (api *API) EscapeHTML(s string) string
 <main class="site-main">
   <article class="post">
     {{postTitle .Post}}
-    {{pluginSlot "post.before" .}}
-    {{postContent .Post}}
-    {{pluginSlot "post.after" .}}
+    {{do_action "post.before" .}}
+    {{post_content .Post}}
+    {{do_action "post.after" .}}
     {{postNavigation .Post}}
   </article>
 
   {{commentsTemplate .}}
 </main>
 
-{{renderWidgets "sidebar" .}}
+{{render_widgets "sidebar" .}}
 {{siteFooter .}}
 ```
 
 注意边界：
 
-- `postContent/commentContent` 这类函数是插件系统第一阶段必需，因为它们是内容 filter 的稳定出口。
+- `post_content/comment_content` 这类函数是插件系统第一阶段必需，因为它们是内容 filter 的稳定出口。
 - `commentsTemplate` 可以显著减少主题重复 HTML，但也会限制主题对评论结构的自由度；建议先提供默认实现，主题仍可选择自定义评论模板，只要保留必要 slot。
 - `siteHeader/siteFooter` 可先作为推荐方向，不必阻塞插件系统第一阶段落地。
 - 所有这些函数都应在文档中维护“会触发哪些 hook/slot”，避免主题作者不知道哪些插件能力依赖它们。
@@ -1114,18 +1116,18 @@ widgets:
 主题模板仍然只写：
 
 ```gohtml
-{{renderWidgets "sidebar" .}}
+{{render_widgets "sidebar" .}}
 ```
 
 渲染流程：
 
-1. `renderWidgets` 读取 `widget_sidebar` 配置。
+1. `render_widgets` 读取 `widget_sidebar` 配置。
 2. 解析出 `WidgetInfo{ID:"saying", Source:"plugin", PluginID:"saying", Options:...}`。
-3. `renderWidgets` 发现来源为 plugin，调用 plugin.Manager 渲染该组件。
+3. `render_widgets` 发现来源为 plugin，调用 plugin.Manager 渲染该组件。
 4. plugin.Manager 为 `saying` 插件创建请求级上下文：DataLoader、translator、组件 options。
 5. 插件读取 `post_id/count`，生成动态列表数据。
 6. 插件执行 `plugins/saying/widgets/saying.gohtml`，模板中可用 `.tp.T` 翻译文案。
-7. 返回 HTML 给 `renderWidgets` 汇总输出。
+7. 返回 HTML 给 `render_widgets` 汇总输出。
 8. 可选执行 `widget.render_html` filter 做最终后处理。
 
 #### 20.6.4 失败策略
@@ -1136,10 +1138,10 @@ widgets:
 
 ### 20.7 评论表情的具体流程
 
-1. 主题评论模板按推荐写法输出评论正文：`{{commentContent .}}`。
-2. `commentContent` 先对评论原文做 HTML 转义，再应用 `comment.render_html` filter。
+1. 主题评论模板按推荐写法输出评论正文：`{{comment_content .}}`。
+2. `comment_content` 先对评论原文做 HTML 转义，再应用 `comment.content_html` filter。
 3. `post-comment-enhance` 插件把 `[/微笑]` 替换成受控 `/plugin-assets/post-comment-enhance/smilies/微笑.gif` 图片。
-4. 主题评论表单 textarea 后调用：`{{pluginSlot "comment_form.after_textarea" .}}`。
+4. 主题评论表单 textarea 后调用：`{{do_action "comment.form.after_textarea" .}}`。
 5. `post-comment-enhance` 插件在该 slot 输出表情按钮面板。
 6. `head.end/body.end` 注入插件 CSS/JS。
 
@@ -1149,17 +1151,17 @@ widgets:
 
 | 状态 | 步骤 | 内容 | 当前说明 |
 |---|---:|---|---|
-| done | 1 | **Hook Registry**：实现 `internal/plugin/hooks.go`，补 action/filter priority、来源、recover 测试。 | 已实现 action/filter 注册、priority 排序、来源记录、panic recover；当前以编译和集成测试验证，后续可补更细单测。 |
+| done | 1 | **Hook Registry**：实现 `hook/registry.go`，补 action/filter priority、来源、recover 测试。 | 已实现 action/filter 注册、priority 排序、来源记录、panic recover；当前以编译和集成测试验证，后续可补更细单测。 |
 | done | 2 | **Manifest + Manager**：实现插件扫描、启用列表读取、manifest 校验。 | 已实现 `plugin.yaml` 解析、插件 ID/目录校验、启用列表读取、启停保存、启用插件运行时加载。 |
-| done | 3 | **pluginapi**：实现 `AddAction/AddFilter` 注入，先不做复杂 i18n。 | 已新增 `pluginapi`，支持 `AddAction/AddFilter`、`T/N/X/XN`、`EscapeHTML`。 |
-| done | 4 | **接入主题 functions**：让 `themeapi.Api.AddAction/AddFilter` 也注册到同一 registry，并记录来源 `theme:<name>`。 | 已接入 `themeapi.Api.AddAction/AddFilter`，启动时按“插件先、主题后”的顺序注册 hook。 |
-| done | 5 | **模板函数**：增加 `pluginSlot/postContent/commentContent` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`postContent` 应用 `post.content_html`，`commentContent` 应用 `comment.render_html`。 |
+| done | 3 | **hook.API**：实现 `AddAction/AddFilter` 注入，先不做复杂 i18n。 | 已统一到 `hook.API`，支持 `AddAction/AddFilter`、`T/N/X/XN`、`EscapeHTML`。 |
+| done | 4 | **接入主题 functions**：让主题 `api.AddAction` / `api.AddFilter` 也注册到同一 registry，并记录来源 `theme:<name>`。 | 已接入主题和插件共用的 `hook.API`，启动时按“插件先、主题后”的顺序注册 hook。 |
+| done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 应用 `post.content_html`，`comment_content` 应用 `comment.content_html`。 |
 | done | 6 | **插件资源路由**：实现 `/plugin-assets/*` 路径校验和静态输出。 | 已实现 `/plugin-assets/{plugin_id}/{path}`，只暴露已启用插件的资源，并做路径穿越校验。 |
 | done | 7 | **组件声明 filter**：后台组件页和前台解析都接入 `widgets.available`。 | 已完成：后台组件列表和前台解析都会应用 `widgets.available`；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
-| done | 8 | **插件组件渲染**：支持 plugin widget 的模板执行或 `widget.render`。 | 已完成：`renderWidgets` 会按 `Source=plugin` 分流到插件渲染器；插件组件支持 `widget.render` action 输出，未输出时回退到 `plugins/<id>/widgets/<widget_id>.gohtml` 模板；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
+| done | 8 | **插件组件渲染**：支持 plugin widget 的模板执行或 `widget.render`。 | 已完成：`render_widgets` 会按 `Source=plugin` 分流到插件渲染器；插件组件支持 `widget.render` action 输出，未输出时回退到 `plugins/<id>/widgets/<widget_id>.gohtml` 模板；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
 | done | 9 | **迁移 saying**：把 default 主题里的 saying 能力迁到 `plugins/saying`。 | 已完成：新增 `plugins/saying`，通过 manifest 声明组件和默认启用，组件模板由插件自带；default 主题已移除 saying 声明和模板。 |
-| done | 10 | **评论表情**：实现 `comment.render_html` + `comment_form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/post-comment-enhance`，通过 `comment.render_html` 渲染短码图片、通过 `comment_form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
-| done | 11 | **i18n 完整化**：插件文本域绑定、`.tp.T`、`pluginapi.Api.T/N/X/XN`。 | 已完成：`pluginapi.Api.T/N/X/XN`、插件文本域绑定、插件模板 `.tp.T` 都已接入。 |
+| done | 10 | **评论表情**：实现 `comment.content_html` + `comment.form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/post-comment-enhance`，通过 `comment.content_html` 渲染短码图片、通过 `comment.form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
+| done | 11 | **i18n 完整化**：插件文本域绑定、`.tp.T`、`api.T/N/X/XN`。 | 已完成：`hook.API` 的 `T/N/X/XN`、插件文本域绑定、插件模板 `.tp.T` 都已接入。 |
 | done | 12 | **后台插件页**：最小列表页展示启用状态、加载错误、hook/source 信息。 | 已完成：新增 `/admin/plugins` 插件列表、启用/停用/重载操作、hook/source/组件/设置展示、加载错误展示，并支持 `/admin/plugin/:id/settings` 配置插件全局选项。 |
 
 当前最近一次验证：`go test ./...` 已通过。
@@ -1170,13 +1172,13 @@ widgets:
 
 - `internal/plugin`: manifest ID 校验、路径校验、启用列表解析。
 - `internal/plugin`: action/filter priority 顺序、panic recover、来源记录。
-- `internal/render`: `pluginSlot/postContent/commentContent` 在请求级上下文下不串数据。
+- `internal/render`: `do_action/post_content/comment_content` 在请求级上下文下不串数据。
 - `internal/theme`: `ResolveWidgets` 兼容旧配置，并能处理 plugin source。
 
 集成/手验：
 
 1. 启用 `saying` 插件，默认主题 sidebar 显示博主动态。
-2. 切换到 twentytwenty/spread，只要主题调用 `renderWidgets`，仍能添加并显示 saying。
+2. 切换到 twentytwenty/spread，只要主题调用 `render_widgets`，仍能添加并显示 saying。
 3. 禁用 `saying` 插件，前台跳过旧 saying 配置且不报错。
 4. 启用评论表情插件，评论表单出现表情面板，提交后评论正文显示图片。
 5. 切换语言后，插件输出的“博主动态 / 表情”等文案跟随翻译。

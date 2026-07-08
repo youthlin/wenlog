@@ -13,7 +13,7 @@ import (
 )
 
 func TestRenderWidgetUsesActionFirst(t *testing.T) {
-	hooks := NewRegistry()
+	hooks := hook.NewRegistry()
 	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
 		if len(args) < 1 {
 			return
@@ -24,7 +24,7 @@ func TestRenderWidgetUsesActionFirst(t *testing.T) {
 			return
 		}
 		_, _ = io.WriteString(out, "<p>from action</p>")
-	}, Source{Type: SourcePlugin, ID: "demo"})
+	}, hook.Source{Type: hook.SourcePlugin, ID: "demo"})
 	m := &Manager{
 		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: t.TempDir()}},
@@ -49,7 +49,7 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 	m := &Manager{
 		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
-		hooks:   NewRegistry(),
+		hooks:   hook.NewRegistry(),
 	}
 
 	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"title": "Hi"}, nil)
@@ -75,7 +75,7 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 	m := &Manager{
 		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
-		hooks:   NewRegistry(),
+		hooks:   hook.NewRegistry(),
 		scripts: map[string]*FunctionsScript{"demo": {PluginID: "demo", api: api}},
 	}
 

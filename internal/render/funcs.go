@@ -31,7 +31,7 @@ func hookInvoke(ctx *RequestContext, name string, args ...any) any {
 	return provider(ctx, name, args...)
 }
 
-// themeOption 在模板中使用 {{themeOption "<optionID>"}}
+// themeOption 在模板中使用 {{theme_option "<optionID>"}}
 func themeOption(ctx *RequestContext, optionID string) string {
 	if ctx == nil || ctx.Runtime == nil {
 		return ""
@@ -44,7 +44,7 @@ func themeOption(ctx *RequestContext, optionID string) string {
 }
 
 // widgetOption 模板函数：读取当前渲染组件的选项值。
-// themeOption 在模板中使用 {{widgetOption "<key>"}}
+// 模板中使用 {{widget_option "<key>"}}。
 func widgetOption(ctx *RequestContext, key string) string {
 	if ctx == nil || ctx.WidgetOptions == nil {
 		return ""
@@ -157,7 +157,7 @@ func postContentHTML(post any) template.HTML {
 	}
 }
 
-// commentContent 输出评论正文，并应用 comment.render_html filter。
+// commentContent 输出评论正文，并应用 comment.content_html filter。
 func commentContent(ctx *RequestContext, comment any) template.HTML {
 	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
 	if h := hooks(ctx.Runtime); h != nil {

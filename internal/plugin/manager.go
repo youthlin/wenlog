@@ -27,7 +27,7 @@ type Manager struct {
 	pluginsDir string
 	store      hook.SettingStore
 	plugins    map[string]*Plugin
-	hooks      *Registry
+	hooks      *hook.Hooks
 	scripts    map[string]*FunctionsScript
 	loadErrors map[string]string
 	enabledIDs []string
@@ -43,7 +43,7 @@ func NewManager(pluginsDir string, store hook.SettingStore) (*Manager, error) {
 		pluginsDir: pluginsDir,
 		store:      store,
 		plugins:    make(map[string]*Plugin),
-		hooks:      NewRegistry(),
+		hooks:      hook.NewRegistry(),
 		scripts:    make(map[string]*FunctionsScript),
 		loadErrors: make(map[string]string),
 		log:        slog.Default().With("component", "plugin-manager"),
@@ -99,7 +99,7 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	tmp := NewRegistry()
+	tmp := hook.NewRegistry()
 	scripts := make(map[string]*FunctionsScript)
 	loadErrors := make(map[string]string)
 	ids := m.enabledIDsLocked(ctx)
@@ -118,7 +118,7 @@ func (m *Manager) LoadEnabledFunctions(ctx context.Context) error {
 			scripts[id] = script
 		}
 	}
-	m.hooks.ReplaceAll(tmp.actions, tmp.filters, tmp.didActions)
+	m.hooks.ReplaceAllFrom(tmp)
 	m.scripts = scripts
 	m.loadErrors = loadErrors
 	return nil
@@ -224,7 +224,7 @@ func (m *Manager) CallLifecycle(ctx context.Context, id, name string) error {
 		return loaded.CallLifecycle(ctx, name)
 	}
 
-	hooks := NewRegistry()
+	hooks := hook.NewRegistry()
 	tmp, err := CompileFunctions(ctx, p, hooks, m.log)
 	if err != nil {
 		return errors.Wrapf(err, "加载插件[%s]生命周期运行时失败", id)

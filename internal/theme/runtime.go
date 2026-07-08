@@ -141,7 +141,7 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	api := NewAPI(t.ThemeDomain(), nil, t.Options)
 	// 直接使用 m.hooks，Registry 实例稳定，插件重载时内部替换。
 	var reg hook.Registry = m.hooks
-	api.SetHookRegistry(reg, hook.Source{Type: "theme", ID: t.Name})
+	api.SetHookRegistry(reg, hook.Source{Type: hook.SourceTheme, ID: t.Name})
 	script, err := CompileFunctions(ctx, t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")

@@ -75,7 +75,7 @@ type RequestContext struct {
 	Theme any
 
 	// WidgetOptions 是当前正在渲染的组件的选项键值对。
-	// renderWidgets 遍历组件时设置，widgetOption 模板函数读取；渲染完成后清空为 nil。
+	// render_widgets 遍历组件时设置，widget_option 模板函数读取；渲染完成后清空为 nil。
 	WidgetOptions map[string]string
 }
 
@@ -178,7 +178,7 @@ const (
 	// 用法: <li class="{{comment_class . "extra-class"}}">
 	tplFuncCommentClass = "comment_class"
 
-	// tplFuncCommentContent 输出评论正文，应用 comment.render_html filter。
+	// tplFuncCommentContent 输出评论正文，应用 comment.content_html filter。
 	// 用法: {{comment_content .}}（用于自定义评论模板 comment_item）
 	tplFuncCommentContent = "comment_content"
 
