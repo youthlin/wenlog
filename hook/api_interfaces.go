@@ -26,6 +26,7 @@ type FuncRegistry interface {
 
 // RenderAPI 是 action 输出和 HTML 转义所需的最小能力集合。
 type RenderAPI interface {
+	Print(args ...any)
 	Printf(format string, args ...any)
 	Println(format string, args ...any)
 	EscapeHTML(s string) string

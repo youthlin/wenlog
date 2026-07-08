@@ -137,6 +137,21 @@ func TestWithActionWriter(t *testing.T) {
 	}
 }
 
+func TestAPIPrintWritesToCurrentActionWriter(t *testing.T) {
+	api := NewAPI()
+	api.Print("ignored")
+
+	var out strings.Builder
+	reqAPI := api.WithContext(WithActionWriter(context.Background(), &out))
+	reqAPI.Print("hello")
+	reqAPI.Printf(" %s", "wenlog")
+	reqAPI.Println(" %d", 1)
+
+	if got, want := out.String(), "hello wenlog 1\n"; got != want {
+		t.Fatalf("action output = %q, want %q", got, want)
+	}
+}
+
 func TestWithActionWriter_NilWriter(t *testing.T) {
 	ctx := context.WithValue(context.Background(), actionWriterKey{}, "not a writer")
 	w := GetActionWriter(ctx)
