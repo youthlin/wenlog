@@ -89,14 +89,15 @@ func doAction(ctx *RequestContext, name string, data any) template.HTML {
 	return template.HTML(result.String())
 }
 
-// applyFilter 应用过滤器链到输入值，返回过滤后的结果。
+// applyFilter 应用过滤器链到输入值，返回过滤后的 HTML 结果。
+// 模板层使用该函数时，filter 合约必须返回可信 HTML；纯文本输出应优先由宿主封装成专用模板函数。
 // 相当于 WordPress 的 apply_filters()。
 func applyFilter(ctx *RequestContext, value any, name string, args ...any) template.HTML {
 	h := hooks(ctx.Runtime)
 	if h == nil || name == "" {
-		return htmlFromFilterValue(value)
+		return trustedHTMLFromFilterValue(value)
 	}
-	return htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), name, value, args...))
+	return trustedHTMLFromFilterValue(h.ApplyFilters(requestContext(ctx), name, value, args...))
 }
 
 func hooks(runtime *TemplateRuntime) hook.Executor {

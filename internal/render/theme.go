@@ -482,7 +482,7 @@ func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
 			continue
 		}
 		if h := hooks(ctx.Runtime); h != nil {
-			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.FilterWidgetRenderHTML, string(html), item, area, data))
+			html = trustedHTMLFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.FilterWidgetRenderHTML, string(html), item, area, data))
 		}
 		util.WriteString(&result, string(html))
 	}

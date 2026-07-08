@@ -282,8 +282,22 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 
 - 使用小写点分命名：`comment.content_html`、`frontend.assets`。
 - 名称表达“领域 + 事件/数据”，避免 `before_xxx` 滥用。
-- Filter 名称应体现返回值语义，例如 `comment.content_html` 返回 HTML 字符串。
+- Filter 名称应体现返回值语义，例如 `comment.content_html` 返回可信 HTML。
 - 每个 hook 必须文档化：触发时机、参数、返回值、安全要求、是否允许错误中断主流程。
+
+当前标准 filter 的返回值安全语义：
+
+| Filter | 返回值语义 | 宿主处理 |
+|---|---|---|
+| `post.title` | 纯文本 | 宿主在 `post_title` 中统一 HTML escape。 |
+| `post.excerpt_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
+| `post.content_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
+| `post.footer_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
+| `comment.content_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
+| `widget.render_html` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 HTML。 |
+| `head.meta` | 可信 HTML | 宿主按 `template.HTML` 输出，插件负责只返回受控 meta HTML。 |
+
+模板函数 `apply_filter` 是 HTML 出口：返回值会作为可信 HTML 输出。文本类扩展点应优先提供宿主封装函数（如 `post_title`），不要要求主题作者直接在模板中对文本调用 `apply_filter`。
 
 ## 7. 插件组件设计
 

@@ -81,6 +81,37 @@ func TestStandardContentFiltersReceiveStableViews(t *testing.T) {
 	}
 }
 
+func TestPostTitleFilterIsEscapedText(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		return `<script>alert(1)</script>`
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	got := string(postTitle(ctx, &model.Post{ID: 1, Title: "Hello"}))
+	if strings.Contains(got, `<script>`) {
+		t.Fatalf("post.title filter result should be escaped, got: %s", got)
+	}
+	if !strings.Contains(got, `&lt;script&gt;alert(1)&lt;/script&gt;`) {
+		t.Fatalf("post.title filter result missing escaped script, got: %s", got)
+	}
+}
+
+func TestHTMLFiltersRemainTrustedHTML(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		return string(value.(string)) + `<aside class="plugin-note">safe</aside>`
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	got := string(postContent(ctx, &model.Post{ID: 1, Title: "Hello", Content: "Body"}))
+	if !strings.Contains(got, `<aside class="plugin-note">safe</aside>`) {
+		t.Fatalf("post.content_html filter should preserve trusted HTML, got: %s", got)
+	}
+}
+
 func TestFeedPostFiltersReceiveStableView(t *testing.T) {
 	hooks := hook.NewRegistry()
 	var got hook.PostView

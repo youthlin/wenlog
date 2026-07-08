@@ -58,7 +58,7 @@ func postTitle(ctx *RequestContext, post any) template.HTML {
 	if h := hooks(ctx.Runtime); h != nil {
 		reqCtx := requestContext(ctx)
 		v := h.ApplyFilters(reqCtx, hook.FilterPostTitle, title, postViewPayload(ctx, post))
-		title = stringFromFilterValue(v, title)
+		title = textFromFilterValue(v, title)
 	}
 	title = html.EscapeString(title)
 	if title == "" {
@@ -79,7 +79,7 @@ func translate(ctx *RequestContext, msg string) string {
 	return html.EscapeString(msg)
 }
 
-func stringFromFilterValue(v any, fallback string) string {
+func textFromFilterValue(v any, fallback string) string {
 	switch val := v.(type) {
 	case string:
 		return val
@@ -97,7 +97,7 @@ func postExcerpt(ctx *RequestContext, post any) template.HTML {
 	if h := hooks(ctx.Runtime); h != nil {
 		reqCtx := requestContext(ctx)
 		v := h.ApplyFilters(reqCtx, hook.FilterPostExcerptHTML, string(html), postViewPayload(ctx, post))
-		html = htmlFromFilterValue(v)
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
@@ -135,9 +135,9 @@ func postContent(r *RequestContext, post any) template.HTML {
 		ctx := requestContext(r)
 		payload := postViewPayload(r, post)
 		v := h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload)
-		html = htmlFromFilterValue(v)
+		html = trustedHTMLFromFilterValue(v)
 		v = h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload)
-		html = htmlFromFilterValue(v)
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
@@ -167,7 +167,7 @@ func commentContent(ctx *RequestContext, comment any) template.HTML {
 	if h := hooks(ctx.Runtime); h != nil {
 		reqCtx := requestContext(ctx)
 		v := h.ApplyFilters(reqCtx, hook.FilterCommentContentHTML, string(html), commentViewPayload(comment))
-		html = htmlFromFilterValue(v)
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
@@ -194,7 +194,11 @@ func commentViewPayload(comment any) any {
 	return comment
 }
 
-func htmlFromFilterValue(v any) template.HTML {
+// trustedHTMLFromFilterValue converts a standard HTML filter result into template.HTML.
+//
+// Only use this for filters whose contract explicitly returns trusted/sanitized HTML,
+// such as post.content_html, comment.content_html, widget.render_html, and head.meta.
+func trustedHTMLFromFilterValue(v any) template.HTML {
 	switch val := v.(type) {
 	case template.HTML:
 		return val
@@ -553,7 +557,7 @@ func headMeta(ctx *RequestContext, data any) template.HTML {
 	html := template.HTML(b.String())
 	if h := hooks(ctx.Runtime); h != nil {
 		v := h.ApplyFilters(requestContext(ctx), hook.FilterHeadMeta, string(html), data)
-		html = htmlFromFilterValue(v)
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }

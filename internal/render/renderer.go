@@ -211,8 +211,8 @@ func (r *Renderer) FilterPostContent(ctx context.Context, post *model.Post) temp
 		if view := hook.PostViewOf(post, nil); view != nil {
 			payload = *view
 		}
-		html = htmlFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload))
-		html = htmlFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload))
+		html = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload))
+		html = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload))
 	}
 	return html
 }

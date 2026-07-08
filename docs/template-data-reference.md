@@ -88,17 +88,17 @@
 | `render_widgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{render_widgets "sidebar" .}}` |
 | `render_menu` | `func(string, ...any) template.HTML` | 渲染指定位置的导航菜单，如 `{{render_menu "primary" .}}`；支持多级下拉子菜单，自动从 `.Menus` 或 `.Menu` 取数据 |
 | `do_action` | `func(string, any) template.HTML` | 触发 action hook 并收集扩展输出 HTML，如 `{{do_action "head.end" .}}` |
-| `apply_filter` | `func(any, string, ...any) template.HTML` | 对输入值应用 filter 链，如 `{{apply_filter .Post.Title "post.title" .Post}}` |
-| `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter；filter 扩展参数传 `hook.PostView` |
-| `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter；filter 扩展参数传 `hook.PostView` |
-| `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView` |
+| `apply_filter` | `func(any, string, ...any) template.HTML` | 对输入值应用 HTML filter 链，返回值会作为可信 HTML 输出；文本类扩展优先使用宿主封装函数，如 `post_title` |
+| `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按纯文本转义 |
+| `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
+| `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
 | `post_tags` | `func(any) template.HTML` | 输出文章标签链接 |
 | `post_navigation` | `func(any, ...string) template.HTML` | 输出上一篇/下一篇文章导航 |
 | `body_class` | `func(any) string` | 生成 `<body>` CSS class |
 | `post_class` | `func(any, ...string) string` | 生成文章容器 CSS class |
 | `comment_class` | `func(any, ...string) string` | 生成评论项 CSS class |
-| `comment_content` | `func(any) template.HTML` | 输出评论正文并应用 `comment.content_html` filter；filter 扩展参数传 `hook.CommentView` |
-| `head_meta` | `func(any) template.HTML` | 输出 OpenGraph / Twitter Card meta 标签并应用 `head.meta` filter |
+| `comment_content` | `func(any) template.HTML` | 输出评论正文并应用 `comment.content_html` filter；filter 扩展参数传 `hook.CommentView`；filter 返回值按可信 HTML 输出 |
+| `head_meta` | `func(any) template.HTML` | 输出 OpenGraph / Twitter Card meta 标签并应用 `head.meta` filter；filter 返回值按可信 HTML 输出 |
 | `list_comments` | `func(...any) template.HTML` | 渲染评论列表 |
 | `comment_form` | `func(any) template.HTML` | 渲染评论表单，内部会触发 `comment.form.after_textarea` action |
 | `comments_pagination` | `func(any, ...int) template.HTML` | 渲染评论分页导航，读取 `.CommentPager`；第二个可选参数为 `midSize`，控制当前页左右显示几个页码，默认 `2` |

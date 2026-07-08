@@ -21,25 +21,25 @@ const (
 	// 后台文章编辑页面 {{- do_action "admin.post.form.after_textarea" $ -}} 调用
 	ActionAdminPostFormAfterTextarea = "admin.post.form.after_textarea"
 
-	// FilterWidgetRenderHTML 过滤单个组件渲染后的 HTML。
+	// FilterWidgetRenderHTML 过滤单个组件渲染后的可信 HTML。
 	FilterWidgetRenderHTML = "widget.render_html"
 	// FilterPostTitle 过滤文章/页面标题文本，运行于 post_title 模板函数内部。
-	// 执行 post_title 模板函数时, 会应用这个 filter
+	// 执行 post_title 模板函数时, 会应用这个 filter；返回值按纯文本处理并由宿主转义。
 	FilterPostTitle = "post.title"
-	// FilterPostExcerptHTML 过滤列表摘要 HTML，运行于 post_excerpt 模板函数内部。
+	// FilterPostExcerptHTML 过滤列表摘要可信 HTML，运行于 post_excerpt 模板函数内部。
 	// 执行 post_excerpt 模板函数时, 会应用这个 filter
 	FilterPostExcerptHTML = "post.excerpt_html"
-	// FilterPostContentHTML 过滤详情正文 HTML，运行于 post_content 模板函数内部。
+	// FilterPostContentHTML 过滤详情正文可信 HTML，运行于 post_content 模板函数内部。
 	// 执行 post_content 模板函数时, 会应用这个 filter
 	FilterPostContentHTML = "post.content_html"
-	// FilterPostFooterHTML 在文章正文末尾追加 HTML（如版权声明），运行于 post_content 模板函数内部。
+	// FilterPostFooterHTML 在文章正文末尾追加可信 HTML（如版权声明），运行于 post_content 模板函数内部。
 	// 执行 post_content 模板函数时, 会应用这个 filter
 	FilterPostFooterHTML = "post.footer_html"
-	// FilterCommentContentHTML 过滤评论正文 HTML，运行于 comment_content 模板函数内部。
+	// FilterCommentContentHTML 过滤评论正文可信 HTML，运行于 comment_content 模板函数内部。
 	// 主题通过 {{list_comments .}} 模板函数输出评论列表, 这个模板函数内部会触发本 filter
 	// 如果主题自行输出评论, 需要自行调用 {{apply_filter .Content "comment.content_html"}}
 	FilterCommentContentHTML = "comment.content_html"
-	// FilterHeadMeta 过滤 OpenGraph / Twitter Card meta 标签 HTML，运行于 headMeta 模板函数内部。
+	// FilterHeadMeta 过滤 OpenGraph / Twitter Card meta 标签可信 HTML，运行于 headMeta 模板函数内部。
 	// 插件可改写、追加或清空 meta 标签（返回空字符串即清除）。
 	// 主题调用 {{head_meta . }} 时, 触发 head_meta 模板函数执行, 内部会应用这个 filter
 	FilterHeadMeta = "head.meta"
