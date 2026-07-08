@@ -239,7 +239,7 @@ func TestManagerEnabledIDsUsesMemoryCache(t *testing.T) {
 }
 
 func TestSmiliesHooksRenderPanelAndContent(t *testing.T) {
-	// 主题模板里直接用这个 slot 名称调用 slot；常量必须和模板/manifest 保持一致，
+	// 主题模板通过 do_action 调用这个 action；常量必须和模板/manifest 保持一致，
 	// 否则插件虽然成功注册 hook，但评论表单不会渲染表情面板。
 	if hook.ActionCommentFormAfterTextarea != "comment.form.after_textarea" {
 		t.Fatalf("ActionCommentFormAfterTextarea = %q, want comment.form.after_textarea", hook.ActionCommentFormAfterTextarea)

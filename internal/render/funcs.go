@@ -1184,7 +1184,7 @@ func writeCommentForm(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, ctx.T("说点什么吧…… *"))
 	util.WriteString(out, `" required></textarea></p>`)
 
-	// slot: comment.form.after_textarea
+	// action: comment.form.after_textarea
 	if h := hooks(ctx.Runtime); h != nil {
 		var slotBuf strings.Builder
 		h.DoAction(
