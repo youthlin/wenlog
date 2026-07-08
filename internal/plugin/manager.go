@@ -11,6 +11,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/extension"
 	"github.com/youthlin/wenlog/internal/i18n"
 )
 
@@ -275,7 +276,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 		}
 	}()
 
-	if err := copyDir(dir, stagingDir); err != nil {
+	if err := extension.CopyDir(dir, stagingDir, "plugin"); err != nil {
 		return nil, errors.Wrap(err, "copy plugin to staging dir")
 	}
 	stagedPlugin, err := LoadPlugin(stagingDir)
@@ -291,7 +292,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 	m.mu.RLock()
 	oldPlugin := m.plugins[pluginID]
 	m.mu.RUnlock()
-	backupDir, err := backupExistingPluginDir(targetDir)
+	backupDir, err := extension.BackupDir(targetDir, "plugin")
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +310,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 	// 重新加载（确保 Dir 指向正确位置）
 	p, err = LoadPlugin(targetDir)
 	if err != nil {
-		if rbErr := rollbackPluginInstall(targetDir, backupDir); rbErr != nil {
+		if rbErr := extension.RollbackReplace(targetDir, backupDir); rbErr != nil {
 			m.mu.Lock()
 			delete(m.plugins, pluginID)
 			m.mu.Unlock()
@@ -318,7 +319,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 		return nil, errors.Wrap(err, "load installed plugin")
 	}
 	if err := p.LoadTranslations(); err != nil {
-		if rbErr := rollbackPluginInstall(targetDir, backupDir); rbErr != nil {
+		if rbErr := extension.RollbackReplace(targetDir, backupDir); rbErr != nil {
 			m.mu.Lock()
 			delete(m.plugins, pluginID)
 			m.mu.Unlock()
@@ -346,7 +347,7 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 		}
 		m.invalidateEnabledIDsCacheLocked()
 		m.mu.Unlock()
-		rbErr := rollbackPluginInstall(targetDir, backupDir)
+		rbErr := extension.RollbackReplace(targetDir, backupDir)
 		restoreErr := m.RebuildTranslations()
 		if rbErr != nil || restoreErr != nil {
 			return nil, errors.Wrapf(err, "rebuild plugin translations; rollback failed: %v; restore translations failed: %v", rbErr, restoreErr)
@@ -367,7 +368,7 @@ func (m *Manager) Delete(id string) error {
 	if !ok {
 		return errors.Errorf("plugin %q not found", id)
 	}
-	backupDir, err := backupExistingPluginDir(p.Dir)
+	backupDir, err := extension.BackupDir(p.Dir, "plugin")
 	if err != nil {
 		return err
 	}
@@ -408,70 +409,6 @@ func (m *Manager) Delete(id string) error {
 // PluginsDir 返回插件存放目录路径。
 func (m *Manager) PluginsDir() string {
 	return m.pluginsDir
-}
-
-func backupExistingPluginDir(targetDir string) (string, error) {
-	if _, err := os.Stat(targetDir); err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", errors.Wrap(err, "stat existing plugin dir")
-	}
-	backupDir, err := os.MkdirTemp(filepath.Dir(targetDir), ".backup-"+filepath.Base(targetDir)+"-*")
-	if err != nil {
-		return "", errors.Wrap(err, "create plugin backup dir")
-	}
-	if err := os.Remove(backupDir); err != nil {
-		return "", errors.Wrap(err, "prepare plugin backup dir")
-	}
-	if err := os.Rename(targetDir, backupDir); err != nil {
-		return "", errors.Wrap(err, "backup existing plugin dir")
-	}
-	return backupDir, nil
-}
-
-func rollbackPluginInstall(targetDir, backupDir string) error {
-	_ = os.RemoveAll(targetDir)
-	if backupDir == "" {
-		return nil
-	}
-	return os.Rename(backupDir, targetDir)
-}
-
-// copyDir 递归复制目录到一个空目标目录。
-func copyDir(src, dst string) error {
-	if err := os.MkdirAll(dst, 0o755); err != nil {
-		return err
-	}
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
-		dstPath := filepath.Join(dst, entry.Name())
-		if entry.IsDir() {
-			if err := copyDir(srcPath, dstPath); err != nil {
-				return err
-			}
-		} else {
-			info, err := entry.Info()
-			if err != nil {
-				return err
-			}
-			if !info.Mode().IsRegular() {
-				return errors.Errorf("unsupported plugin file type: %s", srcPath)
-			}
-			data, err := os.ReadFile(srcPath)
-			if err != nil {
-				return err
-			}
-			if err := os.WriteFile(dstPath, data, info.Mode().Perm()); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // HasAssets 检查插件是否包含静态资源目录。
