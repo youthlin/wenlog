@@ -1,10 +1,13 @@
 package hook
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 // Executor 是 Hook Registry 的最小接口，render 包只需要 DoAction 和 ApplyFilters。
 type Executor interface {
-	DoAction(ctx context.Context, name string, args ...any)
+	DoAction(ctx context.Context, name string, w io.Writer, args ...any)
 	ApplyFilters(ctx context.Context, name string, value any, args ...any) any
 }
 

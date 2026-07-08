@@ -196,23 +196,16 @@ func (api *API) Printf(format string, args ...any) {
 	if api == nil || api.ctx == nil {
 		return
 	}
-	w := getActionWriter(api.ctx)
+	w := GetActionWriter(api.ctx)
 	if w == nil {
 		return
 	}
-	_, _ = w.WriteString(fmt.Sprintf(format, args...))
+	_, _ = fmt.Fprintf(w, format, args...)
 }
 
-// Print 向当前 action 的输出 writer 写入原始字符串。
-func (api *API) Print(s string) {
-	if api == nil || api.ctx == nil {
-		return
-	}
-	w := getActionWriter(api.ctx)
-	if w == nil {
-		return
-	}
-	_, _ = w.WriteString(s)
+// Println 向当前 action 的输出 writer 写入格式化字符串并自动换行。
+func (api *API) Println(format string, args ...any) {
+	api.Printf(format+"\n", args...)
 }
 
 // RemoveAction 移除当前扩展注册的所有同名 action。

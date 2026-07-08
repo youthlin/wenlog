@@ -200,17 +200,13 @@ func cloneHandlers(in []Handler) []Handler {
 }
 
 // DoAction 执行一个 action。单个处理器 panic 不会中断后续处理器。
-// 如果 args[0] 是 io.StringWriter，会自动注入 context 供 api.Printf 使用。
-func (r *Registry) DoAction(ctx context.Context, name string, args ...any) {
+// w 是输出 writer，会自动注入 context 供 api.Printf 使用。
+func (r *Registry) DoAction(ctx context.Context, name string, w io.Writer, args ...any) {
 	if r == nil {
 		return
 	}
 	// 注入 writer 到 context
-	if len(args) > 0 {
-		if w, ok := args[0].(io.StringWriter); ok {
-			ctx = hook.WithActionWriter(ctx, w)
-		}
-	}
+	ctx = hook.WithActionWriter(ctx, w)
 	// 注入当前 hook 名到 context
 	ctx = hook.WithCurrentHook(ctx, name)
 	// 递增 didAction 计数

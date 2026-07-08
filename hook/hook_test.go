@@ -127,11 +127,11 @@ func TestArgs_Bool(t *testing.T) {
 func TestWithActionWriter(t *testing.T) {
 	var buf strings.Builder
 	ctx := WithActionWriter(context.Background(), &buf)
-	w := getActionWriter(ctx)
+	w := GetActionWriter(ctx)
 	if w == nil {
 		t.Fatal("getActionWriter returned nil")
 	}
-	w.WriteString("hello")
+	io.WriteString(w, "hello")
 	if buf.String() != "hello" {
 		t.Errorf("writer content = %q, want hello", buf.String())
 	}
@@ -139,7 +139,7 @@ func TestWithActionWriter(t *testing.T) {
 
 func TestWithActionWriter_NilWriter(t *testing.T) {
 	ctx := context.WithValue(context.Background(), actionWriterKey{}, "not a writer")
-	w := getActionWriter(ctx)
+	w := GetActionWriter(ctx)
 	if w != nil {
 		t.Error("getActionWriter should return nil for non-StringWriter value")
 	}
@@ -409,23 +409,23 @@ func TestNew(t *testing.T) {
 	}
 }
 
-// ========== io.StringWriter 接口验证 ==========
+// ========== io.Writer 接口验证 ==========
 
 func TestActionWriterInterface(t *testing.T) {
 	var buf strings.Builder
 	ctx := WithActionWriter(context.Background(), &buf)
-	w := getActionWriter(ctx)
+	w := GetActionWriter(ctx)
 	if w == nil {
 		t.Fatal("getActionWriter returned nil")
 	}
-	// 验证 io.StringWriter 接口
-	var sw io.StringWriter = w
-	n, err := sw.WriteString("test")
+	// 验证 io.Writer 接口
+	var sw io.Writer = w
+	n, err := sw.Write([]byte("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if n != 4 {
-		t.Errorf("WriteString wrote %d bytes, want 4", n)
+		t.Errorf("Write wrote %d bytes, want 4", n)
 	}
 	if buf.String() != "test" {
 		t.Errorf("buffer = %q, want test", buf.String())

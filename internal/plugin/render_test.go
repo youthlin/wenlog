@@ -3,10 +3,10 @@ package plugin
 import (
 	"context"
 	"html/template"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/youthlin/wenlog/hook"
@@ -15,15 +15,15 @@ import (
 func TestRenderWidgetUsesActionFirst(t *testing.T) {
 	hooks := NewRegistry()
 	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
-		if len(args) < 2 {
+		if len(args) < 1 {
 			return
 		}
-		out, _ := args[0].(*strings.Builder)
-		renderCtx, _ := args[1].(hook.WidgetRenderContext)
+		out := hook.GetActionWriter(ctx)
+		renderCtx, _ := args[0].(hook.WidgetRenderContext)
 		if out == nil || renderCtx.PluginID != "demo" || renderCtx.WidgetID != "hello" {
 			return
 		}
-		out.WriteString("<p>from action</p>")
+		_, _ = io.WriteString(out, "<p>from action</p>")
 	}, Source{Type: SourcePlugin, ID: "demo"})
 	m := &Manager{
 		log:     slog.Default().With("component", "plugin-manager"),

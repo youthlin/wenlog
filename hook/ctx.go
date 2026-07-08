@@ -25,22 +25,17 @@ func getDataLoader(ctx context.Context) *store.DataLoader {
 	return loader
 }
 
-// WithActionWriter 把输出 writer 注入 context，供 Registry.DoAction 内部使用。
-func WithActionWriter(ctx context.Context, w io.StringWriter) context.Context {
-	return withActionWriter(ctx, w)
-}
-
 // actionWriterKey 用于在 context 中存储当前 action 的输出 writer。
 type actionWriterKey struct{}
 
-// withActionWriter 把输出 writer 注入 context，供 api.Printf 使用。
-func withActionWriter(ctx context.Context, w io.StringWriter) context.Context {
+// WithActionWriter 把输出 writer 注入 context，供 api.Printf 使用。
+func WithActionWriter(ctx context.Context, w io.Writer) context.Context {
 	return context.WithValue(ctx, actionWriterKey{}, w)
 }
 
-// getActionWriter 从 context 中取出当前 action 的输出 writer。
-func getActionWriter(ctx context.Context) io.StringWriter {
-	if w, ok := ctx.Value(actionWriterKey{}).(io.StringWriter); ok {
+// GetActionWriter 从 context 中取出当前 action 的输出 writer。
+func GetActionWriter(ctx context.Context) io.Writer {
+	if w, ok := ctx.Value(actionWriterKey{}).(io.Writer); ok {
 		return w
 	}
 	return nil

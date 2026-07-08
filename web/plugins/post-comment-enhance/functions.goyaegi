@@ -70,7 +70,7 @@ func renderAssets(api *hook.API) {
 	if !enabled(api) {
 		return
 	}
-	api.Printf(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`, assetVersion)
+	api.Println(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`, assetVersion)
 }
 
 func enabled(api *hook.API) bool {
@@ -84,20 +84,22 @@ func renderSmileyPanel(api *hook.API, mode string) {
 	if mode == "admin" && api.PluginOption("enable_admin_smiley_panel", "true") == "false" {
 		return
 	}
-	api.Printf(`<div class="smilies" data-smilies data-smilies-mode="%s">`, mode)
-	api.Printf(`<div class="smilies-label sr-only">%s</div>`, api.EscapeHTML(api.T("表情")))
-	api.Printf(`<div class="smilies-list">`)
+	api.Println("")
+	api.Println(`<div class="smilies" data-smilies data-smilies-mode="%s">`, mode)
+	api.Println(`  <div class="smilies-label sr-only">%s</div>`, api.EscapeHTML(api.T("表情")))
+	api.Println(`  <div class="smilies-list">`)
 	for _, name := range smileyNames {
 		code := "[/" + name + "]"
 		escapedName := api.EscapeHTML(name)
 		escapedCode := api.EscapeHTML(code)
-		api.Printf(`<button type="button" class="smiley-btn" data-smiley-code="%s" title="%s" aria-label="%s">`, escapedCode, escapedName, escapedName)
+		api.Printf(`    <button type="button" class="smiley-btn" data-smiley-code="%s" title="%s" aria-label="%s">`, escapedCode, escapedName, escapedName)
 		api.Printf(`<img src="%s" alt="%s" width="24" height="24">`, smileySrc(name), escapedName)
-		api.Printf(`</button>`)
+		api.Println(`</button>`)
 	}
-	api.Printf(`</div></div>`)
+	api.Println(`  </div>`)
+	api.Println(`</div>`)
 	if mode == "admin" {
-		api.Printf(`<script>(function(){var ta=document.getElementById("content_md");if(!ta)return;document.querySelectorAll('[data-smilies-mode="admin"] [data-smiley-code]').forEach(function(b){if(b.dataset.boundSmileyAdmin==="1")return;b.dataset.boundSmileyAdmin="1";b.addEventListener("click",function(){var c=b.getAttribute("data-smiley-code")||"";if(!c)return;var s=ta.selectionStart||0,e=ta.selectionEnd||0;ta.value=ta.value.slice(0,s)+c+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+c.length;ta.focus();ta.dispatchEvent(new Event("input",{bubbles:true}))})})})();</script>`)
+		api.Println(`<script>(function(){var ta=document.getElementById("content_md");if(!ta)return;document.querySelectorAll('[data-smilies-mode="admin"] [data-smiley-code]').forEach(function(b){if(b.dataset.boundSmileyAdmin==="1")return;b.dataset.boundSmileyAdmin="1";b.addEventListener("click",function(){var c=b.getAttribute("data-smiley-code")||"";if(!c)return;var s=ta.selectionStart||0,e=ta.selectionEnd||0;ta.value=ta.value.slice(0,s)+c+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+c.length;ta.focus();ta.dispatchEvent(new Event("input",{bubbles:true}))})})})();</script>`)
 	}
 }
 
