@@ -41,7 +41,7 @@ func (m *Manager) RenderWidget(ctx context.Context, pluginID, widgetID string, o
 	return m.renderWidgetByTemplate(ctx, p, renderCtx)
 }
 
-// pluginWidget 是插件组件的 Widget 接口实现，负责将插件 manifest 中声明的组件绑定到模板 renderer。
+// pluginWidget 是插件组件的 WidgetRenderer 实现，负责将插件 manifest 中声明的组件绑定到模板 renderer。
 type pluginWidget struct {
 	m        *Manager
 	decl     hook.WidgetDecl

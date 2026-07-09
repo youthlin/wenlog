@@ -116,18 +116,17 @@ type WidgetInstance struct {
 	Settings   map[string]string // 实例级配置值
 }
 
-// WidgetResolver 根据来源和 ID 查找组件实现。
-// source 为 "builtin" / "theme" / "plugin"，pluginID 仅在 source="plugin" 时有值
-type WidgetResolver = func(source, id, pluginID string) Widget
+// WidgetResolver 根据来源和 ID 查找组件 renderer。
+// source 为 "builtin" / "theme" / "plugin"，pluginID 仅在 source="plugin" 时有值。
+type WidgetResolver = func(source, id, pluginID string) WidgetRenderer
 
-// Widget 是所有组件（内置/主题/插件）的统一接口。
-// 参照 WordPress WP_Widget 的模板方法模式：核心管理生命周期和存储，
-// 组件实现者只需提供元数据和渲染逻辑。
-type Widget interface {
+// WidgetRenderer 是所有组件（内置/主题/插件）的统一渲染接口。
+// 核心负责注册、解析、实例配置和外层生命周期，组件实现者只提供元数据和渲染逻辑。
+type WidgetRenderer interface {
 	// Meta 返回组件声明元数据（ID、标签、可配置选项等）。
 	Meta() WidgetDecl
-	// Render 渲染组件为 HTML。tpl 是当前请求的主题模板实例，模板型组件用它执行模板；
-	// action 型组件可忽略 tpl 参数。
+	// Render 渲染组件为 HTML。tpl 是当前请求的主题模板实例；内置/主题组件通常用它执行
+	// 主题模板，插件组件可以使用自己的模板渲染机制。
 	Render(ctx context.Context, tpl *template.Template, instance WidgetInstance, data any) (template.HTML, error)
 }
 

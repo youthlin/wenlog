@@ -178,7 +178,7 @@ func TestWidgetRenderHTMLFilterReceivesStableView(t *testing.T) {
 			Options:      map[string]string{"title": "Hello"},
 		}}
 	})
-	r.SetWidgetResolver(func(source, id, pluginID string) hook.Widget {
+	r.SetWidgetResolver(func(source, id, pluginID string) hook.WidgetRenderer {
 		return &testTemplateWidget{id: id}
 	})
 
@@ -418,7 +418,7 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 			Options:      map[string]string{"name": loader + "/" + theme},
 		}}
 	})
-	r.SetWidgetResolver(func(source, id, pluginID string) hook.Widget {
+	r.SetWidgetResolver(func(source, id, pluginID string) hook.WidgetRenderer {
 		if source == "theme" && id == "alpha" {
 			return &testTemplateWidget{id: id}
 		}
@@ -542,7 +542,7 @@ type testTranslator struct{}
 
 func (testTranslator) T(message string, args ...any) string { return message }
 
-// testTemplateWidget 是测试用的模板型组件，实现 hook.Widget 接口。
+// testTemplateWidget 是测试用的模板型组件，实现 hook.WidgetRenderer 接口。
 type testTemplateWidget struct {
 	id string
 }
