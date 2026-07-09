@@ -176,6 +176,11 @@ hooks:
     - head.end
     - comment.form.after_textarea
 
+lifecycle:
+  activate: true
+  deactivate: true
+  uninstall: true
+
 settings:
   - id: enabled_names
     type: textarea

@@ -18,6 +18,11 @@ hooks:
     - post.content_html
     - post.footer_html
 
+lifecycle:
+  activate: true
+  deactivate: true
+  uninstall: true
+
 options:
   - id: enabled
     type: bool

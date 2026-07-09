@@ -37,6 +37,7 @@ type pluginView struct {
 	LoadError   string
 	ActionNames []string
 	FilterNames []string
+	Lifecycle   []string
 	WidgetNames []string
 	OptionNames []string
 	Source      string
@@ -328,10 +329,25 @@ func toPluginView(tr *gettext.Translations, p *plugin.Plugin, enabled bool, load
 		LoadError:   loadError,
 		ActionNames: append([]string(nil), p.Hooks.Actions...),
 		FilterNames: append([]string(nil), p.Hooks.Filters...),
+		Lifecycle:   pluginLifecycleNames(p.Lifecycle),
 		WidgetNames: pluginWidgetNames(p.Widgets),
 		OptionNames: pluginOptionNames(p.Options),
 		Source:      "plugin:" + p.ID,
 	}
+}
+
+func pluginLifecycleNames(l plugin.LifecycleDecl) []string {
+	out := make([]string, 0, 3)
+	if l.Activate {
+		out = append(out, plugin.LifecycleActivate)
+	}
+	if l.Deactivate {
+		out = append(out, plugin.LifecycleDeactivate)
+	}
+	if l.Uninstall {
+		out = append(out, plugin.LifecycleUninstall)
+	}
+	return out
 }
 
 func pluginWidgetNames(widgets []plugin.WidgetDecl) []string {

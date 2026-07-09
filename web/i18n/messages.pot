@@ -1084,6 +1084,10 @@ msgstr ""
 msgid "Filters"
 msgstr ""
 
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:53
+msgid "Lifecycle"
+msgstr ""
+
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:54
 msgid "Widgets"
 msgstr ""

@@ -167,6 +167,30 @@ func writeTestPlugin(t *testing.T, id, functions string) *Plugin {
 	return p
 }
 
+func TestLoadPluginParsesLifecycleDecl(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "lifecycle-demo")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := `id: lifecycle-demo
+name: Lifecycle Demo
+lifecycle:
+  activate: true
+  deactivate: true
+  uninstall: true
+`
+	if err := os.WriteFile(filepath.Join(dir, "plugin.yaml"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p, err := LoadPlugin(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Lifecycle.Activate || !p.Lifecycle.Deactivate || !p.Lifecycle.Uninstall {
+		t.Fatalf("lifecycle = %+v, want all true", p.Lifecycle)
+	}
+}
+
 func TestPluginManifestWidgetsAreRegisteredAutomatically(t *testing.T) {
 	m, err := NewManager(filepath.Join("..", "..", "web", "plugins"), testSettingStore{})
 	if err != nil {
