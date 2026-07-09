@@ -1186,14 +1186,14 @@ func writeCommentForm(out *strings.Builder, ctx *RequestContext,
 
 	// action: comment.form.after_textarea
 	if h := hooks(ctx.Runtime); h != nil {
-		var slotBuf strings.Builder
+		var actionBuf strings.Builder
 		h.DoAction(
 			requestContext(ctx),
 			hook.ActionCommentFormAfterTextarea,
-			&slotBuf,
+			&actionBuf,
 			data,
 		)
-		util.WriteString(out, slotBuf.String())
+		util.WriteString(out, actionBuf.String())
 	}
 
 	if mailEnabled {
