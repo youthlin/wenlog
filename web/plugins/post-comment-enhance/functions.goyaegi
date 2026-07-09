@@ -160,13 +160,17 @@ func replaceVar(s, old, replacement string) string {
 	return strings.ReplaceAll(s, old, replacement)
 }
 
-// buildPostURL 根据文章字段构造永久链接。
+// buildPostURL 根据文章字段生成站点绝对永久链接。
 func buildPostURL(api *hook.API, post *hook.PostView) string {
 	siteURL := strings.TrimRight(api.Setting("site_url"), "/")
-	if post.PostType == "page" && post.Slug != "" {
-		return siteURL + "/" + post.Slug
+	path := api.PostURL(post)
+	if path == "" {
+		return siteURL
 	}
-	return siteURL + "/?p=" + anyToString(post.ID)
+	if siteURL == "" {
+		return path
+	}
+	return siteURL + path
 }
 
 func anyToString(v any) string {

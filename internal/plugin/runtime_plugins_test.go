@@ -7,8 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/store"
 )
 
 type testSettingStore struct{}
@@ -273,5 +278,44 @@ func TestSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	}
 	if !strings.Contains(got, `class="smiley"`) || !strings.Contains(got, `/plugin-assets/post-comment-enhance/smilies/`) {
 		t.Fatalf("smiley shortcode not rendered: %s", got)
+	}
+}
+
+func TestPostCommentEnhanceFooterPostURLUsesPermalink(t *testing.T) {
+	permalink.SetPostPattern("/%year%/%monthnum%/%postname%/")
+	t.Cleanup(func() { permalink.SetPostPattern(consts.SettingsPostPermalinkDefault) })
+
+	p, err := LoadPlugin(filepath.Join("..", "..", "web", "plugins", "post-comment-enhance"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hooks := hook.NewRegistry()
+	if _, err := CompileFunctions(context.Background(), p, hooks, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	loader := &store.DataLoader{Settings: map[string]string{
+		consts.SettingsSiteURL:                         "https://example.test/",
+		"plugin_post-comment-enhance_post_footer_html": `<a href="%postURL%">%postTitle%</a>`,
+	}}
+	ctx := hook.WithDataLoader(context.Background(), loader)
+	post := hook.PostView{
+		ID:          42,
+		Title:       "Hello",
+		Slug:        "hello-go",
+		PostType:    model.PostTypePost,
+		PublishedAt: time.Date(2026, 6, 11, 9, 8, 7, 0, time.UTC),
+	}
+
+	filtered := hooks.ApplyFilters(ctx, hook.FilterPostFooterHTML, "<p>body</p>", post)
+	got, ok := filtered.(string)
+	if !ok {
+		t.Fatalf("filtered content type = %T", filtered)
+	}
+	if !strings.Contains(got, `href="https://example.test/2026/06/hello-go/"`) {
+		t.Fatalf("post footer should use permalink URL, got: %s", got)
+	}
+	if strings.Contains(got, "/?p=42") {
+		t.Fatalf("post footer should not use short post ID URL, got: %s", got)
 	}
 }
