@@ -48,6 +48,33 @@ type OptionAPI interface {
 	GetOption(themeName, optionID string) string
 }
 
+// QueryAPI 是读取站点公开内容和生成前台 URL 所需的最小能力集合。
+type QueryAPI interface {
+	Posts() []PostView
+	Post(postID any) *PostView
+	Pages() []PostView
+	PageBySlug(slug string) *PostView
+	RecentPosts(n int) []PostView
+	PostsByCategory(categorySlug string) []PostView
+	PostsByTag(tagSlug string) []PostView
+	PostsByYear(year int) []PostView
+	PostsByYearMonth(year, month int) []PostView
+	Categories() []CategoryView
+	Tags() []TagView
+	CommentsByPost(postID any) []CommentView
+	RecentComments(n int) []CommentView
+	Users() []UserView
+	User(userID any) *UserView
+	ArchiveMonths() []ArchiveMonthView
+	PostURL(post any) string
+	PageURL(post any) string
+	CommentURL(post any, comment any) string
+	CategoryURL(slug string) string
+	TagURL(slug string) string
+	Snippet(content any, n int) string
+	AvatarURL(email, defaultAvatar string) string
+}
+
 var (
 	_ Registrar    = (*API)(nil)
 	_ FuncInvoker  = (*API)(nil)
@@ -55,4 +82,5 @@ var (
 	_ RenderAPI    = (*API)(nil)
 	_ I18nAPI      = (*API)(nil)
 	_ OptionAPI    = (*API)(nil)
+	_ QueryAPI     = (*API)(nil)
 )

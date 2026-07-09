@@ -411,7 +411,7 @@ type WidgetInfo struct {
 建议原则：
 
 - `hook.API` 脚本入口保持统一，降低主题和插件作者心智成本。
-- 内部实现可以继续按 `Registrar`、`DataAPI`、`RenderAPI`、`OptionAPI`、`I18nAPI` 等职责拆分，再组合成脚本入口。
+- 内部实现可以继续按 `Registrar`、`QueryAPI`、`RenderAPI`、`OptionAPI`、`I18nAPI` 等职责拆分，再组合成脚本入口。
 - 只读视图结构（`PostView`、`CommentView` 等）应保持稳定，避免脚本直接依赖 GORM model。
 
 ### 8.2 API 能力分层
@@ -993,12 +993,19 @@ func (api *API) EscapeHTML(s string) string
 func (api *API) Print(args ...any)
 func (api *API) Printf(format string, args ...any)
 func (api *API) Println(args ...any)
+func (api *API) Posts() []hook.PostView
+func (api *API) Post(postID any) *hook.PostView
+func (api *API) RecentPosts(n int) []hook.PostView
+func (api *API) CommentsByPost(postID any) []hook.CommentView
+func (api *API) PostURL(post any) string
+func (api *API) CommentURL(post any, comment any) string
 ```
 
 注意：
 
 - `AddAction/AddFilter` 在插件/主题加载阶段使用；推荐脚本使用具体参数签名，如 `func(string, hook.PostView) string`，需要完整 API 时使用 `func(*hook.API, any, ...any) any` / `func(*hook.API, ...any)`。
 - `T/N/X/XN` 和输出函数是请求级能力；执行 hook 时 API 要绑定当前请求 translator 和 writer。
+- `Posts/Post/RecentPosts/CommentsByPost/PostURL/CommentURL` 等只读站点数据和 URL helper 归入 `QueryAPI` 职责，脚本仍通过统一的 `*hook.API` 使用。
 - 插件文本域为 `plugin_<plugin_id>`；主题文本域为 `theme_<theme_id>`。
 - 翻译函数只返回普通字符串，不自动 safeHTML。
 
