@@ -50,10 +50,9 @@
         <td class="plugin-capabilities-cell" data-label="{{$.t.T "能力"}}">
           {{if .ActionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Actions"}}</strong>: {{range .ActionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .FilterNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Filters"}}</strong>: {{range .FilterNames}}<code>{{.}}</code> {{end}}</div>{{end}}
-          {{if .SlotNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Slots"}}</strong>: {{range .SlotNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .WidgetNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Widgets"}}</strong>: {{range .WidgetNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .OptionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Options"}}</strong>: {{range .OptionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
-          {{if and (not .ActionNames) (not .FilterNames) (not .SlotNames) (not .WidgetNames) (not .OptionNames)}}—{{end}}
+          {{if and (not .ActionNames) (not .FilterNames) (not .WidgetNames) (not .OptionNames)}}—{{end}}
         </td>
         <td class="actions plugin-actions-cell" data-label="{{$.t.T "操作"}}">
           <a class="btn-secondary btn-sm theme-action-link" href="/admin/theme/files?kind=plugin&plugin={{.ID}}">{{$.t.T "编辑"}}</a>

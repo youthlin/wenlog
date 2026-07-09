@@ -1113,10 +1113,6 @@ msgstr "Actions"
 msgid "Filters"
 msgstr "Filters"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:53
-msgid "Slots"
-msgstr "Slots"
-
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:54
 msgid "Widgets"
 msgstr "Widgets"

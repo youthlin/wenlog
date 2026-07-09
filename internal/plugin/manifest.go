@@ -32,12 +32,11 @@ type Plugin struct {
 	Assets         AssetDecl         `yaml:"assets" json:"assets"`
 }
 
-// HookDecl 描述插件声明会使用的标准 hook/slot。
+// HookDecl 描述插件声明会使用的标准 action/filter。
 // 该声明主要用于后台展示和能力说明，实际注册以 functions.goyaegi 为准。
 type HookDecl struct {
 	Actions []string `yaml:"actions" json:"actions"`
 	Filters []string `yaml:"filters" json:"filters"`
-	Slots   []string `yaml:"slots" json:"slots"`
 }
 
 // WidgetDecl 是 hook.WidgetDecl 的别名，描述插件提供的一类组件。

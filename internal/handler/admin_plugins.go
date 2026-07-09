@@ -37,7 +37,6 @@ type pluginView struct {
 	LoadError   string
 	ActionNames []string
 	FilterNames []string
-	SlotNames   []string
 	WidgetNames []string
 	OptionNames []string
 	Source      string
@@ -329,7 +328,6 @@ func toPluginView(tr *gettext.Translations, p *plugin.Plugin, enabled bool, load
 		LoadError:   loadError,
 		ActionNames: append([]string(nil), p.Hooks.Actions...),
 		FilterNames: append([]string(nil), p.Hooks.Filters...),
-		SlotNames:   append([]string(nil), p.Hooks.Slots...),
 		WidgetNames: pluginWidgetNames(p.Widgets),
 		OptionNames: pluginOptionNames(p.Options),
 		Source:      "plugin:" + p.ID,

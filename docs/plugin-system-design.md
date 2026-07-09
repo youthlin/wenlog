@@ -80,12 +80,12 @@ WordPress 区分 activation、deactivation、uninstall：
 
 ### 3.4 插件与主题关系
 
-WordPress 的最佳实践是：功能放插件，展示结构/样式放主题。主题通过标准模板函数和 hook/slot 让插件接入，而不需要知道具体启用了哪些插件。
+WordPress 的最佳实践是：功能放插件，展示结构/样式放主题。主题通过标准模板函数和 hook 让插件接入，而不需要知道具体启用了哪些插件。
 
 可借鉴点：
 
 - 组件、短代码、评论增强、统计、SEO、站点地图等功能适合插件化。
-- 主题不应知道真实站点启用了哪些插件；主题只需要在标准位置调用宿主提供的内容函数、组件区域和 slot/hook 点。
+- 主题不应知道真实站点启用了哪些插件；主题只需要在标准位置调用宿主提供的内容函数、组件区域和 hook 点。
 - 插件暴露组件时，应自行提供默认渲染实现；主题负责提供区域和整体样式，不负责认识插件组件。
 
 ### 3.5 插件提供小组件的 WordPress 流程
@@ -110,7 +110,7 @@ WordPress 的小组件体系可以拆成三段：
 
 1. **跨主题复用功能**：`saying` 博主动态、评论表情这类能力不再绑定某个主题。
 2. **可启停、可配置**：管理员能在后台安装、启用、停用、配置插件。
-3. **主题与插件低耦合**：主题只按标准写法调用内容函数、组件区域和 slot/hook 点；插件自行实现自己的组件渲染。
+3. **主题与插件低耦合**：主题只按标准写法调用内容函数、组件区域和 hook 点；插件自行实现自己的组件渲染。
 4. **扩展点稳定**：核心流程提供 typed hooks，插件通过 hooks 介入，而不是复制整套主题模板。
 5. **安全边界清晰**：插件默认由管理员安装；运行能力受 API 白名单约束；前台输出默认走 HTML 转义。
 6. **兼容现有主题系统**：优先复用当前组件区域、`widget_option`、模板解析和 ThemeAPI 的经验，避免推倒重来。
@@ -166,7 +166,6 @@ hooks:
     - comment.content_html
   actions:
     - head.end
-  slots:
     - comment.form.after_textarea
 
 settings:
@@ -197,7 +196,7 @@ widgets:
 | `name/version/description/author/license` | 后台展示与升级判断用元数据。 |
 | `requires_wenlog` | 可选，声明最低宿主版本，避免旧版本加载不兼容插件。 |
 | `settings` | 插件全局设置声明，复用主题 `OptionDecl` 的类型体系。 |
-| `hooks` | 可选，声明插件会注册或依赖的 action/filter/slot，便于后台展示和冲突检查；实际注册仍由脚本完成。 |
+| `hooks` | 可选，声明插件会注册或依赖的 action/filter，便于后台展示和冲突检查；实际注册仍由脚本完成。 |
 | `widgets` | 可选，插件提供的全局组件声明，不依赖当前主题，也不绑定具体区域。没有组件的插件可以完全省略。 |
 | `templates` / `widgets` 目录 | 可选，仅当插件需要提供默认片段模板或组件模板时存在。 |
 | `assets` | 可选，插件默认需要注入的 CSS/JS；通常通过 `head.end` / `body.end` action 按页面条件注入。 |
@@ -271,13 +270,13 @@ api.AddFilter("comment.content_html", func(api *hook.API, value any, args ...any
 | `template.data` | filter | `Public.base()` 组装完模板数据后 | 给所有前台页面增加插件数据。 |
 | `head.end` / `body.end` | action | 主题模板 `<head>` 结束前或 `</body>` 前 | 注入插件 CSS/JS。 |
 | `widget.render_html` | filter | 单个组件渲染后 | 包装组件外层、追加样式标记。 |
-| `comment.form.after_textarea` | slot | 评论表单 textarea 后 | 在 textarea 后注入表情按钮、Markdown 工具栏、验证码入口等。 |
+| `comment.form.after_textarea` | action | 评论表单 textarea 后 | 在 textarea 后注入表情按钮、Markdown 工具栏、验证码入口等。 |
 | `comment.content_html` | filter | 评论正文输出前 | 表情替换、@ 提及、Markdown 子集等。 |
 | `comment.submitted` | action | 评论保存后 | 通知、反垃圾、积分等副作用。 |
 
 更重要的是：需要先梳理宿主和主题的“标准扩展点”。类似 WordPress 主题调用 `the_content()` 时，宿主会在内部执行内容相关 filter；本项目也应让主题作者按推荐模板函数写法接入扩展点，而不是知道具体插件。比如主题写 `{{post_content .Post}}`，而不是直接输出 `.Post.Content`；`post_content` 内部再触发 `post.content_html` filter。
 
-`{{do_action "comment.form.after_textarea" .}}` 对应 WordPress 里的典型写法是主题模板中的 `do_action('某个_slot_name', $context)`：主题只声明“这里有一个插槽”，插件用 `add_action()` 往这个位置输出内容。区别是本项目模板语言不是 PHP，所以建议提供 `do_action` 模板函数来封装 `DoAction`，避免主题直接接触 Go hook 实现。
+`{{do_action "comment.form.after_textarea" .}}` 对应 WordPress 里的典型写法是主题模板中的 `do_action('comment_form_after_textarea', $context)`：主题声明一个 action 触发点，插件用 `add_action()` 往这个位置输出内容。区别是本项目模板语言不是 PHP，所以建议提供 `do_action` 模板函数来封装 `DoAction`，避免主题直接接触 Go hook 实现。
 
 ### 6.3 Hook 命名约定
 
@@ -548,7 +547,7 @@ plugins/post-comment-enhance/
 实现方式：
 
 1. `comment.content_html` filter：接收已转义或待渲染的评论正文，替换 `[/微笑]` 这类短码为 `<img class="smiley" ...>`。
-2. `comment.form.after_textarea` slot：在评论 textarea 后注入表情按钮片段，按钮写入短码到 textarea。
+2. `comment.form.after_textarea` action：在评论 textarea 后注入表情按钮片段，按钮写入短码到 textarea。
 3. `head.end` action：仅在需要时注入 CSS/JS。
 4. 插件设置声明启用哪些表情、是否显示表情面板、图片尺寸等。
 
@@ -563,14 +562,14 @@ plugins/post-comment-enhance/
 
 - 核心评论模板应提供标准 action，例如 `comment.form.after_textarea`。
 - 主题可以覆盖评论模板，但应按“推荐主题写法”调用统一 action 函数，例如 `{{do_action "comment.form.after_textarea" .}}`；主题不需要知道这个 action 最终会被评论表情、验证码还是其它插件使用。
-- 若主题完全自定义评论模板且不调用 slot，插件仍能通过 `comment.content_html` 生效，但表情按钮不会自动出现；后台可提示“当前主题未声明评论表单 slot”。
+- 若主题完全自定义评论模板且不调用对应 action，插件仍能通过 `comment.content_html` 生效，但表情按钮不会自动出现；后台可提示“当前主题未触发评论表单 action”。
 
 ## 10. 标准 Hook 点梳理
 
 插件系统的真正难点不是“插件怎么写”，而是宿主和主题要在哪些稳定位置暴露扩展点。建议把 hook 点分成两类：
 
 1. **宿主强制 hook**：由 Go handler / render 层统一触发，主题绕不过去。适合内容过滤、数据保存、评论提交等核心流程。
-2. **主题推荐 slot**：主题模板需要按推荐写法显式调用。适合在页面某个视觉位置插入 UI，例如评论表单 textarea 后、文章内容前后、页脚前等。
+2. **主题推荐 action**：主题模板需要按推荐写法显式调用。适合在页面某个视觉位置插入 UI，例如评论表单 textarea 后、文章内容前后、页脚前等。
 
 ### 10.1 内容渲染相关
 
@@ -583,9 +582,9 @@ plugins/post-comment-enhance/
 
 建议：这些地方最好不要要求主题直接调用 `apply_filter`，而是提供稳定模板函数。主题作者只要按文档写 `post_content/comment_content`，插件就能工作。
 
-### 10.2 页面结构 slot
+### 10.2 页面结构 action
 
-| Slot | 建议调用位置 | 典型用途 |
+| Action | 建议调用位置 | 典型用途 |
 |---|---|---|
 | `head.end` | `</head>` 前 | SEO meta、插件 CSS、preload。 |
 | `body.start` | `<body>` 后 | 统计脚本 noscript、全局提示。 |
@@ -597,7 +596,7 @@ plugins/post-comment-enhance/
 | `comment_form.after` | 评论表单后 | 额外说明、订阅入口。 |
 | `footer.before` | 页脚前 | 全站横幅、备案增强。 |
 
-这些 slot 需要主题模板显式调用，例如：
+这些 action 需要主题模板显式调用，例如：
 
 ```gohtml
 {{do_action "post.before" .}}
@@ -629,16 +628,16 @@ plugins/post-comment-enhance/
 第一批不需要把所有 hook 都实现。建议按现有诉求优先实现：
 
 1. 插件 manifest `widgets` + `WidgetRegistry`：支撑“博主动态”插件组件。
-2. `comment.content_html` + `comment.form.after_textarea` slot：支撑评论表情。
+2. `comment.content_html` + `comment.form.after_textarea` action：支撑评论表情。
 3. `head.end` / `body.end`：支撑插件 CSS/JS 注入。
 4. `post.content_html` / `post_content`：建立类似 `the_content()` 的标准内容出口，后续短代码、目录、版权提示都能复用。
 
 新增 hook 的原则：
 
 - **最小必要**：没有明确插件场景就不加；不要因为“未来可能有用”提前铺太多点。
-- **文档先行**：每个 hook/slot 必须在本文或后续专门的 hook reference 中记录名称、类型、调用位置、参数、返回值、安全约束和示例。
+- **文档先行**：每个 hook 必须在本文或后续专门的 hook reference 中记录名称、类型、调用位置、参数、返回值、安全约束和示例。
 - **稳定性分级**：第一批可标注为 experimental；一旦有插件依赖并发布，再提升为 stable，避免随意改名或改参数。
-- **主题推荐写法同步**：凡是需要主题调用的 slot，都必须同步到主题开发文档和内置主题模板中，避免主题作者漏掉标准出口。
+- **主题推荐写法同步**：凡是需要主题调用的 action，都必须同步到主题开发文档和内置主题模板中，避免主题作者漏掉标准出口。
 - **优先宿主函数封装**：内容类 filter 优先做成 `post_content/comment_content` 这类模板函数，由宿主内部触发 filter；只有视觉插入点才暴露为 `do_action`。
 
 ## 11. 后台管理设计
@@ -753,11 +752,11 @@ plugins/post-comment-enhance/
 ### P2：核心 Hooks 与评论表情
 
 1. 实现 `Hooks`：action/filter 注册、优先级、错误隔离、超时。
-2. 增加 `comment.content_html`、`comment.form.after_textarea`、`head.end` 等 hook/slot。
+2. 增加 `comment.content_html`、`comment.form.after_textarea`、`head.end` 等 hook。
 3. 将 `twentytwenty` 评论表情迁移成 `post-comment-enhance` 插件。
-4. 核心评论模板补 slot；现有主题逐步适配 slot。
+4. 核心评论模板补 action；现有主题逐步适配 action。
 
-验收：切换到任意主题后，评论正文表情渲染保持可用；支持 slot 的主题显示表情面板。
+验收：切换到任意主题后，评论正文表情渲染保持可用；触发对应 action 的主题显示表情面板。
 
 ### P3：安装包、安全与迁移
 
@@ -792,7 +791,7 @@ plugins/post-comment-enhance/
 |---|---|---|
 | 插件脚本安全 | yaegi 不是强沙箱，插件可执行较复杂逻辑。 | 仅管理员安装；API 白名单；后续评估 WASM。 |
 | Hook 过多导致维护困难 | 扩展点随意增加会形成隐式公共 API。 | 每个 hook 必须有文档、测试和稳定性级别。 |
-| 主题不适配 slot | 评论表情按钮等 UI 可能无法插入。 | 插件能力分层：内容 filter 先可用，UI slot 渐进适配。 |
+| 主题不触发 action | 评论表情按钮等 UI 可能无法插入。 | 插件能力分层：内容 filter 先可用，UI action 渐进适配。 |
 | 组件样式不协调 | 插件默认 HTML 在不同主题下可能不好看。 | 插件输出尽量使用通用 `.widget` 结构和最小样式；主题提供区域和通用组件容器样式。 |
 | 同 ID 冲突 | 主题、插件、内置组件可能重名。 | 明确优先级；后台显示来源；日志提示冲突。 |
 | 性能退化 | 多个插件 filter 串行执行影响渲染。 | hook 超时、按页面条件注入、缓存插件 manifest。 |
@@ -803,14 +802,14 @@ plugins/post-comment-enhance/
 
 1. **先做插件 manifest、启停、设置和资源路由**，建立插件基本生命周期。
 2. **优先把博主动态迁成插件组件**，因为它最贴近现有组件系统，改动边界清晰。
-3. **再做评论表情所需 hooks/slots**，因为它涉及评论正文安全、评论表单插槽和资产注入，设计复杂度更高。
+3. **再做评论表情所需 hooks**，因为它涉及评论正文安全、评论表单 action 和资产注入，设计复杂度更高。
 4. **不要一开始追求强沙箱或插件市场**，先把宿主扩展点、后台管理和跨主题复用跑通。
 
 最终形态应该是：主题负责“页面长什么样”，插件负责“站点能做什么”。这样用户切换主题时，博主动态、评论表情、后续 SEO/站点地图/短代码等功能都能保持连续可用。
 
 ## 20. 具体技术实现方案
 
-本节把前面的讨论收敛为可直接开始编码的实施方案。目标是先做“能支撑 saying 插件组件 + 评论表情 hook/slot 的最小插件系统”，避免一次性铺开过多扩展点。
+本节把前面的讨论收敛为可直接开始编码的实施方案。目标是先做“能支撑 saying 插件组件 + 评论表情 hook 的最小插件系统”，避免一次性铺开过多扩展点。
 
 ### 20.1 第一阶段范围
 
@@ -819,7 +818,7 @@ plugins/post-comment-enhance/
 1. 插件 manifest 扫描、启用列表、运行时加载。
 2. 统一 Hook Registry：支持 action/filter、priority、来源追踪、panic recover。
 3. 主题和插件 `functions.goyaegi` 都可以注册 action/filter，但记录不同来源。
-4. 最小 hook/slot：
+4. 最小 hook：
    - `widget.render_html`
    - `comment.content_html`
    - `comment.form.after_textarea`
@@ -869,7 +868,7 @@ hook/
 | `cmd/server/routes.go` | 增加 `/admin/plugins` 最小只读/启停路由；若第一阶段不做 UI，可先只初始化默认启用内置插件。 |
 | `internal/render/parse.go` | 增加模板占位函数：`do_action`、`post_content`、`comment_content`。 |
 | `internal/render/render.go` | clone 模板时绑定真实 `do_action/post_content/comment_content` 请求级闭包。 |
-| `internal/render/theme.go` | 增加 hook provider / slot provider，或通过统一 runtime 调用 plugin.Manager。 |
+| `internal/render/theme.go` | 增加 hook provider，或通过统一 runtime 调用 plugin.Manager。 |
 | `internal/theme/functions.go` | 主题 `functions.goyaegi` 注入 `hook.API`，允许 `api.AddAction` / `api.AddFilter`。 |
 | `internal/theme/widgets.go` | `WidgetInfo` 增加 `Source/PluginID`；解析组件时支持插件声明。 |
 | `internal/handler/admin_widgets.go` | 可用组件列表合并插件 manifest widget 声明，显示来源。 |
@@ -896,7 +895,6 @@ type Plugin struct {
 type HookDecl struct {
     Actions []string `yaml:"actions" json:"actions"`
     Filters []string `yaml:"filters" json:"filters"`
-    Slots   []string `yaml:"slots" json:"slots"`
 }
 
 type WidgetDecl struct {
@@ -1019,10 +1017,10 @@ func (api *API) Println(args ...any)
 |---|---|---|
 | `post_content .Post` | 输出文章正文并应用 `post.content_html` filter | `the_content()` |
 | `comment_content .` | 输出评论正文并应用 `comment.content_html` filter | 评论内容 filter |
-| `do_action "slot.name" .` | 在模板中触发一个 action slot，收集 HTML 输出 | `do_action('slot_name', ...)` |
+| `do_action "action.name" .` | 在模板中触发一个 action，收集 HTML 输出 | `do_action('action_name', ...)` |
 | `render_widgets "area" .` | 渲染某个组件区域 | `dynamic_sidebar('area')` |
-| `siteHeader .` | 渲染标准 header，可内部触发 `head.end` / `body.start` slot | `get_header()` |
-| `siteFooter .` | 渲染标准 footer，可内部触发 `footer.before` / `body.end` slot | `get_footer()` |
+| `siteHeader .` | 渲染标准 header，可内部触发 `head.end` / `body.start` action | `get_header()` |
+| `siteFooter .` | 渲染标准 footer，可内部触发 `footer.before` / `body.end` action | `get_footer()` |
 | `post_title .Post` | 输出文章标题块，可统一转义和过滤 | `the_title()` |
 | `post_title_text .Post` | 输出文章标题文本，可用于列表链接、归档列表、上一篇/下一篇标题 | `the_title()` |
 | `post_excerpt .Post` | 输出摘要并应用 `post.excerpt_html` filter | `the_excerpt()` |
@@ -1072,9 +1070,9 @@ func (api *API) Println(args ...any)
 注意边界：
 
 - `post_content/comment_content` 这类函数是插件系统第一阶段必需，因为它们是内容 filter 的稳定出口。
-- `commentsTemplate` 可以显著减少主题重复 HTML，但也会限制主题对评论结构的自由度；建议先提供默认实现，主题仍可选择自定义评论模板，只要保留必要 slot。
+- `commentsTemplate` 可以显著减少主题重复 HTML，但也会限制主题对评论结构的自由度；建议先提供默认实现，主题仍可选择自定义评论模板，只要触发必要 action。
 - `siteHeader/siteFooter` 可先作为推荐方向，不必阻塞插件系统第一阶段落地。
-- 所有这些函数都应在文档中维护“会触发哪些 hook/slot”，避免主题作者不知道哪些插件能力依赖它们。
+- 所有这些函数都应在文档中维护“会触发哪些 hook”，避免主题作者不知道哪些插件能力依赖它们。
 
 ### 20.6 插件组件 saying 的具体流程
 
@@ -1149,7 +1147,7 @@ widgets:
 2. `comment_content` 先对评论原文做 HTML 转义，再应用 `comment.content_html` filter。
 3. `post-comment-enhance` 插件把 `[/微笑]` 替换成受控 `/plugin-assets/post-comment-enhance/smilies/微笑.gif` 图片。
 4. 主题评论表单 textarea 后调用：`{{do_action "comment.form.after_textarea" .}}`。
-5. `post-comment-enhance` 插件在该 slot 输出表情按钮面板。
+5. `post-comment-enhance` 插件在该 action 输出表情按钮面板。
 6. `head.end/body.end` 注入插件 CSS/JS。
 
 ### 20.8 编码顺序
