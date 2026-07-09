@@ -279,16 +279,12 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 		return nil, errors.Wrap(err, "create plugins dir")
 	}
 
-	stagingDir, err := os.MkdirTemp(m.pluginsDir, ".install-"+p.ID+"-*")
+	stagingParent, err := os.MkdirTemp(m.pluginsDir, ".install-"+p.ID+"-*")
 	if err != nil {
 		return nil, errors.Wrap(err, "create plugin staging dir")
 	}
-	stagingInstalled := false
-	defer func() {
-		if !stagingInstalled {
-			_ = os.RemoveAll(stagingDir)
-		}
-	}()
+	defer os.RemoveAll(stagingParent)
+	stagingDir := filepath.Join(stagingParent, p.ID)
 
 	if err := extension.CopyDir(dir, stagingDir, "plugin"); err != nil {
 		return nil, errors.Wrap(err, "copy plugin to staging dir")
@@ -319,7 +315,6 @@ func (m *Manager) Install(dir string) (*Plugin, error) {
 		}
 		return nil, errors.Wrap(err, "replace plugin dir")
 	}
-	stagingInstalled = true
 
 	// 重新加载（确保 Dir 指向正确位置）
 	p, err = LoadPlugin(targetDir)

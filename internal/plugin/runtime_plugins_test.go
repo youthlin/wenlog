@@ -267,6 +267,52 @@ func TestManagerEnabledIDsUsesMemoryCache(t *testing.T) {
 	}
 }
 
+func TestManagerInstallCopiesPluginThroughStaging(t *testing.T) {
+	pluginsDir := t.TempDir()
+	srcDir := filepath.Join(t.TempDir(), "installable")
+	if err := os.MkdirAll(srcDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "id: installable\nname: Installable\nversion: 0.0.1\n"
+	if err := os.WriteFile(filepath.Join(srcDir, "plugin.yaml"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(srcDir, "asset.txt"), []byte("copied"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	m, err := NewManager(pluginsDir, testSettingStore{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	installed, err := m.Install(srcDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if installed.ID != "installable" || installed.Dir != filepath.Join(pluginsDir, "installable") {
+		t.Fatalf("installed plugin = %+v, want target dir plugin", installed)
+	}
+	if got := m.Get("installable"); got == nil || got.Dir != installed.Dir {
+		t.Fatalf("manager plugin = %+v, want installed plugin", got)
+	}
+	data, err := os.ReadFile(filepath.Join(pluginsDir, "installable", "asset.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "copied" {
+		t.Fatalf("copied asset = %q, want copied", data)
+	}
+	entries, err := os.ReadDir(pluginsDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".install-installable-") {
+			t.Fatalf("staging dir should be cleaned up, found %s", entry.Name())
+		}
+	}
+}
+
 func TestManagerUninstallDeletesPluginDir(t *testing.T) {
 	pluginsDir := t.TempDir()
 	pluginDir := filepath.Join(pluginsDir, "removable")
