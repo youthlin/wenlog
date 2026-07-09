@@ -64,7 +64,7 @@ func TestRenderWidgetMissingTemplateReturnsFalse(t *testing.T) {
 	}
 }
 
-func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
+func TestRenderWidgetTemplateCanUseFriendlyPluginFuncAPI(t *testing.T) {
 	dir := t.TempDir()
 	widgetsDir := filepath.Join(dir, "widgets")
 	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
