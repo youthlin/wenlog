@@ -78,6 +78,14 @@ WordPress 区分 activation、deactivation、uninstall：
 - “卸载”需要显式确认，并允许插件清理自己的设置和数据。
 - 插件升级也应作为生命周期事件处理，便于迁移配置格式。
 
+当前实现：
+
+- 插件脚本可选实现 `Activate(api *hook.API) error`、`Deactivate(api *hook.API) error`、`Uninstall(api *hook.API) error`。
+- 启用时先执行 `Activate`，再写入启用列表并重载运行时；后续步骤失败会尝试执行 `Deactivate` 回滚。
+- 停用时先执行 `Deactivate`，再移出启用列表并重载运行时；失败会尝试重新启用并执行 `Activate`。
+- 卸载时如果插件已启用会先执行 `Deactivate`，再执行 `Uninstall`，然后移出启用列表并删除插件目录。
+- 生命周期函数和 `Register` 入口默认最多等待 5 秒。超时会返回错误并中止当前后台操作；但 Go 不能安全强杀已经进入死循环的 goroutine，因此这仍然是“调用方停止等待”的轻量隔离，不是进程级沙箱。
+
 ### 3.4 插件与主题关系
 
 WordPress 的最佳实践是：功能放插件，展示结构/样式放主题。主题通过标准模板函数和 hook 让插件接入，而不需要知道具体启用了哪些插件。
@@ -237,7 +245,16 @@ type Registry struct {
 2. 从 Setting 表读取启用列表，例如 `plugins_enabled = ["post-comment-enhance", "saying"]`。
 3. 仅编译启用插件的 `functions.goyaegi`，并注册 hooks、widgets、shortcodes、assets 等能力。
 4. 插件加载失败时：记录错误、后台展示故障、跳过该插件，不影响核心站点启动。
-5. 插件停用后：不再注册 hooks 与 widgets，但保留 `plugin_<id>_*` 设置。
+5. 插件启用/停用/卸载时调用脚本内可选生命周期函数：`Activate`、`Deactivate`、`Uninstall`。
+6. 插件停用后：不再注册 hooks 与 widgets，但保留 `plugin_<id>_*` 设置。
+7. 插件卸载后：执行卸载生命周期、移出启用列表，并删除插件目录。插件若需要清理 `plugin_<id>_*` 设置或自建数据，应在 `Uninstall` 中完成。
+
+执行隔离：
+
+- `functions.goyaegi` 的 `Register` 和生命周期函数默认最多等待 5 秒。
+- 单个 action/filter handler 默认最多等待 1 秒；action 超时丢弃该 handler 的缓冲输出，filter 超时保留原值。
+- panic 会被 recover 并记录日志。
+- 当前隔离不是强沙箱，无法安全强杀已经进入死循环的 goroutine；它保证调用方不无限等待。
 
 ## 6. Hooks 设计
 
@@ -650,7 +667,7 @@ plugins/post-comment-enhance/
 |---|---|
 | 插件 | 名称、描述、版本、作者。 |
 | 状态 | 已启用 / 已停用 / 加载失败。 |
-| 操作 | 启用、停用、设置、删除。 |
+| 操作 | 启用、停用、设置、重载、下载、卸载。 |
 | 依赖 | 宿主版本、缺失资源、冲突 hook。 |
 
 ### 11.2 插件设置页
@@ -659,7 +676,7 @@ plugins/post-comment-enhance/
 
 - 复用主题选项的 `OptionDecl` 渲染能力。
 - 设置 key 使用 `plugin_<id>_<option>`。
-- 插件停用后仍保留设置；卸载时才删除。
+- 插件停用后仍保留设置；卸载时执行 `Uninstall` 并删除插件目录。设置项是否删除由插件自己的 `Uninstall` 逻辑负责。
 
 ### 11.3 安装与升级
 
@@ -669,6 +686,7 @@ plugins/post-comment-enhance/
 - 与主题 zip 一样做路径穿越、文件数量、解压后大小、扩展名白名单限制。
 - 安装前解析 `plugin.yaml`，校验 `id` 与目录名一致。
 - 覆盖安装时先解压到临时目录，校验通过后再替换，避免破坏已有插件。
+- 卸载使用已有目录备份/回滚机制删除插件目录；删除失败时尽量恢复启用状态。
 
 ## 12. 数据与存储设计
 
@@ -710,9 +728,9 @@ plugins/post-comment-enhance/
 3. **API 白名单**：插件不能拿到 `*gorm.DB`、`*store.Store`、任意文件系统写权限。
 4. **输出安全**：filter 默认处理普通字符串；只有明确命名为 `_html` 的 hook 才允许返回 HTML，且文档中必须说明输入是否已转义。
 5. **资源隔离**：插件资源必须通过受控路由输出，禁止插件返回本地绝对路径。
-6. **失败隔离**：插件 panic 或 hook 超时不应拖垮站点；可对单个 hook 设置超时和 recover。
+6. **失败隔离**：插件 panic 会被 recover；单个 action/filter handler 默认 1 秒超时，`Register`/生命周期入口默认 5 秒超时。超时只能让调用方停止等待，不能强杀已经跑起来的 goroutine。
 7. **CSRF 与后台 POST**：插件设置页和插件操作沿用现有后台 CSRF 约定。
-8. **卸载确认**：卸载会删除设置和插件数据，必须二次确认。
+8. **卸载确认**：卸载会执行生命周期并删除插件目录，必须二次确认。插件设置和自建数据由 `Uninstall` 负责清理。
 
 ## 15. 与主题系统的分工
 
@@ -730,7 +748,7 @@ plugins/post-comment-enhance/
 
 ## 16. 渐进式实施路线
 
-### P0：最小可用插件框架
+### P0：最小可用插件框架（已完成）
 
 1. 新增 `internal/plugin`：扫描 `plugins/`、读取 `plugin.yaml`、管理启用列表。
 2. 新增后台 `/admin/plugins` 列表页，支持启用/停用。
@@ -740,7 +758,7 @@ plugins/post-comment-enhance/
 
 验收：可以安装一个只有 CSS/设置的演示插件，启用后前台能加载资源，停用后资源不再注入。
 
-### P1：插件组件
+### P1：插件组件（已完成）
 
 1. 在后台组件页和前台组件解析处合并启用插件 manifest 中的 `widgets` 声明。
 2. 插件如需新增组件，通过 `plugin.yaml` 的 `widgets` 声明组件，并由宿主标记来源 `plugin:<id>`。
@@ -749,7 +767,7 @@ plugins/post-comment-enhance/
 
 验收：任意主题只要有组件区域，都能添加“博主动态”；该组件由插件自己的模板 renderer 输出。
 
-### P2：核心 Hooks 与评论表情
+### P2：核心 Hooks 与评论表情（已完成）
 
 1. 实现 `Hooks`：action/filter 注册、优先级、错误隔离、超时。
 2. 增加 `comment.content_html`、`comment.form.after_textarea`、`head.end` 等 hook。
@@ -758,7 +776,7 @@ plugins/post-comment-enhance/
 
 验收：切换到任意主题后，评论正文表情渲染保持可用；触发对应 action 的主题显示表情面板。
 
-### P3：安装包、安全与迁移
+### P3：安装包、安全与迁移（部分完成）
 
 1. 支持插件 zip 上传、替换安装、卸载清理。
 2. 增加插件版本迁移 hook。
@@ -784,6 +802,7 @@ plugins/post-comment-enhance/
 - 启用 `post-comment-enhance` 后评论表单出现表情按钮，提交后正文渲染为图片。
 - 停用 `post-comment-enhance` 后历史评论仍显示短码文本，不报错。
 - 插件加载失败时前台仍可访问，后台插件页显示错误详情。
+- 插件卸载后目录被删除；action/filter 或生命周期超时时按降级语义返回。
 
 ## 18. 风险与权衡
 
@@ -796,7 +815,7 @@ plugins/post-comment-enhance/
 | 同 ID 冲突 | 主题、插件、内置组件可能重名。 | 明确优先级；后台显示来源；日志提示冲突。 |
 | 性能退化 | 多个插件 filter 串行执行影响渲染。 | hook 超时、按页面条件注入、缓存插件 manifest。 |
 
-## 19. 建议优先结论
+## 19. 建议优先结论（历史路线）
 
 建议采用“先组件、后 hooks”的渐进式方案：
 
@@ -830,10 +849,8 @@ plugins/post-comment-enhance/
 7. 插件 i18n：插件脚本和插件模板能按当前请求语言翻译字符串。
 8. 插件静态资源路由：`/plugin-assets/{plugin_id}/{path}`。
 
-第一阶段暂不做：
+第一阶段原暂缓项中，zip 上传安装和卸载清理 UI 已完成。当前仍暂缓：
 
-- 插件 zip 上传安装。
-- 插件卸载清理 UI。
 - 插件公开路由注册。
 - 强沙箱 / WASM。
 - 大量通用 hook 点。
@@ -1163,7 +1180,7 @@ widgets:
 
 | 状态 | 步骤 | 内容 | 当前说明 |
 |---|---:|---|---|
-| done | 1 | **Hook Registry**：实现 `hook/registry.go`，补 action/filter priority、来源、recover 测试。 | 已实现 action/filter 注册、priority 排序、来源记录、panic recover；当前以编译和集成测试验证，后续可补更细单测。 |
+| done | 1 | **Hook Registry**：实现 `hook/registry.go`，补 action/filter priority、来源、recover 测试。 | 已实现 action/filter 注册、priority 排序、来源记录、panic recover、单 handler 超时；action 超时丢弃缓冲输出，filter 超时保留原值。 |
 | done | 2 | **Manifest + Manager**：实现插件扫描、启用列表读取、manifest 校验。 | 已实现 `plugin.yaml` 解析、插件 ID/目录校验、启用列表读取、启停保存、启用插件运行时加载。 |
 | done | 3 | **hook.API**：实现 `AddAction/AddFilter` 注入，先不做复杂 i18n。 | 已统一到 `hook.API`，支持 `AddAction/AddFilter`、`T/N/X/XN`、`EscapeHTML`。 |
 | done | 4 | **接入主题 functions**：让主题 `api.AddAction` / `api.AddFilter` 也注册到同一 registry，并记录来源 `theme:<name>`。 | 已接入主题和插件共用的 `hook.API`，启动时按“插件先、主题后”的顺序注册 hook。 |
@@ -1175,6 +1192,7 @@ widgets:
 | done | 10 | **评论表情**：实现 `comment.content_html` + `comment.form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/post-comment-enhance`，通过 `comment.content_html` 渲染短码图片、通过 `comment.form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
 | done | 11 | **i18n 完整化**：插件文本域绑定、`.tp.T`、`api.T/N/X/XN`。 | 已完成：`hook.API` 的 `T/N/X/XN`、插件文本域绑定、插件模板 `.tp.T` 都已接入。 |
 | done | 12 | **后台插件页**：最小列表页展示启用状态、加载错误、hook/source 信息。 | 已完成：新增 `/admin/plugins` 插件列表、启用/停用/重载操作、hook/source/组件/设置展示、加载错误展示，并支持 `/admin/plugin/:id/settings` 配置插件全局选项。 |
+| done | 13 | **安装与卸载**：插件 zip 上传、替换安装、下载和卸载删除目录。 | 已完成：上传安装使用 `internal/extension` 做路径/大小/文件数限制，覆盖安装带备份回滚；卸载执行生命周期、移出启用列表并删除插件目录。 |
 
 当前最近一次验证：`go test ./...` 已通过。
 
@@ -1183,7 +1201,9 @@ widgets:
 单元测试：
 
 - `internal/plugin`: manifest ID 校验、路径校验、启用列表解析。
-- `internal/plugin`: action/filter priority 顺序、panic recover、来源记录。
+- `hook`: action/filter priority 顺序、panic recover、来源记录、单 handler 超时降级。
+- `internal/plugin`: 启用列表缓存、插件运行时编译、卸载删除目录。
+- `internal/script`: `Register` 入口超时。
 - `internal/render`: `do_action/post_content/comment_content` 在请求级上下文下不串数据。
 - `internal/theme`: `ResolveWidgets` 兼容旧配置，并能处理 plugin source。
 
@@ -1194,13 +1214,13 @@ widgets:
 3. 禁用 `saying` 插件，前台跳过旧 saying 配置且不报错。
 4. 启用评论表情插件，评论表单出现表情面板，提交后评论正文显示图片。
 5. 切换语言后，插件输出的“博主动态 / 表情”等文案跟随翻译。
-6. `go test ./...` 通过。
+6. 上传插件 zip、下载插件包、卸载插件后目录被删除。
+7. `go test ./...` 通过。
 
 ### 20.10 暂缓项
 
 以下内容明确放到后续迭代：
 
-- 插件 zip 上传安装和卸载清理。
 - 插件版本升级迁移 hook。
 - 插件路由注册。
 - 插件市场/签名/自动更新。

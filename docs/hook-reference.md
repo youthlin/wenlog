@@ -23,6 +23,18 @@ func Register(api *hook.API) error {
 
 Filter 的第一个参数始终是当前值；后续参数是下表里的 payload。Action 的参数从下表里的 payload 开始。具体签名也可以显式把 `context.Context` 放在第一参，供宿主内部代码使用。
 
+## 执行隔离
+
+Hook 处理器由 `hook.Registry` 串行执行，并带有基础隔离：
+
+- 单个 action/filter handler 默认最多等待 1 秒。
+- handler panic 会被 recover 并记录日志，不中断后续 handler。
+- action handler 的输出先写入独立缓冲区；handler 按时完成后才 flush 到页面。超时时该 handler 的输出会被丢弃，避免半截 HTML 写入响应。
+- filter handler 超时时保留进入该 handler 前的值，继续执行后续 filter。
+- 如果 handler 签名接收 `context.Context`，传入的是带超时的请求 context，脚本应主动观察 `ctx.Done()`。
+
+限制：当前超时控制不能强制杀死已经进入死循环的 goroutine；它只保证调用方不继续等待，并让 action/filter 链按上面的降级语义继续执行。插件仍按管理员安装的可信代码处理，不是强沙箱。
+
 ## Actions
 
 | Hook | 常量 | 触发点 | Payload | 用途 |
