@@ -1,12 +1,14 @@
 package hook
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"log/slog"
 	"reflect"
 	"sort"
 	"sync"
+	"time"
 )
 
 // Executor 是 Hook Registry 的最小接口，render 包只需要 DoAction 和 ApplyFilters。
@@ -44,6 +46,8 @@ type Handler struct {
 	Fn       any    // 函数实现
 	order    int64  // 相同优先级时按添加顺序
 }
+
+const defaultHandlerTimeout = time.Second
 
 var _ sort.Interface = (Handlers)(nil)
 
@@ -195,13 +199,23 @@ func (r *Hooks) DoAction(ctx context.Context, name string, w io.Writer, args ...
 	if r == nil {
 		return
 	}
-	ctx = WithActionWriter(ctx, w)
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	ctx = WithCurrentHook(ctx, name)
 	r.mu.Lock()
 	r.didActions[name]++
 	r.mu.Unlock()
 	for _, h := range r.Actions(name) {
-		r.safeDoAction(ctx, h, args...)
+		var buf bytes.Buffer
+		if r.runWithTimeout(ctx, h, func(runCtx context.Context) {
+			actionCtx := WithActionWriter(runCtx, &buf)
+			r.safeDoAction(actionCtx, h, args...)
+		}) {
+			if w != nil {
+				_, _ = w.Write(buf.Bytes())
+			}
+		}
 	}
 }
 
@@ -222,11 +236,50 @@ func (r *Hooks) safeDoAction(ctx context.Context, h Handler, args ...any) {
 
 // ApplyFilters 依次执行 filter，并把上一个 filter 的返回值传给下一个 filter。
 func (r *Hooks) ApplyFilters(ctx context.Context, name string, value any, args ...any) any {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	current := value
 	for _, h := range r.Filters(name) {
-		current = r.safeApplyFilter(ctx, h, current, args...)
+		valueBeforeHandler := current
+		result := make(chan any, 1)
+		if r.runWithTimeout(ctx, h, func(runCtx context.Context) {
+			result <- r.safeApplyFilter(runCtx, h, valueBeforeHandler, args...)
+		}) {
+			current = <-result
+		}
 	}
 	return current
+}
+
+func (r *Hooks) runWithTimeout(ctx context.Context, h Handler, fn func(context.Context)) bool {
+	if fn == nil {
+		return true
+	}
+	timeout := defaultHandlerTimeout
+	if deadline, ok := ctx.Deadline(); ok {
+		if remaining := time.Until(deadline); remaining <= 0 {
+			r.logTimeout(ctx, h, 0)
+			return false
+		} else if remaining < timeout {
+			timeout = remaining
+		}
+	}
+
+	done := make(chan struct{})
+	childCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	go func() {
+		defer close(done)
+		fn(childCtx)
+	}()
+	select {
+	case <-done:
+		return true
+	case <-childCtx.Done():
+		r.logTimeout(ctx, h, timeout)
+		return false
+	}
 }
 
 // DidAction 返回指定 action 已被触发的次数。
@@ -321,6 +374,19 @@ func (r *Hooks) logPanic(ctx context.Context, h Handler, rec any) {
 		slog.String("source_type", h.Source.Type),
 		slog.String("source_id", h.Source.ID),
 		slog.Any("panic", rec),
+	)
+}
+
+func (r *Hooks) logTimeout(ctx context.Context, h Handler, timeout time.Duration) {
+	if r == nil || r.log == nil {
+		return
+	}
+	r.log.WarnContext(ctx, "hook处理器执行超时",
+		slog.String("hook", h.Name),
+		slog.Int("priority", h.Priority),
+		slog.String("source_type", h.Source.Type),
+		slog.String("source_id", h.Source.ID),
+		slog.Duration("timeout", timeout),
 	)
 }
 

@@ -243,6 +243,39 @@ func TestManagerEnabledIDsUsesMemoryCache(t *testing.T) {
 	}
 }
 
+func TestManagerUninstallDeletesPluginDir(t *testing.T) {
+	pluginsDir := t.TempDir()
+	pluginDir := filepath.Join(pluginsDir, "removable")
+	if err := os.MkdirAll(pluginDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "id: removable\nname: Removable\nversion: 0.0.1\n"
+	if err := os.WriteFile(filepath.Join(pluginDir, "plugin.yaml"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	settings := &countingSettingStore{}
+	m, err := NewManager(pluginsDir, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Enable(context.Background(), "removable"); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Uninstall(context.Background(), "removable"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(pluginDir); !os.IsNotExist(err) {
+		t.Fatalf("plugin dir should be deleted, stat err=%v", err)
+	}
+	if m.Get("removable") != nil {
+		t.Fatalf("uninstalled plugin should be removed from manager")
+	}
+	if got := strings.Join(m.EnabledIDs(context.Background()), ","); got != "" {
+		t.Fatalf("enabled ids after uninstall = %q, want empty", got)
+	}
+}
+
 func TestSmiliesHooksRenderPanelAndContent(t *testing.T) {
 	// 主题模板通过 do_action 调用这个 action；常量必须和模板/manifest 保持一致，
 	// 否则插件虽然成功注册 hook，但评论表单不会渲染表情面板。

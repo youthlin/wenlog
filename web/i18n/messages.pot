@@ -1109,8 +1109,8 @@ msgstr ""
 msgid "重载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:71
-msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:70
+msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期，并删除插件目录。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:73
@@ -1118,8 +1118,8 @@ msgstr ""
 msgid "卸载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:80
-msgid "确定要卸载插件「%s」吗？会执行卸载生命周期。"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:79
+msgid "确定要卸载插件「%s」吗？会执行卸载生命周期，并删除插件目录。"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:88

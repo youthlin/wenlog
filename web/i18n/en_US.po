@@ -1138,22 +1138,23 @@ msgstr "Disable"
 msgid "重载"
 msgstr "Reload"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:71
-msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:70
+msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期，并删除插件目录。"
 msgstr ""
 "Are you sure you want to uninstall plugin \"%s\"? Deactivation and "
-"uninstalllifecycle hooks will run first."
+"uninstall lifecycle hooks will run first, and the plugin directory will be "
+"deleted."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:82
 msgid "卸载"
 msgstr "Uninstall"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:80
-msgid "确定要卸载插件「%s」吗？会执行卸载生命周期。"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:79
+msgid "确定要卸载插件「%s」吗？会执行卸载生命周期，并删除插件目录。"
 msgstr ""
-"Are you sure you want to uninstall plugin \"%s\"? The uninstall lifecycle "
-"hookwill run."
+"Are you sure you want to uninstall plugin \"%s\"? The uninstall lifecycle hook "
+"will run, and the plugin directory will be deleted."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:88
 msgid "暂无已安装插件。"

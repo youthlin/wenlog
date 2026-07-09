@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
 
 // ========== Args 测试 ==========
@@ -224,6 +225,38 @@ func TestReflectActionSignaturesInjectContextOnlyWhenRequested(t *testing.T) {
 	}
 	if withCtx != "post.render.ctx:Hello" {
 		t.Fatalf("concrete action with context = %q, want post.render.ctx:Hello", withCtx)
+	}
+}
+
+func TestActionTimeoutDropsBufferedOutput(t *testing.T) {
+	hooks := NewRegistry()
+	hooks.AddAction("slow.action", func(ctx context.Context) {
+		if w := GetActionWriter(ctx); w != nil {
+			_, _ = io.WriteString(w, "partial")
+		}
+		<-ctx.Done()
+	}, Source{Type: SourcePlugin, ID: "slow"})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	var out strings.Builder
+	hooks.DoAction(ctx, "slow.action", &out)
+	if got := out.String(); got != "" {
+		t.Fatalf("timed out action output = %q, want empty", got)
+	}
+}
+
+func TestFilterTimeoutKeepsOriginalValue(t *testing.T) {
+	hooks := NewRegistry()
+	hooks.AddFilter("slow.filter", func(ctx context.Context, value string) string {
+		<-ctx.Done()
+		return value + ":late"
+	}, Source{Type: SourcePlugin, ID: "slow"})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if got := hooks.ApplyFilters(ctx, "slow.filter", "original"); got != "original" {
+		t.Fatalf("timed out filter = %v, want original", got)
 	}
 }
 

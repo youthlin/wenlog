@@ -67,7 +67,7 @@
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm">{{$.t.T "重载"}}</button>
           </form>
-          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。" .Name}}')">
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期，并删除插件目录。" .Name}}')">
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "卸载"}}</button>
           </form>
@@ -76,7 +76,7 @@
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm">{{$.t.T "启用"}}</button>
           </form>
-          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会执行卸载生命周期。" .Name}}')">
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会执行卸载生命周期，并删除插件目录。" .Name}}')">
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "卸载"}}</button>
           </form>

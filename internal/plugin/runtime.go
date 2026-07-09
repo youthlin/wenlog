@@ -57,6 +57,6 @@ func (s *FunctionsScript) CallLifecycle(ctx context.Context, name string) error 
 	if s == nil || s.interp == nil || s.api == nil || name == "" {
 		return nil
 	}
-	_, err := script.CallOptionalFunc(s.interp, "plugin", name, "插件", []any{s.api.WithContext(ctx)})
+	_, err := script.CallOptionalFunc(ctx, s.interp, "plugin", name, "插件", []any{s.api.WithContext(ctx)})
 	return err
 }

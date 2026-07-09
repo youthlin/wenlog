@@ -236,12 +236,13 @@ func (m *Manager) CallLifecycle(ctx context.Context, id, name string) error {
 	return tmp.CallLifecycle(ctx, name)
 }
 
-// Uninstall 执行插件卸载生命周期并从启用列表移除。插件目录本身不在这里删除。
+// Uninstall 执行插件卸载生命周期、从启用列表移除并删除插件目录。
 func (m *Manager) Uninstall(ctx context.Context, id string) error {
 	if m == nil || id == "" {
 		return nil
 	}
-	if enabledIDsContain(m.EnabledIDs(ctx), id) {
+	wasEnabled := enabledIDsContain(m.EnabledIDs(ctx), id)
+	if wasEnabled {
 		if err := m.CallLifecycle(ctx, id, LifecycleDeactivate); err != nil {
 			return err
 		}
@@ -249,7 +250,20 @@ func (m *Manager) Uninstall(ctx context.Context, id string) error {
 	if err := m.CallLifecycle(ctx, id, LifecycleUninstall); err != nil {
 		return err
 	}
-	return m.Disable(ctx, id)
+	if err := m.Disable(ctx, id); err != nil {
+		if wasEnabled {
+			_ = m.CallLifecycle(ctx, id, LifecycleActivate)
+		}
+		return err
+	}
+	if err := m.Delete(id); err != nil {
+		if wasEnabled {
+			_ = m.Enable(ctx, id)
+			_ = m.CallLifecycle(ctx, id, LifecycleActivate)
+		}
+		return err
+	}
+	return nil
 }
 
 // Install 从已解压的目录安装插件。dir 是插件根目录（含 plugin.yaml）。
