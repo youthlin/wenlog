@@ -32,13 +32,13 @@ Filter 的第一个参数始终是当前值；后续参数是下表里的 payloa
 | `comment.form.after_textarea` | `hook.Consts.ActionCommentFormAfterTextarea` | `comment_form` 模板函数输出评论 textarea 后 | 当前页面模板数据 | 输出表情面板、附件入口等评论表单控件 |
 | `admin.post.form.after_textarea` | `hook.Consts.ActionAdminPostFormAfterTextarea` | 后台文章编辑表单 textarea 后 | 当前后台模板数据 | 输出编辑器增强控件 |
 
-Action 通过 `api.Print` / `api.Printf` 写 HTML。输出内容由插件负责转义用户数据；宿主不会再次转义 action 输出。
+Action 通过 `api.Print` / `api.Printf` / `api.Println` 写 HTML。输出内容由插件负责转义用户数据；宿主不会再次转义 action 输出。
 
 示例：
 
 ```go
 api.AddAction(hook.Consts.ActionHeadEnd, func(api *hook.API, args ...any) {
-    api.Printf(`<link rel="stylesheet" href="/plugin-assets/demo/style.css">`)
+    api.Println(`<link rel="stylesheet" href="/plugin-assets/demo/style.css">`)
 })
 ```
 
