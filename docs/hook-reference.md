@@ -12,16 +12,21 @@ package plugin
 import "hook"
 
 func Register(api *hook.API) error {
-    api.AddFilter(hook.Consts.FilterPostTitle, func(value string, post hook.PostView) string {
+    api.AddFilter(hook.Consts.FilterPostTitle, func(api *hook.API, value string, post hook.PostView) string {
         return value
     })
     return api.RegistrationError()
 }
 ```
 
-推荐写具体签名，例如 `func(value string, post hook.PostView) string`。需要请求级能力、翻译、设置或输出辅助时，可写 `func(api *hook.API, value any, args ...any) any` 或 `func(api *hook.API, args ...any)`。
+**所有 action/filter 回调的第一个参数必须是 `*hook.API`**（请求级 api，含 ctx/DataLoader/ActionWriter），不再支持 `context.Context` 作为首参。核心 hook 使用下表中的具体类型签名；通用 hook 使用 `hook.ActionFunc` / `hook.FilterFunc` 签名。签名不匹配会在 `RegistrationError()` 中返回错误，插件加载失败。
 
-Filter 的第一个参数始终是当前值；后续参数是下表里的 payload。Action 的参数从下表里的 payload 开始。具体签名也可以显式把 `context.Context` 放在第一参，供宿主内部代码使用。
+- Action 标准签名：`func(api *hook.API, args ...any)`（即 `hook.ActionFunc`）
+- 核心 Filter 标准签名见下表；通用 filter 可用 `func(api *hook.API, value any, args ...any) any`（即 `hook.FilterFunc`）
+- RegisterFunc 签名：`func(api *hook.API, args hook.Args) any`
+- Register 入口：`func Register(api *hook.API)` 或 `func Register(api *hook.API) error`
+
+Filter 的第一个参数（api 之后）始终是当前值；后续参数是 payload。Action 的参数（api 之后）从 payload 开始。
 
 ## 执行隔离
 
@@ -31,7 +36,7 @@ Hook 处理器由 `hook.Registry` 串行执行，并带有基础隔离：
 - handler panic 会被 recover 并记录日志，不中断后续 handler。
 - action handler 的输出先写入独立缓冲区；handler 按时完成后才 flush 到页面。超时时该 handler 的输出会被丢弃，避免半截 HTML 写入响应。
 - filter handler 超时时保留进入该 handler 前的值，继续执行后续 filter。
-- 如果 handler 签名接收 `context.Context`，传入的是带超时的请求 context，脚本应主动观察 `ctx.Done()`。
+- api 内部持有带超时的请求 ctx，可通过 `api.Debug/Info/Warn/Error` 打日志，无需手动获取 ctx。
 
 限制：当前超时控制不能强制杀死已经进入死循环的 goroutine；它只保证调用方不继续等待，并让 action/filter 链按上面的降级语义继续执行。插件仍按管理员安装的可信代码处理，不是强沙箱。
 
@@ -56,20 +61,21 @@ api.AddAction(hook.Consts.ActionHeadEnd, func(api *hook.API, args ...any) {
 
 ## Filters
 
-| Hook | 常量 | 触发点 | 当前值 | Payload | 返回值语义 |
-|---|---|---|---|---|---|
-| `post.title` | `hook.Consts.FilterPostTitle` | `post_title` / `post_title_text` | 标题纯文本 `string` | `hook.PostView` | 纯文本，宿主或模板上下文负责 HTML 转义 |
-| `post.excerpt_html` | `hook.Consts.FilterPostExcerptHTML` | `post_excerpt` | 摘要 HTML `string` | `hook.PostView` | 可信 HTML |
-| `post.content_html` | `hook.Consts.FilterPostContentHTML` | `post_content`；Feed 路径调用 `Renderer.FilterPostContent` | 正文 HTML `string` | `hook.PostView` | 可信 HTML |
-| `post.footer_html` | `hook.Consts.FilterPostFooterHTML` | `post_content` 的 `post.content_html` 之后；Feed 路径同样应用 | 正文 HTML `string` | `hook.PostView` | 可信 HTML |
-| `comment.content_html` | `hook.Consts.FilterCommentContentHTML` | `comment_content` / `list_comments` | 已转义评论 HTML `string` | `hook.CommentView` | 可信 HTML |
-| `widget.render_html` | `hook.Consts.FilterWidgetRenderHTML` | 单个 widget 渲染完成后 | 组件 HTML `string` | `hook.WidgetRenderView` | 可信 HTML |
-| `head.meta` | `hook.Consts.FilterHeadMeta` | `head_meta` 模板函数生成 OpenGraph / Twitter Card 后 | meta 标签 HTML `string` | `hook.HeadMetaView` | 可信 HTML |
+| Hook | 常量 | 触发点 | 当前值 | Payload | 返回值语义 | 标准签名 |
+|---|---|---|---|---|---|---|
+| `post.title` | `FilterPostTitle` | `post_title` / `post_title_text` | 标题纯文本 `string` | `hook.PostView` | 纯文本，宿主或模板上下文负责 HTML 转义 | `func(*API, string, PostView) string` |
+| `post.excerpt_html` | `FilterPostExcerptHTML` | `post_excerpt` | 摘要 HTML `string` | `hook.PostView` | 可信 HTML | `func(*API, string, PostView) string` |
+| `post.content_html` | `FilterPostContentHTML` | `post_content`；Feed 路径调用 `Renderer.FilterPostContent` | 正文 HTML `string` | `hook.PostView` | 可信 HTML | `func(*API, string, PostView) string` |
+| `post.footer_html` | `FilterPostFooterHTML` | `post_content` 的 `post.content_html` 之后；Feed 路径同样应用 | 正文 HTML `string` | `hook.PostView` | 可信 HTML | `func(*API, string, PostView) string` |
+| `comment.content_html` | `FilterCommentContentHTML` | `comment_content` / `list_comments` | 已转义评论 HTML `string` | `hook.CommentView` | 可信 HTML | `func(*API, string, CommentView) string` |
+| `widget.render_html` | `FilterWidgetRenderHTML` | 单个 widget 渲染完成后 | 组件 HTML `string` | `hook.WidgetRenderView` | 可信 HTML | `func(*API, string, WidgetRenderView) string` |
+| `head.meta` | `FilterHeadMeta` | `head_meta` 模板函数生成 OpenGraph / Twitter Card 后 | meta 标签 HTML `string` | `hook.HeadMetaView` | 可信 HTML | `func(*API, string, HeadMetaView) string` |
+| `comment.before_create` | `FilterCommentBeforeCreate` | 评论入库前（CreateComment） | `*hook.CommentPreCreateView` | 无 | `*hook.CommentPreCreateView`，修改 Status 为 `spam` 拒绝、`pending` 待审核、`approved` 通过 | `func(*API, *CommentPreCreateView) *CommentPreCreateView` |
 
 `post.title` 是文本 filter，适合追加标题前缀、替换短标题等。不要返回 HTML 标签：
 
 ```go
-api.AddFilter(hook.Consts.FilterPostTitle, func(value string, post hook.PostView) string {
+api.AddFilter(hook.Consts.FilterPostTitle, func(api *hook.API, value string, post hook.PostView) string {
     if post.PostType == "page" {
         return value
     }
@@ -80,8 +86,20 @@ api.AddFilter(hook.Consts.FilterPostTitle, func(value string, post hook.PostView
 `*_html` filter 是 HTML 出口。插件应只返回自己能保证安全的 HTML；把文章、评论、用户输入等数据插入 HTML 前必须使用 `api.EscapeHTML`。
 
 ```go
-api.AddFilter(hook.Consts.FilterPostFooterHTML, func(api *hook.API, value any, args ...any) any {
-    return value.(string) + `<aside class="post-license">` + api.EscapeHTML(api.T("转载请注明出处")) + `</aside>`
+api.AddFilter(hook.Consts.FilterPostFooterHTML, func(api *hook.API, value string, post hook.PostView) string {
+    return value + `<aside class="post-license">` + api.EscapeHTML(api.T("转载请注明出处")) + `</aside>`
+})
+```
+
+`comment.before_create` filter 用于评论提交前拦截（如反垃圾）：
+
+```go
+api.AddFilter(hook.Consts.FilterCommentBeforeCreate, func(api *hook.API, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
+    if matched, _ := regexp.MatchString(`^[[:ascii:]]+$`, view.Content); matched {
+        view.Status = "spam"
+        view.RejectMessage = "评论内容不符合规则"
+    }
+    return view
 })
 ```
 
@@ -95,6 +113,7 @@ api.AddFilter(hook.Consts.FilterPostFooterHTML, func(api *hook.API, value any, a
 | `hook.CommentView` | 评论正文 |
 | `hook.WidgetRenderView` | 组件最终 HTML 后处理 |
 | `hook.HeadMetaView` | `<head>` meta 标签后处理 |
+| `hook.CommentPreCreateView` | 评论提交前拦截（PostID/Author/Email/URL/IP/UserAgent/Content/Status/RejectMessage） |
 
 View 字段见 `hook/view.go`。脚本里可直接访问 PascalCase 字段，例如 `post.Title`、`post.Author.DisplayName`、`comment.Author`、`widget.PluginID`。
 

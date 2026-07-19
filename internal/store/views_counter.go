@@ -25,7 +25,6 @@ func newViewsCounter() *viewsCounter {
 func (s *Store) IncrementViews(ctx context.Context, id uint) error {
 	s.viewsMu.Lock()
 	s.views.counts[id]++
-	// 同步更新缓存中的 Views 字段（指针修改，后续读缓存可见）
 	if s.cache != nil {
 		if p, ok := s.cache.Posts[id]; ok {
 			p.Views++
@@ -35,24 +34,40 @@ func (s *Store) IncrementViews(ctx context.Context, id uint) error {
 	return nil
 }
 
-// FlushViews 将内存中的浏览量增量批量写入数据库，并清空内存计数。
+// FlushViews 将内存中的浏览量增量批量写入数据库。
+// 单条写入成功后才从内存移除对应计数；写入失败的保留在内存中，下次 flush 重试。
 func (s *Store) FlushViews(ctx context.Context) error {
 	s.viewsMu.Lock()
-	counts := s.views.counts
+	if len(s.views.counts) == 0 {
+		s.viewsMu.Unlock()
+		return nil
+	}
+	// 快照当前计数，并清空内存（新请求的增量写到新 map 中）
+	snapshot := s.views.counts
 	s.views.counts = make(map[uint]int64)
 	s.viewsMu.Unlock()
 
-	if len(counts) == 0 {
-		return nil
-	}
-
-	for id, delta := range counts {
+	var firstErr error
+	failed := make(map[uint]int64)
+	for id, delta := range snapshot {
 		if err := s.gormDB.WithContext(ctx).
 			Model(&model.Post{}).
 			Where("id = ?", id).
 			UpdateColumn("views", gorm.Expr("views + ?", delta)).Error; err != nil {
-			slog.WarnContext(ctx, "批量更新浏览量失败", "error", err, "post_id", id, "delta", delta)
+			slog.WarnContext(ctx, "批量更新浏览量失败，将在下次重试", "error", err, "post_id", id, "delta", delta)
+			if firstErr == nil {
+				firstErr = err
+			}
+			failed[id] = delta
 		}
 	}
-	return nil
+	// 将失败的条目合并回内存计数，避免丢失
+	if len(failed) > 0 {
+		s.viewsMu.Lock()
+		for id, delta := range failed {
+			s.views.counts[id] += delta
+		}
+		s.viewsMu.Unlock()
+	}
+	return firstErr
 }

@@ -124,14 +124,19 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		h.log.InfoContext(c, "评论提交过滤", "result", result)
 		if v, ok := result.(*hook.CommentPreCreateView); ok && v != nil {
 			cm.Content = v.Content
-			cm.Status = v.Status
-			if v.Status == model.CommentSpam {
+			switch v.Status {
+			case model.CommentSpam:
 				msg := v.RejectMessage
 				if msg == "" {
 					msg = tr.T("评论被拦截。")
 				}
 				h.commentResp(c, false, msg, req.PostID)
 				return
+			case model.CommentApproved, model.CommentPending:
+				cm.Status = v.Status
+			default:
+				slog.WarnContext(c, "comment.before_create 返回非法状态，回退为 pending", "status", v.Status)
+				cm.Status = model.CommentPending
 			}
 		}
 	}
