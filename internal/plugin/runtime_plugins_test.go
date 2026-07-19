@@ -81,16 +81,16 @@ func TestCompileFunctionsExportsHookViewTypes(t *testing.T) {
 import "hook"
 
 func Register(api *hook.API) error {
-	api.AddFilter(hook.Consts.FilterPostTitle, func(value string, post hook.PostView) string {
+	api.AddFilter(hook.Consts.FilterPostTitle, func(api *hook.API, value string, post hook.PostView) string {
 		return value + ":" + post.Title
 	})
-	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(value string, comment hook.CommentView) string {
+	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(api *hook.API, value string, comment hook.CommentView) string {
 		return value + ":" + comment.Author
 	})
-	api.AddFilter(hook.Consts.FilterWidgetRenderHTML, func(value string, widget hook.WidgetRenderView) string {
+	api.AddFilter(hook.Consts.FilterWidgetRenderHTML, func(api *hook.API, value string, widget hook.WidgetRenderView) string {
 		return value + ":" + widget.ID
 	})
-	api.AddFilter(hook.Consts.FilterHeadMeta, func(value string, meta hook.HeadMetaView) string {
+	api.AddFilter(hook.Consts.FilterHeadMeta, func(api *hook.API, value string, meta hook.HeadMetaView) string {
 		return value + ":" + meta.Title
 	})
 	return api.RegistrationError()

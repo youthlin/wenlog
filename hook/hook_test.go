@@ -500,9 +500,9 @@ func TestAPICollectsRegistrationErrors(t *testing.T) {
 	msg := err.Error()
 	for _, want := range []string{
 		"注册模板函数失败: name 不能为空",
-		"注册模板函数[bad_template_func]失败: 签名不支持",
-		"注册action[bad_action]失败: hook registry 未注入",
-		"注册filter[bad_filter]失败: hook registry 未注入",
+		"注册模板函数[bad_template_func]失败: 必须返回一个值",
+		"注册 action[bad_action]失败: 处理函数必须是函数",
+		"注册 filter[bad_filter]失败: 处理函数第一个参数必须是 *hook.API",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
@@ -526,8 +526,8 @@ func TestAPIRejectsInvalidHookSignatures(t *testing.T) {
 	}
 	msg := err.Error()
 	for _, want := range []string{
-		"注册 action[bad_action]失败: 处理函数不能有返回值",
-		"注册 filter[bad_filter]失败: 处理函数必须返回一个值",
+		"注册 action[bad_action]失败: 处理函数第一个参数必须是 *hook.API",
+		"注册 filter[bad_filter]失败: 处理函数第一个参数必须是 *hook.API",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)

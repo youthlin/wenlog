@@ -2,12 +2,14 @@ package hook
 
 import "context"
 
-// Registrar 是注册 action/filter 所需的最小能力集合。
+// Registrar 是脚本 Register 函数所需的最小能力集合。
+// 编译期传入脚本，只包含注册能力，阻止脚本在 Register 中误用请求期方法。
 type Registrar interface {
 	AddAction(name string, fn any, priority ...int)
 	AddFilter(name string, fn any, priority ...int)
 	RemoveAction(name string)
 	RemoveFilter(name string)
+	RegisterFunc(name string, fn any)
 	RegistrationError() error
 }
 

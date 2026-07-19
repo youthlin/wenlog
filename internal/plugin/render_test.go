@@ -75,7 +75,7 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginFuncAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	api := hook.NewAPI().WithDomain("plugin_demo")
-	api.RegisterFunc("greeting", func(args hook.Args) any {
+	api.RegisterFunc("greeting", func(api *hook.API, args hook.Args) any {
 		return "Hello, " + args.String("name", "")
 	})
 	m := &Manager{
@@ -109,7 +109,7 @@ func TestPluginTemplateFuncsOnlyNeedHookInvoker(t *testing.T) {
 
 func TestRegisterFuncSupportsCommonSignatures(t *testing.T) {
 	api := hook.NewAPI().WithDomain("plugin_demo")
-	api.RegisterFunc("args", func(args hook.Args) any { return args.Int("n", 0) + 1 })
+	api.RegisterFunc("args", func(api *hook.API, args hook.Args) any { return args.Int("n", 0) + 1 })
 	api.RegisterFunc("api_args", func(api *hook.API, args hook.Args) any { return api.Snippet(args.String("text", ""), 2) })
 	api.RegisterFunc("legacy", func(api *hook.API, args hook.Args) any { return args["name"] })
 
