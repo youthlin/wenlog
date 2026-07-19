@@ -22,6 +22,9 @@ type Store struct {
 
 	cacheMu sync.RWMutex
 	cache   *DataLoader
+
+	viewsMu sync.Mutex
+	views   *viewsCounter
 }
 
 // Open 打开 SQLite 数据库并执行自动迁移。
@@ -41,7 +44,7 @@ func Open(dbPath string) (*Store, error) {
 	if err := db.Use(&GormSQLTracer{}); err != nil {
 		return nil, errors.Wrap(err, "注册SQL语句追踪插件失败")
 	}
-	s := &Store{gormDB: db, dbPath: dbPath}
+	s := &Store{gormDB: db, dbPath: dbPath, views: newViewsCounter()}
 	if err := s.migrate(); err != nil {
 		return nil, err
 	}

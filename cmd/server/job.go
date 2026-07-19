@@ -18,7 +18,32 @@ func startCronJob(st *store.Store) func() {
 	publishScheduled(ctx, st)
 	// 自动备份 goroutine：按后台设置每天执行，默认凌晨 3 点。
 	autoBackupDB(ctx, st)
+	// 浏览量批量落库：每 1 分钟 flush 一次内存中的浏览量增量。
+	flushViews(ctx, st)
 	return cancel
+}
+
+func flushViews(ctx context.Context, st *store.Store) {
+	util.Go(ctx, func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				if err := st.FlushViews(ctx); err != nil {
+					slog.ErrorContext(ctx, "浏览量批量落库失败", slog.Any("error", err))
+				}
+			case <-ctx.Done():
+				// 退出前再 flush 一次，尽量不丢数据
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				if err := st.FlushViews(shutdownCtx); err != nil {
+					slog.ErrorContext(shutdownCtx, "退出时浏览量落库失败", slog.Any("error", err))
+				}
+				return
+			}
+		}
+	})
 }
 
 func publishScheduled(ctx context.Context, st *store.Store) {
