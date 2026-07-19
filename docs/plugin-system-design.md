@@ -1025,7 +1025,7 @@ func (api *API) CommentURL(post any, comment any) string
 
 注意：
 
-- `AddAction/AddFilter` 在插件/主题加载阶段使用；推荐脚本使用具体参数签名，如 `func(string, hook.PostView) string`，需要完整 API 时使用 `func(*hook.API, any, ...any) any` / `func(*hook.API, ...any)`。
+- `AddAction/AddFilter` 在插件/主题加载阶段使用；action 使用 `func(*hook.API, ...any)` 签名（即 `hook.ActionFunc`），核心 filter 使用具体签名如 `func(*hook.API, string, hook.PostView) string`，通用 filter 使用 `func(*hook.API, any, ...any) any`（即 `hook.FilterFunc`）。所有回调第一个参数必须是 `*hook.API`，不再支持无首参或 `context.Context` 首参的旧签名。
 - `T/N/X/XN` 和输出函数是请求级能力；执行 hook 时 API 要绑定当前请求 translator 和 writer。
 - `Posts/Post/RecentPosts/CommentsByPost/PostURL/CommentURL` 等只读站点数据和 URL helper 归入 `QueryAPI` 职责，脚本仍通过统一的 `*hook.API` 使用。
 - 插件文本域为 `plugin_<plugin_id>`；主题文本域为 `theme_<theme_id>`。

@@ -124,20 +124,16 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		h.log.InfoContext(c, "评论提交过滤", "result", result)
 		if v, ok := result.(*hook.CommentPreCreateView); ok && v != nil {
 			cm.Content = v.Content
-			switch v.Status {
-			case model.CommentSpam:
+			normalized := normalizeCommentStatus(c, v.Status)
+			if normalized == model.CommentSpam {
 				msg := v.RejectMessage
 				if msg == "" {
 					msg = tr.T("评论被拦截。")
 				}
 				h.commentResp(c, false, msg, req.PostID)
 				return
-			case model.CommentApproved, model.CommentPending:
-				cm.Status = v.Status
-			default:
-				slog.WarnContext(c, "comment.before_create 返回非法状态，回退为 pending", "status", v.Status)
-				cm.Status = model.CommentPending
 			}
+			cm.Status = normalized
 		}
 	}
 
@@ -459,4 +455,17 @@ func postRedirectURL(p *model.Post) string {
 		return permalink.Page(p) + "#comments"
 	}
 	return permalink.Post(p) + "#comments"
+}
+
+// normalizeCommentStatus 将插件返回的评论状态规范化为合法值。
+// 允许: approved/pending/spam; 其他值回退为 pending 并记录 warn。
+// 抽取为纯函数以便单元测试。
+func normalizeCommentStatus(ctx context.Context, status string) string {
+	switch status {
+	case model.CommentSpam, model.CommentApproved, model.CommentPending:
+		return status
+	default:
+		slog.WarnContext(ctx, "comment.before_create 返回非法状态，回退为 pending", "status", status)
+		return model.CommentPending
+	}
 }
