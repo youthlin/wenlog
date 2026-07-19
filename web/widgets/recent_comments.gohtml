@@ -6,7 +6,7 @@
   <ul>
     {{range $i, $item := .RecentCommentItems}}{{if lt $i $n}}
     <li>
-      <img class="avatar" src="{{avatarURL $item.Comment.Email $.DefaultAvatar}}" alt="" width="24" height="24">
+      <img class="avatar" src="{{avatarURL $item.Comment.Email $.DefaultAvatar 24}}" loading="lazy" alt="" width="24" height="24">
       <div class="widget-comment-content">
         <div class="widget-comment-line">
           <a href="{{$item.CommentURL}}">{{$item.Snippet}}</a>

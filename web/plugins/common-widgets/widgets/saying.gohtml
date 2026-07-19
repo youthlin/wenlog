@@ -6,7 +6,8 @@
 <section class="widget widget-saying">
   <h3>{{$title}}</h3>
   <div class="widget-saying-author">
-    <img class="avatar" src="{{.api.AvatarURL (index $saying 0).AuthorEmail .Data.DefaultAvatar}}" alt="" width="32" height="32">
+    <img src="{{.api.AvatarURL (index $saying 0).AuthorEmail .Data.DefaultAvatar 32}}" 
+        class="avatar" loading="lazy" alt="" width="32" height="32">
     <span>{{(index $saying 0).AuthorName}}</span>
   </div>
   <ul>

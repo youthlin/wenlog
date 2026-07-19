@@ -595,8 +595,12 @@ func (api *API) Snippet(content any, n int) string {
 }
 
 // AvatarURL 由邮箱生成 cravatar(国内镜像)头像 URL。
-func (api *API) AvatarURL(email, defaultAvatar string) string {
+func (api *API) AvatarURL(email, defaultAvatar string, size int) string {
 	sum := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(email))))
 	hash := hex.EncodeToString(sum[:])
-	return "https://cn.cravatar.com/avatar/" + hash + "?s=" + strconv.Itoa(consts.AvatarSizeSmall) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
+	s := size
+	if s <= 0 {
+		s = consts.AvatarSizeSmall
+	}
+	return "https://cn.cravatar.com/avatar/" + hash + "?s=" + strconv.Itoa(s) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
 }

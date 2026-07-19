@@ -181,13 +181,17 @@ func detailHTML(p *model.Post) template.HTML {
 }
 
 // avatarURL 由邮箱生成 cravatar(国内镜像)头像 URL。
-func avatarURL(email, defaultAvatar string) string {
-	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(consts.AvatarSizeSmall) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
+func avatarURL(email, defaultAvatar string, size int) string {
+	s := size
+	if s <= 0 {
+		s = consts.AvatarSizeSmall
+	}
+	return "https://cn.cravatar.com/avatar/" + avatarHash(email) + "?s=" + strconv.Itoa(s) + "&d=" + util.NormalizeDefaultAvatar(defaultAvatar)
 }
 
 // defaultAvatarURL 获取强制展示指定默认头像的链接。
-func defaultAvatarURL(defaultAvatar string) string {
-	url := avatarURL("", defaultAvatar)
+func defaultAvatarURL(defaultAvatar string, size int) string {
+	url := avatarURL("", defaultAvatar, size)
 	return url + "&f=y"
 }
 

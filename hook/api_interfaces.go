@@ -72,7 +72,7 @@ type QueryAPI interface {
 	CategoryURL(slug string) string
 	TagURL(slug string) string
 	Snippet(content any, n int) string
-	AvatarURL(email, defaultAvatar string) string
+	AvatarURL(email, defaultAvatar string, size int) string
 }
 
 var (

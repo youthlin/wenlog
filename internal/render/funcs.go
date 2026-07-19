@@ -815,7 +815,7 @@ func writeDefaultCommentItem(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, `<div class="comment-head">`)
 	// avatar
 	util.WriteString(out, `<img class="avatar" src="`)
-	util.WriteString(out, html.EscapeString(avatarURL(email, defaultAvatar)))
+	util.WriteString(out, html.EscapeString(avatarURL(email, defaultAvatar, avatarSize)))
 	util.WriteString(out, `" alt="" width="`)
 	util.WriteString(out, sizeStr)
 	util.WriteString(out, `" height="`)

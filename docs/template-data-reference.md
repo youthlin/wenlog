@@ -72,8 +72,8 @@
 | `postExcerptHTML` | `func(*model.Post) template.HTML` | 文章摘要 HTML（截断 more 标记前） |
 | `detailHTML` | `func(*model.Post) template.HTML` | 详情页完整正文 |
 | `hasMore` | `func(string) bool` | 是否有 more 标记 |
-| `avatarURL` | `func(string, string) string` | 头像 URL（带默认头像） |
-| `defaultAvatarURL` | `func(string) string` | 根据默认头像类型生成兜底头像 URL |
+| `avatarURL` | `func(string, string, int) string` | 头像 URL（参数：邮箱、默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
+| `defaultAvatarURL` | `func(string, int) string` | 根据默认头像类型生成兜底头像 URL（参数：默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
 | `fmtDate` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
 | `fmtDateTime` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
 | `fmtDateTimeLocal` | `func(time.Time) string` | 格式化为 HTML datetime-local 可用值 `2006-01-02T15:04` |

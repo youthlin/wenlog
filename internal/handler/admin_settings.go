@@ -963,16 +963,9 @@ func (h *Admin) TestSMTPSettings(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "smtp-test-sent"))
 }
 
-// SaveSessionSettings 修改 session secret。修改后所有登录用户都需要重新登录。
+// SaveSessionSettings 重新生成 session secret。修改后所有登录用户都需要重新登录。
 func (h *Admin) SaveSessionSettings(c *gin.Context) {
-	tr := i18n.Get(c)
-	secret := strings.TrimSpace(c.PostForm("session_secret"))
-	if secret == "" {
-		data := h.settingsDataForTab(c, "general")
-		data["Error"] = tr.T("Session Secret 不能为空。")
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
+	secret := util.GenerateRandomString(32)
 	if err := h.st.SetSetting(c, consts.SettingsSessionSecret, secret); err != nil {
 		h.serverError(c, err)
 		return

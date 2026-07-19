@@ -20,13 +20,16 @@ import (
 
 func TestAvatarURL(t *testing.T) {
 	// 已知:md5("me@example.com") = ... ;只校验前缀与不随大小写/空白变化。
-	a := avatarURL("Me@Example.com", "")
-	b := avatarURL("  me@example.com ", "")
+	a := avatarURL("Me@Example.com", "", 0)
+	b := avatarURL("  me@example.com ", "", 0)
 	if a != b {
 		t.Errorf("avatarURL should normalize case/space: %q != %q", a, b)
 	}
-	if got := avatarURL("me@example.com", ""); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
+	if got := avatarURL("me@example.com", "", 0); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
 		t.Errorf("avatar url too short: %q", got)
+	}
+	if got := avatarURL("me@example.com", "", 80); !strings.Contains(got, "?s=80") {
+		t.Errorf("avatar url should contain size param: %q", got)
 	}
 }
 
