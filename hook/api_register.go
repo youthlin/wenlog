@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"reflect"
 	"sort"
 )
 
 // AddAction 注册 action。
 //
-// 处理函数第一个参数必须是 *hook.API；核心 action 推荐使用 ActionFunc 签名 func(*API, ...any)，
-// 其他具体签名通过反射包装，性能略低但可用。
+// 处理函数第一个参数必须是 *hook.API，且必须使用 ActionFunc 签名 func(*API, ...any)
+// 或无额外参数的 func(*API)。
 func (api *API) AddAction(name string, fn any, priority ...int) {
 	if api == nil {
 		return
@@ -29,25 +28,12 @@ func (api *API) AddAction(name string, fn any, priority ...int) {
 	api.registry.AddAction(name, wrapped, priority...)
 }
 
-var apiType = reflect.TypeOf((*API)(nil))
-
-// wrapAction 包装 action 回调：优先使用类型断言 fast path，未知签名走反射兜底。
+// wrapAction 包装 action 回调：直接类型断言，不匹配则报错。
 func (api *API) wrapAction(name string, fn any) (func(context.Context, ...any), error) {
 	if fn == nil {
 		return nil, fmt.Errorf("注册 action[%s]失败: 处理函数不能为空", name)
 	}
-	rt := reflect.TypeOf(fn)
-	if rt == nil || rt.Kind() != reflect.Func {
-		return nil, fmt.Errorf("注册 action[%s]失败: 处理函数必须是函数", name)
-	}
-	if rt.NumIn() == 0 || rt.In(0) != apiType {
-		return nil, fmt.Errorf("注册 action[%s]失败: 处理函数第一个参数必须是 *hook.API", name)
-	}
-	if rt.NumOut() != 0 {
-		return nil, fmt.Errorf("注册 action[%s]失败: 处理函数不能有返回值", name)
-	}
-
-	// Fast path: ActionFunc = func(*API, ...any) — 所有核心 action 都使用此签名
+	// ActionFunc = func(*API, ...any)
 	if f, ok := fn.(ActionFunc); ok {
 		return func(ctx context.Context, args ...any) {
 			defer func() {
@@ -68,69 +54,13 @@ func (api *API) wrapAction(name string, fn any) (func(context.Context, ...any), 
 			f(api.WithContext(ctx))
 		}, nil
 	}
-
-	// 兜底：反射包装任意签名
-	return api.wrapActionReflect(name, fn, rt)
-}
-
-// wrapActionReflect 使用反射包装任意首参为 *API 的 action 回调。
-func (api *API) wrapActionReflect(name string, fn any, rt reflect.Type) (func(context.Context, ...any), error) {
-	rv := reflect.ValueOf(fn)
-	isVariadic := rt.IsVariadic()
-	numIn := rt.NumIn()
-
-	return func(ctx context.Context, args ...any) {
-		callArgs := make([]reflect.Value, 0, numIn)
-		requestAPI := api.WithContext(ctx)
-		callArgs = append(callArgs, reflect.ValueOf(requestAPI))
-
-		argIdx := 0
-		for i := 1; i < numIn; i++ {
-			paramType := rt.In(i)
-			if isVariadic && i == numIn-1 {
-				elemType := paramType.Elem()
-				for ; argIdx < len(args); argIdx++ {
-					v, ok := reflectArg(args[argIdx], elemType)
-					if !ok {
-						slog.WarnContext(ctx, "hook action variadic arg type mismatch, skipped",
-							"hook", name, "param_index", i, "expected", elemType, "got", reflect.TypeOf(args[argIdx]))
-						break
-					}
-					callArgs = append(callArgs, v)
-				}
-				break
-			}
-			if argIdx >= len(args) {
-				callArgs = append(callArgs, reflect.Zero(paramType))
-				argIdx++
-				continue
-			}
-			v, ok := reflectArg(args[argIdx], paramType)
-			if !ok {
-				slog.WarnContext(ctx, "hook action arg type mismatch, using zero value",
-					"hook", name, "param_index", i, "expected", paramType, "got", reflect.TypeOf(args[argIdx]))
-				callArgs = append(callArgs, reflect.Zero(paramType))
-			} else {
-				callArgs = append(callArgs, v)
-			}
-			argIdx++
-		}
-
-		defer func() {
-			if rec := recover(); rec != nil {
-				slog.WarnContext(ctx, "hook action handler panic (in wrapped call)",
-					"hook", name, "panic", rec)
-			}
-		}()
-		rv.Call(callArgs)
-	}, nil
+	return nil, fmt.Errorf("注册 action[%s]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)", name)
 }
 
 // AddFilter 注册 filter。
 //
-// 处理函数第一个参数必须是 *hook.API，第二个参数接收当前值，返回一个同类型或兼容类型的值。
-// 核心 filter 推荐使用文档中的固定签名（如 func(*API, string, PostView) string），
-// 其他签名通过反射包装。
+// 处理函数第一个参数必须是 *hook.API，第二个参数接收当前值，返回同类型值。
+// 核心 filter 使用文档中的固定签名，通用 filter 使用 FilterFunc = func(*API, any, ...any) any。
 func (api *API) AddFilter(name string, fn any, priority ...int) {
 	if api == nil {
 		return
@@ -147,23 +77,13 @@ func (api *API) AddFilter(name string, fn any, priority ...int) {
 	api.registry.AddFilter(name, wrapped, priority...)
 }
 
-// wrapFilter 包装 filter 回调：核心 hook 使用直接类型断言 fast path，未知 hook 走反射兜底。
+// wrapFilter 包装 filter 回调：核心 hook 按名称匹配具体签名直接类型断言，
+// 通用 filter 使用 FilterFunc，不匹配则报错。
 func (api *API) wrapFilter(name string, fn any) (func(context.Context, any, ...any) any, error) {
 	if fn == nil {
 		return nil, fmt.Errorf("注册 filter[%s]失败: 处理函数不能为空", name)
 	}
-	rt := reflect.TypeOf(fn)
-	if rt == nil || rt.Kind() != reflect.Func {
-		return nil, fmt.Errorf("注册 filter[%s]失败: 处理函数必须是函数", name)
-	}
-	if rt.NumIn() < 2 || rt.In(0) != apiType {
-		return nil, fmt.Errorf("注册 filter[%s]失败: 处理函数第一个参数必须是 *hook.API，第二个参数接收当前值", name)
-	}
-	if rt.NumOut() != 1 {
-		return nil, fmt.Errorf("注册 filter[%s]失败: 处理函数必须返回一个值", name)
-	}
-
-	// Fast path: 核心 hook 的已知签名直接类型断言，零反射调用
+	// 核心 hook 按名称匹配具体签名
 	switch name {
 	case FilterPostTitle, FilterPostExcerptHTML, FilterPostContentHTML, FilterPostFooterHTML:
 		if f, ok := fn.(func(*API, string, PostView) string); ok {
@@ -186,8 +106,7 @@ func (api *API) wrapFilter(name string, fn any) (func(context.Context, any, ...a
 			return api.wrapFilterCommentPreCreate(f, name), nil
 		}
 	}
-
-	// Fast path: 通用 FilterFunc = func(*API, any, ...any) any
+	// 通用 FilterFunc = func(*API, any, ...any) any
 	if f, ok := fn.(FilterFunc); ok {
 		return func(ctx context.Context, value any, args ...any) any {
 			defer func() {
@@ -208,9 +127,7 @@ func (api *API) wrapFilter(name string, fn any) (func(context.Context, any, ...a
 			return f(api.WithContext(ctx), value)
 		}, nil
 	}
-
-	// 兜底：反射包装
-	return api.wrapFilterReflect(name, fn, rt)
+	return nil, fmt.Errorf("注册 filter[%s]失败: 处理函数签名不匹配，请使用对应 hook 的标准签名或 func(*hook.API, any, ...any) any", name)
 }
 
 func (api *API) wrapFilterStringPostView(f func(*API, string, PostView) string, name string) func(context.Context, any, ...any) any {
@@ -224,7 +141,7 @@ func (api *API) wrapFilterStringPostView(f func(*API, string, PostView) string, 
 		s, ok := value.(string)
 		if !ok {
 			slog.WarnContext(ctx, "hook filter value type mismatch, returning original",
-				"hook", name, "expected", "string", "got", reflect.TypeOf(value))
+				"hook", name, "expected", "string", "got", fmt.Sprintf("%T", value))
 			return
 		}
 		var pv PostView
@@ -246,7 +163,7 @@ func (api *API) wrapFilterStringCommentView(f func(*API, string, CommentView) st
 		s, ok := value.(string)
 		if !ok {
 			slog.WarnContext(ctx, "hook filter value type mismatch, returning original",
-				"hook", name, "expected", "string", "got", reflect.TypeOf(value))
+				"hook", name, "expected", "string", "got", fmt.Sprintf("%T", value))
 			return
 		}
 		var cv CommentView
@@ -268,7 +185,7 @@ func (api *API) wrapFilterStringWidgetRenderView(f func(*API, string, WidgetRend
 		s, ok := value.(string)
 		if !ok {
 			slog.WarnContext(ctx, "hook filter value type mismatch, returning original",
-				"hook", name, "expected", "string", "got", reflect.TypeOf(value))
+				"hook", name, "expected", "string", "got", fmt.Sprintf("%T", value))
 			return
 		}
 		var wv WidgetRenderView
@@ -290,7 +207,7 @@ func (api *API) wrapFilterStringHeadMetaView(f func(*API, string, HeadMetaView) 
 		s, ok := value.(string)
 		if !ok {
 			slog.WarnContext(ctx, "hook filter value type mismatch, returning original",
-				"hook", name, "expected", "string", "got", reflect.TypeOf(value))
+				"hook", name, "expected", "string", "got", fmt.Sprintf("%T", value))
 			return
 		}
 		var hv HeadMetaView
@@ -315,72 +232,6 @@ func (api *API) wrapFilterCommentPreCreate(f func(*API, *CommentPreCreateView) *
 		}
 		return f(api.WithContext(ctx), v)
 	}
-}
-
-// wrapFilterReflect 使用反射包装任意首参为 *API 的 filter 回调。
-func (api *API) wrapFilterReflect(name string, fn any, rt reflect.Type) (func(context.Context, any, ...any) any, error) {
-	rv := reflect.ValueOf(fn)
-	isVariadic := rt.IsVariadic()
-	numIn := rt.NumIn()
-	valueType := rt.In(1)
-
-	return func(ctx context.Context, value any, args ...any) any {
-		callArgs := make([]reflect.Value, 0, numIn)
-		requestAPI := api.WithContext(ctx)
-		callArgs = append(callArgs, reflect.ValueOf(requestAPI))
-
-		v, ok := reflectArg(value, valueType)
-		if !ok {
-			slog.WarnContext(ctx, "hook filter value type mismatch, returning original value",
-				"hook", name, "expected", valueType, "got", reflect.TypeOf(value))
-			return value
-		}
-		callArgs = append(callArgs, v)
-
-		argIdx := 0
-		for i := 2; i < numIn; i++ {
-			paramType := rt.In(i)
-			if isVariadic && i == numIn-1 {
-				elemType := paramType.Elem()
-				for ; argIdx < len(args); argIdx++ {
-					av, ok := reflectArg(args[argIdx], elemType)
-					if !ok {
-						slog.WarnContext(ctx, "hook filter variadic arg type mismatch, skipped",
-							"hook", name, "param_index", i, "expected", elemType, "got", reflect.TypeOf(args[argIdx]))
-						break
-					}
-					callArgs = append(callArgs, av)
-				}
-				break
-			}
-			if argIdx >= len(args) {
-				callArgs = append(callArgs, reflect.Zero(paramType))
-				argIdx++
-				continue
-			}
-			av, ok := reflectArg(args[argIdx], paramType)
-			if !ok {
-				slog.WarnContext(ctx, "hook filter arg type mismatch, using zero value",
-					"hook", name, "param_index", i, "expected", paramType, "got", reflect.TypeOf(args[argIdx]))
-				callArgs = append(callArgs, reflect.Zero(paramType))
-			} else {
-				callArgs = append(callArgs, av)
-			}
-			argIdx++
-		}
-
-		defer func() {
-			if rec := recover(); rec != nil {
-				slog.WarnContext(ctx, "hook filter handler panic (in wrapped call), returning original value",
-					"hook", name, "panic", rec)
-			}
-		}()
-		outs := rv.Call(callArgs)
-		if len(outs) == 0 || !outs[0].IsValid() || !outs[0].CanInterface() {
-			return value
-		}
-		return outs[0].Interface()
-	}, nil
 }
 
 // RemoveAction 移除当前扩展注册的所有同名 action。
@@ -422,39 +273,11 @@ func wrapTemplateFunc(name string, fn any) (Func, error) {
 	if fn == nil {
 		return nil, fmt.Errorf("注册模板函数[%s]失败: 函数不能为空", name)
 	}
-	rv := reflect.ValueOf(fn)
-	rt := rv.Type()
-	if rt.Kind() != reflect.Func {
-		return nil, fmt.Errorf("注册模板函数[%s]失败: 必须是函数", name)
-	}
-	if rt.NumOut() != 1 {
-		return nil, fmt.Errorf("注册模板函数[%s]失败: 必须返回一个值", name)
-	}
-	if rt.NumIn() < 1 || rt.In(0) != apiType {
-		return nil, fmt.Errorf("注册模板函数[%s]失败: 第一个参数必须是 *hook.API", name)
-	}
-
 	// 标准签名: func(api *API, args Args) any
 	if f, ok := fn.(Func); ok {
 		return f, nil
 	}
-
-	// 其他签名通过反射包装
-	hasArgsParam := rt.NumIn() >= 2 && rt.In(1) == reflect.TypeOf(Args{})
-
-	return func(api *API, args Args) any {
-		callArgs := make([]reflect.Value, 0, rt.NumIn())
-		callArgs = append(callArgs, reflect.ValueOf(api))
-		if hasArgsParam {
-			callArgs = append(callArgs, reflect.ValueOf(args))
-		}
-		defer func() { recover() }()
-		outs := rv.Call(callArgs)
-		if len(outs) == 0 || !outs[0].IsValid() || !outs[0].CanInterface() {
-			return nil
-		}
-		return outs[0].Interface()
-	}, nil
+	return nil, fmt.Errorf("注册模板函数[%s]失败: 签名必须是 func(*hook.API, hook.Args) any", name)
 }
 
 // GetFunc 获取已注册的命名函数。
@@ -523,9 +346,5 @@ func (api *API) validateRegistration(kind, name string, fn any, wrapped bool) er
 	if wrapped {
 		return nil
 	}
-	t := reflect.TypeOf(fn)
-	if t == nil || t.Kind() != reflect.Func {
-		return fmt.Errorf("注册%s[%s]失败: 处理函数必须是函数", kind, name)
-	}
-	return nil
+	return fmt.Errorf("注册%s[%s]失败: 处理函数签名不合法", kind, name)
 }
