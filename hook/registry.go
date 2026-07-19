@@ -206,15 +206,23 @@ func (r *Hooks) DoAction(ctx context.Context, name string, w io.Writer, args ...
 	r.mu.Lock()
 	r.didActions[name]++
 	r.mu.Unlock()
-	for _, h := range r.Actions(name) {
+	handlers := r.Actions(name)
+	r.log.DebugContext(ctx, "hook action start", "hook", name, "handlers", len(handlers))
+	for _, h := range handlers {
 		var buf bytes.Buffer
-		if r.runWithTimeout(ctx, h, func(runCtx context.Context) {
+		start := time.Now()
+		ok := r.runWithTimeout(ctx, h, func(runCtx context.Context) {
 			actionCtx := WithActionWriter(runCtx, &buf)
 			r.safeDoAction(actionCtx, h, args...)
-		}) {
-			if w != nil {
-				_, _ = w.Write(buf.Bytes())
-			}
+		})
+		dur := time.Since(start)
+		if !ok {
+			r.log.WarnContext(ctx, "hook action handler timeout", "hook", name, "source", h.Source, "priority", h.Priority, "dur", dur)
+			continue
+		}
+		r.log.DebugContext(ctx, "hook action handler done", "hook", name, "source", h.Source, "priority", h.Priority, "dur", dur, "output_bytes", buf.Len())
+		if w != nil {
+			_, _ = w.Write(buf.Bytes())
 		}
 	}
 }
@@ -240,14 +248,22 @@ func (r *Hooks) ApplyFilters(ctx context.Context, name string, value any, args .
 		ctx = context.Background()
 	}
 	current := value
-	for _, h := range r.Filters(name) {
+	handlers := r.Filters(name)
+	r.log.DebugContext(ctx, "hook filter start", "hook", name, "handlers", len(handlers))
+	for _, h := range handlers {
 		valueBeforeHandler := current
 		result := make(chan any, 1)
-		if r.runWithTimeout(ctx, h, func(runCtx context.Context) {
+		start := time.Now()
+		ok := r.runWithTimeout(ctx, h, func(runCtx context.Context) {
 			result <- r.safeApplyFilter(runCtx, h, valueBeforeHandler, args...)
-		}) {
-			current = <-result
+		})
+		dur := time.Since(start)
+		if !ok {
+			r.log.WarnContext(ctx, "hook filter handler timeout", "hook", name, "source", h.Source, "priority", h.Priority, "dur", dur)
+			continue
 		}
+		current = <-result
+		r.log.DebugContext(ctx, "hook filter handler done", "hook", name, "source", h.Source, "priority", h.Priority, "dur", dur, "changed", current != valueBeforeHandler)
 	}
 	return current
 }

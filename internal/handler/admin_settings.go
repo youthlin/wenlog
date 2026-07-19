@@ -27,6 +27,7 @@ import (
 
 	"github.com/youthlin/wenlog/internal/consts"
 	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
 	"github.com/youthlin/wenlog/internal/permalink"
 	"github.com/youthlin/wenlog/internal/util"
 	"github.com/youthlin/wenlog/internal/version"
@@ -115,6 +116,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsMetricsAuthPassword,
 		consts.SettingsShowSQLDetails,
 		consts.SettingsUpdateDownloadMirror,
+		consts.SettingsLogLevel,
 	)
 	if err != nil && h.log != nil {
 		h.log.ErrorContext(c, "get settings for settings page", "error", err)
@@ -150,6 +152,11 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
 	data["UpdateDownloadMirrorValue"] = strings.TrimSpace(settings[consts.SettingsUpdateDownloadMirror])
+	logLevel := strings.TrimSpace(settings[consts.SettingsLogLevel])
+	if logLevel == "" {
+		logLevel = consts.SettingsLogLevelDefault
+	}
+	data["LogLevelValue"] = logLevel
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
 	data["InstanceRawVersion"] = version.Version
@@ -205,6 +212,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "sql-details-saved" {
 		data["Notice"] = tr.T("SQL 调试设置已保存。")
+	}
+	if c != nil && c.Query("message") == "log-level-saved" {
+		data["Notice"] = tr.T("日志级别已保存并立即生效。")
 	}
 	if c != nil && c.Query("message") == "update-settings-saved" {
 		data["Notice"] = tr.T("更新设置已保存。")
@@ -879,6 +889,21 @@ func (h *Admin) SaveSQLDetailsSettings(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "sql-details-saved"))
+}
+
+// SaveLogLevelSettings 保存日志级别设置并立即生效。
+func (h *Admin) SaveLogLevelSettings(c *gin.Context) {
+	level := strings.TrimSpace(strings.ToLower(c.PostForm("log_level")))
+	if !middleware.SetLogLevel(level) {
+		level = consts.SettingsLogLevelDefault
+		middleware.SetLogLevel(level)
+	}
+	if err := h.st.SetSetting(c, consts.SettingsLogLevel, level); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	slog.Info("log level changed", "level", level)
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "log-level-saved"))
 }
 
 func (h *Admin) saveSMTPSettings(c *gin.Context) error {

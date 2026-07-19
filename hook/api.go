@@ -91,3 +91,45 @@ func (api *API) loader() *store.DataLoader {
 	}
 	return api.dataLoader
 }
+
+// ========== ========== 日志方法 ========== ==========
+
+// ctx 返回 API 绑定的请求 context，无则使用 context.Background()。
+func (api *API) reqCtx() context.Context {
+	if api != nil && api.ctx != nil {
+		return api.ctx
+	}
+	return context.Background()
+}
+
+// Debug 输出 Debug 级别日志，用法同 slog.DebugContext，参数为 key/value 交替对。
+func (api *API) Debug(msg string, args ...any) {
+	if api == nil || api.log == nil {
+		return
+	}
+	api.log.DebugContext(api.reqCtx(), msg, args...)
+}
+
+// Info 输出 Info 级别日志。
+func (api *API) Info(msg string, args ...any) {
+	if api == nil || api.log == nil {
+		return
+	}
+	api.log.InfoContext(api.reqCtx(), msg, args...)
+}
+
+// Warn 输出 Warn 级别日志。
+func (api *API) Warn(msg string, args ...any) {
+	if api == nil || api.log == nil {
+		return
+	}
+	api.log.WarnContext(api.reqCtx(), msg, args...)
+}
+
+// Error 输出 Error 级别日志。
+func (api *API) Error(msg string, args ...any) {
+	if api == nil || api.log == nil {
+		return
+	}
+	api.log.ErrorContext(api.reqCtx(), msg, args...)
+}

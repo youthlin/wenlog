@@ -208,12 +208,24 @@ func rejectCommentByPattern(api *hook.API, view *hook.CommentPreCreateView) *hoo
 	}
 	re, err := regexp.Compile(pattern)
 	if err != nil {
+		api.Warn("评论拦截正则编译失败", "pattern", pattern, "error", err)
 		return view
 	}
+	api.Debug("评论拦截正则检查", "pattern", pattern, "content_len", len(view.Content), "author", view.Author, "ip", view.IP)
 	if !re.MatchString(view.Content) {
 		return view
 	}
 	view.Status = "spam"
 	view.RejectMessage = api.PluginOption("comment_reject_message", api.T("评论内容不符合规则，提交失败。"))
+	api.Info("评论被正则拦截", "pattern", pattern, "author", view.Author, "ip", view.IP, "content_preview", truncate(view.Content, 100))
 	return view
+}
+
+// truncate 截断字符串到指定 rune 数。
+func truncate(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return string(r[:n]) + "..."
 }

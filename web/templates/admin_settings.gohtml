@@ -164,6 +164,23 @@
       </form>
     </section>
 
+    <section class="card settings-card">
+      <h3>{{.t.T "日志级别"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/log-level">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "当前日志级别"}}
+          <select name="log_level">
+            <option value="debug" {{if eq .LogLevelValue "debug"}}selected{{end}}>Debug</option>
+            <option value="info" {{if eq .LogLevelValue "info"}}selected{{end}}>Info</option>
+            <option value="warn" {{if eq .LogLevelValue "warn"}}selected{{end}}>Warn</option>
+            <option value="error" {{if eq .LogLevelValue "error"}}selected{{end}}>Error</option>
+          </select>
+        </label>
+        <p class="tip">{{.t.T "Debug 级别会输出 Hook 执行详细日志，便于调试插件；修改后立即生效，无需重启服务。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存日志级别"}}</button></p>
+      </form>
+    </section>
+
   </div>
 </div>
 {{- else}}
