@@ -116,7 +116,11 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		Status:    cm.Status,
 	}
 	if hooks := h.renderer.Hooks(); hooks != nil {
-		result := hooks.ApplyFilters(c.Request.Context(), hook.FilterCommentBeforeCreate, preView)
+		ctx := c.Request.Context()
+		if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+			ctx = hook.WithDataLoader(ctx, loader)
+		}
+		result := hooks.ApplyFilters(ctx, hook.FilterCommentBeforeCreate, preView)
 		h.log.InfoContext(c, "评论提交过滤", "result", result)
 		if v, ok := result.(*hook.CommentPreCreateView); ok && v != nil {
 			cm.Content = v.Content
@@ -239,7 +243,7 @@ func (h *Public) validateCommentTarget(c *gin.Context, tr *gettext.Translations,
 // checkCommentRateLimit 检查同 IP 评论频率限制。
 func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations, postID uint) bool {
 	ip := c.ClientIP()
-	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
+	since := time.Now().Add(-rateWindowSec * time.Second)
 	cnt, err := h.st.RecentCommentCountByIP(c, ip, since)
 	if err != nil {
 		h.log.ErrorContext(c, "评论限频", "error", err, "ip", ip)
@@ -247,6 +251,7 @@ func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations,
 		return false
 	}
 	if cnt >= rateMaxInWindow {
+		h.log.ErrorContext(c, "评论太频繁", "since", since, "count", cnt)
 		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
 		return false
 	}

@@ -68,8 +68,8 @@ func Register(api *hook.API) {
 		return appendPostFooter(api.WithContext(ctx), value, post)
 	})
 	// 评论提交前正则拦截
-	api.AddFilter(hook.Consts.FilterCommentBeforeCreate, func(_ context.Context, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
-		return rejectCommentByPattern(api, view)
+	api.AddFilter(hook.Consts.FilterCommentBeforeCreate, func(ctx context.Context, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
+		return rejectCommentByPattern(api.WithContext(ctx), view)
 	})
 }
 
@@ -203,6 +203,7 @@ func rejectCommentByPattern(api *hook.API, view *hook.CommentPreCreateView) *hoo
 		return view
 	}
 	pattern := strings.TrimSpace(api.PluginOption("comment_reject_pattern", ""))
+	api.Info("评论黑名单正则", "pattern", pattern)
 	if pattern == "" {
 		return view
 	}

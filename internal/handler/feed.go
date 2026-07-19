@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/permalink"
 )
 
@@ -42,6 +43,10 @@ func (h *Public) Feed(c *gin.Context) {
 		return
 	}
 	baseURL := requestBaseURL(c)
+	filterCtx := c.Request.Context()
+	if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+		filterCtx = hook.WithDataLoader(filterCtx, loader)
+	}
 	ch := rssChan{
 		Title:       s.SiteName,
 		Link:        baseURL,
@@ -50,7 +55,7 @@ func (h *Public) Feed(c *gin.Context) {
 	for i := range res.Posts {
 		p := &res.Posts[i]
 		link := baseURL + permalink.Post(p)
-		desc := string(h.renderer.FilterPostContent(c, p))
+		desc := string(h.renderer.FilterPostContent(filterCtx, p))
 		if desc == "" {
 			desc = p.Title
 		}
@@ -117,6 +122,10 @@ func (h *Public) AtomFeed(c *gin.Context) {
 	}
 	baseURL := requestBaseURL(c)
 	atomURL := baseURL + "/atom"
+	filterCtx := c.Request.Context()
+	if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+		filterCtx = hook.WithDataLoader(filterCtx, loader)
+	}
 
 	feed := atomFeed{
 		Title:    s.SiteName,
@@ -131,7 +140,7 @@ func (h *Public) AtomFeed(c *gin.Context) {
 	for i := range res.Posts {
 		p := &res.Posts[i]
 		link := baseURL + permalink.Post(p)
-		content := string(h.renderer.FilterPostContent(c, p))
+		content := string(h.renderer.FilterPostContent(filterCtx, p))
 		if content == "" {
 			content = p.Title
 		}
