@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"hook"
@@ -65,6 +66,10 @@ func Register(api *hook.API) {
 	// 文章尾部 HTML（版权声明等）
 	api.AddFilter(hook.Consts.FilterPostFooterHTML, func(ctx context.Context, value string, post hook.PostView) string {
 		return appendPostFooter(api.WithContext(ctx), value, post)
+	})
+	// 评论提交前正则拦截
+	api.AddFilter(hook.Consts.FilterCommentBeforeCreate, func(_ context.Context, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
+		return rejectCommentByPattern(api, view)
 	})
 }
 
@@ -190,4 +195,25 @@ func postSmiliesEnabled(api *hook.API) bool {
 
 func smileySrc(name string) string {
 	return "/plugin-assets/post-comment-enhance/smilies/" + url.PathEscape(name) + ".gif"
+}
+
+// rejectCommentByPattern 按插件配置的正则表达式拦截评论。
+func rejectCommentByPattern(api *hook.API, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
+	if view == nil {
+		return view
+	}
+	pattern := strings.TrimSpace(api.PluginOption("comment_reject_pattern", ""))
+	if pattern == "" {
+		return view
+	}
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return view
+	}
+	if !re.MatchString(view.Content) {
+		return view
+	}
+	view.Status = "spam"
+	view.RejectMessage = api.PluginOption("comment_reject_message", api.T("评论内容不符合规则，提交失败。"))
+	return view
 }

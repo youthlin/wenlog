@@ -39,6 +39,11 @@ const (
 	// 主题通过 {{list_comments .}} 模板函数输出评论列表, 这个模板函数内部会触发本 filter
 	// 如果主题自行输出评论, 需要自行调用 {{apply_filter .Content "comment.content_html"}}
 	FilterCommentContentHTML = "comment.content_html"
+	// FilterCommentBeforeCreate 在评论创建前触发，接收 *CommentPreCreateView，
+	// 插件可修改其 Status 为 approved/pending/spam 来决定评论命运，也可修改 Content。
+	// 返回 spam 且 RejectMessage 非空时，前端会收到 RejectMessage 作为错误提示。
+	// 主题或 handler 在 CreateComment 前自行调用 r.ApplyFilters(ctx, FilterCommentBeforeCreate, view)。
+	FilterCommentBeforeCreate = "comment.before_create"
 	// FilterHeadMeta 过滤 OpenGraph / Twitter Card meta 标签可信 HTML，运行于 headMeta 模板函数内部。
 	// 插件可改写、追加或清空 meta 标签（返回空字符串即清除）。
 	// 主题调用 {{head_meta . }} 时, 触发 head_meta 模板函数执行, 内部会应用这个 filter
@@ -57,6 +62,7 @@ var Consts = struct {
 	FilterPostContentHTML,
 	FilterPostFooterHTML,
 	FilterCommentContentHTML,
+	FilterCommentBeforeCreate,
 	FilterWidgetRenderHTML,
 	FilterHeadMeta string
 	PriorityEarly,
@@ -72,6 +78,7 @@ var Consts = struct {
 	FilterPostContentHTML:            FilterPostContentHTML,
 	FilterPostFooterHTML:             FilterPostFooterHTML,
 	FilterCommentContentHTML:         FilterCommentContentHTML,
+	FilterCommentBeforeCreate:        FilterCommentBeforeCreate,
 	FilterWidgetRenderHTML:           FilterWidgetRenderHTML,
 	FilterHeadMeta:                   FilterHeadMeta,
 	PriorityEarly:                    PriorityEarly,

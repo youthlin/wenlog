@@ -1,7 +1,7 @@
 id: post-comment-enhance
 name: "文章评论增强"
-version: "20260705141547"
-description: "为评论和文章正文提供表情短码插入与渲染，后台编辑器提供表情面板，支持文章尾部自定义 HTML。"
+version: "20260719000000"
+description: "为评论和文章正文提供表情短码插入与渲染，后台编辑器提供表情面板，支持文章尾部自定义 HTML，支持正则拦截垃圾评论。"
 author: "youthlin"
 default_enabled: true
 
@@ -17,6 +17,7 @@ hooks:
     - comment.content_html
     - post.content_html
     - post.footer_html
+    - comment.before_create
 
 lifecycle:
   activate: true
@@ -41,3 +42,13 @@ options:
     label: "文章尾部 HTML"
     description: "每篇文章正文末尾追加的 HTML。可用变量：%siteURL% %siteName% %siteDesc% %postURL% %postID% %postTitle% %postSlug% %postExcerpt% %postAuthor% %postAuthorUsername%"
     default: ""
+  - id: comment_reject_pattern
+    type: text
+    label: "评论拦截正则"
+    description: "评论内容匹配此正则表达式时将被拒绝提交（Go 正则语法，如 ^[A-Za-z0-9\\s\\pP]+$ 匹配纯英文/数字/标点）。留空则不启用。"
+    default: ""
+  - id: comment_reject_message
+    type: text
+    label: "评论拦截提示"
+    description: "评论被正则匹配时返回给用户的错误提示。"
+    default: "评论内容不符合规则，提交失败。"

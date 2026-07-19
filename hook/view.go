@@ -101,6 +101,24 @@ type CommentView struct {
 	CommenterRole string
 }
 
+// CommentPreCreateView 是 comment.before_create filter 的上下文，评论入库前传入。
+// 插件可修改 Status 为 approved/pending/spam 决定评论命运，也可修改 Content。
+// Status 为 spam 且 RejectMessage 非空时，前端将收到该错误提示。
+type CommentPreCreateView struct {
+	PostID        uint
+	ParentID      uint
+	ReplyToID     uint
+	UserID        *uint
+	Author        string
+	Email         string
+	URL           string
+	IP            string
+	UserAgent     string
+	Content       string
+	Status        string // 初始为 pending/approved，插件可改为 pending/spam
+	RejectMessage string // 当 Status 为 spam 时返回给前端的错误提示
+}
+
 // WidgetRenderView 是 widget.render_html filter 的稳定上下文。
 type WidgetRenderView struct {
 	Area         string

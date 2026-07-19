@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
+	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/email"
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/middleware"
@@ -99,6 +100,38 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		uid := loggedInUser.ID
 		cm.UserID = &uid
 	}
+
+	// 调用 comment.before_create filter，插件可修改 Status/Content 或拒绝提交。
+	preView := &hook.CommentPreCreateView{
+		PostID:    cm.PostID,
+		ParentID:  cm.ParentID,
+		ReplyToID: cm.ReplyToID,
+		UserID:    cm.UserID,
+		Author:    cm.Author,
+		Email:     cm.Email,
+		URL:       cm.URL,
+		IP:        cm.IP,
+		UserAgent: c.Request.UserAgent(),
+		Content:   cm.Content,
+		Status:    cm.Status,
+	}
+	if hooks := h.renderer.Hooks(); hooks != nil {
+		result := hooks.ApplyFilters(c.Request.Context(), hook.FilterCommentBeforeCreate, preView)
+		h.log.InfoContext(c, "评论提交过滤", "result", result)
+		if v, ok := result.(*hook.CommentPreCreateView); ok && v != nil {
+			cm.Content = v.Content
+			cm.Status = v.Status
+			if v.Status == model.CommentSpam {
+				msg := v.RejectMessage
+				if msg == "" {
+					msg = tr.T("评论被拦截。")
+				}
+				h.commentResp(c, false, msg, req.PostID)
+				return
+			}
+		}
+	}
+
 	if err := h.st.CreateComment(c, cm); err != nil {
 		h.serverError(c, err)
 		return
