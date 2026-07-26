@@ -20,9 +20,14 @@ func WithDataLoader(ctx context.Context, loader *store.DataLoader) context.Conte
 	return context.WithValue(ctx, loaderContextKey{}, loader)
 }
 
-func getDataLoader(ctx context.Context) *store.DataLoader {
+// DataLoaderFrom 从 context 中读取请求级 DataLoader。
+func DataLoaderFrom(ctx context.Context) *store.DataLoader {
 	loader, _ := ctx.Value(loaderContextKey{}).(*store.DataLoader)
 	return loader
+}
+
+func getDataLoader(ctx context.Context) *store.DataLoader {
+	return DataLoaderFrom(ctx)
 }
 
 // actionWriterKey 用于在 context 中存储当前 action 的输出 writer。

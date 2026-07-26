@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -91,7 +92,104 @@ func TestIncrementViews_UpdatesCache(t *testing.T) {
 	st.cacheMu.Unlock()
 
 	st.IncrementViews(ctx, 1)
-	if post.Views != 6 {
-		t.Errorf("cached views=%d, want 6", post.Views)
+	if post.Views != 5 {
+		t.Errorf("original cached post views=%d, want unchanged 5", post.Views)
 	}
+	st.cacheMu.RLock()
+	got := st.cache.Posts[1]
+	st.cacheMu.RUnlock()
+	if got == post {
+		t.Fatal("IncrementViews should replace cached post instead of mutating shared post in place")
+	}
+	if got.Views != 6 {
+		t.Errorf("new cached views=%d, want 6", got.Views)
+	}
+}
+
+func TestIncrementViews_CopyOnWriteCacheDoesNotMutateExistingLoader(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	post := &model.Post{ID: 1, Slug: "p1", PostType: model.PostTypePost, Status: model.StatusPublished, Views: 5}
+	loader := &DataLoader{
+		Posts:          map[uint]*model.Post{1: post},
+		postsBySlug:    map[string]*model.Post{"p1": post},
+		postsByType:    map[string][]*model.Post{model.PostTypePost: []*model.Post{post}},
+		menuPages:      []*model.Post{post},
+		Categories:     map[uint]*model.Category{},
+		Tags:           map[uint]*model.Tag{},
+		Users:          map[uint]*model.User{},
+		Settings:       map[string]string{},
+		Comments:       map[uint]*model.Comment{},
+		commentsByPost: map[uint][]uint{},
+	}
+	st.cacheMu.Lock()
+	st.cache = loader
+	st.cacheMu.Unlock()
+
+	st.IncrementViews(ctx, 1)
+
+	if post.Views != 5 {
+		t.Fatalf("old loader post was mutated in place: views=%d, want 5", post.Views)
+	}
+	st.cacheMu.RLock()
+	newLoader := st.cache
+	newPost := newLoader.Posts[1]
+	st.cacheMu.RUnlock()
+	if newLoader == loader {
+		t.Fatal("cache loader should be replaced copy-on-write")
+	}
+	if newPost == post {
+		t.Fatal("cache post should be replaced copy-on-write")
+	}
+	if newPost.Views != 6 {
+		t.Fatalf("new cached post views=%d, want 6", newPost.Views)
+	}
+	if newLoader.postsBySlug["p1"] != newPost {
+		t.Fatal("postsBySlug should point to the copied post")
+	}
+	if newLoader.postsByType[model.PostTypePost][0] != newPost {
+		t.Fatal("postsByType should point to the copied post")
+	}
+	if newLoader.menuPages[0] != newPost {
+		t.Fatal("menuPages should point to the copied post")
+	}
+}
+
+func TestIncrementViews_ConcurrentCacheReaders(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	post := &model.Post{ID: 1, Views: 5}
+	st.cacheMu.Lock()
+	st.cache = &DataLoader{Posts: map[uint]*model.Post{1: post}}
+	st.cacheMu.Unlock()
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 200; j++ {
+				st.cacheMu.RLock()
+				loader := st.cache
+				st.cacheMu.RUnlock()
+				if loader != nil && loader.Posts != nil {
+					if p := loader.Posts[1]; p != nil {
+						_ = p.Views
+					}
+				}
+			}
+		}()
+	}
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 200; j++ {
+				if err := st.IncrementViews(ctx, 1); err != nil {
+					t.Errorf("IncrementViews: %v", err)
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }

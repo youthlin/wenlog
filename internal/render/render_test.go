@@ -15,6 +15,7 @@ import (
 
 	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/web"
 )
 
@@ -219,17 +220,51 @@ func TestHeadMetaFilterReceivesStableView(t *testing.T) {
 
 func TestFeedPostFiltersReceiveStableView(t *testing.T) {
 	hooks := hook.NewRegistry()
-	var got hook.PostView
+	var contentPost hook.PostView
+	var titlePost hook.PostView
+	var footerPost hook.PostView
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		titlePost, _ = args[0].(hook.PostView)
+		return "Filtered " + value.(string)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
 	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
-		got, _ = args[0].(hook.PostView)
+		contentPost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostFooterHTML, func(value any, args ...any) any {
+		footerPost, _ = args[0].(hook.PostView)
 		return value
 	}, hook.Source{Type: hook.SourceCore, ID: "test"})
 	r := &Renderer{}
 	r.themeRuntime.providers.Hooks = hooks
 
-	_ = r.FilterPostContent(context.Background(), &model.Post{ID: 11, Title: "Feed", Content: "body"})
-	if got.ID != 11 || got.Title != "Feed" || got.Content != "body" {
-		t.Fatalf("feed post.content_html payload = %+v, want PostView", got)
+	loader := testLoaderForPostView()
+	ctx := hook.WithDataLoader(context.Background(), loader)
+	post := &model.Post{ID: 11, Title: "Feed", Content: "body", AuthorID: 7}
+	if got := r.FilterPostTitle(ctx, post); got != "Filtered Feed" {
+		t.Fatalf("FilterPostTitle() = %q, want filtered title", got)
+	}
+	_ = r.FilterPostContent(ctx, post)
+	for name, got := range map[string]hook.PostView{
+		"post.title":        titlePost,
+		"post.content_html": contentPost,
+		"post.footer_html":  footerPost,
+	} {
+		if got.ID != 11 || got.Title != "Feed" || got.Content != "body" || got.Author.ID != 7 || got.Author.DisplayName != "Author" {
+			t.Fatalf("%s payload = %+v, want PostView with author from DataLoader", name, got)
+		}
+	}
+}
+
+func testLoaderForPostView() *store.DataLoader {
+	post := &model.Post{ID: 11, Title: "Feed", Content: "body", AuthorID: 7}
+	return &store.DataLoader{
+		Posts:      map[uint]*model.Post{11: post},
+		Users:      map[uint]*model.User{7: &model.User{ID: 7, Username: "author", DisplayName: "Author"}},
+		Categories: map[uint]*model.Category{},
+		Tags:       map[uint]*model.Tag{},
+		Settings:   map[string]string{},
+		Comments:   map[uint]*model.Comment{},
 	}
 }
 

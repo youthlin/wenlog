@@ -25,13 +25,77 @@ func newViewsCounter() *viewsCounter {
 func (s *Store) IncrementViews(ctx context.Context, id uint) error {
 	s.viewsMu.Lock()
 	s.views.counts[id]++
-	if s.cache != nil {
-		if p, ok := s.cache.Posts[id]; ok {
-			p.Views++
-		}
-	}
 	s.viewsMu.Unlock()
+	s.cacheMu.Lock()
+	s.cache = cacheWithIncrementedViews(s.cache, id)
+	s.cacheMu.Unlock()
 	return nil
+}
+
+func cacheWithIncrementedViews(loader *DataLoader, id uint) *DataLoader {
+	if loader == nil || loader.Posts == nil {
+		return loader
+	}
+	oldPost := loader.Posts[id]
+	if oldPost == nil {
+		return loader
+	}
+	newPost := *oldPost
+	newPost.Views++
+	cloned := *loader
+	cloned.Posts = replacePostMapEntry(loader.Posts, id, &newPost)
+	cloned.postsBySlug = replacePostSlugMap(loader.postsBySlug, oldPost, &newPost)
+	cloned.postsByType = replacePostTypeMap(loader.postsByType, oldPost, &newPost)
+	cloned.menuPages = replacePostSlice(loader.menuPages, oldPost, &newPost)
+	return &cloned
+}
+
+func replacePostMapEntry(posts map[uint]*model.Post, id uint, newPost *model.Post) map[uint]*model.Post {
+	cloned := make(map[uint]*model.Post, len(posts))
+	for key, post := range posts {
+		cloned[key] = post
+	}
+	cloned[id] = newPost
+	return cloned
+}
+
+func replacePostSlugMap(posts map[string]*model.Post, oldPost, newPost *model.Post) map[string]*model.Post {
+	if posts == nil {
+		return nil
+	}
+	cloned := make(map[string]*model.Post, len(posts))
+	for key, post := range posts {
+		if post == oldPost {
+			post = newPost
+		}
+		cloned[key] = post
+	}
+	return cloned
+}
+
+func replacePostTypeMap(posts map[string][]*model.Post, oldPost, newPost *model.Post) map[string][]*model.Post {
+	if posts == nil {
+		return nil
+	}
+	cloned := make(map[string][]*model.Post, len(posts))
+	for key, list := range posts {
+		cloned[key] = replacePostSlice(list, oldPost, newPost)
+	}
+	return cloned
+}
+
+func replacePostSlice(list []*model.Post, oldPost, newPost *model.Post) []*model.Post {
+	if list == nil {
+		return nil
+	}
+	cloned := make([]*model.Post, len(list))
+	for i, post := range list {
+		if post == oldPost {
+			post = newPost
+		}
+		cloned[i] = post
+	}
+	return cloned
 }
 
 // FlushViews 将内存中的浏览量增量批量写入数据库。

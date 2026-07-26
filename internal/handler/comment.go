@@ -121,10 +121,16 @@ func (h *Public) SubmitComment(c *gin.Context) {
 			ctx = hook.WithDataLoader(ctx, loader)
 		}
 		result := hooks.ApplyFilters(ctx, hook.FilterCommentBeforeCreate, preView)
-		h.log.InfoContext(c, "评论提交过滤", "result", result)
 		if v, ok := result.(*hook.CommentPreCreateView); ok && v != nil {
 			cm.Content = v.Content
 			normalized := normalizeCommentStatus(c, v.Status)
+			h.log.DebugContext(c, "评论提交过滤",
+				"post_id", v.PostID,
+				"status", normalized,
+				"rejected", normalized == model.CommentSpam,
+				"content_length", len(v.Content),
+				"has_reject_message", v.RejectMessage != "",
+			)
 			if normalized == model.CommentSpam {
 				msg := v.RejectMessage
 				if msg == "" {
