@@ -36,7 +36,7 @@
     <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .Stats.PagesDraft .Stats.PagesDraft}}</span>
     {{- end}}
   </a>
-  <a class="stat-card" href="/admin/comments">
+  <a class="stat-card" href="{{if gt .Stats.Comments.Pending 0}}/admin/comments?status=pending{{else}}/admin/comments{{end}}">
     <span class="stat-icon">💬</span>
     <span class="stat-value">{{.Stats.Comments.Approved}}</span>
     <span class="stat-label">{{.t.T "已批准评论"}}</span>

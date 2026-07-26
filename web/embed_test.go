@@ -25,6 +25,24 @@ func TestTemplatesParse(t *testing.T) {
 	}
 }
 
+func TestAdminDashboardCommentCardLinksPendingWhenNeeded(t *testing.T) {
+	tplFS, err := fs.Sub(web.Templates, "templates")
+	if err != nil {
+		t.Fatalf("sub templates fs: %v", err)
+	}
+	data, err := fs.ReadFile(tplFS, "admin_dashboard.gohtml")
+	if err != nil {
+		t.Fatalf("read admin dashboard template: %v", err)
+	}
+	templateText := string(data)
+	if !strings.Contains(templateText, `href="{{if gt .Stats.Comments.Pending 0}}/admin/comments?status=pending{{else}}/admin/comments{{end}}"`) {
+		t.Fatalf("admin dashboard comment stats card must link to pending comments when pending count is positive")
+	}
+	if !strings.Contains(templateText, `.t.N1_64 "%d 条待审" .Stats.Comments.Pending .Stats.Comments.Pending`) {
+		t.Fatalf("admin dashboard comment stats card should still display pending comment count")
+	}
+}
+
 func TestAdminDataTablesFollowResponsiveContract(t *testing.T) {
 	tplFS, err := fs.Sub(web.Templates, "templates")
 	if err != nil {
