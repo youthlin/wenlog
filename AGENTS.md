@@ -50,14 +50,15 @@
 - `internal/render.Renderer` 负责解析模板、模板函数、模板层级 fallback、预览模板缓存和组件渲染。页面类型到模板的 fallback 链在 `render.TemplateHierarchy` 中维护。
 - `theme.yaml` 当前不只是元数据，还声明 `widget_areas`、`widgets`、组件级 `options` 与主题全局 `options`。组件配置保存在 Setting 表的 `widget_<area>`，主题选项保存在 `option_<theme>_<option>`。
 - 前台请求通常先通过 `store.DataLoader` 全量预加载公开数据，再由 `Public.base()` 注入 `.RecentPosts`、`.Categories`、`.Tags`、`.ArchiveMonths`、`.RecentCommentItems`、`.Menu` 等通用模板数据。
-- 主题自定义逻辑通过 `functions.goyaegi` 的 `Register(api *themeapi.API)` 注册主题函数；模板侧通过 `themeInvoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
-- 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `renderWidgets "area" .` 渲染区域，用 `widgetOption "key"` 读取当前组件实例选项。
+- 主题自定义逻辑通过 `functions.goyaegi` 的 `Register(api *hook.API)` 注册主题函数；模板侧通过 `hook_invoke` 调用。普通模板数据优先使用 `base()` 已注入的数据，只有确实需要自定义计算时再用主题函数。
+- 组件模板命名为 `widget_<id>`，可由主题的 `widgets/{id}.gohtml` 覆盖内置组件；模板中可用 `render_widgets "area" .` 渲染区域，用 `widget_option "key"` 读取当前组件实例选项。
 - 主题静态资源通过 `/theme-assets/...` 引用，当前/预览主题会自动解析到对应 `assets/` 目录。不要在主题模板里硬编码 `/web/themes/...`。
 
 **主题与插件设计文档：**
 - `docs/template-data-reference.md` — 模板数据字段、模板函数、数据模型、theme.yaml 配置参考（主题开发必读）
 - `docs/theme-system-optimization-plan.md` — 主题系统当前实现梳理与优化计划
 - `docs/plugin-system-design.md` — 插件系统设计（hook/Registry、组件注册、插件生命周期）
+- `docs/hook-reference.md` — 标准 action/filter 的触发点、payload view、返回值安全语义和脚本签名
 - `docs/outdated/` — 历史设计稿（v1~v6），仅供参考演进背景
 
 > **维护约定**：迭代插件或主题系统时，若变更影响模板数据字段、模板函数签名、theme.yaml 配置格式或插件 API，需同步更新 `docs/` 下对应文档。
@@ -293,21 +294,25 @@ go build -o wenlog ./cmd/server
    /* ... 其他表格类似 */
    ```
 
-3. **移动端卡片布局（`@media (max-width: 760px)`）**：表格转为卡片流式布局，核心变换：
+3. **移动端卡片布局（`@media (max-width: 760px)`）**：所有标准 `.data-table:not(.import-stats-table)` 默认转为卡片流式布局，新增普通后台表格不需要额外复制 CSS。核心变换：
    - `thead { display: none }` — 隐藏表头
    - 所有表格元素 `display: block; width: 100%` — 从表格模型转为块模型
    - `tbody { display: grid; gap: 14px }` — 每行变成独立卡片
    - `tbody tr` 添加 `border + border-radius + box-shadow` — 卡片外观
    - `td[data-label]::before { content: attr(data-label) }` — 用 `data-label` 生成每列标签
    - `.actions` 改为 `display: grid; gap: 8px` — 操作按钮纵向排列
-   - `.table-scroll:has(.{entity}-table) { overflow: visible }` — 取消横向滚动，让卡片自然流动
+   - `.table-scroll:has(.data-table:not(.import-stats-table)) { overflow: visible }` — 取消横向滚动，让卡片自然流动
+   - `.actions` 默认转为纵向栅格，按钮默认占满宽度
+   - 超长文本默认 `overflow-wrap: anywhere`，避免单元格内容撑宽页面
 
 **新增表格类型的 checklist：**
 
-1. 模板中：`<table class="data-table {entity}-table">`，每个 `<td>` 带 `data-label`
-2. `admin.css` 桌面端：无需额外样式（`data-table` 已覆盖通用样式）
-3. `admin.css` 平板过渡：在 `@media (max-width: 760px)` 中添加 `.table-scroll .{entity}-table { min-width: Npx }`
-4. `admin.css` 移动端卡片：在 `@media (max-width: 760px)` 中按现有表格模式复制一份，将选择器替换为 `{entity}-table`，调整 `colspan` 和特殊列的 `display`/`order`
+1. 模板中：`<table class="data-table {entity}-table">`，每个普通数据 `<td>` 带 `data-label`
+2. 模板中：表格必须由 `.table-scroll` 包裹；空状态 `colspan` 行允许不带 `data-label`
+3. `admin.css` 桌面端：无需额外样式（`data-table` 已覆盖通用样式）
+4. `admin.css` 移动端：普通表格无需新增 CSS，通用 `.data-table:not(.import-stats-table)` 会自动转成卡片布局
+5. 只有在需要平板过渡最小宽度、隐藏某些移动端列、调整列顺序、定制操作区排列等特殊效果时，才为 `{entity}-table` 添加局部覆盖样式
+6. `web/embed_test.go` 中的 `TestAdminDataTablesFollowResponsiveContract` 会检查后台模板里的 `data-table` 是否有 `.table-scroll` 包裹、是否存在实体表格 class、普通数据 `<td>` 是否带 `data-label`；新增表格后需保证该测试通过
 
 ### i18n / 翻译字符串约定
 

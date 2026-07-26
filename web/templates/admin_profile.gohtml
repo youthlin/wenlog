@@ -13,7 +13,7 @@
       <h3>{{.t.T "个人资料"}}</h3>
       {{if .CurrentUser}}
       <div class="profile-avatar-panel">
-        <img class="avatar profile-avatar" src="{{avatarURL .CurrentUser.Email .DefaultAvatar}}" alt="" width="80" height="80">
+        <img class="avatar profile-avatar" src="{{avatarURL .CurrentUser.Email .DefaultAvatar 80}}" alt="" width="80" height="80">
         <div>
           <p class="profile-avatar-name">{{if .CurrentUser.DisplayName}}{{.CurrentUser.DisplayName}}{{else}}{{.CurrentUser.Username}}{{end}}</p>
           <p class="form-hint">{{.t.T "头像由 Cravatar 提供，可前往 cravatar.com 修改。"}}</p>
@@ -87,7 +87,7 @@
       <h3>{{.t.T "Passkey 登录"}}</h3>
       <p class="form-hint">{{.t.T "添加 Passkey 后，可以使用系统密码、指纹、人脸或安全密钥登录。Passkey 需要 HTTPS 或 localhost 环境。"}}</p>
       <div class="passkey-register-panel" data-passkey-supported hidden>
-        <label>{{.t.T "Passkey 名称"}}<input type="text" data-passkey-name value="{{.PasskeyDefaultName}}" placeholder="{{.t.T "例如：我的 MacBook"}}"></label>
+        <label>{{.t.T "Passkey 名称"}}<input type="text" data-passkey-name required autocomplete="off" placeholder="{{.t.T "例如：我的 MacBook"}}"></label>
         <button type="button" class="btn" data-passkey-register>{{.t.T "添加 Passkey"}}</button>
       </div>
       <p class="form-hint" data-passkey-status></p>

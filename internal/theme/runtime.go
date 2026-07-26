@@ -137,11 +137,11 @@ func (m *Manager) LoadTheme(ctx context.Context, name string) error {
 	}
 
 	// 2. 编译 functions.go（如果存在）
-	api := NewAPI(nil)             // loader 在模板渲染时按请求注入
-	api.SetThemeOptions(t.Options) // 设置选项默认值，供 GetOption 回退
+	// loader 在模板渲染时按请求注入
+	api := NewAPI(t.ThemeDomain(), nil, t.Options)
 	// 直接使用 m.hooks，Registry 实例稳定，插件重载时内部替换。
 	var reg hook.Registry = m.hooks
-	api.SetHookRegistry(reg, hook.Source{Type: "theme", ID: t.Name})
+	api.SetHookRegistry(reg, hook.Source{Type: hook.SourceTheme, ID: t.Name})
 	script, err := CompileFunctions(ctx, t.Dir, api, m.log)
 	if err != nil {
 		err = errors.Wrap(err, "编译主题functions.go失败")

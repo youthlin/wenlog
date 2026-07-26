@@ -3,10 +3,37 @@ package middleware
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// LogLevel 是全局日志级别变量，可在运行时通过 SetLogLevel 动态调整。
+var LogLevel = new(slog.LevelVar)
+
+// SetLogLevel 动态设置全局日志级别，支持 debug/info/warn/error（大小写不敏感）。
+// 返回是否设置成功。
+func SetLogLevel(level string) bool {
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case "debug":
+		LogLevel.Set(slog.LevelDebug)
+	case "info", "":
+		LogLevel.Set(slog.LevelInfo)
+	case "warn", "warning":
+		LogLevel.Set(slog.LevelWarn)
+	case "error":
+		LogLevel.Set(slog.LevelError)
+	default:
+		return false
+	}
+	return true
+}
+
+// CurrentLogLevel 返回当前日志级别字符串。
+func CurrentLogLevel() string {
+	return LogLevel.Level().String()
+}
 
 // Logger gin 中间件 输出结构化访问日志。
 func Logger() gin.HandlerFunc {

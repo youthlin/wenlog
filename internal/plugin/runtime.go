@@ -19,20 +19,15 @@ type FunctionsScript struct {
 
 // CompileFunctions 编译插件目录下的 functions.go 或 functions.goyaegi 文件。
 // 如果插件没有 functions 文件，返回 nil, nil。
-func CompileFunctions(ctx context.Context, p *Plugin, hooks *Registry, log *slog.Logger) (*FunctionsScript, error) {
+func CompileFunctions(ctx context.Context, p *Plugin, hooks hook.Registry, log *slog.Logger) (*FunctionsScript, error) {
 	if p == nil {
 		return nil, nil
 	}
-	source := Source{Type: SourcePlugin, ID: p.ID}
-	api := hook.New(
-		func(name string, fn any, priority ...int) { hooks.AddAction(name, fn, source, priority...) },
-		func(name string, fn any, priority ...int) { hooks.AddFilter(name, fn, source, priority...) },
-		p.PluginDomain(),
-	)
-	api.SetRemoveHooks(
-		func(name string) { hooks.RemoveAction(name, source) },
-		func(name string) { hooks.RemoveFilter(name, source) },
-	)
+	source := hook.Source{Type: hook.SourcePlugin, ID: p.ID}
+	api := hook.NewAPI().
+		WithRegistryBinding(hook.NewRegistryBinding(hooks, source)).
+		WithDomain(p.PluginDomain())
+
 	i, src, err := script.CompileFromDir(ctx, p.Dir, script.CompileOptions{
 		Subject:      "插件",
 		PackageName:  "plugin",
@@ -44,6 +39,9 @@ func CompileFunctions(ctx context.Context, p *Plugin, hooks *Registry, log *slog
 	}
 	if i == nil {
 		return nil, nil
+	}
+	if err := api.RegistrationError(); err != nil {
+		return nil, err
 	}
 	if log != nil {
 		log.InfoContext(ctx, "插件函数functions.goyaegi编译执行成功",
@@ -59,6 +57,6 @@ func (s *FunctionsScript) CallLifecycle(ctx context.Context, name string) error 
 	if s == nil || s.interp == nil || s.api == nil || name == "" {
 		return nil
 	}
-	_, err := script.CallOptionalFunc(s.interp, "plugin", name, "插件", []any{s.api.WithContext(ctx)})
+	_, err := script.CallOptionalFunc(ctx, s.interp, "plugin", name, "插件", []any{s.api.WithContext(ctx)})
 	return err
 }

@@ -238,7 +238,6 @@ func (h *Public) pageWithLoader(c *gin.Context, loader *store.DataLoader) {
 		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
 			h.log.ErrorContext(c, "增加页面浏览量失败", "error", err, "post_id", p.ID)
 		}
-		p.Views++
 	}
 	h.renderContentPost(c, p, loader, "page", permalink.Page(p), nil)
 }
@@ -337,7 +336,6 @@ func (h *Public) renderResolvedPostWithLoader(c *gin.Context, path string, match
 		if err := h.st.IncrementViews(c, p.ID); err != nil && h.log != nil {
 			h.log.ErrorContext(c, "增加文章浏览量失败", "error", err, "post_id", p.ID)
 		}
-		p.Views++
 	}
 	loader.FillPost(p)
 	extra := gin.H{

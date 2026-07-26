@@ -366,12 +366,6 @@ func (s *Store) GetPageBySlug(ctx context.Context, slug string) (*model.Post, er
 	}
 	return &p, nil
 }
-func (s *Store) IncrementViews(ctx context.Context, id uint) error {
-	return s.DB(ctx).
-		Model(&model.Post{}).
-		Where("id = ?", id).
-		UpdateColumn("views", gorm.Expr("views + 1")).Error
-}
 func (s *Store) AllPostsForArchive(ctx context.Context) ([]model.Post, error) {
 	var posts []model.Post
 	err := s.DB(ctx).Select("id", "title", "slug", "published_at", "author_id").

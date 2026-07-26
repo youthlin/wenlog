@@ -412,10 +412,10 @@ func (s *Store) CommentsByIDs(ctx context.Context, ids []uint) ([]model.Comment,
 	}
 	return comments, nil
 }
-func (s *Store) RecentCommentCountByIP(ctx context.Context, ip string, sinceUnix int64) (int64, error) {
+func (s *Store) RecentCommentCountByIP(ctx context.Context, ip string, since time.Time) (int64, error) {
 	var n int64
 	err := s.DB(ctx).Model(&model.Comment{}).
-		Where("ip = ? AND created_at > datetime(?, 'unixepoch')", ip, sinceUnix).
+		Where("ip = ? AND created_at > ?", ip, since).
 		Count(&n).Error
 	return n, errors.Wrap(err, "recent comment count")
 }

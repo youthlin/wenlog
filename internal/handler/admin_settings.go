@@ -27,6 +27,7 @@ import (
 
 	"github.com/youthlin/wenlog/internal/consts"
 	"github.com/youthlin/wenlog/internal/i18n"
+	"github.com/youthlin/wenlog/internal/middleware"
 	"github.com/youthlin/wenlog/internal/permalink"
 	"github.com/youthlin/wenlog/internal/util"
 	"github.com/youthlin/wenlog/internal/version"
@@ -115,6 +116,7 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 		consts.SettingsMetricsAuthPassword,
 		consts.SettingsShowSQLDetails,
 		consts.SettingsUpdateDownloadMirror,
+		consts.SettingsLogLevel,
 	)
 	if err != nil && h.log != nil {
 		h.log.ErrorContext(c, "get settings for settings page", "error", err)
@@ -150,6 +152,11 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	data["ShowSQLDetails"] = settings[consts.SettingsShowSQLDetails] == "true"
 	data["UpdateDownloadMirrorValue"] = strings.TrimSpace(settings[consts.SettingsUpdateDownloadMirror])
+	logLevel := strings.TrimSpace(settings[consts.SettingsLogLevel])
+	if logLevel == "" {
+		logLevel = consts.SettingsLogLevelDefault
+	}
+	data["LogLevelValue"] = logLevel
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
 	data["InstanceRawVersion"] = version.Version
@@ -205,6 +212,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "sql-details-saved" {
 		data["Notice"] = tr.T("SQL 调试设置已保存。")
+	}
+	if c != nil && c.Query("message") == "log-level-saved" {
+		data["Notice"] = tr.T("日志级别已保存并立即生效。")
 	}
 	if c != nil && c.Query("message") == "update-settings-saved" {
 		data["Notice"] = tr.T("更新设置已保存。")
@@ -881,6 +891,21 @@ func (h *Admin) SaveSQLDetailsSettings(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "sql-details-saved"))
 }
 
+// SaveLogLevelSettings 保存日志级别设置并立即生效。
+func (h *Admin) SaveLogLevelSettings(c *gin.Context) {
+	level := strings.TrimSpace(strings.ToLower(c.PostForm("log_level")))
+	if !middleware.SetLogLevel(level) {
+		level = consts.SettingsLogLevelDefault
+		middleware.SetLogLevel(level)
+	}
+	if err := h.st.SetSetting(c, consts.SettingsLogLevel, level); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	slog.Info("log level changed", "level", level)
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "log-level-saved"))
+}
+
 func (h *Admin) saveSMTPSettings(c *gin.Context) error {
 	smtpHost := strings.TrimSpace(c.PostForm("smtp_host"))
 	smtpPort := strings.TrimSpace(c.PostForm("smtp_port"))
@@ -963,16 +988,9 @@ func (h *Admin) TestSMTPSettings(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("general", "smtp-test-sent"))
 }
 
-// SaveSessionSettings 修改 session secret。修改后所有登录用户都需要重新登录。
+// SaveSessionSettings 重新生成 session secret。修改后所有登录用户都需要重新登录。
 func (h *Admin) SaveSessionSettings(c *gin.Context) {
-	tr := i18n.Get(c)
-	secret := strings.TrimSpace(c.PostForm("session_secret"))
-	if secret == "" {
-		data := h.settingsDataForTab(c, "general")
-		data["Error"] = tr.T("Session Secret 不能为空。")
-		c.HTML(http.StatusBadRequest, "admin_settings.gohtml", data)
-		return
-	}
+	secret := util.GenerateRandomString(32)
 	if err := h.st.SetSetting(c, consts.SettingsSessionSecret, secret); err != nil {
 		h.serverError(c, err)
 		return

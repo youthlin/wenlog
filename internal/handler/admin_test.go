@@ -19,6 +19,7 @@ import (
 	gettext "github.com/youthlin/t"
 	"github.com/youthlin/wenlog/internal/consts"
 	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/plugin"
 	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/internal/util"
 )
@@ -82,6 +83,22 @@ func TestReleaseTagFromURL(t *testing.T) {
 		if got != tt.want {
 			t.Fatalf("%s: releaseTagFromURL()=%q, want %q", tt.name, got, tt.want)
 		}
+	}
+}
+
+func TestToPluginViewIncludesLifecycle(t *testing.T) {
+	p := &plugin.Plugin{
+		ID:   "demo",
+		Name: "Demo",
+		Lifecycle: plugin.LifecycleDecl{
+			Activate:  true,
+			Uninstall: true,
+		},
+	}
+	view := toPluginView(gettext.NewTranslations(), p, false, "")
+	got := strings.Join(view.Lifecycle, ",")
+	if got != "Activate,Uninstall" {
+		t.Fatalf("lifecycle names = %q, want Activate,Uninstall", got)
 	}
 }
 

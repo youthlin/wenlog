@@ -21,9 +21,10 @@
 </footer>
 {{- end}}
 {{- end}}
+{{template "js_i18n" .}}
 <script src="/assets/common.js?v={{.AssetVersion}}"></script>
 <script src="/assets/theme.js"></script>
-{{- slot "body.end" .}}
+{{- do_action "body.end" .}}
 </body>
 </html>
 {{- end}}

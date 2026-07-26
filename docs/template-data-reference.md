@@ -60,6 +60,8 @@
 
 所有模板中可用的函数：
 
+会触发标准 action / filter 的函数，其 hook 名称、payload view、返回值安全语义和脚本签名见 `docs/hook-reference.md`。
+
 | 函数 | 签名 | 说明 |
 |---|---|---|
 | `postURL` | `func(any) string` | 文章或页面永久链接；支持 `model.Post`、`*model.Post` 和 `theme.PostView` |
@@ -70,8 +72,8 @@
 | `postExcerptHTML` | `func(*model.Post) template.HTML` | 文章摘要 HTML（截断 more 标记前） |
 | `detailHTML` | `func(*model.Post) template.HTML` | 详情页完整正文 |
 | `hasMore` | `func(string) bool` | 是否有 more 标记 |
-| `avatarURL` | `func(string, string) string` | 头像 URL（带默认头像） |
-| `defaultAvatarURL` | `func(string) string` | 根据默认头像类型生成兜底头像 URL |
+| `avatarURL` | `func(string, string, int) string` | 头像 URL（参数：邮箱、默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
+| `defaultAvatarURL` | `func(string, int) string` | 根据默认头像类型生成兜底头像 URL（参数：默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
 | `fmtDate` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
 | `fmtDateTime` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
 | `fmtDateTimeLocal` | `func(time.Time) string` | 格式化为 HTML datetime-local 可用值 `2006-01-02T15:04` |
@@ -82,12 +84,26 @@
 | `seq` | `func(int) []int` | 生成 `[1..n]` 整数切片 |
 | `toInt` | `func(string) int` | 字符串转整数，失败返回 0 |
 | `default` | `func(def, val any) any` | 当 val 为空值时返回 def |
-| `themeInvoke` | `func(string, ...any) any` | 调用主题 `functions.go/functions.goyaegi` 里通过 `themeapi.Api.RegisterFunc(...)` 注册的主题函数 |
-| `themeOption` | `func(string) string` | 读取主题全局选项 |
-| `themeWidgets` | `func(string) any` | 返回某个组件区域的组件配置，通常由 `renderWidgets` 间接使用 |
-| `renderWidgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{renderWidgets "sidebar" .}}` |
-| `widgetOption` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
-| `renderMenu` | `func(string, ...any) template.HTML` | 渲染指定位置的导航菜单，如 `{{renderMenu "primary" .}}`；支持多级下拉子菜单，自动从 `.Menus` 或 `.Menu` 取数据 |
+| `hook_invoke` | `func(string, ...any) any` | 调用当前主题或插件 `functions.goyaegi` 里通过 `api.RegisterFunc(...)` 注册的扩展函数 |
+| `theme_option` | `func(string) string` | 读取主题全局选项 |
+| `widget_option` | `func(string) string` | 在 `widget_<id>` 模板内读取当前组件实例选项 |
+| `render_widgets` | `func(string, any) template.HTML` | 渲染指定组件区域，如 `{{render_widgets "sidebar" .}}` |
+| `render_menu` | `func(string, ...any) template.HTML` | 渲染指定位置的导航菜单，如 `{{render_menu "primary" .}}`；支持多级下拉子菜单，自动从 `.Menus` 或 `.Menu` 取数据 |
+| `do_action` | `func(string, any) template.HTML` | 触发 action hook 并收集扩展输出 HTML，如 `{{do_action "head.end" .}}` |
+| `apply_filter` | `func(any, string, ...any) template.HTML` | 对输入值应用 HTML filter 链，返回值会作为可信 HTML 输出；文本类扩展优先使用宿主封装函数，如 `post_title` |
+| `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按纯文本转义 |
+| `post_title_text` | `func(any) string` | 输出文章标题文本并应用 `post.title` filter；适合列表链接、归档列表、上一篇/下一篇等已有结构内的标题文本；模板会按上下文自动转义 |
+| `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
+| `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
+| `post_tags` | `func(any) template.HTML` | 输出文章标签链接 |
+| `post_navigation` | `func(any, ...string) template.HTML` | 输出上一篇/下一篇文章导航 |
+| `body_class` | `func(any) string` | 生成 `<body>` CSS class |
+| `post_class` | `func(any, ...string) string` | 生成文章容器 CSS class |
+| `comment_class` | `func(any, ...string) string` | 生成评论项 CSS class |
+| `comment_content` | `func(any) template.HTML` | 输出评论正文并应用 `comment.content_html` filter；filter 扩展参数传 `hook.CommentView`；filter 返回值按可信 HTML 输出 |
+| `head_meta` | `func(any) template.HTML` | 输出 OpenGraph / Twitter Card meta 标签并应用 `head.meta` filter；filter 扩展参数传 `hook.HeadMetaView`；filter 返回值按可信 HTML 输出 |
+| `list_comments` | `func(...any) template.HTML` | 渲染评论列表 |
+| `comment_form` | `func(any) template.HTML` | 渲染评论表单，内部会触发 `comment.form.after_textarea` action |
 | `comments_pagination` | `func(any, ...int) template.HTML` | 渲染评论分页导航，读取 `.CommentPager`；第二个可选参数为 `midSize`，控制当前页左右显示几个页码，默认 `2` |
 | `posts_pagination` | `func(any, ...int) template.HTML` | 渲染文章列表分页导航，读取 `.Pager`；第二个可选参数为 `midSize`，控制当前页左右显示几个页码，默认 `2` |
 
@@ -355,7 +371,7 @@ options:
 ```text
 themes/my-theme/
 ├── theme.yaml
-├── functions.goyaegi       # 可选：注册主题函数（themeInvoke）
+├── functions.goyaegi       # 可选：注册主题扩展函数和 hook
 ├── templates/
 │   ├── index.gohtml        # 必需：首页和兜底模板
 │   ├── post.gohtml         # 可选
@@ -458,18 +474,18 @@ themes/my-theme/
 | `recent_comments` | `widget_recent_comments` | `.RecentCommentItems` |
 | `categories` | `widget_categories` | `.Categories` |
 | `tag_cloud` | `widget_tag_cloud` | `.Tags` |
-| `custom_html` | `widget_custom_html` | `widgetOption "html"` |
+| `custom_html` | `widget_custom_html` | `widget_option "html"` |
 
 示例：
 
 ```gohtml
 {{define "widget_recent_posts"}}
-{{$n := widgetOption "count" | toInt | default 5}}
+{{$n := widget_option "count" | toInt | default 5}}
 <section class="widget widget-recent-posts">
   <h3>{{.t.T "最新文章"}}</h3>
   <ul>
     {{range $i, $p := .RecentPosts}}{{if lt $i $n}}
-      <li><a href="{{postURL $p}}">{{$p.Title}}</a></li>
+      <li><a href="{{postURL $p}}">{{post_title_text $p}}</a></li>
     {{end}}{{end}}
   </ul>
 </section>
@@ -480,38 +496,41 @@ themes/my-theme/
 
 ```gohtml
 <aside class="sidebar">
-  {{renderWidgets "sidebar" .}}
+  {{render_widgets "sidebar" .}}
 </aside>
 ```
 
 ## 主题自定义数据（functions.goyaegi）
 
-当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与无参 `Register()` 函数，通过宿主真实 `themeapi` 包中的 `themeapi.Api` 注册主题函数：
+当通用模板数据不够用时，主题可提供 `functions.goyaegi` 或 `functions.go`，定义 `package theme` 与 `Register(api *hook.API)` 函数，通过 `api.RegisterFunc` 注册可由模板调用的扩展函数。`Register` 也可以返回 `error`，用于在加载阶段显式暴露初始化失败：
 
 ```go
 package theme
 
 import (
     "sort"
-    "themeapi"
+
+    "hook"
 )
 
-func Register() {
-    themeapi.Api.RegisterFunc("popular_posts", func(args map[string]any) any {
-        posts := themeapi.Api.Posts()
+func Register(api *hook.API) error {
+    api.RegisterFunc("PopularPosts", func(api *hook.API, args hook.Args) any {
+        posts := api.Posts()
         sort.Slice(posts, func(i, j int) bool { return posts[i].Views > posts[j].Views })
-        if len(posts) > 5 {
-            posts = posts[:5]
+        n := args.PositiveInt("n", 5)
+        if len(posts) > n {
+            posts = posts[:n]
         }
         return posts
     })
+    return api.RegistrationError()
 }
 ```
 
 模板中调用：
 
 ```gohtml
-{{range themeInvoke "popular_posts"}}
-  <a href="{{postURL .}}">{{.Title}}</a>
+{{range hook_invoke "PopularPosts" "n" 5}}
+  <a href="{{postURL .}}">{{post_title_text .}}</a>
 {{end}}
 ```

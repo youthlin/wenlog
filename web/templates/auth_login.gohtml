@@ -46,6 +46,7 @@
   {{- if .SMTPConfigured}} | <a href="/auth/forgot-password">{{.t.T "忘记密码？"}}</a>{{end}}
   </p>
 </form>
+{{template "js_i18n" .}}
 <script src="/assets/theme.js?v={{.AssetVersion}}"></script>
 <script src="/assets/common.js?v={{.AssetVersion}}"></script>
 </body>

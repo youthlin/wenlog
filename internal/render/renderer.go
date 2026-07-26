@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"html/template"
 	"io/fs"
 	"os"
@@ -10,6 +11,9 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin/render"
 	ginrender "github.com/gin-gonic/gin/render"
+
+	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 // [Renderer] 实现了 gin 的 [render.HTMLRender] 接口
@@ -191,4 +195,42 @@ func (r *Renderer) Template() *template.Template {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.tpl
+}
+
+// Hooks 返回当前 hook 执行器，供非模板渲染路径（如 Feed）使用。
+func (r *Renderer) Hooks() hook.Executor {
+	return r.themeRuntime.current().Hooks
+}
+
+// FilterPostTitle 对文章标题文本应用 post.title filter 链。
+// 供 Feed 等非模板渲染路径使用，保持与模板中的 post_title_text 一致。
+func (r *Renderer) FilterPostTitle(ctx context.Context, post *model.Post) string {
+	title := ""
+	if post != nil {
+		title = post.Title
+	}
+	if h := r.Hooks(); h != nil {
+		payload := postViewPayloadFromContext(ctx, post)
+		title = textFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostTitle, title, payload), title)
+	}
+	return title
+}
+
+// FilterPostContent 对文章正文 HTML 应用 post.content_html 和 post.footer_html filter 链。
+// 供 Feed 等非模板渲染路径使用，确保表情转换、尾部 HTML 等在 RSS 阅读器中生效。
+func (r *Renderer) FilterPostContent(ctx context.Context, post *model.Post) template.HTML {
+	html := detailHTML(post)
+	if h := r.Hooks(); h != nil {
+		payload := postViewPayloadFromContext(ctx, post)
+		html = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload))
+		html = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload))
+	}
+	return html
+}
+
+func postViewPayloadFromContext(ctx context.Context, post any) any {
+	if view := hook.PostViewOf(post, hook.DataLoaderFrom(ctx)); view != nil {
+		return *view
+	}
+	return post
 }

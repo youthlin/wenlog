@@ -179,14 +179,14 @@ func ResolveWidgetsWithDecls(ctx context.Context, userConfigJSON string, t *Them
 	for i, item := range items {
 		decl, ok := resolveWidgetDecl(available, item)
 		if !ok {
-			slog.InfoContext(ctx, "widget resolve failed", "area", area, "item_id", item.ID, "item_source", item.Source)
+			slog.DebugContext(ctx, "widget resolve failed", "area", area, "item_id", item.ID, "item_source", item.Source)
 			continue
 		}
 		if decl.Source != WidgetSourcePlugin && !widgetTemplateExists(t, decl.ID) && !IsBuiltinWidget(decl.ID) {
-			slog.InfoContext(ctx, "widget template missing", "area", area, "id", decl.ID, "source", decl.Source)
+			slog.DebugContext(ctx, "widget template missing", "area", area, "id", decl.ID, "source", decl.Source)
 			continue
 		}
-		slog.InfoContext(ctx, "widget resolved", "area", area, "id", decl.ID, "source", decl.Source, "plugin_id", decl.PluginID)
+		slog.DebugContext(ctx, "widget resolved", "area", area, "id", decl.ID, "source", decl.Source, "plugin_id", decl.PluginID)
 		result = append(result, WidgetInfo{
 			InstanceID:   widgetInstanceID(item, i),
 			ID:           decl.ID,

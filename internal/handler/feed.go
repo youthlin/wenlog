@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/permalink"
 )
 
@@ -42,6 +43,10 @@ func (h *Public) Feed(c *gin.Context) {
 		return
 	}
 	baseURL := requestBaseURL(c)
+	filterCtx := c.Request.Context()
+	if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+		filterCtx = hook.WithDataLoader(filterCtx, loader)
+	}
 	ch := rssChan{
 		Title:       s.SiteName,
 		Link:        baseURL,
@@ -50,12 +55,13 @@ func (h *Public) Feed(c *gin.Context) {
 	for i := range res.Posts {
 		p := &res.Posts[i]
 		link := baseURL + permalink.Post(p)
-		desc := p.Excerpt
+		title := h.renderer.FilterPostTitle(filterCtx, p)
+		desc := string(h.renderer.FilterPostContent(filterCtx, p))
 		if desc == "" {
-			desc = p.Title
+			desc = title
 		}
 		ch.Items = append(ch.Items, rssItem{
-			Title:   p.Title,
+			Title:   title,
 			Link:    link,
 			GUID:    link,
 			PubDate: p.PublishedAt.Format(time.RFC1123Z),
@@ -89,12 +95,17 @@ type atomLink struct {
 }
 
 type atomEntry struct {
-	Title   string     `xml:"title"`
-	ID      string     `xml:"id"`
-	Updated string     `xml:"updated"`
-	Link    atomLink   `xml:"link"`
-	Summary string     `xml:"summary,omitempty"`
-	Author  atomAuthor `xml:"author"`
+	Title   string      `xml:"title"`
+	ID      string      `xml:"id"`
+	Updated string      `xml:"updated"`
+	Link    atomLink    `xml:"link"`
+	Content atomContent `xml:"content"`
+	Author  atomAuthor  `xml:"author"`
+}
+
+type atomContent struct {
+	Type string `xml:"type,attr"`
+	Body string `xml:",chardata"`
 }
 
 type atomAuthor struct {
@@ -112,6 +123,10 @@ func (h *Public) AtomFeed(c *gin.Context) {
 	}
 	baseURL := requestBaseURL(c)
 	atomURL := baseURL + "/atom"
+	filterCtx := c.Request.Context()
+	if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+		filterCtx = hook.WithDataLoader(filterCtx, loader)
+	}
 
 	feed := atomFeed{
 		Title:    s.SiteName,
@@ -126,9 +141,10 @@ func (h *Public) AtomFeed(c *gin.Context) {
 	for i := range res.Posts {
 		p := &res.Posts[i]
 		link := baseURL + permalink.Post(p)
-		summary := p.Excerpt
-		if summary == "" {
-			summary = p.Title
+		title := h.renderer.FilterPostTitle(filterCtx, p)
+		content := string(h.renderer.FilterPostContent(filterCtx, p))
+		if content == "" {
+			content = title
 		}
 		authorName := ""
 		if p.Author.DisplayName != "" {
@@ -137,11 +153,11 @@ func (h *Public) AtomFeed(c *gin.Context) {
 			authorName = p.Author.Username
 		}
 		feed.Entries = append(feed.Entries, atomEntry{
-			Title:   p.Title,
+			Title:   title,
 			ID:      link,
 			Updated: p.PublishedAt.Format(time.RFC3339),
 			Link:    atomLink{Href: link, Rel: "alternate"},
-			Summary: summary,
+			Content: atomContent{Type: "html", Body: content},
 			Author:  atomAuthor{Name: authorName},
 		})
 	}

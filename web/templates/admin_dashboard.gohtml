@@ -9,7 +9,7 @@
 {{- if .User}}
 <section class="card dashboard-welcome-card">
   <a class="dashboard-user-avatar" href="/admin/profile" aria-label="{{.t.T "查看个人资料"}}">
-    <img class="avatar" src="{{avatarURL .User.Email .DefaultAvatar}}" alt="" width="72" height="72">
+    <img class="avatar" src="{{avatarURL .User.Email .DefaultAvatar 72}}" alt="" width="72" height="72">
   </a>
   <div class="dashboard-user-main">
     <a class="dashboard-user-name" href="/admin/profile">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.User.Username}}{{end}}</a>
@@ -36,7 +36,7 @@
     <span class="stat-sub">{{.t.N1_64 "%d 篇草稿" .Stats.PagesDraft .Stats.PagesDraft}}</span>
     {{- end}}
   </a>
-  <a class="stat-card" href="/admin/comments">
+  <a class="stat-card" href="{{if gt .Stats.Comments.Pending 0}}/admin/comments?status=pending{{else}}/admin/comments{{end}}">
     <span class="stat-icon">💬</span>
     <span class="stat-value">{{.Stats.Comments.Approved}}</span>
     <span class="stat-label">{{.t.T "已批准评论"}}</span>

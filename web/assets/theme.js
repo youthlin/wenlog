@@ -46,11 +46,13 @@
     syncThemeSelects(storedTheme);
   });
 
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
   var navBtn = document.querySelector("[data-nav-toggle]");
   var navPanel = document.querySelector("[data-nav-panel]");
   var navBackdrop = document.querySelector("[data-nav-backdrop]");
-  var openLabel = document.documentElement.dataset.navOpenLabel || "Open menu";
-  var closeLabel = document.documentElement.dataset.navCloseLabel || "Collapse menu";
+  var openLabel = t("navOpenLabel", "Open menu");
+  var closeLabel = t("navCloseLabel", "Collapse menu");
   function isMobileNav() {
     return !!(navBtn && window.getComputedStyle(navBtn).display !== "none");
   }

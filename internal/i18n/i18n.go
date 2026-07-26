@@ -2,6 +2,8 @@
 package i18n
 
 import (
+	"encoding/json"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -172,7 +174,54 @@ func Inject(c *gin.Context, data gin.H) gin.H {
 	data["usedLocale"] = used
 	data["htmlLang"] = htmlLang(used)
 	data["langURL"] = switchURLs
+	data["JSI18nJSON"] = jsCatalogJSON(translator)
 	return data
+}
+
+func jsCatalogJSON(translator *gettext.Translations) template.JS {
+	if translator == nil {
+		translator = gettext.Global()
+	}
+	catalog := map[string]string{
+		"uploading":             translator.T("上传中..."),
+		"uploadFailed":          translator.T("上传失败"),
+		"imageInserted":         translator.T("已插入图片 Markdown"),
+		"existingImageInserted": translator.T("已插入已有图片"),
+		"loadFilesFailed":       translator.T("加载文件失败"),
+		"previewLabel":          translator.T("预览"),
+		"continueEditingLabel":  translator.T("继续编辑"),
+		"expandLabel":           translator.T("展开"),
+		"collapseLabel":         translator.T("收起"),
+		"navOpenLabel":          translator.T("打开菜单"),
+		"navCloseLabel":         translator.T("收起菜单"),
+		"commentSuccess":        translator.T("评论已提交,等待审核后显示。"),
+		"commentFail":           translator.T("提交失败,请稍后重试。"),
+		"commentNetwork":        translator.T("网络错误,请稍后重试。"),
+		"headingPlaceholder":    translator.T("小标题"),
+		"boldPlaceholder":       translator.T("加粗文本"),
+		"italicPlaceholder":     translator.T("斜体文本"),
+		"quotePlaceholder":      translator.T("引用内容"),
+		"listItemPlaceholder":   translator.T("列表项"),
+		"linkTextPlaceholder":   translator.T("链接文字"),
+		"linkURLPrompt":         translator.T("链接 URL"),
+		"draftDiscarded":        translator.T("已忽略本地草稿。"),
+		"draftSaved":            translator.T("已自动保存到本地。"),
+		"requestFailed":         translator.T("请求失败"),
+		"passkeyNameRequired":   translator.T("请先输入便于识别的 Passkey 名称。"),
+		"passkeyCreating":       translator.T("正在创建 Passkey…"),
+		"passkeyAdded":          translator.T("Passkey 已添加。"),
+		"passkeyFailed":         translator.T("Passkey 操作失败。"),
+		"passkeyVerifying":      translator.T("请使用 Passkey 完成验证…"),
+		"passkeyLoginFailed":    translator.T("Passkey 登录失败。"),
+		"searchPlaceholder":     translator.T("输入关键字筛选…"),
+		"searchEmpty":           translator.T("没有匹配项"),
+		"categoryRequired":      translator.T("请至少选择一个分类目录。"),
+	}
+	data, err := json.Marshal(map[string]any{"messages": catalog})
+	if err != nil {
+		return template.JS(`{"messages":{}}`)
+	}
+	return template.JS(data)
 }
 
 // InjectDomain 向模板数据注入指定文本域的翻译能力。

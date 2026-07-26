@@ -143,6 +143,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.POST("/settings/session", adm.SaveSessionSettings)
 	adminGroup.POST("/settings/metrics", adm.SaveMetricsAuthSettings)
 	adminGroup.POST("/settings/sql-details", adm.SaveSQLDetailsSettings)
+	adminGroup.POST("/settings/log-level", adm.SaveLogLevelSettings)
 	adminGroup.POST("/settings/update", adm.SaveUpdateSettings)
 	adminGroup.GET("/settings/update/check", adm.CheckAppUpdate)
 	adminGroup.POST("/settings/update/apply", adm.ApplyAppUpdate)

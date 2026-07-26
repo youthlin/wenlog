@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"archive/zip"
 	"context"
 	"fmt"
-	"io"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,6 +13,7 @@ import (
 	gettext "github.com/youthlin/t"
 
 	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/extension"
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/plugin"
 	"github.com/youthlin/wenlog/internal/theme"
@@ -39,7 +37,7 @@ type pluginView struct {
 	LoadError   string
 	ActionNames []string
 	FilterNames []string
-	SlotNames   []string
+	Lifecycle   []string
 	WidgetNames []string
 	OptionNames []string
 	Source      string
@@ -331,11 +329,25 @@ func toPluginView(tr *gettext.Translations, p *plugin.Plugin, enabled bool, load
 		LoadError:   loadError,
 		ActionNames: append([]string(nil), p.Hooks.Actions...),
 		FilterNames: append([]string(nil), p.Hooks.Filters...),
-		SlotNames:   append([]string(nil), p.Hooks.Slots...),
+		Lifecycle:   pluginLifecycleNames(p.Lifecycle),
 		WidgetNames: pluginWidgetNames(p.Widgets),
 		OptionNames: pluginOptionNames(p.Options),
 		Source:      "plugin:" + p.ID,
 	}
+}
+
+func pluginLifecycleNames(l plugin.LifecycleDecl) []string {
+	out := make([]string, 0, 3)
+	if l.Activate {
+		out = append(out, plugin.LifecycleActivate)
+	}
+	if l.Deactivate {
+		out = append(out, plugin.LifecycleDeactivate)
+	}
+	if l.Uninstall {
+		out = append(out, plugin.LifecycleUninstall)
+	}
+	return out
 }
 
 func pluginWidgetNames(widgets []plugin.WidgetDecl) []string {
@@ -408,7 +420,14 @@ func (h *Admin) PluginUpload(c *gin.Context) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	if err := extractPluginZip(file, fh.Size, tmpDir); err != nil {
+	if err := extension.ExtractZip(file, fh.Size, tmpDir, extension.ExtractOptions{
+		Kind:       "plugin",
+		MaxSize:    maxPluginExtractedSize,
+		MaxFile:    maxPluginExtractedFile,
+		MaxFiles:   maxPluginExtractedFiles,
+		MaxNameLen: maxPluginExtractedName,
+		AllowFile:  isAllowedPluginFile,
+	}); err != nil {
 		h.redirectPlugins(c, "", tr.T("解压插件包失败: %s", err.Error()))
 		return
 	}
@@ -458,7 +477,7 @@ func (h *Admin) PluginDownload(c *gin.Context) {
 	}
 	tmpName := tmp.Name()
 	defer os.Remove(tmpName)
-	if err := writePluginZip(tmp, p.ID, p.Dir); err != nil {
+	if err := extension.WriteZip(tmp, p.ID, p.Dir); err != nil {
 		_ = tmp.Close()
 		h.redirectPlugins(c, "", tr.T("打包插件失败: %s", err.Error()))
 		return
@@ -468,142 +487,6 @@ func (h *Admin) PluginDownload(c *gin.Context) {
 		return
 	}
 	c.FileAttachment(tmpName, p.ID+".zip")
-}
-
-func writePluginZip(w io.Writer, rootName, dir string) error {
-	zw := zip.NewWriter(w)
-	defer zw.Close()
-	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-		if rel == "." {
-			return nil
-		}
-		info, err := d.Info()
-		if err != nil {
-			return err
-		}
-		header, err := zip.FileInfoHeader(info)
-		if err != nil {
-			return err
-		}
-		header.Name = filepath.ToSlash(filepath.Join(rootName, rel))
-		if d.IsDir() {
-			header.Name += "/"
-		} else {
-			header.Method = zip.Deflate
-		}
-		writer, err := zw.CreateHeader(header)
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		_, copyErr := io.Copy(writer, file)
-		closeErr := file.Close()
-		if copyErr != nil {
-			return copyErr
-		}
-		return closeErr
-	})
-}
-
-// extractPluginZip 解压 zip 到目标目录，带路径穿越防护。
-func extractPluginZip(r io.ReaderAt, size int64, dest string) error {
-	zr, err := zip.NewReader(r, size)
-	if err != nil {
-		return err
-	}
-	var total int64
-	var files int
-	for _, f := range zr.File {
-		name := filepath.Clean(f.Name)
-		if !safePluginZipPath(name) {
-			continue
-		}
-		if len(filepath.Base(name)) > maxPluginExtractedName {
-			return fmt.Errorf("plugin file name too long: %s", name)
-		}
-		target := filepath.Join(dest, name)
-		if !pathWithinDir(dest, target) {
-			continue
-		}
-		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(target, 0o755); err != nil {
-				return err
-			}
-			continue
-		}
-		files++
-		if files > maxPluginExtractedFiles {
-			return fmt.Errorf("plugin package contains too many files")
-		}
-		headerSize := int64(f.UncompressedSize64)
-		if headerSize > maxPluginExtractedFile {
-			return fmt.Errorf("plugin file %s is too large", name)
-		}
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		if !isAllowedPluginFile(name) {
-			continue
-		}
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		out, err := os.Create(target)
-		if err != nil {
-			rc.Close()
-			return err
-		}
-		written, err := copyPluginZipFile(out, rc)
-		rc.Close()
-		closeErr := out.Close()
-		if err != nil {
-			_ = os.Remove(target)
-			return err
-		}
-		if closeErr != nil {
-			_ = os.Remove(target)
-			return closeErr
-		}
-		total += written
-		if total > maxPluginExtractedSize {
-			_ = os.Remove(target)
-			return fmt.Errorf("plugin package uncompressed size is too large")
-		}
-	}
-	return nil
-}
-
-func copyPluginZipFile(out io.Writer, rc io.Reader) (int64, error) {
-	lr := &io.LimitedReader{R: rc, N: maxPluginExtractedFile + 1}
-	written, err := io.Copy(out, lr)
-	if err != nil {
-		return written, err
-	}
-	if written > maxPluginExtractedFile {
-		return written, fmt.Errorf("plugin file is too large")
-	}
-	return written, nil
-}
-
-func safePluginZipPath(name string) bool {
-	if name == "." || name == ".." || filepath.IsAbs(name) {
-		return false
-	}
-	return !strings.HasPrefix(name, ".."+string(filepath.Separator))
 }
 
 // isAllowedPluginFile 检查文件扩展名是否在插件文件白名单中。

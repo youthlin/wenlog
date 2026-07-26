@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
+	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/email"
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/middleware"
@@ -99,6 +100,49 @@ func (h *Public) SubmitComment(c *gin.Context) {
 		uid := loggedInUser.ID
 		cm.UserID = &uid
 	}
+
+	// 调用 comment.before_create filter，插件可修改 Status/Content 或拒绝提交。
+	preView := &hook.CommentPreCreateView{
+		PostID:    cm.PostID,
+		ParentID:  cm.ParentID,
+		ReplyToID: cm.ReplyToID,
+		UserID:    cm.UserID,
+		Author:    cm.Author,
+		Email:     cm.Email,
+		URL:       cm.URL,
+		IP:        cm.IP,
+		UserAgent: c.Request.UserAgent(),
+		Content:   cm.Content,
+		Status:    cm.Status,
+	}
+	if hooks := h.renderer.Hooks(); hooks != nil {
+		ctx := c.Request.Context()
+		if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+			ctx = hook.WithDataLoader(ctx, loader)
+		}
+		result := hooks.ApplyFilters(ctx, hook.FilterCommentBeforeCreate, preView)
+		if v, ok := result.(*hook.CommentPreCreateView); ok && v != nil {
+			cm.Content = v.Content
+			normalized := normalizeCommentStatus(c, v.Status)
+			h.log.DebugContext(c, "评论提交过滤",
+				"post_id", v.PostID,
+				"status", normalized,
+				"rejected", normalized == model.CommentSpam,
+				"content_length", len(v.Content),
+				"has_reject_message", v.RejectMessage != "",
+			)
+			if normalized == model.CommentSpam {
+				msg := v.RejectMessage
+				if msg == "" {
+					msg = tr.T("评论被拦截。")
+				}
+				h.commentResp(c, false, msg, req.PostID)
+				return
+			}
+			cm.Status = normalized
+		}
+	}
+
 	if err := h.st.CreateComment(c, cm); err != nil {
 		h.serverError(c, err)
 		return
@@ -206,7 +250,7 @@ func (h *Public) validateCommentTarget(c *gin.Context, tr *gettext.Translations,
 // checkCommentRateLimit 检查同 IP 评论频率限制。
 func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations, postID uint) bool {
 	ip := c.ClientIP()
-	since := time.Now().Add(-rateWindowSec * time.Second).Unix()
+	since := time.Now().Add(-rateWindowSec * time.Second)
 	cnt, err := h.st.RecentCommentCountByIP(c, ip, since)
 	if err != nil {
 		h.log.ErrorContext(c, "评论限频", "error", err, "ip", ip)
@@ -214,6 +258,7 @@ func (h *Public) checkCommentRateLimit(c *gin.Context, tr *gettext.Translations,
 		return false
 	}
 	if cnt >= rateMaxInWindow {
+		h.log.ErrorContext(c, "评论太频繁", "since", since, "count", cnt)
 		h.commentResp(c, false, tr.T("评论太频繁,请稍后再试。"), postID)
 		return false
 	}
@@ -416,4 +461,17 @@ func postRedirectURL(p *model.Post) string {
 		return permalink.Page(p) + "#comments"
 	}
 	return permalink.Post(p) + "#comments"
+}
+
+// normalizeCommentStatus 将插件返回的评论状态规范化为合法值。
+// 允许: approved/pending/spam; 其他值回退为 pending 并记录 warn。
+// 抽取为纯函数以便单元测试。
+func normalizeCommentStatus(ctx context.Context, status string) string {
+	switch status {
+	case model.CommentSpam, model.CommentApproved, model.CommentPending:
+		return status
+	default:
+		slog.WarnContext(ctx, "comment.before_create 返回非法状态，回退为 pending", "status", status)
+		return model.CommentPending
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/youthlin/wenlog/internal/config"
+	"github.com/youthlin/wenlog/internal/consts"
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/middleware"
 	"github.com/youthlin/wenlog/internal/store"
@@ -31,6 +32,12 @@ func main() {
 	if err != nil {
 		slog.ErrorContext(bg, "初始化数据库失败", slog.Any("error", err))
 		os.Exit(1)
+	}
+	// 从 DB 加载日志级别配置
+	if savedLevel, err := st.GetSetting(bg, consts.SettingsLogLevel); err == nil && savedLevel != "" {
+		if middleware.SetLogLevel(savedLevel) {
+			slog.Info("log level loaded from db", "level", savedLevel)
+		}
 	}
 	if err = i18n.Init(); err != nil {
 		slog.ErrorContext(bg, "加载i18n资源失败", slog.Any("error", err))
@@ -64,9 +71,10 @@ func main() {
 }
 
 func setDefaultLogger(jsonOut bool) {
+	middleware.SetLogLevel("info")
 	opts := &slog.HandlerOptions{
 		AddSource: true,
-		Level:     slog.LevelInfo,
+		Level:     middleware.LogLevel,
 	}
 	var h slog.Handler
 	if jsonOut {

@@ -8,7 +8,6 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
-	"strings"
 
 	gettext "github.com/youthlin/t"
 	"github.com/youthlin/wenlog/hook"
@@ -16,29 +15,33 @@ import (
 	"github.com/youthlin/wenlog/internal/script"
 )
 
-// RenderWidget 渲染插件组件。优先执行 widget.render action；如果 action 没有输出，回退到插件 widgets/<id>.gohtml 模板。
+type widgetRenderContext struct {
+	PluginID string
+	WidgetID string
+	Options  map[string]string
+	Data     any
+}
+
+// RenderWidget 渲染插件组件。插件组件由 manifest 声明并注册为明确的 Widget renderer，
+// 渲染时执行插件 widgets/<id>.gohtml 模板。
 func (m *Manager) RenderWidget(ctx context.Context, pluginID, widgetID string, options map[string]string, data any) (template.HTML, bool) {
 	if m == nil || pluginID == "" || widgetID == "" {
 		return "", false
 	}
 	p := m.Get(pluginID)
 	if p == nil {
-		slog.InfoContext(ctx, "RenderWidget: plugin not found", "plugin_id", pluginID)
+		slog.DebugContext(ctx, "RenderWidget: plugin not found", "plugin_id", pluginID)
 		return "", false
 	}
 	if options == nil {
 		options = map[string]string{}
 	}
-	slog.InfoContext(ctx, "RenderWidget: rendering plugin widget", "plugin_id", pluginID, "widget_id", widgetID)
-	renderCtx := hook.WidgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
-	if html, ok := m.renderWidgetByAction(ctx, renderCtx); ok {
-		slog.InfoContext(ctx, "RenderWidget: rendered by action", "plugin_id", pluginID, "widget_id", widgetID)
-		return html, true
-	}
+	slog.DebugContext(ctx, "RenderWidget: rendering plugin widget", "plugin_id", pluginID, "widget_id", widgetID)
+	renderCtx := widgetRenderContext{PluginID: pluginID, WidgetID: widgetID, Options: options, Data: data}
 	return m.renderWidgetByTemplate(ctx, p, renderCtx)
 }
 
-// pluginWidget 是插件组件的 Widget 接口实现，组合了 action 和 template 两种渲染模式。
+// pluginWidget 是插件组件的 WidgetRenderer 实现，负责将插件 manifest 中声明的组件绑定到模板 renderer。
 type pluginWidget struct {
 	m        *Manager
 	decl     hook.WidgetDecl
@@ -70,35 +73,22 @@ func (m *Manager) RegisterPluginWidgets(ctx context.Context, widgetRegistry *hoo
 			d.PluginID = p.ID
 			w := &pluginWidget{m: m, decl: d, pluginID: p.ID}
 			widgetRegistry.Register(w)
-			slog.InfoContext(ctx, "RegisterPluginWidgets: registered", "plugin", p.ID, "widget", d.ID)
+			slog.DebugContext(ctx, "RegisterPluginWidgets: registered", "plugin", p.ID, "widget", d.ID)
 		}
 	}
 }
 
-func (m *Manager) renderWidgetByAction(ctx context.Context, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
-	hooks := m.GetRegistry()
-	if hooks == nil {
-		return "", false
-	}
-	var out strings.Builder
-	hooks.DoAction(ctx, hook.HookWidgetRender, &out, renderCtx)
-	if out.Len() == 0 {
-		return "", false
-	}
-	return template.HTML(out.String()), true
-}
-
-func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderCtx hook.WidgetRenderContext) (template.HTML, bool) {
+func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderCtx widgetRenderContext) (template.HTML, bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	path := filepath.Join(p.WidgetsDir(), renderCtx.WidgetID+".gohtml")
 	if _, err := os.Stat(path); err != nil {
-		slog.InfoContext(ctx, "renderWidgetByTemplate: template file not found", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
+		slog.DebugContext(ctx, "renderWidgetByTemplate: template file not found", "plugin", p.ID, "widget", renderCtx.WidgetID, "path", path, "error", err)
 		return "", false
 	}
 	api := m.pluginAPI(ctx, p)
-	slog.InfoContext(ctx, "renderWidgetByTemplate: got plugin API", "plugin", p.ID, "widget", renderCtx.WidgetID, "api_has_funcs", api != nil && len(api.FuncNames()) > 0)
+	slog.DebugContext(ctx, "renderWidgetByTemplate: got plugin API", "plugin", p.ID, "widget", renderCtx.WidgetID, "api_has_funcs", api != nil && len(api.FuncNames()) > 0)
 	tpl, err := template.New(filepath.Base(path)).
 		Funcs(pluginTemplateFuncs(ctx, renderCtx.Options, api)).
 		ParseFiles(path)
@@ -120,42 +110,42 @@ func (m *Manager) renderWidgetByTemplate(ctx context.Context, p *Plugin, renderC
 	for _, name := range []string{"widget_" + renderCtx.WidgetID, filepath.Base(path)} {
 		var buf bytes.Buffer
 		if err := tpl.ExecuteTemplate(&buf, name, data); err == nil {
-			slog.InfoContext(ctx, "renderWidgetByTemplate: template executed successfully", "plugin", p.ID, "widget", renderCtx.WidgetID, "html_len", buf.Len())
+			slog.DebugContext(ctx, "renderWidgetByTemplate: template executed successfully", "plugin", p.ID, "widget", renderCtx.WidgetID, "html_len", buf.Len())
 			return template.HTML(buf.String()), true
 		}
-		slog.InfoContext(ctx, "renderWidgetByTemplate: template execute failed", "plugin", p.ID, "widget", renderCtx.WidgetID, "name", name, "error", err)
+		slog.DebugContext(ctx, "renderWidgetByTemplate: template execute failed", "plugin", p.ID, "widget", renderCtx.WidgetID, "name", name, "error", err)
 	}
-	slog.InfoContext(ctx, "renderWidgetByTemplate: all template names failed", "plugin", p.ID, "widget", renderCtx.WidgetID)
+	slog.DebugContext(ctx, "renderWidgetByTemplate: all template names failed", "plugin", p.ID, "widget", renderCtx.WidgetID)
 	return "", false
 }
 
 func (m *Manager) pluginAPI(ctx context.Context, p *Plugin) *hook.API {
 	if p == nil {
-		return hook.New(nil, nil, "").WithContext(ctx)
+		return hook.NewAPI().WithContext(ctx)
 	}
 	m.mu.RLock()
 	script := m.scripts[p.ID]
 	m.mu.RUnlock()
 	if script != nil && script.api != nil {
 		api := script.api.WithContext(ctx)
-		slog.InfoContext(ctx, "pluginAPI: found script api", "plugin", p.ID, "funcs", api.FuncNames())
+		m.log.DebugContext(ctx, "pluginAPI: found script api", "plugin", p.ID, "funcs", api.FuncNames())
 		return api
 	}
-	slog.InfoContext(ctx, "pluginAPI: no script/api, returning empty API", "plugin", p.ID, "has_script", script != nil, "has_api", script != nil && script.api != nil)
-	return hook.New(nil, nil, p.PluginDomain()).WithContext(ctx)
+	slog.DebugContext(ctx, "pluginAPI: no script/api, returning empty API", "plugin", p.ID, "has_script", script != nil, "has_api", script != nil && script.api != nil)
+	return hook.NewAPI().WithDomain(p.PluginDomain()).WithContext(ctx)
 }
 
-func pluginTemplateFuncs(ctx context.Context, options map[string]string, api *hook.API) template.FuncMap {
+func pluginTemplateFuncs(ctx context.Context, options map[string]string, invoker hook.FuncInvoker) template.FuncMap {
 	funcs := render.CommonFuncMap()
 	maps.Copy(funcs, template.FuncMap{
 		"plugin_option": func(key string) string { return options[key] },
 		"hook_invoke": func(name string, args ...any) any {
-			if api == nil {
-				slog.InfoContext(ctx, "hookInvoke: api is nil", "name", name)
+			if invoker == nil {
+				slog.DebugContext(ctx, "hookInvoke: api is nil", "name", name)
 				return nil
 			}
-			result := api.InvokeFunc(ctx, name, script.ParseKVArgs(args))
-			slog.InfoContext(ctx, "hookInvoke: called", "name", name, "result_nil", result == nil)
+			result := invoker.InvokeFunc(ctx, name, script.ParseKVArgs(args))
+			slog.DebugContext(ctx, "hookInvoke: called", "name", name, "result_nil", result == nil)
 			return result
 		},
 	})

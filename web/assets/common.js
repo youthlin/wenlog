@@ -23,6 +23,9 @@
 
 // Passkey 注册与登录。
 (function () {
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
+
   function isPotentiallyTrustworthyOrigin() {
     var protocol = window.location.protocol;
     var host = window.location.hostname;
@@ -112,20 +115,25 @@
     var headers = { 'Content-Type': 'application/json' };
     if (withCSRF) headers['X-CSRF-Token'] = csrfToken();
     return fetch(url, { method: 'POST', headers: headers, body: body ? JSON.stringify(body) : '{}' })
-      .then(function (r) { return r.json().then(function (data) { if (!r.ok || data.ok === false) throw new Error(data.message || '请求失败'); return data; }); });
+      .then(function (r) { return r.json().then(function (data) { if (!r.ok || data.ok === false) throw new Error(data.message || t('requestFailed', 'Request failed')); return data; }); });
   }
 
   document.querySelectorAll('[data-passkey-register]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var nameInput = document.querySelector('[data-passkey-name]');
       var name = nameInput ? nameInput.value.trim() : '';
+      if (!name) {
+        status(t('passkeyNameRequired', 'Please enter a memorable Passkey name first.'));
+        if (nameInput) nameInput.focus();
+        return;
+      }
       btn.disabled = true;
-      status('正在创建 Passkey…');
+      status(t('passkeyCreating', 'Creating Passkey...'));
       postJSON('/admin/profile/passkeys/begin', {}, true)
         .then(function (data) { return navigator.credentials.create({ publicKey: normalizeCreationOptions(data.options) }); })
         .then(function (cred) { return postJSON('/admin/profile/passkeys/finish?name=' + encodeURIComponent(name), serializeCreate(cred), true); })
-        .then(function () { status('Passkey 已添加。'); window.location.reload(); })
-        .catch(function (err) { status(err.message || 'Passkey 操作失败。'); })
+        .then(function () { status(t('passkeyAdded', 'Passkey added.')); window.location.reload(); })
+        .catch(function (err) { status(err.message || t('passkeyFailed', 'Passkey operation failed.')); })
         .finally(function () { btn.disabled = false; });
     });
   });
@@ -136,12 +144,12 @@
       var usernameInput = selector ? document.querySelector(selector) : null;
       var username = usernameInput ? usernameInput.value.trim() : '';
       btn.disabled = true;
-      status('请使用 Passkey 完成验证…');
+      status(t('passkeyVerifying', 'Please verify with Passkey...'));
       postJSON('/auth/passkey/begin?username=' + encodeURIComponent(username), {}, false)
         .then(function (data) { return navigator.credentials.get({ publicKey: normalizeRequestOptions(data.options) }); })
         .then(function (cred) { return postJSON('/auth/passkey/finish', serializeGet(cred), false); })
         .then(function (data) { window.location.href = data.redirect || '/admin/'; })
-        .catch(function (err) { status(err.message || 'Passkey 登录失败。'); })
+        .catch(function (err) { status(err.message || t('passkeyLoginFailed', 'Passkey login failed.')); })
         .finally(function () { btn.disabled = false; });
     });
   });
@@ -149,6 +157,9 @@
 
 // 下拉框搜索筛选（跨主题通用）
 (function () {
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
+
   document.querySelectorAll("select[data-searchable-select]").forEach(function (select, index) {
     if (select.dataset.searchableReady === "1") {
       return;
@@ -183,7 +194,7 @@
     var input = document.createElement("input");
     input.type = "search";
     input.className = "searchable-select-input";
-    input.placeholder = select.dataset.searchPlaceholder || "输入关键字筛选…";
+    input.placeholder = select.dataset.searchPlaceholder || t("searchPlaceholder", "Type to filter...");
 
     var list = document.createElement("div");
     list.className = "searchable-select-list";
@@ -195,7 +206,7 @@
     var empty = document.createElement("div");
     empty.className = "searchable-select-empty";
     empty.hidden = true;
-    empty.textContent = select.dataset.searchEmpty || "没有匹配项";
+    empty.textContent = select.dataset.searchEmpty || t("searchEmpty", "No matches");
 
     panel.appendChild(input);
     panel.appendChild(list);

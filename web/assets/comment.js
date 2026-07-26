@@ -1,9 +1,10 @@
 // 评论 Ajax 提交 + 评论分页 Ajax 切换。
 (function () {
-  var root = document.documentElement.dataset || {};
-  var MSG_SUCCESS = root.commentSuccess || "Comment submitted and awaiting moderation.";
-  var MSG_FAIL = root.commentFail || "Submission failed. Please try again later.";
-  var MSG_NETWORK = root.commentNetwork || "Network error. Please try again later.";
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
+  var MSG_SUCCESS = t("commentSuccess", "Comment submitted and awaiting moderation.");
+  var MSG_FAIL = t("commentFail", "Submission failed. Please try again later.");
+  var MSG_NETWORK = t("commentNetwork", "Network error. Please try again later.");
   var commentsBox = document.getElementById("comments-box");
   var form = document.getElementById("comment-form");
   if (!commentsBox) return;

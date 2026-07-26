@@ -1,13 +1,23 @@
 // 后台交互:Markdown 编辑增强、预览、草稿、图片上传/粘贴/文件库插入、评论行内编辑、批量全选。
 (function () {
-  var root = document.documentElement.dataset || {};
-  var MSG_UPLOADING = root.uploading || "Uploading...";
-  var MSG_UPLOAD_FAILED = root.uploadFailed || "Upload failed";
-  var MSG_IMAGE_INSERTED = root.imageInserted || "Image inserted";
-  var MSG_EXISTING_IMAGE_INSERTED = root.existingImageInserted || "Existing image inserted";
-  var MSG_LOAD_FILES_FAILED = root.loadFilesFailed || "Failed to load files";
-  var MSG_EXPAND = root.expandLabel || "展开";
-  var MSG_COLLAPSE = root.collapseLabel || "收起";
+  var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
+  function t(key, fallback) { return messages[key] || fallback; }
+  var MSG_UPLOADING = t("uploading", "Uploading...");
+  var MSG_UPLOAD_FAILED = t("uploadFailed", "Upload failed");
+  var MSG_IMAGE_INSERTED = t("imageInserted", "Image inserted");
+  var MSG_EXISTING_IMAGE_INSERTED = t("existingImageInserted", "Existing image inserted");
+  var MSG_LOAD_FILES_FAILED = t("loadFilesFailed", "Failed to load files");
+  var MSG_EXPAND = t("expandLabel", "Expand");
+  var MSG_COLLAPSE = t("collapseLabel", "Collapse");
+  var MSG_HEADING_PLACEHOLDER = t("headingPlaceholder", "Heading");
+  var MSG_BOLD_PLACEHOLDER = t("boldPlaceholder", "Bold text");
+  var MSG_ITALIC_PLACEHOLDER = t("italicPlaceholder", "Italic text");
+  var MSG_QUOTE_PLACEHOLDER = t("quotePlaceholder", "Quote");
+  var MSG_LIST_ITEM_PLACEHOLDER = t("listItemPlaceholder", "List item");
+  var MSG_LINK_TEXT_PLACEHOLDER = t("linkTextPlaceholder", "Link text");
+  var MSG_LINK_URL_PROMPT = t("linkURLPrompt", "Link URL");
+  var MSG_DRAFT_DISCARDED = t("draftDiscarded", "Local draft discarded.");
+  var MSG_DRAFT_SAVED = t("draftSaved", "Saved locally.");
 
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -66,22 +76,22 @@
   function markdownAction(textarea, action) {
     switch (action) {
     case "heading":
-      prefixLines(textarea, "## ", "小标题");
+      prefixLines(textarea, "## ", MSG_HEADING_PLACEHOLDER);
       break;
     case "bold":
-      wrapSelection(textarea, "**", "**", "加粗文本");
+      wrapSelection(textarea, "**", "**", MSG_BOLD_PLACEHOLDER);
       break;
     case "italic":
-      wrapSelection(textarea, "*", "*", "斜体文本");
+      wrapSelection(textarea, "*", "*", MSG_ITALIC_PLACEHOLDER);
       break;
     case "quote":
-      prefixLines(textarea, "> ", "引用内容");
+      prefixLines(textarea, "> ", MSG_QUOTE_PLACEHOLDER);
       break;
     case "ul":
-      prefixLines(textarea, "- ", "列表项");
+      prefixLines(textarea, "- ", MSG_LIST_ITEM_PLACEHOLDER);
       break;
     case "ol":
-      prefixLines(textarea, function (i) { return (i + 1) + ". "; }, "列表项");
+      prefixLines(textarea, function (i) { return (i + 1) + ". "; }, MSG_LIST_ITEM_PLACEHOLDER);
       break;
     case "code":
       wrapSelection(textarea, "`", "`", "code");
@@ -90,8 +100,8 @@
       wrapSelection(textarea, "```\n", "\n```", "code");
       break;
     case "link": {
-      var sel = selectedText(textarea) || "链接文字";
-      var url = window.prompt("链接 URL", "https://");
+      var sel = selectedText(textarea) || MSG_LINK_TEXT_PLACEHOLDER;
+      var url = window.prompt(MSG_LINK_URL_PROMPT, "https://");
       if (url === null) return;
       replaceSelection(textarea, "[" + sel + "](" + url + ")");
       break;
@@ -218,7 +228,7 @@
     var box = document.querySelector("[data-category-required]");
     if (!box) return;
     var form = box.closest("form");
-    var message = box.getAttribute("data-category-required-message") || "Please select at least one category.";
+    var message = box.getAttribute("data-category-required-message") || t("categoryRequired", "Please select at least one category.");
     var inputs = Array.prototype.slice.call(box.querySelectorAll('input[name="category_ids"]'));
     if (!form || inputs.length === 0) return;
     function setValidity() {
@@ -293,11 +303,11 @@
     if (discardBtn) discardBtn.addEventListener("click", function () {
       localStorage.removeItem(key);
       if (box) box.hidden = true;
-      if (status) status.textContent = "已忽略本地草稿。";
+      if (status) status.textContent = MSG_DRAFT_DISCARDED;
     });
     var saveDraft = debounce(function () {
       localStorage.setItem(key, ta.value);
-      if (status) status.textContent = "已自动保存到本地。";
+      if (status) status.textContent = MSG_DRAFT_SAVED;
     }, 800);
     ta.addEventListener("input", saveDraft);
     var form = ta.closest("form");

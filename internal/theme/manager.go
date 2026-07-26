@@ -10,6 +10,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/extension"
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/render"
 )
@@ -201,7 +202,7 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 		}
 	}()
 
-	if err := copyDir(dir, stagingDir); err != nil {
+	if err := extension.CopyDir(dir, stagingDir, "theme"); err != nil {
 		return nil, errors.Wrap(err, "copy theme to staging dir")
 	}
 	stagedTheme, err := LoadTheme(stagingDir)
@@ -220,7 +221,7 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 	m.mu.RLock()
 	oldTheme := m.themes[themeName]
 	m.mu.RUnlock()
-	backupDir, err := backupExistingThemeDir(targetDir)
+	backupDir, err := extension.BackupDir(targetDir, "theme")
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +239,7 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 	// 重新加载（确保 Dir 指向正确位置）
 	t, err = LoadTheme(targetDir)
 	if err != nil {
-		if rbErr := rollbackThemeInstall(targetDir, backupDir); rbErr != nil {
+		if rbErr := extension.RollbackReplace(targetDir, backupDir); rbErr != nil {
 			m.mu.Lock()
 			delete(m.themes, themeName)
 			m.mu.Unlock()
@@ -247,7 +248,7 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 		return nil, errors.Wrap(err, "load installed theme")
 	}
 	if err := t.LoadTranslations(); err != nil {
-		if rbErr := rollbackThemeInstall(targetDir, backupDir); rbErr != nil {
+		if rbErr := extension.RollbackReplace(targetDir, backupDir); rbErr != nil {
 			m.mu.Lock()
 			delete(m.themes, themeName)
 			m.mu.Unlock()
@@ -273,7 +274,7 @@ func (m *Manager) Install(dir string) (*Theme, error) {
 			delete(m.themes, themeName)
 		}
 		m.mu.Unlock()
-		rbErr := rollbackThemeInstall(targetDir, backupDir)
+		rbErr := extension.RollbackReplace(targetDir, backupDir)
 		restoreErr := m.RebuildTranslations()
 		if rbErr != nil || restoreErr != nil {
 			return nil, errors.Wrapf(err, "rebuild theme translations; rollback failed: %v; restore translations failed: %v", rbErr, restoreErr)
@@ -297,7 +298,7 @@ func (m *Manager) Delete(name string) error {
 	if name == defaultThemeName {
 		return errors.New("cannot delete the default theme")
 	}
-	backupDir, err := backupExistingThemeDir(t.Dir)
+	backupDir, err := extension.BackupDir(t.Dir, "theme")
 	if err != nil {
 		return err
 	}
@@ -335,68 +336,4 @@ func (m *Manager) Delete(name string) error {
 // ThemesDir 返回主题存放目录路径。
 func (m *Manager) ThemesDir() string {
 	return m.themesDir
-}
-
-func backupExistingThemeDir(targetDir string) (string, error) {
-	if _, err := os.Stat(targetDir); err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", errors.Wrap(err, "stat existing theme dir")
-	}
-	backupDir, err := os.MkdirTemp(filepath.Dir(targetDir), ".backup-"+filepath.Base(targetDir)+"-*")
-	if err != nil {
-		return "", errors.Wrap(err, "create theme backup dir")
-	}
-	if err := os.Remove(backupDir); err != nil {
-		return "", errors.Wrap(err, "prepare theme backup dir")
-	}
-	if err := os.Rename(targetDir, backupDir); err != nil {
-		return "", errors.Wrap(err, "backup existing theme dir")
-	}
-	return backupDir, nil
-}
-
-func rollbackThemeInstall(targetDir, backupDir string) error {
-	_ = os.RemoveAll(targetDir)
-	if backupDir == "" {
-		return nil
-	}
-	return os.Rename(backupDir, targetDir)
-}
-
-// copyDir 递归复制目录到一个空目标目录。
-func copyDir(src, dst string) error {
-	if err := os.MkdirAll(dst, 0o755); err != nil {
-		return err
-	}
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
-		dstPath := filepath.Join(dst, entry.Name())
-		if entry.IsDir() {
-			if err := copyDir(srcPath, dstPath); err != nil {
-				return err
-			}
-		} else {
-			info, err := entry.Info()
-			if err != nil {
-				return err
-			}
-			if !info.Mode().IsRegular() {
-				return errors.Errorf("unsupported theme file type: %s", srcPath)
-			}
-			data, err := os.ReadFile(srcPath)
-			if err != nil {
-				return err
-			}
-			if err := os.WriteFile(dstPath, data, info.Mode().Perm()); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }

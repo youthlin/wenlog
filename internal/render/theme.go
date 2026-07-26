@@ -359,19 +359,19 @@ func (r *Renderer) PreviewInstance(name string, data any, previewName string) gi
 	return &themeHTMLRender{tmpl: mainTpl, name: name, data: data, runtime: &r.themeRuntime}
 }
 
-func requestContext(ctx *RequestContext) context.Context {
-	var req context.Context
-	if ctx != nil && ctx.Context != nil {
-		req = ctx.Context
+func requestContext(r *RequestContext) context.Context {
+	var ctx context.Context
+	if r != nil && r.Context != nil {
+		ctx = r.Context
 	} else {
-		req = context.Background()
+		ctx = context.Background()
 	}
-	if ctx != nil && ctx.ThemeLoader != nil {
-		if loader, _ := ctx.ThemeLoader.(*store.DataLoader); loader != nil {
-			req = hook.WithDataLoader(req, loader)
+	if r != nil && r.ThemeLoader != nil {
+		if loader, _ := r.ThemeLoader.(*store.DataLoader); loader != nil {
+			ctx = hook.WithDataLoader(ctx, loader)
 		}
 	}
-	return req
+	return ctx
 }
 
 // 以下 reflect* 辅助集中服务于模板函数的“宽输入”能力：模板里传入的 post/comment/menu
@@ -469,20 +469,20 @@ func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
 	}
 	widgets := provider(ctx, area)
 	if len(widgets) == 0 {
-		slog.InfoContext(ctx.Context, "renderWidgets: no widgets for area", "area", area)
+		slog.DebugContext(ctx.Context, "renderWidgets: no widgets for area", "area", area)
 		return ""
 	}
-	slog.InfoContext(ctx.Context, "renderWidgets: rendering widgets", "area", area, "count", len(widgets))
+	slog.DebugContext(ctx.Context, "renderWidgets: rendering widgets", "area", area, "count", len(widgets))
 	var result strings.Builder
 	for _, item := range widgets {
 		ctx.WidgetOptions = item.Options
 		html, ok := renderWidgetItem(ctx, item, data)
 		if !ok {
-			slog.InfoContext(ctx.Context, "renderWidgets: widget render failed", "area", area, "id", item.ID, "source", item.Source, "plugin_id", item.PluginID)
+			slog.DebugContext(ctx.Context, "renderWidgets: widget render failed", "area", area, "id", item.ID, "source", item.Source, "plugin_id", item.PluginID)
 			continue
 		}
 		if h := hooks(ctx.Runtime); h != nil {
-			html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookWidgetRenderHTML, string(html), item, area, data))
+			html = trustedHTMLFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.FilterWidgetRenderHTML, string(html), widgetRenderPayload(item, area)))
 		}
 		util.WriteString(&result, string(html))
 	}
@@ -490,18 +490,30 @@ func renderWidgets(ctx *RequestContext, area string, data any) template.HTML {
 	return template.HTML(result.String())
 }
 
+func widgetRenderPayload(item WidgetInfo, area string) hook.WidgetRenderView {
+	return hook.WidgetRenderView{
+		Area:         area,
+		InstanceID:   item.InstanceID,
+		ID:           item.ID,
+		Source:       item.Source,
+		PluginID:     item.PluginID,
+		TemplateName: item.TemplateName,
+		Options:      item.Options,
+	}
+}
+
 func renderWidgetItem(ctx *RequestContext, item WidgetInfo, data any) (template.HTML, bool) {
 	resolver := ctx.Runtime.current().WidgetResolver
 	if resolver == nil {
-		slog.InfoContext(ctx.Context, "renderWidgetItem: no resolver")
+		slog.DebugContext(ctx.Context, "renderWidgetItem: no resolver")
 		return "", false
 	}
 	w := resolver(item.Source, item.ID, item.PluginID)
 	if w == nil {
-		slog.InfoContext(ctx.Context, "renderWidgetItem: widget not found in registry", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
+		slog.DebugContext(ctx.Context, "renderWidgetItem: widget not found in registry", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
 		return "", false
 	}
-	slog.InfoContext(ctx.Context, "renderWidgetItem: widget found, rendering", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
+	slog.DebugContext(ctx.Context, "renderWidgetItem: widget found, rendering", "source", item.Source, "id", item.ID, "plugin_id", item.PluginID)
 	instance := hook.WidgetInstance{
 		InstanceID: item.InstanceID,
 		WidgetID:   item.ID,
@@ -509,7 +521,7 @@ func renderWidgetItem(ctx *RequestContext, item WidgetInfo, data any) (template.
 	}
 	html, err := w.Render(requestContext(ctx), ctx.Template, instance, data)
 	if err != nil || html == "" {
-		slog.InfoContext(ctx.Context, "renderWidgetItem: render returned empty/error", "id", item.ID, "error", err)
+		slog.DebugContext(ctx.Context, "renderWidgetItem: render returned empty/error", "id", item.ID, "error", err)
 		return "", false
 	}
 	return html, true

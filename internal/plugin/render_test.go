@@ -3,39 +3,26 @@ package plugin
 import (
 	"context"
 	"html/template"
+	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/youthlin/wenlog/hook"
 )
 
-func TestRenderWidgetUsesActionFirst(t *testing.T) {
-	hooks := NewRegistry()
-	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
-		if len(args) < 2 {
-			return
-		}
-		out, _ := args[0].(*strings.Builder)
-		renderCtx, _ := args[1].(hook.WidgetRenderContext)
-		if out == nil || renderCtx.PluginID != "demo" || renderCtx.WidgetID != "hello" {
-			return
-		}
-		out.WriteString("<p>from action</p>")
-	}, Source{Type: SourcePlugin, ID: "demo"})
-	m := &Manager{
-		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: t.TempDir()}},
-		hooks:   hooks,
-	}
-
-	html, ok := m.RenderWidget(context.Background(), "demo", "hello", nil, nil)
-	if !ok || html != template.HTML("<p>from action</p>") {
-		t.Fatalf("RenderWidget(action)=(%q,%v), want action html", html, ok)
-	}
+type stubHookInvoker struct {
+	called bool
+	args   map[string]any
 }
 
-func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
+func (s *stubHookInvoker) InvokeFunc(_ context.Context, name string, args map[string]any) any {
+	s.called = true
+	s.args = args
+	return "called:" + name
+}
+
+func TestRenderWidgetUsesTemplateRenderer(t *testing.T) {
 	dir := t.TempDir()
 	widgetsDir := filepath.Join(dir, "widgets")
 	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
@@ -44,9 +31,17 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(widgetsDir, "hello.gohtml"), []byte(`{{define "widget_hello"}}<section>{{plugin_option "title"}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	hooks := hook.NewRegistry()
+	hooks.AddAction("widget.render", func(ctx context.Context, args ...any) {
+		out := hook.GetActionWriter(ctx)
+		if out != nil {
+			t.Fatal("legacy widget.render action should not be called")
+		}
+	}, hook.Source{Type: hook.SourcePlugin, ID: "demo"})
 	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
-		hooks:   NewRegistry(),
+		hooks:   hooks,
 	}
 
 	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"title": "Hi"}, nil)
@@ -55,7 +50,21 @@ func TestRenderWidgetFallsBackToTemplate(t *testing.T) {
 	}
 }
 
-func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
+func TestRenderWidgetMissingTemplateReturnsFalse(t *testing.T) {
+	dir := t.TempDir()
+	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
+		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
+		hooks:   hook.NewRegistry(),
+	}
+
+	html, ok := m.RenderWidget(context.Background(), "demo", "hello", map[string]string{"title": "Hi"}, nil)
+	if ok || html != "" {
+		t.Fatalf("RenderWidget(missing template)=(%q,%v), want empty false", html, ok)
+	}
+}
+
+func TestRenderWidgetTemplateCanUseFriendlyPluginFuncAPI(t *testing.T) {
 	dir := t.TempDir()
 	widgetsDir := filepath.Join(dir, "widgets")
 	if err := os.MkdirAll(widgetsDir, 0o755); err != nil {
@@ -65,13 +74,14 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 		`{{define "widget_hello"}}<section>{{hook_invoke "greeting" "name" (plugin_option "name")}}</section>{{end}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	api := hook.New(nil, nil, "plugin_demo")
-	api.RegisterFunc("greeting", func(args hook.Args) any {
+	api := hook.NewAPI().WithDomain("plugin_demo")
+	api.RegisterFunc("greeting", func(api *hook.API, args hook.Args) any {
 		return "Hello, " + args.String("name", "")
 	})
 	m := &Manager{
+		log:     slog.Default().With("component", "plugin-manager"),
 		plugins: map[string]*Plugin{"demo": {ID: "demo", Name: "Demo", Dir: dir}},
-		hooks:   NewRegistry(),
+		hooks:   hook.NewRegistry(),
 		scripts: map[string]*FunctionsScript{"demo": {PluginID: "demo", api: api}},
 	}
 
@@ -81,11 +91,27 @@ func TestRenderWidgetTemplateCanUseFriendlyPluginDataAPI(t *testing.T) {
 	}
 }
 
+func TestPluginTemplateFuncsOnlyNeedHookInvoker(t *testing.T) {
+	invoker := &stubHookInvoker{}
+	funcs := pluginTemplateFuncs(context.Background(), map[string]string{"name": "Plugin"}, invoker)
+	call, ok := funcs["hook_invoke"].(func(string, ...any) any)
+	if !ok {
+		t.Fatalf("hook_invoke type = %T, want func(string, ...any) any", funcs["hook_invoke"])
+	}
+
+	if got := call("greeting", "name", "Plugin"); got != "called:greeting" {
+		t.Fatalf("hook_invoke = %v, want called:greeting", got)
+	}
+	if !invoker.called || invoker.args["name"] != "Plugin" {
+		t.Fatalf("invoker args = %#v, called=%v", invoker.args, invoker.called)
+	}
+}
+
 func TestRegisterFuncSupportsCommonSignatures(t *testing.T) {
-	api := hook.New(nil, nil, "plugin_demo")
-	api.RegisterFunc("args", func(args hook.Args) any { return args.Int("n", 0) + 1 })
+	api := hook.NewAPI().WithDomain("plugin_demo")
+	api.RegisterFunc("args", func(api *hook.API, args hook.Args) any { return args.Int("n", 0) + 1 })
 	api.RegisterFunc("api_args", func(api *hook.API, args hook.Args) any { return api.Snippet(args.String("text", ""), 2) })
-	api.RegisterFunc("legacy", func(api *hook.API, args map[string]any) any { return args["name"] })
+	api.RegisterFunc("legacy", func(api *hook.API, args hook.Args) any { return args["name"] })
 
 	ctx := context.Background()
 	if got := api.InvokeFunc(ctx, "args", map[string]any{"n": "2"}); got != 3 {

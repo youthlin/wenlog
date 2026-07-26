@@ -204,7 +204,7 @@ func TestEnsureThemesOnDiskRefreshesBundledThemeWhenVersionChanged(t *testing.T)
 	if string(gotHeader) != string(wantHeader) {
 		t.Fatalf("theme template not refreshed")
 	}
-	if !strings.Contains(string(gotHeader), `slot "head.end"`) {
+	if !strings.Contains(string(gotHeader), `do_action "head.end"`) {
 		t.Fatalf("refreshed header missing plugin hook: %s", gotHeader)
 	}
 }
@@ -222,11 +222,11 @@ func TestEnsurePluginsOnDiskReleasesBundledPlugins(t *testing.T) {
 
 	ensurePluginsOnDisk()
 
-	wantYAML, err := fs.ReadFile(plugins.Plugins, "comment-smilies/plugin.yaml")
+	wantYAML, err := fs.ReadFile(plugins.Plugins, "post-comment-enhance/plugin.yaml")
 	if err != nil {
 		t.Fatalf("read bundled plugin yaml: %v", err)
 	}
-	gotYAML, err := os.ReadFile(filepath.Join("plugins", "comment-smilies", "plugin.yaml"))
+	gotYAML, err := os.ReadFile(filepath.Join("plugins", "post-comment-enhance", "plugin.yaml"))
 	if err != nil {
 		t.Fatalf("read released plugin yaml: %v", err)
 	}

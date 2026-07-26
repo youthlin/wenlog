@@ -27,17 +27,25 @@ type Plugin struct {
 	DefaultEnabled bool              `yaml:"default_enabled" json:"default_enabled"`
 	Dir            string            `yaml:"-" json:"-"`
 	Hooks          HookDecl          `yaml:"hooks" json:"hooks"`
+	Lifecycle      LifecycleDecl     `yaml:"lifecycle" json:"lifecycle"`
 	Widgets        []WidgetDecl      `yaml:"widgets" json:"widgets"`
 	Options        []hook.OptionDecl `yaml:"options" json:"options"`
 	Assets         AssetDecl         `yaml:"assets" json:"assets"`
 }
 
-// HookDecl 描述插件声明会使用的标准 hook/slot。
+// HookDecl 描述插件声明会使用的标准 action/filter。
 // 该声明主要用于后台展示和能力说明，实际注册以 functions.goyaegi 为准。
 type HookDecl struct {
 	Actions []string `yaml:"actions" json:"actions"`
 	Filters []string `yaml:"filters" json:"filters"`
-	Slots   []string `yaml:"slots" json:"slots"`
+}
+
+// LifecycleDecl 描述插件脚本实现的生命周期入口。
+// 该声明用于后台展示和能力说明，实际调用仍以 functions.goyaegi 中的函数为准。
+type LifecycleDecl struct {
+	Activate   bool `yaml:"activate" json:"activate"`
+	Deactivate bool `yaml:"deactivate" json:"deactivate"`
+	Uninstall  bool `yaml:"uninstall" json:"uninstall"`
 }
 
 // WidgetDecl 是 hook.WidgetDecl 的别名，描述插件提供的一类组件。

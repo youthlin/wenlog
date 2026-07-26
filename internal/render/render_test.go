@@ -15,18 +15,22 @@ import (
 
 	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/model"
+	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/web"
 )
 
 func TestAvatarURL(t *testing.T) {
 	// 已知:md5("me@example.com") = ... ;只校验前缀与不随大小写/空白变化。
-	a := avatarURL("Me@Example.com", "")
-	b := avatarURL("  me@example.com ", "")
+	a := avatarURL("Me@Example.com", "", 0)
+	b := avatarURL("  me@example.com ", "", 0)
 	if a != b {
 		t.Errorf("avatarURL should normalize case/space: %q != %q", a, b)
 	}
-	if got := avatarURL("me@example.com", ""); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
+	if got := avatarURL("me@example.com", "", 0); len(got) < len("https://cn.cravatar.com/avatar/")+32 {
 		t.Errorf("avatar url too short: %q", got)
+	}
+	if got := avatarURL("me@example.com", "", 80); !strings.Contains(got, "?s=80") {
+		t.Errorf("avatar url should contain size param: %q", got)
 	}
 }
 
@@ -40,6 +44,227 @@ func TestPostNavigationSkipsTypedNilPosts(t *testing.T) {
 	}
 	if got := postURL((*model.Post)(nil)); got != "" {
 		t.Fatalf("postURL with typed nil post = %q, want empty", got)
+	}
+}
+
+func TestStandardContentFiltersReceiveStableViews(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var titlePost hook.PostView
+	var contentPost hook.PostView
+	var commentView hook.CommentView
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		titlePost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		contentPost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterCommentContentHTML, func(value any, args ...any) any {
+		commentView, _ = args[0].(hook.CommentView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{
+		Runtime: &TemplateRuntime{},
+	}
+	ctx.Runtime.providers.Hooks = hooks
+
+	post := &model.Post{ID: 7, Title: "Hello", Content: "body"}
+	_ = postTitle(ctx, post)
+	_ = postContent(ctx, post)
+	_ = commentContent(ctx, &model.Comment{ID: 9, PostID: 7, Content: "comment"})
+
+	if titlePost.ID != 7 || titlePost.Title != "Hello" {
+		t.Fatalf("post.title payload = %+v, want PostView", titlePost)
+	}
+	if contentPost.ID != 7 || contentPost.Content != "body" {
+		t.Fatalf("post.content_html payload = %+v, want PostView", contentPost)
+	}
+	if commentView.ID != 9 || commentView.PostID != 7 || commentView.Content != "comment" {
+		t.Fatalf("comment.content_html payload = %+v, want CommentView", commentView)
+	}
+}
+
+func TestPostTitleFilterIsEscapedText(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		return `<script>alert(1)</script>`
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	got := string(postTitle(ctx, &model.Post{ID: 1, Title: "Hello"}))
+	if strings.Contains(got, `<script>`) {
+		t.Fatalf("post.title filter result should be escaped, got: %s", got)
+	}
+	if !strings.Contains(got, `&lt;script&gt;alert(1)&lt;/script&gt;`) {
+		t.Fatalf("post.title filter result missing escaped script, got: %s", got)
+	}
+}
+
+func TestPostTitleTextFilterEscapesInTemplates(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "index.gohtml", `{{define "index"}}<a href="/post">{{post_title_text .Post}}</a>{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		return `<script>alert(1)</script>`
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r.themeRuntime.providers.Hooks = hooks
+
+	rr := httptest.NewRecorder()
+	data := map[string]any{"Post": &model.Post{ID: 1, Title: "Hello"}}
+	if err := r.Instance("index", data).Render(rr); err != nil {
+		t.Fatalf("render index: %v", err)
+	}
+	got := rr.Body.String()
+	if strings.Contains(got, `<script>`) {
+		t.Fatalf("post_title_text should be escaped by template output, got: %s", got)
+	}
+	if !strings.Contains(got, `&lt;script&gt;alert(1)&lt;/script&gt;`) {
+		t.Fatalf("post_title_text missing escaped filter result, got: %s", got)
+	}
+}
+
+func TestSingleThemeKeepsPageTitleInHTMLTitle(t *testing.T) {
+	content, err := fs.ReadFile(web.Themes, "themes/single/templates/index.gohtml")
+	if err != nil {
+		t.Fatalf("read single theme template: %v", err)
+	}
+	got := string(content)
+	if !strings.Contains(got, `<title>{{.Title}}</title>`) {
+		t.Fatalf("single theme header should use page Title in <title>, got: %s", got)
+	}
+	if strings.Contains(got, `<title>{{post_title_text .}}</title>`) {
+		t.Fatalf("single theme header should not call post_title_text on page data")
+	}
+}
+
+func TestHTMLFiltersRemainTrustedHTML(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		return string(value.(string)) + `<aside class="plugin-note">safe</aside>`
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	got := string(postContent(ctx, &model.Post{ID: 1, Title: "Hello", Content: "Body"}))
+	if !strings.Contains(got, `<aside class="plugin-note">safe</aside>`) {
+		t.Fatalf("post.content_html filter should preserve trusted HTML, got: %s", got)
+	}
+}
+
+func TestWidgetRenderHTMLFilterReceivesStableView(t *testing.T) {
+	dir := t.TempDir()
+	writeTemplateFile(t, dir, "page.gohtml", `{{define "page"}}{{render_widgets "sidebar" .}}{{end}}`)
+	writeTemplateFile(t, dir, "widget_alpha.gohtml", `{{define "widget_alpha"}}alpha{{end}}`)
+	r, err := NewHot(dir)
+	if err != nil {
+		t.Fatalf("new hot renderer: %v", err)
+	}
+	hooks := hook.NewRegistry()
+	var got hook.WidgetRenderView
+	hooks.AddFilter(hook.FilterWidgetRenderHTML, func(value any, args ...any) any {
+		got, _ = args[0].(hook.WidgetRenderView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r.themeRuntime.providers.Hooks = hooks
+	r.SetThemeWidgetsProvider(func(ctx *RequestContext, area string) []WidgetInfo {
+		return []WidgetInfo{{
+			InstanceID:   "inst-1",
+			Source:       "plugin",
+			PluginID:     "demo",
+			ID:           "alpha",
+			TemplateName: "widget_alpha",
+			Options:      map[string]string{"title": "Hello"},
+		}}
+	})
+	r.SetWidgetResolver(func(source, id, pluginID string) hook.WidgetRenderer {
+		return &testTemplateWidget{id: id}
+	})
+
+	rr := httptest.NewRecorder()
+	if err := r.Instance("page", nil).Render(rr); err != nil {
+		t.Fatalf("render page: %v", err)
+	}
+	if got.Area != "sidebar" || got.InstanceID != "inst-1" || got.ID != "alpha" || got.Source != "plugin" || got.PluginID != "demo" || got.TemplateName != "widget_alpha" || got.Options["title"] != "Hello" {
+		t.Fatalf("widget.render_html payload = %+v, want stable WidgetRenderView", got)
+	}
+}
+
+func TestHeadMetaFilterReceivesStableView(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var got hook.HeadMetaView
+	hooks.AddFilter(hook.FilterHeadMeta, func(value any, args ...any) any {
+		got, _ = args[0].(hook.HeadMetaView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	_ = headMeta(ctx, map[string]any{
+		"Title":        "Hello",
+		"Description":  "Desc",
+		"CanonicalURL": "https://example.com/hello",
+		"SiteName":     "WenLog",
+		"SiteLogo":     "/logo.png",
+		"Post":         &model.Post{ID: 1},
+	})
+	if got.Title != "Hello" || got.Description != "Desc" || got.CanonicalURL != "https://example.com/hello" || got.SiteName != "WenLog" || got.SiteLogo != "/logo.png" || got.OGType != "article" || got.TwitterCard != "summary_large_image" {
+		t.Fatalf("head.meta payload = %+v, want stable HeadMetaView", got)
+	}
+}
+
+func TestFeedPostFiltersReceiveStableView(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var contentPost hook.PostView
+	var titlePost hook.PostView
+	var footerPost hook.PostView
+	hooks.AddFilter(hook.FilterPostTitle, func(value any, args ...any) any {
+		titlePost, _ = args[0].(hook.PostView)
+		return "Filtered " + value.(string)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		contentPost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostFooterHTML, func(value any, args ...any) any {
+		footerPost, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r := &Renderer{}
+	r.themeRuntime.providers.Hooks = hooks
+
+	loader := testLoaderForPostView()
+	ctx := hook.WithDataLoader(context.Background(), loader)
+	post := &model.Post{ID: 11, Title: "Feed", Content: "body", AuthorID: 7}
+	if got := r.FilterPostTitle(ctx, post); got != "Filtered Feed" {
+		t.Fatalf("FilterPostTitle() = %q, want filtered title", got)
+	}
+	_ = r.FilterPostContent(ctx, post)
+	for name, got := range map[string]hook.PostView{
+		"post.title":        titlePost,
+		"post.content_html": contentPost,
+		"post.footer_html":  footerPost,
+	} {
+		if got.ID != 11 || got.Title != "Feed" || got.Content != "body" || got.Author.ID != 7 || got.Author.DisplayName != "Author" {
+			t.Fatalf("%s payload = %+v, want PostView with author from DataLoader", name, got)
+		}
+	}
+}
+
+func testLoaderForPostView() *store.DataLoader {
+	post := &model.Post{ID: 11, Title: "Feed", Content: "body", AuthorID: 7}
+	return &store.DataLoader{
+		Posts:      map[uint]*model.Post{11: post},
+		Users:      map[uint]*model.User{7: &model.User{ID: 7, Username: "author", DisplayName: "Author"}},
+		Categories: map[uint]*model.Category{},
+		Tags:       map[uint]*model.Tag{},
+		Settings:   map[string]string{},
+		Comments:   map[uint]*model.Comment{},
 	}
 }
 
@@ -231,7 +456,7 @@ func TestThemeRenderStateIsRequestScoped(t *testing.T) {
 			Options:      map[string]string{"name": loader + "/" + theme},
 		}}
 	})
-	r.SetWidgetResolver(func(source, id, pluginID string) hook.Widget {
+	r.SetWidgetResolver(func(source, id, pluginID string) hook.WidgetRenderer {
 		if source == "theme" && id == "alpha" {
 			return &testTemplateWidget{id: id}
 		}
@@ -355,7 +580,7 @@ type testTranslator struct{}
 
 func (testTranslator) T(message string, args ...any) string { return message }
 
-// testTemplateWidget 是测试用的模板型组件，实现 hook.Widget 接口。
+// testTemplateWidget 是测试用的模板型组件，实现 hook.WidgetRenderer 接口。
 type testTemplateWidget struct {
 	id string
 }

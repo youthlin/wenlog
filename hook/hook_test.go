@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
 
 // ========== Args 测试 ==========
@@ -127,19 +128,34 @@ func TestArgs_Bool(t *testing.T) {
 func TestWithActionWriter(t *testing.T) {
 	var buf strings.Builder
 	ctx := WithActionWriter(context.Background(), &buf)
-	w := getActionWriter(ctx)
+	w := GetActionWriter(ctx)
 	if w == nil {
 		t.Fatal("getActionWriter returned nil")
 	}
-	w.WriteString("hello")
+	io.WriteString(w, "hello")
 	if buf.String() != "hello" {
 		t.Errorf("writer content = %q, want hello", buf.String())
 	}
 }
 
+func TestAPIPrintWritesToCurrentActionWriter(t *testing.T) {
+	api := NewAPI()
+	api.Print("ignored")
+
+	var out strings.Builder
+	reqAPI := api.WithContext(WithActionWriter(context.Background(), &out))
+	reqAPI.Print("hello")
+	reqAPI.Printf(" %s", "wenlog")
+	reqAPI.Println(" 1")
+
+	if got, want := out.String(), "hello wenlog 1\n"; got != want {
+		t.Fatalf("action output = %q, want %q", got, want)
+	}
+}
+
 func TestWithActionWriter_NilWriter(t *testing.T) {
 	ctx := context.WithValue(context.Background(), actionWriterKey{}, "not a writer")
-	w := getActionWriter(ctx)
+	w := GetActionWriter(ctx)
 	if w != nil {
 		t.Error("getActionWriter should return nil for non-StringWriter value")
 	}
@@ -167,6 +183,80 @@ func TestWithDataLoader(t *testing.T) {
 	ctx = WithDataLoader(context.Background(), nil)
 	if ctx == nil {
 		t.Error("WithDataLoader should return non-nil context")
+	}
+}
+
+func TestReflectHookSignaturesInjectContextOnlyWhenRequested(t *testing.T) {
+	hooks := NewRegistry()
+	hooks.AddFilter("post.title", func(value string, post PostView) string {
+		return value + ":" + post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+	hooks.AddFilter("post.title.ctx", func(ctx context.Context, value string, post PostView) string {
+		if CurrentHook(ctx) != "" {
+			return value + ":unexpected-hook"
+		}
+		return value + ":" + post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+
+	post := PostView{Title: "Hello"}
+	if got := hooks.ApplyFilters(context.Background(), "post.title", "title", post); got != "title:Hello" {
+		t.Fatalf("concrete filter without context = %v, want title:Hello", got)
+	}
+	if got := hooks.ApplyFilters(context.Background(), "post.title.ctx", "title", post); got != "title:Hello" {
+		t.Fatalf("concrete filter with context = %v, want title:Hello", got)
+	}
+}
+
+func TestReflectActionSignaturesInjectContextOnlyWhenRequested(t *testing.T) {
+	hooks := NewRegistry()
+	var withoutCtx, withCtx string
+	hooks.AddAction("post.render", func(post PostView) {
+		withoutCtx = post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+	hooks.AddAction("post.render.ctx", func(ctx context.Context, post PostView) {
+		withCtx = CurrentHook(ctx) + ":" + post.Title
+	}, Source{Type: SourceCore, ID: "test"})
+
+	post := PostView{Title: "Hello"}
+	hooks.DoAction(context.Background(), "post.render", io.Discard, post)
+	hooks.DoAction(context.Background(), "post.render.ctx", io.Discard, post)
+	if withoutCtx != "Hello" {
+		t.Fatalf("concrete action without context = %q, want Hello", withoutCtx)
+	}
+	if withCtx != "post.render.ctx:Hello" {
+		t.Fatalf("concrete action with context = %q, want post.render.ctx:Hello", withCtx)
+	}
+}
+
+func TestActionTimeoutDropsBufferedOutput(t *testing.T) {
+	hooks := NewRegistry()
+	hooks.AddAction("slow.action", func(ctx context.Context) {
+		if w := GetActionWriter(ctx); w != nil {
+			_, _ = io.WriteString(w, "partial")
+		}
+		<-ctx.Done()
+	}, Source{Type: SourcePlugin, ID: "slow"})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	var out strings.Builder
+	hooks.DoAction(ctx, "slow.action", &out)
+	if got := out.String(); got != "" {
+		t.Fatalf("timed out action output = %q, want empty", got)
+	}
+}
+
+func TestFilterTimeoutKeepsOriginalValue(t *testing.T) {
+	hooks := NewRegistry()
+	hooks.AddFilter("slow.filter", func(ctx context.Context, value string) string {
+		<-ctx.Done()
+		return value + ":late"
+	}, Source{Type: SourcePlugin, ID: "slow"})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if got := hooks.ApplyFilters(ctx, "slow.filter", "original"); got != "original" {
+		t.Fatalf("timed out filter = %v, want original", got)
 	}
 }
 
@@ -336,10 +426,10 @@ func TestWidgetDeclKey(t *testing.T) {
 func TestHookConstants(t *testing.T) {
 	// 确保所有 hook 名非空
 	hooks := []string{
-		HookHeadEnd, HookBodyEnd, HookCommentFormAfterTextarea,
-		HookWidgetRender, HookPostTitle, HookPostExcerptHTML,
-		HookPostContentHTML, HookCommentContentHTML, HookWidgetRenderHTML,
-		HookHeadMeta,
+		ActionHeadEnd, ActionBodyEnd, ActionCommentFormAfterTextarea,
+		FilterPostTitle, FilterPostExcerptHTML,
+		FilterPostContentHTML, FilterCommentContentHTML, FilterWidgetRenderHTML,
+		FilterHeadMeta,
 	}
 	for _, h := range hooks {
 		if h == "" {
@@ -359,45 +449,6 @@ func TestPriorityOrder(t *testing.T) {
 	}
 }
 
-// ========== HeadEndData / BodyEndData 测试 ==========
-
-func TestHeadEndData(t *testing.T) {
-	d := HeadEndData{Data: map[string]string{"key": "value"}}
-	if d.Data == nil {
-		t.Error("HeadEndData.Data should not be nil")
-	}
-}
-
-func TestBodyEndData(t *testing.T) {
-	d := BodyEndData{Data: "test"}
-	if d.Data != "test" {
-		t.Errorf("BodyEndData.Data = %v", d.Data)
-	}
-}
-
-// ========== CommentFormAfterTextareaData 测试 ==========
-
-func TestCommentFormAfterTextareaData(t *testing.T) {
-	d := CommentFormAfterTextareaData{Data: 42}
-	if d.Data != 42 {
-		t.Errorf("Data = %v", d.Data)
-	}
-}
-
-// ========== WidgetRenderContext 测试 ==========
-
-func TestWidgetRenderContext(t *testing.T) {
-	ctx := WidgetRenderContext{
-		PluginID: "test-plugin",
-		WidgetID: "test-widget",
-		Options:  map[string]string{"key": "val"},
-		Data:     "data",
-	}
-	if ctx.PluginID != "test-plugin" {
-		t.Errorf("PluginID = %q", ctx.PluginID)
-	}
-}
-
 // ========== SelectOpt 测试 ==========
 
 func TestSelectOpt(t *testing.T) {
@@ -411,9 +462,10 @@ func TestSelectOpt(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	var addActionCalled, addFilterCalled bool
-	addAction := func(name string, fn any, priority ...int) { addActionCalled = true }
-	addFilter := func(name string, fn any, priority ...int) { addFilterCalled = true }
-	api := New(addAction, addFilter, "test-domain")
+	api := NewAPI().WithRegistryBinding(RegistryBinding{
+		AddAction: func(name string, fn any, priority ...int) { addActionCalled = true },
+		AddFilter: func(name string, fn any, priority ...int) { addFilterCalled = true },
+	}).WithDomain("test-domain")
 	if api == nil {
 		t.Fatal("New returned nil")
 	}
@@ -424,33 +476,85 @@ func TestNew(t *testing.T) {
 		t.Error("funcs map should be initialized")
 	}
 	// 验证闭包正确绑定
-	api.addAction("test", func() {})
+	api.registry.AddAction("test", func() {})
 	if !addActionCalled {
 		t.Error("addAction was not called")
 	}
-	api.addFilter("test", func() {})
+	api.registry.AddFilter("test", func() {})
 	if !addFilterCalled {
 		t.Error("addFilter was not called")
 	}
 }
 
-// ========== io.StringWriter 接口验证 ==========
+func TestAPICollectsRegistrationErrors(t *testing.T) {
+	api := NewAPI()
+	api.RegisterFunc("", func() any { return nil })
+	api.RegisterFunc("bad_template_func", func(string) {})
+	api.AddAction("bad_action", "not a func")
+	api.AddFilter("bad_filter", func() any { return nil })
+
+	err := api.RegistrationError()
+	if err == nil {
+		t.Fatal("RegistrationError() = nil, want error")
+	}
+	msg := err.Error()
+	for _, want := range []string{
+		"注册模板函数失败: name 不能为空",
+			"注册模板函数[bad_template_func]失败: 签名必须是 func(*hook.API, hook.Args) any",
+			"注册 action[bad_action]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)",
+			"注册 filter[bad_filter]失败: 处理函数签名不匹配",
+	} {
+		if !strings.Contains(msg, want) {
+			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
+		}
+	}
+}
+
+func TestAPIRejectsInvalidHookSignatures(t *testing.T) {
+	var actionCalled, filterCalled bool
+	api := NewAPI().WithRegistryBinding(RegistryBinding{
+		AddAction: func(name string, fn any, priority ...int) { actionCalled = true },
+		AddFilter: func(name string, fn any, priority ...int) { filterCalled = true },
+	})
+
+	api.AddAction("bad_action", func() string { return "" })
+	api.AddFilter("bad_filter", func() {})
+
+	err := api.RegistrationError()
+	if err == nil {
+		t.Fatal("RegistrationError() = nil, want error")
+	}
+	msg := err.Error()
+	for _, want := range []string{
+			"注册 action[bad_action]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)",
+			"注册 filter[bad_filter]失败: 处理函数签名不匹配",
+	} {
+		if !strings.Contains(msg, want) {
+			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
+		}
+	}
+	if actionCalled || filterCalled {
+		t.Fatalf("invalid hooks should not be registered, action=%v filter=%v", actionCalled, filterCalled)
+	}
+}
+
+// ========== io.Writer 接口验证 ==========
 
 func TestActionWriterInterface(t *testing.T) {
 	var buf strings.Builder
 	ctx := WithActionWriter(context.Background(), &buf)
-	w := getActionWriter(ctx)
+	w := GetActionWriter(ctx)
 	if w == nil {
 		t.Fatal("getActionWriter returned nil")
 	}
-	// 验证 io.StringWriter 接口
-	var sw io.StringWriter = w
-	n, err := sw.WriteString("test")
+	// 验证 io.Writer 接口
+	var sw io.Writer = w
+	n, err := sw.Write([]byte("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if n != 4 {
-		t.Errorf("WriteString wrote %d bytes, want 4", n)
+		t.Errorf("Write wrote %d bytes, want 4", n)
 	}
 	if buf.String() != "test" {
 		t.Errorf("buffer = %q, want test", buf.String())

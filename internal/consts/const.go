@@ -50,6 +50,9 @@ const (
 	SettingsAutoBackupKeep        = "auto_backup_keep"
 	SettingsAutoBackupTimeDefault = "03:00"
 	SettingsAutoBackupKeepDefault = 10
+	// 日志级别 (debug/info/warn/error)
+	SettingsLogLevel        = "log_level"
+	SettingsLogLevelDefault = "info"
 )
 
 // 安全相关常量。

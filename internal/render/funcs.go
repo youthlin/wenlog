@@ -14,6 +14,7 @@ import (
 	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/model"
 	"github.com/youthlin/wenlog/internal/permalink"
+	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/internal/util"
 	"github.com/youthlin/wenlog/internal/wxr"
 )
@@ -31,7 +32,7 @@ func hookInvoke(ctx *RequestContext, name string, args ...any) any {
 	return provider(ctx, name, args...)
 }
 
-// themeOption 在模板中使用 {{themeOption "<optionID>"}}
+// themeOption 在模板中使用 {{theme_option "<optionID>"}}
 func themeOption(ctx *RequestContext, optionID string) string {
 	if ctx == nil || ctx.Runtime == nil {
 		return ""
@@ -44,7 +45,7 @@ func themeOption(ctx *RequestContext, optionID string) string {
 }
 
 // widgetOption 模板函数：读取当前渲染组件的选项值。
-// themeOption 在模板中使用 {{widgetOption "<key>"}}
+// 模板中使用 {{widget_option "<key>"}}。
 func widgetOption(ctx *RequestContext, key string) string {
 	if ctx == nil || ctx.WidgetOptions == nil {
 		return ""
@@ -53,10 +54,7 @@ func widgetOption(ctx *RequestContext, key string) string {
 }
 
 func postTitle(ctx *RequestContext, post any) template.HTML {
-	title := reflectStringField(post, "Title")
-	if h := hooks(ctx.Runtime); h != nil {
-		title = stringFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostTitle, title, post), title)
-	}
+	title := postTitleText(ctx, post)
 	title = html.EscapeString(title)
 	if title == "" {
 		return ""
@@ -65,6 +63,16 @@ func postTitle(ctx *RequestContext, post any) template.HTML {
 		title += ` <span class="draft-badge">` + translate(ctx, "草稿预览") + `</span>`
 	}
 	return template.HTML(`<h1 class="post-title">` + title + `</h1>`)
+}
+
+func postTitleText(ctx *RequestContext, post any) string {
+	title := reflectStringField(post, "Title")
+	if h := hooks(ctx.Runtime); h != nil {
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterPostTitle, title, postViewPayload(ctx, post))
+		title = textFromFilterValue(v, title)
+	}
+	return title
 }
 
 func translate(ctx *RequestContext, msg string) string {
@@ -76,7 +84,7 @@ func translate(ctx *RequestContext, msg string) string {
 	return html.EscapeString(msg)
 }
 
-func stringFromFilterValue(v any, fallback string) string {
+func textFromFilterValue(v any, fallback string) string {
 	switch val := v.(type) {
 	case string:
 		return val
@@ -92,7 +100,9 @@ func stringFromFilterValue(v any, fallback string) string {
 func postExcerpt(ctx *RequestContext, post any) template.HTML {
 	html := postExcerptHTMLAny(post)
 	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostExcerptHTML, string(html), post))
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterPostExcerptHTML, string(html), postViewPayload(ctx, post))
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
@@ -123,11 +133,16 @@ func postExcerptHTMLAny(post any) template.HTML {
 	}
 }
 
-// postContent 输出文章正文，并应用 post.content_html filter。
-func postContent(ctx *RequestContext, post any) template.HTML {
+// postContent 输出文章正文，并应用 post.content_html 和 post.footer_html filter。
+func postContent(r *RequestContext, post any) template.HTML {
 	html := postContentHTML(post)
-	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookPostContentHTML, string(html), post))
+	if h := hooks(r.Runtime); h != nil {
+		ctx := requestContext(r)
+		payload := postViewPayload(r, post)
+		v := h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload)
+		html = trustedHTMLFromFilterValue(v)
+		v = h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload)
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
@@ -151,16 +166,44 @@ func postContentHTML(post any) template.HTML {
 	}
 }
 
-// commentContent 输出评论正文，并应用 comment.render_html filter。
+// commentContent 输出评论正文，并应用 comment.content_html filter。
 func commentContent(ctx *RequestContext, comment any) template.HTML {
 	html := template.HTML(html.EscapeString(reflectStringField(comment, "Content")))
 	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookCommentContentHTML, string(html), comment))
+		reqCtx := requestContext(ctx)
+		v := h.ApplyFilters(reqCtx, hook.FilterCommentContentHTML, string(html), commentViewPayload(comment))
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
 
-func htmlFromFilterValue(v any) template.HTML {
+func postViewPayload(ctx *RequestContext, post any) any {
+	if view := hook.PostViewOf(post, dataLoader(ctx)); view != nil {
+		return *view
+	}
+	return post
+}
+
+func dataLoader(ctx *RequestContext) *store.DataLoader {
+	if ctx == nil || ctx.ThemeLoader == nil {
+		return nil
+	}
+	loader, _ := ctx.ThemeLoader.(*store.DataLoader)
+	return loader
+}
+
+func commentViewPayload(comment any) any {
+	if view := hook.CommentViewOf(comment); view != nil {
+		return *view
+	}
+	return comment
+}
+
+// trustedHTMLFromFilterValue converts a standard HTML filter result into template.HTML.
+//
+// Only use this for filters whose contract explicitly returns trusted/sanitized HTML,
+// such as post.content_html, comment.content_html, widget.render_html, and head.meta.
+func trustedHTMLFromFilterValue(v any) template.HTML {
 	switch val := v.(type) {
 	case template.HTML:
 		return val
@@ -518,7 +561,16 @@ func headMeta(ctx *RequestContext, data any) template.HTML {
 
 	html := template.HTML(b.String())
 	if h := hooks(ctx.Runtime); h != nil {
-		html = htmlFromFilterValue(h.ApplyFilters(requestContext(ctx), hook.HookHeadMeta, string(html), data))
+		v := h.ApplyFilters(requestContext(ctx), hook.FilterHeadMeta, string(html), hook.HeadMetaView{
+			Title:        title,
+			Description:  desc,
+			CanonicalURL: url,
+			SiteName:     siteName,
+			SiteLogo:     siteLogo,
+			OGType:       ogType,
+			TwitterCard:  card,
+		})
+		html = trustedHTMLFromFilterValue(v)
 	}
 	return html
 }
@@ -763,7 +815,7 @@ func writeDefaultCommentItem(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, `<div class="comment-head">`)
 	// avatar
 	util.WriteString(out, `<img class="avatar" src="`)
-	util.WriteString(out, html.EscapeString(avatarURL(email, defaultAvatar)))
+	util.WriteString(out, html.EscapeString(avatarURL(email, defaultAvatar, avatarSize)))
 	util.WriteString(out, `" alt="" width="`)
 	util.WriteString(out, sizeStr)
 	util.WriteString(out, `" height="`)
@@ -781,7 +833,7 @@ func writeDefaultCommentItem(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, `</span>`)
 	// badges
 	if commenterRole != "" {
-		roleTitle := ""
+		var roleTitle string
 		switch commenterRole {
 		case "author":
 			roleTitle = ctx.T("文章作者")
@@ -1132,12 +1184,16 @@ func writeCommentForm(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, ctx.T("说点什么吧…… *"))
 	util.WriteString(out, `" required></textarea></p>`)
 
-	// slot: comment.form.after_textarea
+	// action: comment.form.after_textarea
 	if h := hooks(ctx.Runtime); h != nil {
-		var slotBuf strings.Builder
-		h.DoAction(requestContext(ctx), hook.HookCommentFormAfterTextarea, &slotBuf,
-			hook.CommentFormAfterTextareaData{Data: data})
-		util.WriteString(out, slotBuf.String())
+		var actionBuf strings.Builder
+		h.DoAction(
+			requestContext(ctx),
+			hook.ActionCommentFormAfterTextarea,
+			&actionBuf,
+			data,
+		)
+		util.WriteString(out, actionBuf.String())
 	}
 
 	if mailEnabled {

@@ -164,6 +164,23 @@
       </form>
     </section>
 
+    <section class="card settings-card">
+      <h3>{{.t.T "日志级别"}}</h3>
+      <form class="edit-form" method="post" action="/admin/settings/log-level">
+        {{template "csrf_field" .}}
+        <label>{{.t.T "当前日志级别"}}
+          <select name="log_level">
+            <option value="debug" {{if eq .LogLevelValue "debug"}}selected{{end}}>Debug</option>
+            <option value="info" {{if eq .LogLevelValue "info"}}selected{{end}}>Info</option>
+            <option value="warn" {{if eq .LogLevelValue "warn"}}selected{{end}}>Warn</option>
+            <option value="error" {{if eq .LogLevelValue "error"}}selected{{end}}>Error</option>
+          </select>
+        </label>
+        <p class="tip">{{.t.T "Debug 级别会输出 Hook 执行详细日志，便于调试插件；修改后立即生效，无需重启服务。"}}</p>
+        <p><button type="submit" class="btn">{{.t.T "保存日志级别"}}</button></p>
+      </form>
+    </section>
+
   </div>
 </div>
 {{- else}}
@@ -192,42 +209,42 @@
           <legend>{{.t.T "默认头像"}}</legend>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="mp" {{if eq .DefaultAvatarValue "mp"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "mp"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "mp" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "神秘人士"}}</strong><small>{{.t.T "通用的人物轮廓"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="blank" {{if eq .DefaultAvatarValue "blank"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "blank"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "blank" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "空白"}}</strong><small>{{.t.T "透明图像"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="cravatar" {{if eq .DefaultAvatarValue "cravatar"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "cravatar"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "cravatar" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "Cravatar 标志"}}</strong><small>{{.t.T "默认服务标志"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="identicon" {{if eq .DefaultAvatarValue "identicon"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "identicon"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "identicon" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "抽象图形"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="wavatar" {{if eq .DefaultAvatarValue "wavatar"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "wavatar"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "wavatar" 48}}" alt="" width="48" height="48">
             <span><strong>Wavatar</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="monsterid" {{if eq .DefaultAvatarValue "monsterid"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "monsterid"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "monsterid" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "小怪物"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="retro" {{if eq .DefaultAvatarValue "retro"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "retro"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "retro" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "复古"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="robohash" {{if eq .DefaultAvatarValue "robohash"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "robohash"}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{defaultAvatarURL "robohash" 48}}" alt="" width="48" height="48">
             <span><strong>RoboHash</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
         </fieldset>
@@ -267,9 +284,8 @@
       <h3>{{.t.T "会话设置"}}</h3>
       <form class="edit-form" method="post" action="/admin/settings/session">
         {{template "csrf_field" .}}
-        <label>{{.t.T "新的 Session Secret"}}<input type="text" name="session_secret" placeholder="{{.t.T "请输入新的 Session Secret"}}" required></label>
-        <p class="tip">{{if .SessionSecretConfigured}}{{.t.T "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"}}{{else}}{{.t.T "当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新登录。"}}{{end}}</p>
-        <p><button type="submit" class="btn">{{.t.T "更新 Session Secret"}}</button></p>
+        <p class="tip">{{if .SessionSecretConfigured}}{{.t.T "已配置自定义 Session Secret。重新生成后所有登录用户都需要重新登录。"}}{{else}}{{.t.T "当前仍在使用默认或环境变量提供的 Session Secret。重新生成后所有登录用户都需要重新登录。"}}{{end}}</p>
+        <p><button type="submit" class="btn">{{.t.T "重新生成 Session Secret"}}</button></p>
       </form>
     </section>
   </div>

@@ -1,0 +1,230 @@
+package plugin
+
+import (
+	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
+
+	"hook"
+)
+
+const assetVersion = "20260705141547"
+
+var smileyNames = []string{
+	"微笑",
+	"呲牙",
+	"偷笑",
+	"调皮",
+	"可爱",
+	"亲亲",
+	"鼓掌",
+	"坏笑",
+	"得意",
+	"大兵",
+	"白眼",
+	"疑问",
+	"惊讶",
+	"吓到",
+	"流汗",
+	"流泪",
+	"难过",
+	"发怒",
+	"发呆",
+	"撇嘴",
+	"抠鼻",
+}
+
+// Register 注册评论表情插件的 hook。
+func Register(api *hook.API) {
+	// 在 head 中注入 css
+	api.AddAction(hook.Consts.ActionHeadEnd, func(api *hook.API, args ...any) {
+		renderAssets(api)
+	})
+	// 评论内容的表情渲染
+	api.AddFilter(hook.Consts.FilterCommentContentHTML, func(api *hook.API, value string, comment hook.CommentView) string {
+		return renderSmilies(api, value)
+	})
+	// 在前台评论框后 插入表情面板
+	api.AddAction(hook.Consts.ActionCommentFormAfterTextarea, func(api *hook.API, args ...any) {
+		renderSmileyPanel(api, "comment")
+	})
+	// 后台文章编辑器的表情面板
+	api.AddAction(hook.Consts.ActionAdminPostFormAfterTextarea, func(api *hook.API, args ...any) {
+		renderSmileyPanel(api, "admin")
+	})
+	// 文章正文的表情渲染
+	api.AddFilter(hook.Consts.FilterPostContentHTML, func(api *hook.API, value string, post hook.PostView) string {
+		content := value
+		if postSmiliesEnabled(api) {
+			content = renderSmilies(api, content)
+		}
+		return content
+	})
+	// 文章尾部 HTML（版权声明等）
+	api.AddFilter(hook.Consts.FilterPostFooterHTML, func(api *hook.API, value string, post hook.PostView) string {
+		return appendPostFooter(api, value, post)
+	})
+	// 评论提交前正则拦截
+	api.AddFilter(hook.Consts.FilterCommentBeforeCreate, func(api *hook.API, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
+		return rejectCommentByPattern(api, view)
+	})
+}
+
+func renderAssets(api *hook.API) {
+	if !enabled(api) {
+		return
+	}
+	api.Printf(`<link rel="stylesheet" href="/plugin-assets/post-comment-enhance/style.css?v=%s">`+"\n", assetVersion)
+}
+
+func enabled(api *hook.API) bool {
+	return api.PluginOption("enabled", "true") != "false"
+}
+
+func renderSmileyPanel(api *hook.API, mode string) {
+	if !enabled(api) {
+		return
+	}
+	if mode == "admin" && api.PluginOption("enable_admin_smiley_panel", "true") == "false" {
+		return
+	}
+	api.Println("")
+	api.Printf(`<div class="smilies" data-smilies data-smilies-mode="%s">`+"\n", mode)
+	api.Printf(`  <div class="smilies-label sr-only">%s</div>`+"\n", api.EscapeHTML(api.T("表情")))
+	api.Println(`  <div class="smilies-list">`)
+	for _, name := range smileyNames {
+		code := "[/" + name + "]"
+		escapedName := api.EscapeHTML(name)
+		escapedCode := api.EscapeHTML(code)
+		api.Printf(`    <button type="button" class="smiley-btn" data-smiley-code="%s" title="%s" aria-label="%s">`, escapedCode, escapedName, escapedName)
+		api.Printf(`<img src="%s" alt="%s" width="24" height="24">`, smileySrc(name), escapedName)
+		api.Println(`</button>`)
+	}
+	api.Println(`  </div>`)
+	api.Println(`</div>`)
+	if mode == "admin" {
+		api.Println(`<script>(function(){var ta=document.getElementById("content_md");if(!ta)return;document.querySelectorAll('[data-smilies-mode="admin"] [data-smiley-code]').forEach(function(b){if(b.dataset.boundSmileyAdmin==="1")return;b.dataset.boundSmileyAdmin="1";b.addEventListener("click",function(){var c=b.getAttribute("data-smiley-code")||"";if(!c)return;var s=ta.selectionStart||0,e=ta.selectionEnd||0;ta.value=ta.value.slice(0,s)+c+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+c.length;ta.focus();ta.dispatchEvent(new Event("input",{bubbles:true}))})})})();</script>`)
+	}
+}
+
+func renderSmilies(api *hook.API, content string) string {
+	if content == "" {
+		return content
+	}
+	if !enabled(api) {
+		return content
+	}
+	for _, name := range smileyNames {
+		code := "[/" + name + "]"
+		img := `<img class="smiley" src="` + smileySrc(name) + `" alt="` + api.EscapeHTML(name) + `" title="` + api.EscapeHTML(name) + `" width="24" height="24">`
+		content = strings.ReplaceAll(content, code, img)
+	}
+	return content
+}
+
+// appendPostFooter 在文章正文末尾追加配置的 HTML 尾部内容。
+func appendPostFooter(api *hook.API, content string, post hook.PostView) string {
+	if content == "" {
+		return content
+	}
+	footerHTML := api.PluginOption("post_footer_html", "")
+	if footerHTML == "" {
+		return content
+	}
+	footerHTML = replacePostVars(api, footerHTML, &post)
+	return content + footerHTML
+}
+
+// replacePostVars 替换字符串中的 %var% 变量，风格与固定链接配置一致。
+// 可用变量：
+//
+//	%siteURL% / %siteName% / %siteDesc% — 站点设置
+//	%postURL% / %postID% / %postTitle% / %postSlug% / %postExcerpt% — 文章字段
+//	%postAuthor% / %postAuthorUsername% — 作者字段
+//
+// 替换值经过 HTML 转义，防止用户数据注入 XSS。
+func replacePostVars(api *hook.API, s string, post *hook.PostView) string {
+	s = replaceVar(s, "%siteURL%", api.EscapeHTML(api.Setting("site_url")))
+	s = replaceVar(s, "%siteName%", api.EscapeHTML(api.Setting("site_name")))
+	s = replaceVar(s, "%siteDesc%", api.EscapeHTML(api.Setting("site_description")))
+	s = replaceVar(s, "%postURL%", api.EscapeHTML(buildPostURL(api, post)))
+	s = replaceVar(s, "%postID%", api.EscapeHTML(anyToString(post.ID)))
+	s = replaceVar(s, "%postTitle%", api.EscapeHTML(post.Title))
+	s = replaceVar(s, "%postSlug%", api.EscapeHTML(post.Slug))
+	s = replaceVar(s, "%postExcerpt%", api.EscapeHTML(post.Excerpt))
+	s = replaceVar(s, "%postAuthor%", api.EscapeHTML(post.Author.DisplayName))
+	s = replaceVar(s, "%postAuthorUsername%", api.EscapeHTML(post.Author.Username))
+	return s
+}
+
+// replaceVar 替换所有出现的 old 为 replacement。
+func replaceVar(s, old, replacement string) string {
+	return strings.ReplaceAll(s, old, replacement)
+}
+
+// buildPostURL 根据文章字段生成站点绝对永久链接。
+func buildPostURL(api *hook.API, post *hook.PostView) string {
+	siteURL := strings.TrimRight(api.Setting("site_url"), "/")
+	path := api.PostURL(post)
+	if path == "" {
+		return siteURL
+	}
+	if siteURL == "" {
+		return path
+	}
+	return siteURL + path
+}
+
+func anyToString(v any) string {
+	switch t := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return t
+	default:
+		return fmt.Sprint(t)
+	}
+}
+
+func postSmiliesEnabled(api *hook.API) bool {
+	return api.PluginOption("enable_post_smilies", "true") != "false"
+}
+
+func smileySrc(name string) string {
+	return "/plugin-assets/post-comment-enhance/smilies/" + url.PathEscape(name) + ".gif"
+}
+
+// rejectCommentByPattern 按插件配置的正则表达式拦截评论。
+func rejectCommentByPattern(api *hook.API, view *hook.CommentPreCreateView) *hook.CommentPreCreateView {
+	if view == nil {
+		return view
+	}
+	pattern := strings.TrimSpace(api.PluginOption("comment_reject_pattern", ""))
+	api.Info("评论黑名单正则", "pattern", pattern)
+	if pattern == "" {
+		return view
+	}
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		api.Warn("评论拦截正则编译失败", "pattern", pattern, "error", err)
+		return view
+	}
+	api.Debug("评论拦截正则检查", "pattern", pattern, "content_len", len(view.Content), "author", view.Author, "ip", view.IP)
+	if !re.MatchString(view.Content) {
+		return view
+	}
+	view.Status = "spam"
+	view.RejectMessage = api.PluginOption("comment_reject_message", api.T("评论内容不符合规则，提交失败。"))
+	api.Info("评论被正则拦截", "pattern", pattern, "author", view.Author, "ip", view.IP, "content_preview", truncate(view.Content, 100))
+	return view
+}
+
+// truncate 截断字符串到指定 rune 数。
+func truncate(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return string(r[:n]) + "..."
+}

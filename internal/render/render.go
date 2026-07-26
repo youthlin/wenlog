@@ -75,7 +75,7 @@ type RequestContext struct {
 	Theme any
 
 	// WidgetOptions 是当前正在渲染的组件的选项键值对。
-	// renderWidgets 遍历组件时设置，widgetOption 模板函数读取；渲染完成后清空为 nil。
+	// render_widgets 遍历组件时设置，widget_option 模板函数读取；渲染完成后清空为 nil。
 	WidgetOptions map[string]string
 }
 
@@ -138,13 +138,21 @@ const (
 	// 用法: {{render_menu "location"}} 或 {{render_menu "location" .}}
 	tplFuncRenderMenu = "render_menu"
 
-	// tplFuncSlot 渲染指定名称的插槽（hook 注入点）。
-	// 用法: {{slot "slot_name" .}}
-	tplFuncSlot = "slot"
+	// tplFuncDoAction 执行指定名称的 action hook，收集输出 HTML。
+	// 用法: {{do_action "action_name" .}}
+	tplFuncDoAction = "do_action"
+
+	// tplFuncApplyFilter 应用过滤器链到输入值，返回过滤结果。
+	// 用法: {{apply_filter value "filter_name" .}} 或 {{apply_filter value "filter_name"}}
+	tplFuncApplyFilter = "apply_filter"
 
 	// tplFuncPostTitle 输出文章标题（含草稿标记），应用 post.title filter。
 	// 用法: {{post_title .Post}}
 	tplFuncPostTitle = "post_title"
+
+	// tplFuncPostTitleText 输出文章标题文本，应用 post.title filter。
+	// 用法: {{post_title_text .Post}}
+	tplFuncPostTitleText = "post_title_text"
 
 	// tplFuncPostExcerpt 输出文章摘要，应用 post.excerpt_html filter。
 	// 用法: {{post_excerpt .Post}}
@@ -174,7 +182,7 @@ const (
 	// 用法: <li class="{{comment_class . "extra-class"}}">
 	tplFuncCommentClass = "comment_class"
 
-	// tplFuncCommentContent 输出评论正文，应用 comment.render_html filter。
+	// tplFuncCommentContent 输出评论正文，应用 comment.content_html filter。
 	// 用法: {{comment_content .}}（用于自定义评论模板 comment_item）
 	tplFuncCommentContent = "comment_content"
 
@@ -245,8 +253,10 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext) (*temp
 		tplFuncWidgetOption:       func(key string) string { return widgetOption(ctx, key) },
 		tplFuncRenderWidgets:      func(area string, data any) template.HTML { return renderWidgets(ctx, area, data) },
 		tplFuncRenderMenu:         func(location string, data ...any) template.HTML { return renderMenu(ctx, location, data...) },
-		tplFuncSlot:               func(name string, data any) template.HTML { return slot(ctx, name, data) },
+		tplFuncDoAction:           func(name string, data any) template.HTML { return doAction(ctx, name, data) },
+		tplFuncApplyFilter:        func(value any, name string, args ...any) template.HTML { return applyFilter(ctx, value, name, args...) },
 		tplFuncPostTitle:          func(post any) template.HTML { return postTitle(ctx, post) },
+		tplFuncPostTitleText:      func(post any) string { return postTitleText(ctx, post) },
 		tplFuncPostExcerpt:        func(post any) template.HTML { return postExcerpt(ctx, post) },
 		tplFuncPostContent:        func(post any) template.HTML { return postContent(ctx, post) },
 		tplFuncPostTags:           func(post any) template.HTML { return postTags(post) },
@@ -274,8 +284,10 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncRenderWidgets:      func(area string, data any) template.HTML { return "" },
 		tplFuncRenderMenu:         func(location string, data ...any) template.HTML { return "" },
 		tplFuncWidgetOption:       func(key string) string { return "" },
-		tplFuncSlot:               func(name string, data any) template.HTML { return "" },
+		tplFuncDoAction:           func(name string, data any) template.HTML { return "" },
+		tplFuncApplyFilter:        func(value any, name string, args ...any) template.HTML { return "" },
 		tplFuncPostTitle:          func(data any) template.HTML { return "" },
+		tplFuncPostTitleText:      func(data any) string { return "" },
 		tplFuncPostExcerpt:        func(post any) template.HTML { return "" },
 		tplFuncPostContent:        func(post any) template.HTML { return "" },
 		tplFuncPostTags:           func(post any) template.HTML { return "" },

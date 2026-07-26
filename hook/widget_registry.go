@@ -2,21 +2,21 @@ package hook
 
 import "sync"
 
-// WidgetRegistry 管理所有已注册的组件实现，按 source:id 或 plugin:pluginID:id 索引。
+// WidgetRegistry 管理所有已注册的组件 renderer，按 source:id 或 plugin:pluginID:id 索引。
 // theme 和 plugin 包各自通过 Register 方法将组件注册进来，
-// renderer 通过 Get 方法查找组件实现用于渲染。
+// 模板渲染阶段通过 Get 方法查找 renderer。
 type WidgetRegistry struct {
 	mu      sync.RWMutex
-	widgets map[string]Widget
+	widgets map[string]WidgetRenderer
 }
 
 // NewWidgetRegistry 创建组件注册表。
 func NewWidgetRegistry() *WidgetRegistry {
-	return &WidgetRegistry{widgets: make(map[string]Widget)}
+	return &WidgetRegistry{widgets: make(map[string]WidgetRenderer)}
 }
 
-// Register 注册一个组件实现。
-func (r *WidgetRegistry) Register(w Widget) {
+// Register 注册一个组件 renderer。
+func (r *WidgetRegistry) Register(w WidgetRenderer) {
 	if r == nil || w == nil {
 		return
 	}
@@ -27,9 +27,9 @@ func (r *WidgetRegistry) Register(w Widget) {
 	r.mu.Unlock()
 }
 
-// Get 按来源和 ID 查找组件实现。
+// Get 按来源和 ID 查找组件 renderer。
 // source 为 "builtin" / "theme" / "plugin"，pluginID 仅在 source="plugin" 时有值。
-func (r *WidgetRegistry) Get(source, id, pluginID string) Widget {
+func (r *WidgetRegistry) Get(source, id, pluginID string) WidgetRenderer {
 	if r == nil {
 		return nil
 	}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/traefik/yaegi/interp"
@@ -13,6 +14,8 @@ import (
 )
 
 var functionsFileNames = []string{"functions.go", "functions.goyaegi"}
+
+const defaultEntryTimeout = 5 * time.Second
 
 // FindFunctionsPath 返回扩展目录下优先匹配的 functions 脚本路径。
 // 主题和插件共用同一套查找规则：优先 functions.go，其次 functions.goyaegi。
@@ -97,7 +100,7 @@ func CompileAndRegister(ctx context.Context, source string, options CompileOptio
 	if err := validateRegisterArgs(subject, registerFn, options.RegisterArgs); err != nil {
 		return nil, err
 	}
-	if err := callRegister(subject, registerFn, options.RegisterArgs); err != nil {
+	if err := callRegister(ctx, subject, registerFn, options.RegisterArgs); err != nil {
 		return nil, err
 	}
 	return i, nil
@@ -124,9 +127,12 @@ func safeEval(ctx context.Context, i *interp.Interpreter, source string) (prog a
 
 // CallOptionalFunc 调用脚本包中的可选函数；函数不存在时返回 false, nil。
 // 生命周期函数复用 Register 的参数校验规则，并允许函数返回 error。
-func CallOptionalFunc(i *interp.Interpreter, packageName, funcName, subject string, args []any) (bool, error) {
+func CallOptionalFunc(ctx context.Context, i *interp.Interpreter, packageName, funcName, subject string, args []any) (bool, error) {
 	if i == nil || packageName == "" || funcName == "" {
 		return false, nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	if subject == "" {
 		subject = "脚本"
@@ -142,27 +148,11 @@ func CallOptionalFunc(i *interp.Interpreter, packageName, funcName, subject stri
 	if err := validateRegisterArgs(subject, fn, args); err != nil {
 		return true, err
 	}
-	outs, err := callFunction(subject, funcName, fn, args)
+	outs, err := callFunction(ctx, subject, funcName, fn, args)
 	if err != nil {
 		return true, err
 	}
-	if len(outs) == 0 {
-		return true, nil
-	}
-	if len(outs) > 1 {
-		return true, errors.Errorf("%s函数中%s最多只能返回一个error", subject, funcName)
-	}
-	if !outs[0].IsValid() {
-		return true, nil
-	}
-	if isNilValue(outs[0]) {
-		return true, nil
-	}
-	errValue, ok := outs[0].Interface().(error)
-	if !ok {
-		return true, errors.Errorf("%s函数中%s返回值必须是error", subject, funcName)
-	}
-	return true, errValue
+	return true, optionalErrorResult(subject, funcName, outs)
 }
 
 func isNilValue(v reflect.Value) bool {
@@ -192,12 +182,50 @@ func validateRegisterArgs(subject string, registerFn reflect.Value, args []any) 
 	return nil
 }
 
-func callRegister(subject string, registerFn reflect.Value, args []any) (err error) {
-	_, err = callFunction(subject, "Register", registerFn, args)
-	return err
+func callRegister(ctx context.Context, subject string, registerFn reflect.Value, args []any) error {
+	outs, err := callFunction(ctx, subject, "Register", registerFn, args)
+	if err != nil {
+		return err
+	}
+	return optionalErrorResult(subject, "Register", outs)
 }
 
-func callFunction(subject, name string, fn reflect.Value, args []any) (outs []reflect.Value, err error) {
+func callFunction(ctx context.Context, subject, name string, fn reflect.Value, args []any) (outs []reflect.Value, err error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	result := make(chan scriptCallResult, 1)
+	go func() {
+		outs, err := callFunctionDirect(subject, name, fn, args)
+		result <- scriptCallResult{outs: outs, err: err}
+	}()
+
+	timeout := defaultEntryTimeout
+	if deadline, ok := ctx.Deadline(); ok {
+		if remaining := time.Until(deadline); remaining <= 0 {
+			return nil, errors.Errorf("%s函数%s执行超时", subject, name)
+		} else if remaining < timeout {
+			timeout = remaining
+		}
+	}
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case res := <-result:
+		return res.outs, res.err
+	case <-ctx.Done():
+		return nil, errors.Errorf("%s函数%s执行超时: %v", subject, name, ctx.Err())
+	case <-timer.C:
+		return nil, errors.Errorf("%s函数%s执行超时: %s", subject, name, timeout)
+	}
+}
+
+type scriptCallResult struct {
+	outs []reflect.Value
+	err  error
+}
+
+func callFunctionDirect(subject, name string, fn reflect.Value, args []any) (outs []reflect.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.Errorf("%s函数%s执行panic: %v", subject, name, r)
@@ -218,6 +246,23 @@ func callFunction(subject, name string, fn reflect.Value, args []any) (outs []re
 		in = append(in, v)
 	}
 	return fn.Call(in), nil
+}
+
+func optionalErrorResult(subject, name string, outs []reflect.Value) error {
+	if len(outs) == 0 {
+		return nil
+	}
+	if len(outs) > 1 {
+		return errors.Errorf("%s函数中%s最多只能返回一个error", subject, name)
+	}
+	if !outs[0].IsValid() || isNilValue(outs[0]) {
+		return nil
+	}
+	errValue, ok := outs[0].Interface().(error)
+	if !ok {
+		return errors.Errorf("%s函数中%s返回值必须是error", subject, name)
+	}
+	return errValue
 }
 
 // ParseKVArgs 解析 key-value 参数对为 map[string]any。

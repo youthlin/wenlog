@@ -13,7 +13,7 @@
 
 <section class="card settings-card plugins-card">
   <h3>{{.t.T "插件管理"}}</h3>
-  <p class="tip">{{.t.T "插件可以通过 action/filter/slot 扩展站点能力。启用或停用后会立即重载插件运行时和当前主题 hooks。"}}</p>
+  <p class="tip">{{.t.T "插件可以通过 action/filter 扩展站点能力，模板中使用 {{do_action}} 和 {{apply_filter}} 调用。启用或停用后会立即重载插件运行时和当前主题 hooks。"}}</p>
   {{if .EnabledPluginIDs}}<p class="tip">{{.t.T "当前启用"}}: <code>{{.EnabledPluginIDs}}</code></p>{{end}}
 
   <div class="table-scroll">
@@ -50,10 +50,10 @@
         <td class="plugin-capabilities-cell" data-label="{{$.t.T "能力"}}">
           {{if .ActionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Actions"}}</strong>: {{range .ActionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .FilterNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Filters"}}</strong>: {{range .FilterNames}}<code>{{.}}</code> {{end}}</div>{{end}}
-          {{if .SlotNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Slots"}}</strong>: {{range .SlotNames}}<code>{{.}}</code> {{end}}</div>{{end}}
+          {{if .Lifecycle}}<div class="plugin-capability-line"><strong>{{$.t.T "Lifecycle"}}</strong>: {{range .Lifecycle}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .WidgetNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Widgets"}}</strong>: {{range .WidgetNames}}<code>{{.}}</code> {{end}}</div>{{end}}
           {{if .OptionNames}}<div class="plugin-capability-line"><strong>{{$.t.T "Options"}}</strong>: {{range .OptionNames}}<code>{{.}}</code> {{end}}</div>{{end}}
-          {{if and (not .ActionNames) (not .FilterNames) (not .SlotNames) (not .WidgetNames) (not .OptionNames)}}—{{end}}
+          {{if and (not .ActionNames) (not .FilterNames) (not .Lifecycle) (not .WidgetNames) (not .OptionNames)}}—{{end}}
         </td>
         <td class="actions plugin-actions-cell" data-label="{{$.t.T "操作"}}">
           <a class="btn-secondary btn-sm theme-action-link" href="/admin/theme/files?kind=plugin&plugin={{.ID}}">{{$.t.T "编辑"}}</a>
@@ -68,7 +68,7 @@
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm">{{$.t.T "重载"}}</button>
           </form>
-          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期。" .Name}}')">
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期，并删除插件目录。" .Name}}')">
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "卸载"}}</button>
           </form>
@@ -77,7 +77,7 @@
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm">{{$.t.T "启用"}}</button>
           </form>
-          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会执行卸载生命周期。" .Name}}')">
+          <form class="inline" method="post" action="/admin/plugin/{{.ID}}/uninstall" onsubmit="return confirm('{{$.t.T "确定要卸载插件「%s」吗？会执行卸载生命周期，并删除插件目录。" .Name}}')">
             {{template "csrf_field" $}}
             <button type="submit" class="btn-secondary btn-sm link-danger">{{$.t.T "卸载"}}</button>
           </form>

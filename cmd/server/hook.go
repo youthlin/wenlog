@@ -40,8 +40,6 @@ func initHook(r *gin.Engine, st *store.Store, renderer *render.Renderer) (
 	pm *plugin.Manager,
 ) {
 	var err error
-	var ctx = context.Background()
-
 	// 1. 初始化主题和插件管理器（仅创建实例，不配置 renderer）
 	tm, err = initThemeManager(st, renderer)
 	if err != nil {
@@ -64,12 +62,12 @@ func initHook(r *gin.Engine, st *store.Store, renderer *render.Renderer) (
 
 	// 4. 加载当前主题的模板和 functions.goyaegi
 	//    必须在 Hook Registry 注入之后执行，否则主题脚本注册 hook 会失败
-	if err := tm.LoadTheme(ctx, ""); err != nil {
+	if err := tm.LoadTheme(bg, ""); err != nil {
 		slog.ErrorContext(bg, "加载主题 hook 失败", slog.Any("error", err))
 	}
 
 	// 5. 构建统一组件注册表：内置 → 主题 → 插件，注入 renderer
-	populateWidgetRegistry(ctx, tm, pm, renderer)
+	populateWidgetRegistry(bg, tm, pm, renderer)
 
 	// 6. 注册主题和插件静态资源路由
 	registerThemeAssetsRoute(r, tm)
