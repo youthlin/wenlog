@@ -1,6 +1,6 @@
 id: post-comment-enhance
 name: "文章评论增强"
-version: "20260719000000"
+version: "20260726120736"
 description: "为评论和文章正文提供表情短码插入与渲染，后台编辑器提供表情面板，支持文章尾部自定义 HTML，支持正则拦截垃圾评论。"
 author: "youthlin"
 default_enabled: true

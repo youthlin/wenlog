@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wenlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 12:14+0800\n"
+"POT-Creation-Date: 2026-07-26 12:07+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -205,7 +205,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_base.gohtml:63
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_import.gohtml:78
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_import.gohtml:99
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:85
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:86
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:41
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:95
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:99
@@ -473,7 +473,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:88
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_edit_files.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:55
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:93
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_theme_options.gohtml:65
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_user_form.gohtml:33
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_widgets.gohtml:104
@@ -484,7 +484,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:89
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:104
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_edit_files.gohtml:289
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:93
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:6
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_terms.gohtml:15
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_terms.gohtml:30
@@ -1043,7 +1043,7 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:40
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:78
 msgid "状态"
 msgstr ""
 
@@ -1113,7 +1113,7 @@ msgstr ""
 msgid "重载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:71
 msgid "确定要卸载插件「%s」吗？会先执行停用和卸载生命周期，并删除插件目录。"
 msgstr ""
 
@@ -1122,7 +1122,7 @@ msgstr ""
 msgid "卸载"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:79
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:80
 msgid "确定要卸载插件「%s」吗？会执行卸载生命周期，并删除插件目录。"
 msgstr ""
 
@@ -1245,50 +1245,50 @@ msgstr ""
 msgid "分栏预览"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:61
 msgid "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:63
 msgid "摘要(可选)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:71
 msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:73
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:74
 msgid "如:Go, 教程, 随笔"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:73
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:74
 msgid "标签(逗号分隔)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:79
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:80
 msgid "发布"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:80
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:81
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:58
 msgid "草稿"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:81
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:82
 msgid "定时发布"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:85
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:36
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:68
 msgid "发布时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:87
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:88
 msgid "开放"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:89
 msgctxt "admin.comment_status.option"
 msgid "关闭"
 msgstr ""
@@ -1873,213 +1873,223 @@ msgstr ""
 msgid "保存 SQL 调试设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:173
-msgid "站点设置"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:168
+msgid "日志级别"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:176
-msgid "站点名称"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:177
-msgid "站点描述"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:178
-msgid "站点 Logo URL"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:171
+msgid "当前日志级别"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:179
+msgid ""
+"Debug 级别会输出 Hook 执行详细日志，便于调试插件；修改后立即生效，无需重启服"
+"务。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:180
+msgid "保存日志级别"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:190
+msgid "站点设置"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:193
+msgid "站点名称"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:194
+msgid "站点描述"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:195
+msgid "站点 Logo URL"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:196
 msgid ""
 "可选。设置后在主题 header 中显示 Logo 图片。可使用「文件管理」上传图片后复制"
 "链接。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:180
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:197
 msgid "文章固定链接结构"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:181
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:198
 msgid ""
 "兼容常见 WordPress 占位符：%year% %monthnum% %day% %hour% %minute% %second% "
 "%post_id% %postname% %category% %author%。也允许夹杂固定文本，例如 /%year%"
 "%post_id%.html。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:183
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:200
 msgid "分类目录前缀"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:184
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:201
 msgid "标签前缀"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:186
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:203
 msgid ""
 "例如可把分类目录从 /category/go 改成 /topics/go，把标签从 /tag/gin 改成 /"
 "labels/gin。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:188
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:205
 msgid "列表分页数量"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:189
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:206
 msgid "Feed 输出数量"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:192
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:209
 msgid "默认头像"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:196
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:213
 msgid "神秘人士"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:196
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:213
 msgid "通用的人物轮廓"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:201
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:218
 msgid "空白"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:201
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:218
 msgid "透明图像"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:206
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:223
 msgid "Cravatar 标志"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:206
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:223
 msgid "默认服务标志"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:211
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:228
 msgid "抽象图形"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:211
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:216
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:221
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:226
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:231
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:228
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:233
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:238
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:243
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:248
 msgid "自动生成"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:221
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:238
 msgid "小怪物"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:226
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:243
 msgid "复古"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:234
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:251
 msgid "当评论者或用户没有自定义 Cravatar 头像时，使用这里选择的默认头像样式。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:236
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:253
 msgid "开放注册"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:237
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:254
 msgid "允许前台注册"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:240
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:257
 msgid "开启后前台显示注册入口，新用户需先验证邮箱，完成后默认为订阅者角色。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:242
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:259
 msgid "开放注册需要先配置 SMTP 邮件设置，否则无法发送邮箱验证邮件。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:244
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:261
 msgid "保存站点设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:249
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:266
 msgid "SMTP 邮件设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:252
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:269
 msgid "配置 SMTP 后可使用忘记密码等邮件功能。留空则禁用邮件发送。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:253
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:270
 msgid "SMTP 服务器"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:254
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:271
 msgid "SMTP 端口"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:255
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:272
 msgid "SMTP 用户名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:256
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:273
 msgid "SMTP 密码"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:256
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:273
 msgid "留空则不修改"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:257
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:274
 msgid "发件人地址"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:258
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:275
 msgid "站点 URL"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:259
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:276
 msgid "用于生成重置密码等邮件中的链接。留空则自动从请求推断。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:260
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:277
 msgid "测试收件人"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:261
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:278
 msgid "测试前会先保存上方 SMTP 设置。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:262
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:279
 msgid "保存 SMTP 设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:262
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:279
 msgid "发送测试邮件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:267
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:284
 msgid "会话设置"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:270
-msgid "新的 Session Secret"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:287
+msgid "已配置自定义 Session Secret。重新生成后所有登录用户都需要重新登录。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:270
-msgid "请输入新的 Session Secret"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:271
-msgid "已配置自定义 Session Secret。修改后所有登录用户都需要重新登录。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:271
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:287
 msgid ""
-"当前仍在使用默认或环境变量提供的 Session Secret。修改后所有登录用户都需要重新"
-"登录。"
+"当前仍在使用默认或环境变量提供的 Session Secret。重新生成后所有登录用户都需要"
+"重新登录。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:272
-msgid "更新 Session Secret"
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:288
+msgid "重新生成 Session Secret"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_terms.gohtml:22
@@ -2746,157 +2756,157 @@ msgstr ""
 msgid "菜单已保存"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:56
+#: internal/handler/admin_plugins.go:54
 msgid "插件"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:75 internal/handler/admin_plugins.go:273
-#: internal/handler/admin_plugins.go:424 internal/handler/admin_plugins.go:446
+#: internal/handler/admin_plugins.go:73 internal/handler/admin_plugins.go:271
+#: internal/handler/admin_plugins.go:443 internal/handler/admin_plugins.go:465
 msgid "插件管理器未初始化"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:81 internal/handler/admin_plugins.go:278
+#: internal/handler/admin_plugins.go:79 internal/handler/admin_plugins.go:276
 msgid "未指定插件"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:85 internal/handler/admin_plugins.go:283
+#: internal/handler/admin_plugins.go:83 internal/handler/admin_plugins.go:281
 #, c-format
 msgid "插件不存在: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:94 internal/handler/admin_plugins.go:102
+#: internal/handler/admin_plugins.go:92 internal/handler/admin_plugins.go:100
 #, c-format
 msgid "启用插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:111
+#: internal/handler/admin_plugins.go:109
 #, c-format
 msgid "启用插件失败，已回滚: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:114
+#: internal/handler/admin_plugins.go:112
 #, c-format
 msgid "插件「%s」已启用"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:119 internal/handler/admin_plugins.go:124
+#: internal/handler/admin_plugins.go:117 internal/handler/admin_plugins.go:122
 #, c-format
 msgid "停用插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:133
+#: internal/handler/admin_plugins.go:131
 #, c-format
 msgid "停用插件失败，已回滚: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:136
+#: internal/handler/admin_plugins.go:134
 #, c-format
 msgid "插件「%s」已停用"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:140 internal/handler/admin_plugins.go:143
+#: internal/handler/admin_plugins.go:138 internal/handler/admin_plugins.go:141
 #, c-format
 msgid "重载插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:150
+#: internal/handler/admin_plugins.go:148
 #, c-format
 msgid "插件「%s」已重载"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:153
+#: internal/handler/admin_plugins.go:151
 #, c-format
 msgid "卸载插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:157
+#: internal/handler/admin_plugins.go:155
 #, c-format
 msgid "卸载插件后重载失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:160
+#: internal/handler/admin_plugins.go:158
 #, c-format
 msgid "插件「%s」已卸载"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:162
+#: internal/handler/admin_plugins.go:160
 #, c-format
 msgid "未知插件操作: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:173
+#: internal/handler/admin_plugins.go:171
 msgid "插件设置"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:227
+#: internal/handler/admin_plugins.go:225
 #, c-format
 msgid "插件设置已保存，但重载失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:231
+#: internal/handler/admin_plugins.go:229
 msgid "插件设置已保存"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:385 internal/handler/admin_theme.go:99
+#: internal/handler/admin_plugins.go:397 internal/handler/admin_theme.go:97
 #: internal/handler/admin_upload.go:36
 msgid "未选择文件"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:389
+#: internal/handler/admin_plugins.go:401
 msgid "插件包不能超过 5MB"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:393
+#: internal/handler/admin_plugins.go:405
 msgid "仅支持 .zip 格式的插件包"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:399 internal/handler/admin_theme.go:113
+#: internal/handler/admin_plugins.go:411 internal/handler/admin_theme.go:111
 #: internal/handler/admin_upload.go:45
 msgid "打开上传文件失败"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:406 internal/handler/admin_theme.go:121
+#: internal/handler/admin_plugins.go:418 internal/handler/admin_theme.go:119
 msgid "创建临时目录失败"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:412
+#: internal/handler/admin_plugins.go:431
 #, c-format
 msgid "解压插件包失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:418
+#: internal/handler/admin_plugins.go:437
 msgid "插件包中未找到 plugin.yaml"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:429
+#: internal/handler/admin_plugins.go:448
 #, c-format
 msgid "安装插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:433
+#: internal/handler/admin_plugins.go:452
 #, c-format
 msgid "插件「%s」安装成功"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:441
+#: internal/handler/admin_plugins.go:460
 msgid "未指定插件 ID"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:451
+#: internal/handler/admin_plugins.go:470
 #, c-format
 msgid "插件「%s」不存在"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:456
+#: internal/handler/admin_plugins.go:475
 msgid "创建插件下载文件失败"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:463
+#: internal/handler/admin_plugins.go:482
 #, c-format
 msgid "打包插件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_plugins.go:467
+#: internal/handler/admin_plugins.go:486
 #, c-format
 msgid "写入插件下载文件失败: %s"
 msgstr ""
@@ -3131,134 +3141,138 @@ msgstr ""
 msgid "查看修订版本"
 msgstr ""
 
-#: internal/handler/admin_settings.go:91
+#: internal/handler/admin_settings.go:92
 msgid "常规设置"
 msgstr ""
 
-#: internal/handler/admin_settings.go:94
+#: internal/handler/admin_settings.go:95
 msgid "开发设置"
 msgstr ""
 
-#: internal/handler/admin_settings.go:177
+#: internal/handler/admin_settings.go:184
 msgid "模板已重新解析。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:180
+#: internal/handler/admin_settings.go:187
 msgid ""
 "已切换到本地模板 hot 模式；若 `web/templates` 已存在，则会直接复用现有文件，"
 "不覆盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:183
+#: internal/handler/admin_settings.go:190
 msgid "已切回使用内嵌模板资源；本地模板目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:186
+#: internal/handler/admin_settings.go:193
 msgid ""
 "已切换到本地资源 hot 模式；若 `web/assets` 已存在，则会直接复用现有文件，不覆"
 "盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:189
+#: internal/handler/admin_settings.go:196
 msgid "已切回使用内嵌资源文件；本地资源目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:192
+#: internal/handler/admin_settings.go:199
 msgid ""
 "已切换到本地翻译资源 hot 模式；若 `web/i18n` 已存在，则会直接复用现有文件，不"
 "覆盖你的改动。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:195
+#: internal/handler/admin_settings.go:202
 msgid "已切回使用内嵌翻译资源；本地翻译目录会保留在磁盘上。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:198
+#: internal/handler/admin_settings.go:205
 msgid "SMTP 设置已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:201
+#: internal/handler/admin_settings.go:208
 msgid "测试邮件已发送，请检查收件箱。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:204
+#: internal/handler/admin_settings.go:211
 msgid "Metrics Basic Auth 密码已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:207
+#: internal/handler/admin_settings.go:214
 msgid "SQL 调试设置已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:210
+#: internal/handler/admin_settings.go:217
+msgid "日志级别已保存并立即生效。"
+msgstr ""
+
+#: internal/handler/admin_settings.go:220
 msgid "更新设置已保存。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:213
+#: internal/handler/admin_settings.go:223
 msgid "主题已重载。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:216
+#: internal/handler/admin_settings.go:226
 msgid "插件资源已重载。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:219
+#: internal/handler/admin_settings.go:229
 msgid "后台更新已启动，请稍等片刻后刷新页面确认版本。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:222
+#: internal/handler/admin_settings.go:232
 msgid "开放注册需要先配置 SMTP 邮件设置。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:375
+#: internal/handler/admin_settings.go:385
 #, c-format
 msgid "更新失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:556
+#: internal/handler/admin_settings.go:566
 msgid "下载镜像地址不合法，请填写 https 地址。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:813
+#: internal/handler/admin_settings.go:823
 #, c-format
 msgid "固定链接结构不合法: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:820
+#: internal/handler/admin_settings.go:830
 #, c-format
 msgid "分类目录前缀不合法: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:828
+#: internal/handler/admin_settings.go:838
 #, c-format
 msgid "标签前缀不合法: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:838
+#: internal/handler/admin_settings.go:848
 msgid "分类目录前缀和标签前缀不能相同。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:862
+#: internal/handler/admin_settings.go:872
 msgid "Metrics Basic Auth 密码至少需要 12 个字符。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:932
+#: internal/handler/admin_settings.go:957
 msgid "测试收件人不能为空。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:938
+#: internal/handler/admin_settings.go:963
 msgid "测试收件人邮箱格式不正确。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:946
+#: internal/handler/admin_settings.go:971
 msgid "SMTP 未配置完整，请填写服务器、端口和发件人地址。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:953
+#: internal/handler/admin_settings.go:978
 #, c-format
 msgid "[%s] SMTP 测试邮件"
 msgstr ""
 
-#: internal/handler/admin_settings.go:954
+#: internal/handler/admin_settings.go:979
 #, c-format
 msgid ""
 "这是一封来自 %s 的 SMTP 测试邮件。\n"
@@ -3266,122 +3280,118 @@ msgid ""
 "如果你收到这封邮件，说明 SMTP 配置已生效。\n"
 msgstr ""
 
-#: internal/handler/admin_settings.go:958
+#: internal/handler/admin_settings.go:983
 #, c-format
 msgid "测试邮件发送失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:972
-msgid "Session Secret 不能为空。"
-msgstr ""
-
-#: internal/handler/admin_settings.go:991
+#: internal/handler/admin_settings.go:1009
 msgid "当前不是热更新模式，不能重新解析模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:997
+#: internal/handler/admin_settings.go:1015
 #, c-format
 msgid "重新解析模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1009
+#: internal/handler/admin_settings.go:1027
 msgid "当前模板渲染器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1015
+#: internal/handler/admin_settings.go:1033
 msgid "当前已经是 hot 模式，无需再次释放模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1022
+#: internal/handler/admin_settings.go:1040
 #, c-format
 msgid "切换到本地模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1031
+#: internal/handler/admin_settings.go:1049
 #, c-format
 msgid "释放模板文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1043
+#: internal/handler/admin_settings.go:1061
 msgid "当前不是 hot 模式，不能切回内嵌模板。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1049
+#: internal/handler/admin_settings.go:1067
 #, c-format
 msgid "切换回内嵌模板失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1061
+#: internal/handler/admin_settings.go:1079
 msgid "当前资源管理器不可用。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1067
+#: internal/handler/admin_settings.go:1085
 msgid "当前已经是 hot 模式，无需再次释放资源文件。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1079
+#: internal/handler/admin_settings.go:1097
 #, c-format
 msgid "读取嵌入资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1085
+#: internal/handler/admin_settings.go:1103
 #, c-format
 msgid "释放资源文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1098
+#: internal/handler/admin_settings.go:1116
 msgid "当前不是 hot 模式，不能切回内嵌资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1111
+#: internal/handler/admin_settings.go:1129
 msgid "当前已经是 hot 模式，无需再次释放翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1119
+#: internal/handler/admin_settings.go:1137
 #, c-format
 msgid "读取内嵌翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1125
+#: internal/handler/admin_settings.go:1143
 #, c-format
 msgid "释放翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1133
-#: internal/handler/admin_settings.go:1160
+#: internal/handler/admin_settings.go:1151
+#: internal/handler/admin_settings.go:1178
 #, c-format
 msgid "重新加载翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1140
-#: internal/handler/admin_settings.go:1167
+#: internal/handler/admin_settings.go:1158
+#: internal/handler/admin_settings.go:1185
 #, c-format
 msgid "重新加载主题翻译资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1153
+#: internal/handler/admin_settings.go:1171
 msgid "当前不是 hot 模式，不能切回内嵌翻译资源。"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1200
-msgid "主题管理器未初始化。"
-msgstr ""
-
-#: internal/handler/admin_settings.go:1206
-#, c-format
-msgid "重载主题失败: %s"
-msgstr ""
-
 #: internal/handler/admin_settings.go:1218
-msgid "插件管理器未初始化。"
+msgid "主题管理器未初始化。"
 msgstr ""
 
 #: internal/handler/admin_settings.go:1224
 #, c-format
+msgid "重载主题失败: %s"
+msgstr ""
+
+#: internal/handler/admin_settings.go:1236
+msgid "插件管理器未初始化。"
+msgstr ""
+
+#: internal/handler/admin_settings.go:1242
+#, c-format
 msgid "重载插件资源失败: %s"
 msgstr ""
 
-#: internal/handler/admin_settings.go:1230
+#: internal/handler/admin_settings.go:1248
 #, c-format
 msgid "重载插件翻译资源失败: %s"
 msgstr ""
@@ -3446,103 +3456,103 @@ msgstr ""
 msgid "标签 slug %q 已存在。"
 msgstr ""
 
-#: internal/handler/admin_theme.go:33
+#: internal/handler/admin_theme.go:31
 msgid "外观"
 msgstr ""
 
-#: internal/handler/admin_theme.go:103
+#: internal/handler/admin_theme.go:101
 msgid "主题包不能超过 5MB"
 msgstr ""
 
-#: internal/handler/admin_theme.go:107
+#: internal/handler/admin_theme.go:105
 msgid "仅支持 .zip 格式的主题包"
 msgstr ""
 
-#: internal/handler/admin_theme.go:127
+#: internal/handler/admin_theme.go:132
 #, c-format
 msgid "解压主题包失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:134
+#: internal/handler/admin_theme.go:139
 msgid "主题包中未找到 theme.yaml"
 msgstr ""
 
-#: internal/handler/admin_theme.go:141 internal/handler/admin_theme.go:163
-#: internal/handler/admin_theme.go:190 internal/handler/admin_theme.go:219
-#: internal/handler/admin_theme.go:310
+#: internal/handler/admin_theme.go:146 internal/handler/admin_theme.go:168
+#: internal/handler/admin_theme.go:195 internal/handler/admin_theme.go:224
+#: internal/handler/admin_theme.go:267
 msgid "主题管理器未初始化"
 msgstr ""
 
-#: internal/handler/admin_theme.go:146
+#: internal/handler/admin_theme.go:151
 #, c-format
 msgid "安装主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:150
+#: internal/handler/admin_theme.go:155
 #, c-format
 msgid "主题「%s」安装成功"
 msgstr ""
 
-#: internal/handler/admin_theme.go:158 internal/handler/admin_theme.go:185
-#: internal/handler/admin_theme.go:214 internal/handler/admin_theme.go:305
+#: internal/handler/admin_theme.go:163 internal/handler/admin_theme.go:190
+#: internal/handler/admin_theme.go:219 internal/handler/admin_theme.go:262
 msgid "未指定主题名称"
-msgstr ""
-
-#: internal/handler/admin_theme.go:167
-#, c-format
-msgid "激活主题失败: %s"
 msgstr ""
 
 #: internal/handler/admin_theme.go:172
 #, c-format
-msgid "主题已激活，但加载失败，已回退默认主题: %s"
+msgid "激活主题失败: %s"
 msgstr ""
 
 #: internal/handler/admin_theme.go:177
 #, c-format
+msgid "主题已激活，但加载失败，已回退默认主题: %s"
+msgstr ""
+
+#: internal/handler/admin_theme.go:182
+#, c-format
 msgid "已激活主题「%s」"
 msgstr ""
 
-#: internal/handler/admin_theme.go:198
+#: internal/handler/admin_theme.go:203
 #, c-format
 msgid "删除主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:206
+#: internal/handler/admin_theme.go:211
 #, c-format
 msgid "主题「%s」已删除"
 msgstr ""
 
-#: internal/handler/admin_theme.go:224 internal/handler/admin_theme.go:314
+#: internal/handler/admin_theme.go:229 internal/handler/admin_theme.go:271
 #, c-format
 msgid "主题「%s」不存在"
 msgstr ""
 
-#: internal/handler/admin_theme.go:229
+#: internal/handler/admin_theme.go:234
 msgid "创建主题下载文件失败"
 msgstr ""
 
-#: internal/handler/admin_theme.go:236
+#: internal/handler/admin_theme.go:241
 #, c-format
 msgid "打包主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:240
+#: internal/handler/admin_theme.go:245
 #, c-format
 msgid "写入主题下载文件失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:319
+#: internal/handler/admin_theme.go:276
 #, c-format
 msgid "加载预览主题失败: %s"
 msgstr ""
 
-#: internal/handler/admin_theme.go:323
+#: internal/handler/admin_theme.go:280
 #, c-format
 msgid "正在预览主题「%s」，前台已生效。"
 msgstr ""
 
-#: internal/handler/admin_theme.go:333
+#: internal/handler/admin_theme.go:290
 msgid "已退出主题预览"
 msgstr ""
 
@@ -3713,7 +3723,7 @@ msgstr ""
 msgid "注册"
 msgstr ""
 
-#: internal/handler/auth_handler.go:144 internal/handler/comment.go:175
+#: internal/handler/auth_handler.go:144 internal/handler/comment.go:219
 msgid "邮箱格式不正确。"
 msgstr ""
 
@@ -3829,60 +3839,64 @@ msgstr ""
 msgid "密码已重置，请使用新密码登录。"
 msgstr ""
 
-#: internal/handler/comment.go:59
+#: internal/handler/comment.go:60
 msgid "提交内容格式有误。"
 msgstr ""
 
-#: internal/handler/comment.go:75
+#: internal/handler/comment.go:76
 msgid "目标评论不存在。"
 msgstr ""
 
-#: internal/handler/comment.go:106 internal/i18n/i18n.go:197
+#: internal/handler/comment.go:137
+msgid "评论被拦截。"
+msgstr ""
+
+#: internal/handler/comment.go:150 internal/i18n/i18n.go:197
 msgid "评论已提交,等待审核后显示。"
 msgstr ""
 
-#: internal/handler/comment.go:108
+#: internal/handler/comment.go:152
 msgid "评论已发布。"
 msgstr ""
 
-#: internal/handler/comment.go:140 internal/handler/comment.go:151
+#: internal/handler/comment.go:184 internal/handler/comment.go:195
 msgid "提交失败。"
 msgstr ""
 
-#: internal/handler/comment.go:162
+#: internal/handler/comment.go:206
 msgid "昵称和内容不能为空。"
 msgstr ""
 
-#: internal/handler/comment.go:166
+#: internal/handler/comment.go:210
 msgid "评论长度不合适。"
 msgstr ""
 
-#: internal/handler/comment.go:170
+#: internal/handler/comment.go:214
 msgid "邮箱不能为空。"
 msgstr ""
 
-#: internal/handler/comment.go:181
+#: internal/handler/comment.go:225
 msgid "网站地址格式不正确。"
 msgstr ""
 
-#: internal/handler/comment.go:194
+#: internal/handler/comment.go:238
 msgid "目标文章不存在。"
 msgstr ""
 
-#: internal/handler/comment.go:200
+#: internal/handler/comment.go:244
 msgid "该文章评论已关闭。"
 msgstr ""
 
-#: internal/handler/comment.go:213 internal/handler/comment.go:217
+#: internal/handler/comment.go:257 internal/handler/comment.go:262
 msgid "评论太频繁,请稍后再试。"
 msgstr ""
 
-#: internal/handler/comment.go:298
+#: internal/handler/comment.go:343
 #, c-format
 msgid "[%s] 你的评论有新回复"
 msgstr ""
 
-#: internal/handler/comment.go:299
+#: internal/handler/comment.go:344
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3897,12 +3911,12 @@ msgid ""
 "如果你不想再收到通知，可联系站点管理员关闭该评论的回复通知。\n"
 msgstr ""
 
-#: internal/handler/comment.go:306
+#: internal/handler/comment.go:351
 #, c-format
 msgid "[%s] 你的评论已通过审核"
 msgstr ""
 
-#: internal/handler/comment.go:307
+#: internal/handler/comment.go:352
 #, c-format
 msgid ""
 "您好 %s，\n"
@@ -3930,21 +3944,21 @@ msgstr ""
 msgid "归档"
 msgstr ""
 
-#: internal/handler/public.go:291 internal/handler/public.go:292
+#: internal/handler/public.go:290 internal/handler/public.go:291
 #, c-format
 msgid "分类：%s"
 msgstr ""
 
-#: internal/handler/public.go:311 internal/handler/public.go:312
+#: internal/handler/public.go:310 internal/handler/public.go:311
 #, c-format
 msgid "标签：%s"
 msgstr ""
 
-#: internal/handler/public.go:607
+#: internal/handler/public.go:605
 msgid "页面不存在"
 msgstr ""
 
-#: internal/handler/public.go:609
+#: internal/handler/public.go:607
 msgid "你访问的页面不存在或已被删除。"
 msgstr ""
 
@@ -4072,101 +4086,101 @@ msgstr ""
 msgid "没有匹配项"
 msgstr ""
 
-#: internal/render/funcs.go:696
+#: internal/render/funcs.go:748
 msgid "评论已关闭"
 msgstr ""
 
-#: internal/render/funcs.go:787
+#: internal/render/funcs.go:839
 msgid "文章作者"
 msgstr ""
 
-#: internal/render/funcs.go:789
+#: internal/render/funcs.go:841
 msgid "管理员"
 msgstr ""
 
-#: internal/render/funcs.go:791
+#: internal/render/funcs.go:843
 msgid "登录用户"
 msgstr ""
 
-#: internal/render/funcs.go:801
+#: internal/render/funcs.go:853
 msgid "回复时邮件通知"
 msgstr ""
 
-#: internal/render/funcs.go:813
+#: internal/render/funcs.go:865
 msgid "评论审核中,当前仅自己可见"
 msgstr ""
 
-#: internal/render/funcs.go:826
+#: internal/render/funcs.go:878
 #, c-format
 msgid "回复 @%s"
 msgstr ""
 
-#: internal/render/funcs.go:840
+#: internal/render/funcs.go:892
 msgid "回复"
 msgstr ""
 
-#: internal/render/funcs.go:923 internal/render/funcs.go:1015
+#: internal/render/funcs.go:975 internal/render/funcs.go:1067
 msgid "上一页"
 msgstr ""
 
-#: internal/render/funcs.go:929 internal/render/funcs.go:1021
+#: internal/render/funcs.go:981 internal/render/funcs.go:1073
 msgid "下一页"
 msgstr ""
 
-#: internal/render/funcs.go:1063
+#: internal/render/funcs.go:1115
 #, c-format
 msgid "以 <strong>%s</strong> 的身份发表评论，"
 msgstr ""
 
-#: internal/render/funcs.go:1073
+#: internal/render/funcs.go:1125
 msgid "登出"
 msgstr ""
 
-#: internal/render/funcs.go:1104
+#: internal/render/funcs.go:1156
 msgid "昵称"
 msgstr ""
 
-#: internal/render/funcs.go:1108
+#: internal/render/funcs.go:1160
 msgid "昵称 *"
 msgstr ""
 
-#: internal/render/funcs.go:1112
+#: internal/render/funcs.go:1164
 msgid "邮箱"
 msgstr ""
 
-#: internal/render/funcs.go:1116
+#: internal/render/funcs.go:1168
 msgid "邮箱 *(不公开)"
 msgstr ""
 
-#: internal/render/funcs.go:1120
+#: internal/render/funcs.go:1172
 msgid "网站"
 msgstr ""
 
-#: internal/render/funcs.go:1124
+#: internal/render/funcs.go:1176
 msgid "网站(可选)"
 msgstr ""
 
-#: internal/render/funcs.go:1130
+#: internal/render/funcs.go:1182
 msgid "评论内容"
 msgstr ""
 
-#: internal/render/funcs.go:1132
+#: internal/render/funcs.go:1184
 msgid "说点什么吧…… *"
 msgstr ""
 
-#: internal/render/funcs.go:1145
+#: internal/render/funcs.go:1201
 msgid "有回复时邮件通知我"
 msgstr ""
 
-#: internal/render/funcs.go:1150
+#: internal/render/funcs.go:1206
 msgid "提交评论"
 msgstr ""
 
-#: internal/render/funcs.go:1152
+#: internal/render/funcs.go:1208
 msgid "取消回复"
 msgstr ""
 
-#: internal/render/funcs.go:1155
+#: internal/render/funcs.go:1211
 msgid "评论提交后需经审核才会显示。"
 msgstr ""
 
