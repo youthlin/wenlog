@@ -4,7 +4,8 @@
   <h1>{{.t.T "附件管理"}}</h1>
   <label class="btn upload-btn">{{.t.T "上传图片"}}<input type="file" id="upload_file_page" accept="image/png,image/jpeg,image/gif,image/webp" hidden></label>
 </div>
-<p class="tip" id="upload_status"></p>
+<p class="tip upload-status" id="upload_status"></p>
+<progress class="upload-progress" id="upload_progress" max="100" value="0" hidden></progress>
 <div class="table-scroll">
   <table class="data-table uploads-table">
 	    <thead><tr><th>{{.t.T "预览"}}</th><th>{{.t.T "文件"}}</th><th>{{.t.T "大小"}}</th><th>{{.t.T "时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
@@ -38,14 +39,16 @@
 	    </tbody>
   </table>
 </div>
-<p class="total">{{.t.N1_64 "共 %d 个文件" .Total .Total}}</p>
+<div class="table-footer">
+  <p class="total">{{.t.N1_64 "共 %d 个文件" .Total .Total}}</p>
 {{- if gt .Pages 1}}
-<nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/uploads?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
-  <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/uploads?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
-</nav>
+  <nav class="pagination">
+    {{if gt .Page 1}}<a href="/admin/uploads?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
+    <span class="page-info">{{.Page}} / {{.Pages}}</span>
+    {{if lt .Page .Pages}}<a href="/admin/uploads?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
+  </nav>
 {{- end}}
+</div>
 <script src="/assets/admin.js?v={{.AssetVersion}}"></script>
 {{template "admin_footer" .}}
 {{- end}}

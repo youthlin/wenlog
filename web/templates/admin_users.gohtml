@@ -4,7 +4,7 @@
 {{- if .Error}}
 <p class="err-banner">{{.Error}}</p>
 {{- end}}
-<p class="total">{{.t.N1_64 "共 %d 位用户" .Total .Total}} · <a href="/admin/user/new" class="btn">{{.t.T "新增用户"}}</a></p>
+<p><a href="/admin/user/new" class="btn">{{.t.T "新增用户"}}</a></p>
 <div class="table-scroll">
   <table class="data-table users-table">
     <thead><tr><th>{{.t.T "用户名"}}</th><th>{{.t.T "显示名"}}</th><th>{{.t.T "邮箱"}}</th><th>{{.t.T "角色"}}</th><th>{{.t.T "注册时间"}}</th><th>{{.t.T "操作"}}</th></tr></thead>
@@ -49,12 +49,15 @@
     </tbody>
   </table>
 </div>
+<div class="table-footer">
+  <p class="total">{{.t.N1_64 "共 %d 位用户" .Total .Total}}</p>
 {{- if gt .Pages 1}}
-<nav class="pagination">
-  {{if gt .Page 1}}<a href="/admin/users?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
-  <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if lt .Page .Pages}}<a href="/admin/users?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
-</nav>
+  <nav class="pagination">
+    {{if gt .Page 1}}<a href="/admin/users?page={{sub .Page 1}}">{{.t.T "上一页"}}</a>{{end}}
+    <span class="page-info">{{.Page}} / {{.Pages}}</span>
+    {{if lt .Page .Pages}}<a href="/admin/users?page={{add .Page 1}}">{{.t.T "下一页"}}</a>{{end}}
+  </nav>
 {{- end}}
+</div>
 {{template "admin_footer" .}}
 {{- end}}

@@ -18,6 +18,8 @@
   var MSG_LINK_URL_PROMPT = t("linkURLPrompt", "Link URL");
   var MSG_DRAFT_DISCARDED = t("draftDiscarded", "Local draft discarded.");
   var MSG_DRAFT_SAVED = t("draftSaved", "Saved locally.");
+  var MSG_CATEGORY_SELECTED = t("categorySelected", "%d selected");
+  var MSG_CATEGORY_PLACEHOLDER = t("categoryPlaceholder", "Select categories");
 
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -120,22 +122,58 @@
     if (tip) tip.textContent = text;
   }
 
+  function setUploadProgress(percent, visible) {
+    var bar = document.getElementById("upload_progress");
+    if (!bar) return;
+    if (!visible) {
+      bar.hidden = true;
+      bar.value = 0;
+      bar.removeAttribute("aria-valuetext");
+      return;
+    }
+    bar.hidden = false;
+    var value = Math.max(0, Math.min(100, Math.round(percent || 0)));
+    bar.value = value;
+    bar.setAttribute("aria-valuetext", value + "%");
+  }
+
   function uploadImage(file, textarea, onDone) {
     var fd = new FormData();
     fd.set("file", file);
     setStatus(MSG_UPLOADING);
-    fetch("/admin/upload", { method: "POST", body: fd, headers: { "X-CSRF-Token": csrfToken() } })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (!data.ok) throw new Error(data.message || MSG_UPLOAD_FAILED);
-        if (textarea) insertAtCursor(textarea, data.markdown + "\n");
-        setStatus(MSG_IMAGE_INSERTED);
-        if (onDone) onDone(data);
-      })
-      .catch(function (err) {
+    setUploadProgress(0, true);
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/admin/upload");
+    xhr.setRequestHeader("X-CSRF-Token", csrfToken());
+    xhr.upload.addEventListener("progress", function (event) {
+      if (!event.lengthComputable) return;
+      setUploadProgress((event.loaded / event.total) * 100, true);
+    });
+    xhr.addEventListener("load", function () {
+      var data;
+      try {
+        data = JSON.parse(xhr.responseText || "{}");
+      } catch (err) {
+        data = {};
+      }
+      if (xhr.status < 200 || xhr.status >= 300 || !data.ok) {
+        setUploadProgress(0, false);
         setStatus("");
-        alert(err.message || MSG_UPLOAD_FAILED);
-      });
+        alert((data && data.message) || MSG_UPLOAD_FAILED);
+        return;
+      }
+      setUploadProgress(100, true);
+      if (textarea) insertAtCursor(textarea, data.markdown + "\n");
+      setStatus(MSG_IMAGE_INSERTED);
+      window.setTimeout(function () { setUploadProgress(0, false); }, 900);
+      if (onDone) onDone(data);
+    });
+    xhr.addEventListener("error", function () {
+      setUploadProgress(0, false);
+      setStatus("");
+      alert(MSG_UPLOAD_FAILED);
+    });
+    xhr.send(fd);
   }
 
   function renderUploadPicker(items, textarea) {
@@ -243,6 +281,53 @@
     setValidity();
   }
 
+  function initCategoryDropdown() {
+    var box = document.querySelector("[data-category-dropdown]");
+    if (!box) return;
+    var trigger = box.querySelector("[data-category-trigger]");
+    var label = box.querySelector("[data-category-trigger-label]");
+    var panel = box.querySelector("[data-category-panel]");
+    var inputs = Array.prototype.slice.call(box.querySelectorAll('input[name="category_ids"]'));
+    if (!trigger || !label || !panel || inputs.length === 0) return;
+    function selectedInputs() {
+      return inputs.filter(function (input) { return input.checked; });
+    }
+    function updateLabel() {
+      var selected = selectedInputs();
+      if (selected.length === 0) {
+        label.textContent = MSG_CATEGORY_PLACEHOLDER;
+        return;
+      }
+      if (selected.length <= 2) {
+        label.textContent = selected.map(function (input) {
+          return input.closest("label").textContent.trim();
+        }).join(", ");
+        return;
+      }
+      label.textContent = MSG_CATEGORY_SELECTED.replace("%d", selected.length);
+    }
+    function closePanel() {
+      panel.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+    }
+    function openPanel() {
+      panel.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+    }
+    trigger.addEventListener("click", function () {
+      if (panel.hidden) openPanel();
+      else closePanel();
+    });
+    document.addEventListener("click", function (event) {
+      if (!box.contains(event.target)) closePanel();
+    });
+    trigger.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closePanel();
+    });
+    inputs.forEach(function (input) { input.addEventListener("change", updateLabel); });
+    updateLabel();
+  }
+
   var ta = document.getElementById("content_md");
   var editor = document.querySelector("[data-md-editor]");
   var pv = document.getElementById("md_preview");
@@ -284,18 +369,40 @@
     return "wenlog:post-draft:" + type + ":" + id;
   }
 
+  function parseDraft(value) {
+    if (!value) return null;
+    try {
+      var parsed = JSON.parse(value);
+      if (parsed && typeof parsed.content === "string") return parsed;
+    } catch (err) {
+      return { content: value, savedAt: 0 };
+    }
+    return null;
+  }
+
+  function postUpdatedAt(form) {
+    if (!form) return 0;
+    var value = form.getAttribute("data-post-updated-at") || "";
+    var time = Date.parse(value);
+    return Number.isFinite(time) ? time : 0;
+  }
+
   function initDraftRestore() {
     if (!ta) return;
     var key = draftKey();
     if (!key || !window.localStorage) return;
+    var form = ta.closest("form");
     var box = document.getElementById("draft_restore");
     var restoreBtn = document.getElementById("restore_draft_btn");
     var discardBtn = document.getElementById("discard_draft_btn");
     var status = document.getElementById("draft_status");
-    var saved = localStorage.getItem(key);
-    if (saved && saved !== ta.value && box) box.hidden = false;
+    var saved = parseDraft(localStorage.getItem(key));
+    var updatedAt = postUpdatedAt(form);
+    if (saved && saved.content !== ta.value && (!updatedAt || (saved.savedAt && saved.savedAt > updatedAt)) && box) box.hidden = false;
+    if (saved && saved.content === ta.value && saved.savedAt && saved.savedAt <= updatedAt) localStorage.removeItem(key);
     if (restoreBtn) restoreBtn.addEventListener("click", function () {
-      ta.value = localStorage.getItem(key) || ta.value;
+      var saved = parseDraft(localStorage.getItem(key));
+      ta.value = saved ? saved.content : ta.value;
       if (box) box.hidden = true;
       triggerInput(ta);
       ta.focus();
@@ -306,11 +413,10 @@
       if (status) status.textContent = MSG_DRAFT_DISCARDED;
     });
     var saveDraft = debounce(function () {
-      localStorage.setItem(key, ta.value);
+      localStorage.setItem(key, JSON.stringify({ content: ta.value, savedAt: Date.now() }));
       if (status) status.textContent = MSG_DRAFT_SAVED;
     }, 800);
     ta.addEventListener("input", saveDraft);
-    var form = ta.closest("form");
     if (form) form.addEventListener("submit", function () { localStorage.removeItem(key); });
   }
 
@@ -346,6 +452,7 @@
 
   initSlugSync();
   initCategoryRequired();
+  initCategoryDropdown();
 
   if (ta && fileInput) {
     fileInput.addEventListener("change", function () {

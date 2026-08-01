@@ -206,6 +206,8 @@ func jsCatalogJSON(translator *gettext.Translations) template.JS {
 		"linkURLPrompt":         translator.T("链接 URL"),
 		"draftDiscarded":        translator.T("已忽略本地草稿。"),
 		"draftSaved":            translator.T("已自动保存到本地。"),
+		"categoryPlaceholder":   translator.T("选择分类目录"),
+		"categorySelected":      translator.T("已选择 %d 个分类"),
 		"requestFailed":         translator.T("请求失败"),
 		"passkeyNameRequired":   translator.T("请先输入便于识别的 Passkey 名称。"),
 		"passkeyCreating":       translator.T("正在创建 Passkey…"),

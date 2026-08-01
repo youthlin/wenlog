@@ -1,6 +1,6 @@
 # Spread — 宽屏杂志主题
 name: "spread"
-version: "20260726120736"
+version: "20260801221504"
 description: "宽屏满幅色块、杂志目录式列表和大胆触摸交互的主题"
 author: "youthlin"
 author_uri: "https://github.com/youthlin"
@@ -27,6 +27,12 @@ options:
     label: "自定义 CSS"
     description: "会注入到页面 <head> 中"
     default: ""
+
+  - id: hero_image
+    type: image
+    label: "首页 Hero 背景图"
+    description: "首页顶部大标题背景图。留空时使用默认必应壁纸。"
+    default: "https://www.bing.com/th?id=OHR.HawaiiLava_ZH-CN3257621771_1920x1080.jpg&rf=LaDigue_1920x1080.jpg&pid=hp"
 
   - id: footer_text
     type: text

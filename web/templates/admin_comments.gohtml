@@ -131,14 +131,16 @@
   </table>
 </div>
 
-<p class="total">{{.t.N1_64 "共 %d 条评论" .Total .Total}}</p>
+<div class="table-footer">
+  <p class="total">{{.t.N1_64 "共 %d 条评论" .Total .Total}}</p>
 {{- if gt .Pages 1}}
-<nav class="pagination">
-  {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
-  <span class="page-info">{{.Page}} / {{.Pages}}</span>
-  {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
-</nav>
+  <nav class="pagination">
+    {{if .PrevPageURL}}<a href="{{.PrevPageURL}}">{{.t.T "上一页"}}</a>{{end}}
+    <span class="page-info">{{.Page}} / {{.Pages}}</span>
+    {{if .NextPageURL}}<a href="{{.NextPageURL}}">{{.t.T "下一页"}}</a>{{end}}
+  </nav>
 {{- end}}
+</div>
 <script src="/assets/admin.js?v={{.AssetVersion}}"></script>
 {{template "admin_footer" .}}
 {{- end}}

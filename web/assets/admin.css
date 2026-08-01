@@ -411,6 +411,7 @@ body.admin.nav-open { overflow: hidden; }
 .admin-shell > .filter-tabs,
 .admin-shell > .batch-bar,
 .admin-shell > .table-scroll,
+.admin-shell > .table-footer,
 .admin-shell > .pagination,
 .admin-shell > .edit-form,
 .admin-shell > .tip,
@@ -626,6 +627,25 @@ body.admin.nav-open { overflow: hidden; }
 .inline button:not(.btn):not(.btn-secondary) { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0 4px; font-size: 14px; }
 .link-danger { color: var(--danger) !important; }
 .total { color: var(--muted); }
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: nowrap;
+}
+.table-footer .total,
+.table-footer .pagination {
+  margin: 0;
+}
+.table-footer .total {
+  min-width: 0;
+  white-space: nowrap;
+}
+.table-footer .pagination {
+  flex: 0 0 auto;
+}
 
 /* ============================================================
    14. 评论管理页 (Comments Table)
@@ -1157,13 +1177,14 @@ body.admin.nav-open { overflow: hidden; }
 /* ============================================================
    10. 文章/页面编辑表单 (Edit Form)
    ============================================================ */
-.edit-form { background: var(--card); padding: 20px; border-radius: 12px; max-width: 800px; box-shadow: var(--form-shadow); }
+.edit-form { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: var(--form-shadow); }
 .edit-form label { display: block; margin-bottom: 14px; font-weight: 600; }
 .edit-form input, .edit-form textarea, .edit-form select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; font-family: inherit; font-size: 14px; font-weight: normal; margin-top: 4px; background: var(--bg); color: var(--fg); }
 .edit-form textarea { font-family: "SF Mono", Menlo, monospace; }
 .form-row { display: flex; gap: 16px; }
 .form-row label { flex: 1; }
-.tip { color: var(--muted); max-width: 800px; }
+.tip { color: var(--muted); }
+.form-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .inline-setting-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 14px 0 6px; }
 .inline-setting-title { font-weight: 600; }
 .edit-form .inline-checkbox { display: inline-flex; align-items: center; gap: 6px; width: auto; margin: 0; font-weight: normal; }
@@ -1220,6 +1241,13 @@ body.admin.nav-open { overflow: hidden; }
 .draft-restore .btn-secondary { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; min-height: 34px; line-height: 1.3; font-family: inherit; font-size: 14px; }
 .markdown-toolbar .upload-btn { margin: 0; font-weight: normal; }
 .markdown-toolbar .tip { margin-left: 4px; }
+.upload-status { min-width: 8em; }
+.upload-progress {
+  width: 140px;
+  height: 8px;
+  margin-left: 2px;
+  accent-color: var(--accent);
+}
 .toolbar-tip { margin: -4px 0 12px; }
 .md-view-tabs .btn-secondary.active { color: color-mix(in srgb, var(--accent) 86%, var(--fg)); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .draft-restore { padding: 10px 12px; border: 1px solid rgba(255,193,7,.3); border-radius: 8px; background: rgba(255,193,7,.12); color: var(--fg); }
@@ -1358,8 +1386,43 @@ body.admin.nav-open { overflow: hidden; }
 }
 .cat-field { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; margin-bottom: 14px; }
 .cat-field legend { font-weight: 600; padding: 0 6px; }
-.cat-check { display: inline-block; font-weight: normal; margin: 0 14px 6px 0; }
-.cat-check input { width: auto; margin: 0 4px 0 0; }
+.category-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.category-dropdown-trigger span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.category-dropdown-icon { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.category-dropdown-panel {
+  display: grid;
+  gap: 6px;
+  max-height: 240px;
+  overflow: auto;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.category-dropdown-panel[hidden] { display: none !important; }
+.cat-check { display: flex; align-items: center; gap: 8px; font-weight: normal; margin: 0; padding: 6px 8px; border-radius: 5px; cursor: pointer; }
+.cat-check:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.cat-check input { width: auto; margin: 0; }
 
 /* ============================================================
    8. 登录页 (Login)
@@ -1887,8 +1950,10 @@ body.admin.nav-open { overflow: hidden; }
   .batch-bar button { min-height: 40px; justify-content: center; }
   .batch-bar .check-all,
   .batch-bar input[type="hidden"] { grid-column: 1 / -1; }
-  .pagination { flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
-  .pagination .page-info { flex: 1 0 100%; text-align: center; }
+  .table-footer { justify-content: space-between; text-align: left; gap: 8px; }
+  .pagination { flex-wrap: nowrap; justify-content: center; gap: 10px; margin-top: 16px; }
+  .table-footer .pagination { margin-top: 0; }
+  .pagination .page-info { flex: 0 0 auto; text-align: center; }
   .table-scroll { margin-bottom: 8px; }
   .settings-main { width: 100%; }
   .settings-stack { gap: 14px; }

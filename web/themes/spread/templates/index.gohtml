@@ -1,6 +1,8 @@
 {{- define "index.gohtml" -}}
 {{template "header" .}}
-<section class="hero wide-shell" aria-labelledby="home-title">
+{{$heroImage := theme_option "hero_image" -}}
+<section class="hero wide-shell{{if $heroImage}} has-hero-image{{end}}" aria-labelledby="home-title">
+  {{- if $heroImage}}<img class="hero-bg-image" src="{{$heroImage}}" alt="" loading="eager" fetchpriority="high">{{end}}
   <h1 id="home-title">{{.SiteName}}</h1>
   {{- if .Description}}
   <p class="hero-description">{{.Description}}</p>

@@ -160,7 +160,7 @@
   var messages = (window.WenLogI18n && window.WenLogI18n.messages) || {};
   function t(key, fallback) { return messages[key] || fallback; }
 
-  document.querySelectorAll("select[data-searchable-select]").forEach(function (select, index) {
+  document.querySelectorAll("select[data-searchable-select]:not([multiple])").forEach(function (select, index) {
     if (select.dataset.searchableReady === "1") {
       return;
     }
