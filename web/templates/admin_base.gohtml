@@ -13,6 +13,9 @@
 {{- if .CSRFToken}}
 <meta name="csrf-token" content="{{.CSRFToken}}">
 {{- end}}
+{{- if .AutoRefreshSeconds}}
+<meta http-equiv="refresh" content="{{.AutoRefreshSeconds}}">
+{{- end}}
 <link rel="stylesheet" href="/assets/admin.css?v={{.AssetVersion}}">
 <script>(function(){try{var themes=['dark','light','red-plum','bamboo','lotus','orange','azure','purple'];var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',themes.indexOf(t)>=0?t:'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 </head>

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -160,7 +161,15 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	data["SettingsGeneralURL"] = settingsPageURL("general")
 	data["SettingsDeveloperURL"] = settingsPageURL("developer")
 	data["InstanceRawVersion"] = version.Version
-	data["UpdateLogPath"] = h.updateLogPath()
+	updateLogPath := h.updateLogPath()
+	data["UpdateLogPath"] = updateLogPath
+	data["AppUpdateRunning"] = h.appUpdateInProgress()
+	if data["AppUpdateRunning"] == true {
+		data["AutoRefreshSeconds"] = 3
+	}
+	if logTail := readUpdateLogTail(updateLogPath, 12<<10); logTail != "" {
+		data["UpdateLogTail"] = logTail
+	}
 	data["UpdateAvailable"] = false
 	if c != nil && c.Query("check_update") == "1" {
 		latest, err := latestRelease(c.Request.Context(), h.log)
@@ -227,6 +236,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "app-update-started" {
 		data["Notice"] = tr.T("后台更新已启动，请稍等片刻后刷新页面确认版本。")
+	}
+	if c != nil && c.Query("message") == "app-update-running" {
+		data["Notice"] = tr.T("后台更新正在进行中，请稍后刷新页面确认版本。")
 	}
 	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
 		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
@@ -361,37 +373,77 @@ func (h *Admin) CheckAppUpdate(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "")+"?check_update=1")
 }
 
-// ApplyAppUpdate 使用 Go 原生逻辑下载 GitHub Release 资产，替换当前二进制并重启服务。
+// ApplyAppUpdate 启动后台更新任务，避免下载过程被浏览器或反向代理请求超时中断。
 func (h *Admin) ApplyAppUpdate(c *gin.Context) {
-	tr := i18n.Get(c)
 	logPath := h.updateLogPath()
 	if err := os.MkdirAll(filepath.Dir(logPath), 0o755); err != nil {
 		h.serverError(c, err)
 		return
 	}
+	if !h.beginAppUpdate() {
+		c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "app-update-running"))
+		return
+	}
 	logf, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {
+		h.finishAppUpdate()
 		h.serverError(c, err)
 		return
 	}
-	tag, err := h.applyNativeUpdate(c.Request.Context(), logf)
-	if err != nil {
-		fprintfUpdateLog(logf, "更新失败: %v\n", err)
-		_ = logf.Close()
-		if h.log != nil {
-			h.log.ErrorContext(c, "native app update failed", "error", err, "log_path", logPath)
-		}
-		data := h.settingsDataForTab(c, "developer")
-		data["Error"] = tr.T("更新失败: %s", err.Error())
-		c.HTML(http.StatusInternalServerError, "admin_settings.gohtml", data)
+	go h.runAppUpdate(context.Background(), logf, logPath)
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "app-update-started"))
+}
+
+func (h *Admin) beginAppUpdate() bool {
+	if h == nil {
+		return false
+	}
+	h.appUpdateMu.Lock()
+	defer h.appUpdateMu.Unlock()
+	if h.appUpdateRunning {
+		return false
+	}
+	h.appUpdateRunning = true
+	return true
+}
+
+func (h *Admin) finishAppUpdate() {
+	if h == nil {
 		return
 	}
-	_ = logf.Close()
-	h.scheduleRestartAfterUpdate(c)
-	if h.log != nil {
-		h.log.InfoContext(c, "native app update installed", "version", tag)
+	h.appUpdateMu.Lock()
+	h.appUpdateRunning = false
+	h.appUpdateMu.Unlock()
+}
+
+func (h *Admin) appUpdateInProgress() bool {
+	if h == nil {
+		return false
 	}
-	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "app-update-started"))
+	h.appUpdateMu.Lock()
+	defer h.appUpdateMu.Unlock()
+	return h.appUpdateRunning
+}
+
+func (h *Admin) runAppUpdate(ctx context.Context, logf *os.File, logPath string) {
+	defer func() {
+		_ = logf.Close()
+		h.finishAppUpdate()
+	}()
+	fprintfUpdateLog(logf, "后台更新任务已启动\n")
+	tag, err := h.applyNativeUpdate(ctx, logf)
+	if err != nil {
+		fprintfUpdateLog(logf, "更新失败: %v\n", err)
+		if h.log != nil {
+			h.log.ErrorContext(ctx, "native app update failed", "error", err, "log_path", logPath)
+		}
+		return
+	}
+	fprintfUpdateLog(logf, "更新任务已完成，准备重启服务\n")
+	if h.log != nil {
+		h.log.InfoContext(ctx, "native app update installed", "version", tag)
+	}
+	h.scheduleRestartAfterUpdate(ctx)
 }
 
 func (h *Admin) updateLogPath() string {
@@ -399,6 +451,39 @@ func (h *Admin) updateLogPath() string {
 		return filepath.Join(filepath.Dir(h.cfg.DBPath), "wenlog-update.log")
 	}
 	return filepath.Join("data", "wenlog-update.log")
+}
+
+func readUpdateLogTail(path string, maxBytes int64) string {
+	path = strings.TrimSpace(path)
+	if path == "" || maxBytes <= 0 {
+		return ""
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || info.IsDir() || info.Size() == 0 {
+		return ""
+	}
+	offset := info.Size() - maxBytes
+	if offset < 0 {
+		offset = 0
+	}
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return ""
+	}
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return ""
+	}
+	if offset > 0 {
+		if idx := bytes.IndexByte(data, '\n'); idx >= 0 && idx+1 < len(data) {
+			data = data[idx+1:]
+		}
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func (h *Admin) applyNativeUpdate(ctx context.Context, logw io.Writer) (string, error) {

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/cockroachdb/errors"
 	"github.com/gin-contrib/sessions"
@@ -43,6 +44,9 @@ type Admin struct {
 	assets        hotSwitcher
 	themeManager  *ThemeManager
 	pluginManager *PluginManager
+
+	appUpdateMu      sync.Mutex
+	appUpdateRunning bool
 }
 
 // NewAdmin 构造后台处理器。

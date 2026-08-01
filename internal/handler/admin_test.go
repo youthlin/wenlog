@@ -177,6 +177,43 @@ func TestUpdateDownloadSourcesUseMirrorOnly(t *testing.T) {
 	}
 }
 
+func TestBeginAppUpdateGuardsConcurrentRun(t *testing.T) {
+	adm := &Admin{}
+	if !adm.beginAppUpdate() {
+		t.Fatal("first beginAppUpdate should start update")
+	}
+	if !adm.appUpdateInProgress() {
+		t.Fatal("appUpdateInProgress should be true after begin")
+	}
+	if adm.beginAppUpdate() {
+		t.Fatal("second beginAppUpdate should reject concurrent update")
+	}
+	adm.finishAppUpdate()
+	if adm.appUpdateInProgress() {
+		t.Fatal("appUpdateInProgress should be false after finish")
+	}
+	if !adm.beginAppUpdate() {
+		t.Fatal("beginAppUpdate should start again after finish")
+	}
+	adm.finishAppUpdate()
+}
+
+func TestReadUpdateLogTail(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "wenlog-update.log")
+	if err := os.WriteFile(path, []byte("first line\nsecond line\nthird line\n"), 0o644); err != nil {
+		t.Fatalf("write log: %v", err)
+	}
+	if got := readUpdateLogTail(path, 1024); got != "first line\nsecond line\nthird line" {
+		t.Fatalf("full tail=%q", got)
+	}
+	if got := readUpdateLogTail(path, 24); got != "second line\nthird line" {
+		t.Fatalf("partial tail=%q", got)
+	}
+	if got := readUpdateLogTail(filepath.Join(t.TempDir(), "missing.log"), 1024); got != "" {
+		t.Fatalf("missing tail=%q", got)
+	}
+}
+
 func TestReleaseDirFromFS(t *testing.T) {
 	targetDir := filepath.Join(t.TempDir(), "assets")
 	src := fstest.MapFS{

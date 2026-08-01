@@ -1455,6 +1455,36 @@ body.admin.nav-open { overflow: hidden; }
 .settings-stack { display: grid; gap: 18px; }
 .settings-card .edit-form { max-width: none; padding: 0; background: transparent; }
 .settings-card .edit-form + .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.update-log-viewer {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 82%, var(--card));
+  overflow: hidden;
+}
+.update-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.update-log-head .tip {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.update-log-viewer pre {
+  max-height: 320px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+  font: 12px/1.55 "SF Mono", Menlo, Consolas, monospace;
+}
 /* 主题截图 */
 .theme-screenshot-cell { width: 120px; text-align: center; vertical-align: middle; }
 .theme-screenshot-thumb { max-width: 100px; max-height: 75px; border-radius: 4px; border: 1px solid var(--border); display: block; margin: 0 auto; }

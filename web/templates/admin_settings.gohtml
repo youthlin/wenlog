@@ -23,6 +23,9 @@
       <p class="tip">{{.t.T "构建日期: %s" .InstanceBuildDate}}</p>
       <p class="tip">{{safeHTML (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escapeHTML .RepositoryURL) (escapeHTML .RepositoryURL)))}}</p>
       <p class="tip">{{.t.T "优先通过 Go Module Proxy 检查最新版本；一键更新默认优先从 Gitee Release 下载已同步产物，并回退到 GitHub Release。"}}</p>
+      {{- if .AppUpdateRunning}}
+      <p class="notice-banner">{{.t.T "后台更新正在进行中，本页会自动刷新。"}}</p>
+      {{- end}}
       <form class="edit-form" method="post" action="/admin/settings/update">
         {{template "csrf_field" .}}
         <label>{{.t.T "下载镜像"}}
@@ -47,6 +50,15 @@
       <p class="err-banner">{{.t.T "检查更新失败: %s" .UpdateCheckError}}</p>
       {{- end}}
       <p class="form-actions"><a class="btn-secondary" href="/admin/settings/update/check">{{.t.T "检查最新版本"}}</a></p>
+      {{- if .UpdateLogTail}}
+      <div class="update-log-viewer">
+        <div class="update-log-head">
+          <strong>{{.t.T "更新进度"}}</strong>
+          <span class="tip">{{.UpdateLogPath}}</span>
+        </div>
+        <pre>{{.UpdateLogTail}}</pre>
+      </div>
+      {{- end}}
     </section>
 
     <section class="card settings-card">
