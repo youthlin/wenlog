@@ -364,9 +364,32 @@
   function draftKey() {
     var form = document.querySelector('form.edit-form[action="/admin/post"]');
     if (!form) return "";
-    var id = (form.querySelector('input[name="id"]') || {}).value || "new";
     var type = (form.querySelector('input[name="post_type"]') || {}).value || "post";
-    return "wenlog:post-draft:" + type + ":" + id;
+    var id = (form.querySelector('input[name="id"]') || {}).value || "";
+    if (id) return "wenlog:post-draft:" + type + ":" + id;
+    return "wenlog:post-draft:" + type + ":new:" + ensureNewDraftID(type);
+  }
+
+  function newDraftID() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    return String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+  }
+
+  function safeDraftID(value) {
+    return String(value || "").replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 80);
+  }
+
+  function ensureNewDraftID(type) {
+    var params = new URLSearchParams(window.location.search || "");
+    var draftID = safeDraftID(params.get("draft_id"));
+    if (draftID) return draftID;
+    draftID = safeDraftID(newDraftID());
+    params.set("draft_id", draftID);
+    try {
+      window.history.replaceState(null, "", window.location.pathname + "?" + params.toString() + window.location.hash);
+      if (window.localStorage) localStorage.removeItem("wenlog:post-draft:" + type + ":new");
+    } catch (err) {}
+    return draftID;
   }
 
   function parseDraft(value) {
