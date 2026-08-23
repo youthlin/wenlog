@@ -1686,16 +1686,17 @@ msgstr "Download mirror"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:31
 msgid ""
-"留空则优先从 Gitee Release 下载，失败后自动回退到 GitHub Release。若服务器访"
-"问 GitHub/Gitee 慢，可填写能代理 GitHub Release 产物的镜像；镜像可填写前缀地"
-"址，也可使用 {raw_url} 插入原始下载地址，或使用 {url} 插入 URL 编码后的下载地"
-"址。"
+"留空则优先从 Gitee Release 下载，失败后自动回退到 GitHub Release；填写 "
+"https://github.com 则只从 GitHub 直连下载。若服务器访问 GitHub/Gitee 慢，可填"
+"写能代理 GitHub Release 产物的镜像；镜像可填写前缀地址，也可使用 {raw_url} "
+"插入原始下载地址，或使用 {url} 插入 URL 编码后的下载地址。"
 msgstr ""
 "Leave blank to prefer Gitee Release and automatically fall back to GitHub "
-"Release if it fails. If this server accesses GitHub/Gitee slowly, enter a "
-"mirror that can proxy GitHub Release assets. The mirror can be a prefix URL, "
-"or use {raw_url} to insert the original download URL, or {url} to insert the "
-"URL-encoded download URL."
+"Release if it fails. Enter https://github.com to download directly from "
+"GitHub only. If this server accesses GitHub/Gitee slowly, enter a mirror that "
+"can proxy GitHub Release assets. The mirror can be a prefix URL, or use "
+"{raw_url} to insert the original download URL, or {url} to insert the URL-"
+"encoded download URL."
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:32
 msgid "保存更新设置"
@@ -1722,6 +1723,14 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:40
 msgid "更新日志：%s"
 msgstr "Update log: %s"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:61
+msgid "确认清空更新日志？"
+msgstr "Clear the update log?"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:63
+msgid "清空更新日志"
+msgstr "Clear update log"
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_settings.gohtml:41
 msgid "一键更新到最新版本"
@@ -3430,6 +3439,10 @@ msgstr "Log level saved and applied immediately."
 msgid "更新设置已保存。"
 msgstr "Update settings saved."
 
+#: internal/handler/admin_settings.go:232
+msgid "更新日志已清空。"
+msgstr "Update log cleared."
+
 #: internal/handler/admin_settings.go:223
 msgid "主题已重载。"
 msgstr "Theme reloaded."
@@ -3443,6 +3456,10 @@ msgid "后台更新已启动，请稍等片刻后刷新页面确认版本。"
 msgstr ""
 "Background update started. Please wait a moment, then refresh the page to "
 "confirm the version."
+
+#: internal/handler/admin_settings.go:247
+msgid "后台更新正在进行中，暂时不能清空更新日志。"
+msgstr "The update log cannot be cleared while a background update is running."
 
 #: internal/handler/admin_settings.go:232
 msgid "开放注册需要先配置 SMTP 邮件设置。"

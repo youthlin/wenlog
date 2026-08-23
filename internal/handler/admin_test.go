@@ -19,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 	"github.com/youthlin/wenlog/hook"
+	"github.com/youthlin/wenlog/internal/config"
 	"github.com/youthlin/wenlog/internal/consts"
 	"github.com/youthlin/wenlog/internal/middleware"
 	"github.com/youthlin/wenlog/internal/model"
@@ -421,6 +422,19 @@ func TestUpdateDownloadSourcesUseMirrorOnly(t *testing.T) {
 	}
 }
 
+func TestUpdateDownloadSourcesUseGitHubDirectly(t *testing.T) {
+	for _, setting := range []string{"https://github.com", "https://github.com/", githubReleaseBaseURL} {
+		sources := updateDownloadSources("v1.2.3", "wenlog-v1.2.3-linux-amd64.tar.gz", setting)
+		if len(sources) != 1 {
+			t.Fatalf("setting %q: len(sources)=%d, want 1", setting, len(sources))
+		}
+		want := "https://github.com/youthlin/wenlog/releases/download/v1.2.3/wenlog-v1.2.3-linux-amd64.tar.gz"
+		if sources[0].Name != "GitHub" || sources[0].ArchiveURL != want {
+			t.Fatalf("setting %q: source=%+v", setting, sources[0])
+		}
+	}
+}
+
 func TestBeginAppUpdateGuardsConcurrentRun(t *testing.T) {
 	adm := &Admin{}
 	if !adm.beginAppUpdate() {
@@ -455,6 +469,69 @@ func TestReadUpdateLogTail(t *testing.T) {
 	}
 	if got := readUpdateLogTail(filepath.Join(t.TempDir(), "missing.log"), 1024); got != "" {
 		t.Fatalf("missing tail=%q", got)
+	}
+}
+
+func TestClearAppUpdateLog(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "wenlog-update.log")
+	if err := os.WriteFile(logPath, []byte("old update log\n"), 0o644); err != nil {
+		t.Fatalf("write update log: %v", err)
+	}
+	h := &Admin{cfg: &config.Config{DBPath: filepath.Join(dir, "wenlog.db")}}
+	r := gin.New()
+	r.POST("/admin/settings/update/log/clear", h.ClearAppUpdateLog)
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/admin/settings/update/log/clear", nil)
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusSeeOther || !strings.Contains(w.Header().Get("Location"), "message=update-log-cleared") {
+		t.Fatalf("status=%d location=%q", w.Code, w.Header().Get("Location"))
+	}
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("read update log: %v", err)
+	}
+	if len(data) != 0 {
+		t.Fatalf("update log=%q, want empty", data)
+	}
+}
+
+func TestClearAppUpdateLogRejectsRunningUpdate(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "wenlog-update.log")
+	const content = "update running\n"
+	if err := os.WriteFile(logPath, []byte(content), 0o644); err != nil {
+		t.Fatalf("write update log: %v", err)
+	}
+	h := &Admin{cfg: &config.Config{DBPath: filepath.Join(dir, "wenlog.db")}, appUpdateRunning: true}
+	r := gin.New()
+	r.POST("/admin/settings/update/log/clear", h.ClearAppUpdateLog)
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/admin/settings/update/log/clear", nil)
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusSeeOther || !strings.Contains(w.Header().Get("Location"), "message=update-log-clear-running") {
+		t.Fatalf("status=%d location=%q", w.Code, w.Header().Get("Location"))
+	}
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("read update log: %v", err)
+	}
+	if string(data) != content {
+		t.Fatalf("update log=%q, want %q", data, content)
+	}
+}
+
+func TestEnsureExecutableDirectoryWritable(t *testing.T) {
+	exe := filepath.Join(t.TempDir(), "wenlog")
+	if err := ensureExecutableDirectoryWritable(exe); err != nil {
+		t.Fatalf("writable directory: %v", err)
+	}
+	missing := filepath.Join(t.TempDir(), "missing", "wenlog")
+	err := ensureExecutableDirectoryWritable(missing)
+	if err == nil || !strings.Contains(err.Error(), "ReadWritePaths") {
+		t.Fatalf("missing directory err=%v, want systemd guidance", err)
 	}
 }
 

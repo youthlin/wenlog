@@ -100,12 +100,13 @@ scp wenlog user@your-server:/tmp/
 
 ### 4.1 目录规划
 
-两个站点共用同一份二进制，各自有独立的数据目录：
+两个站点各自保留一份二进制和独立的数据目录。这样后台一键更新只替换当前实例，不会与另一个进程竞争同一个文件：
 
 ```
 /opt/wenlog/
 ├── site1.example.com/          # 站点1: site1.example.com
-│   ├── wenlog               # Go 二进制（主副本）
+│   ├── bin/
+│   │   └── wenlog           # Go 二进制；bin 目录允许服务用户写入以支持一键更新
 │   ├── data/              # SQLite 数据库 + pid（运行时产生）
 │   │   ├── wenlog.db
 │   │   └── wenlog.pid
@@ -115,7 +116,8 @@ scp wenlog user@your-server:/tmp/
 │   └── themes/            # 主题目录（首次启动自动释放内嵌主题）
 │
 └── site2.example.com/             # 站点2: site2.example.com
-    ├── wenlog -> /opt/wenlog/site1.example.com/wenlog   # 软链接到同一份二进制
+    ├── bin/
+    │   └── wenlog
     ├── data/
     │   ├── wenlog.db
     │   └── wenlog.pid
@@ -132,15 +134,12 @@ scp wenlog user@your-server:/tmp/
 sudo su - wenlog
 
 # 创建目录
-mkdir -p /opt/wenlog/site1.example.com/{data,public/wp-content/uploads,themes}
-mkdir -p /opt/wenlog/site2.example.com/{data,public/wp-content/uploads,themes}
+mkdir -p /opt/wenlog/site1.example.com/{bin,data,public/wp-content/uploads,themes}
+mkdir -p /opt/wenlog/site2.example.com/{bin,data,public/wp-content/uploads,themes}
 
-# 移动二进制到站点1
-mv /tmp/wenlog /opt/wenlog/site1.example.com/wenlog
-chmod +x /opt/wenlog/site1.example.com/wenlog
-
-# 站点2 软链接到同一份二进制
-ln -s /opt/wenlog/site1.example.com/wenlog /opt/wenlog/site2.example.com/wenlog
+# 为两个实例各部署一份二进制
+install -m 0755 /tmp/wenlog /opt/wenlog/site1.example.com/bin/wenlog
+install -m 0755 /tmp/wenlog /opt/wenlog/site2.example.com/bin/wenlog
 
 # 退出 wenlog 用户
 exit
@@ -203,7 +202,7 @@ User=wenlog
 Group=wenlog
 WorkingDirectory=/opt/wenlog/site1.example.com
 EnvironmentFile=/opt/wenlog/site1.example.com/wenlog.env
-ExecStart=/opt/wenlog/site1.example.com/wenlog
+ExecStart=/opt/wenlog/site1.example.com/bin/wenlog
 ExecStop=/bin/kill -SIGTERM $MAINPID
 Restart=on-failure
 RestartSec=5s
@@ -213,8 +212,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/opt/wenlog/site1.example.com/data /opt/wenlog/site1.example.com/public /opt/wenlog/site1.example.com/themes
-ReadOnlyPaths=/opt/wenlog/site1.example.com/wenlog
+ReadWritePaths=/opt/wenlog/site1.example.com/bin /opt/wenlog/site1.example.com/data /opt/wenlog/site1.example.com/public /opt/wenlog/site1.example.com/themes
 
 # 资源限制（1C0.5G 机器）
 MemoryMax=200M
@@ -239,7 +237,7 @@ User=wenlog
 Group=wenlog
 WorkingDirectory=/opt/wenlog/site2.example.com
 EnvironmentFile=/opt/wenlog/site2.example.com/wenlog.env
-ExecStart=/opt/wenlog/site2.example.com/wenlog
+ExecStart=/opt/wenlog/site2.example.com/bin/wenlog
 ExecStop=/bin/kill -SIGTERM $MAINPID
 Restart=on-failure
 RestartSec=5s
@@ -249,8 +247,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/opt/wenlog/site2.example.com/data /opt/wenlog/site2.example.com/public /opt/wenlog/site2.example.com/themes
-ReadOnlyPaths=/opt/wenlog/site2.example.com/wenlog
+ReadWritePaths=/opt/wenlog/site2.example.com/bin /opt/wenlog/site2.example.com/data /opt/wenlog/site2.example.com/public /opt/wenlog/site2.example.com/themes
 
 # 资源限制（1C0.5G 机器）
 MemoryMax=200M
@@ -279,7 +276,31 @@ curl http://127.0.0.1:8889/healthz
 # 应返回: ok
 ```
 
-### 5.4 关于内置 daemon 模式
+### 5.4 已有部署启用后台一键更新
+
+旧版示例把二进制放在站点根目录，并通过 `ReadOnlyPaths` 显式设为只读。这会使后台更新在创建备份文件时收到 `read-only file system`。建议把每个实例的二进制迁移到独立 `bin/` 目录：
+
+```bash
+SITE=/opt/wenlog/site1.example.com
+SERVICE=wenlog-site1-example-com.service
+
+sudo systemctl stop "$SERVICE"
+sudo install -d -o wenlog -g wenlog -m 0755 "$SITE/bin"
+sudo install -o wenlog -g wenlog -m 0755 "$SITE/wenlog" "$SITE/bin/wenlog"
+
+# 编辑服务单元：
+# ExecStart=$SITE/bin/wenlog
+# ReadWritePaths=$SITE/bin $SITE/data $SITE/public $SITE/themes
+# 删除旧的 ReadOnlyPaths=$SITE/wenlog
+sudo systemctl edit --full "$SERVICE"
+sudo systemctl daemon-reload
+sudo systemctl start "$SERVICE"
+sudo systemctl status "$SERVICE"
+```
+
+`bin/` 和其中的二进制必须归服务运行用户所有。不要让多个实例通过软链接共享同一份可执行文件；应逐实例更新，避免并发替换和 systemd 写入白名单跨目录失效。
+
+### 5.5 关于内置 daemon 模式
 
 wenlog 自带 `start/stop/restart` 后台管理命令，但在 systemd 下**不需要使用**。systemd 直接管理进程生命周期更可靠。如果不用 systemd（比如在容器里），可以用：
 
@@ -552,10 +573,10 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o wenlog ./cmd/
 # 2. 传到服务器
 scp wenlog user@your-server:/tmp/wenlog_new
 
-# 3. 在服务器上替换（两个站点共用同一份二进制）
+# 3. 在服务器上分别替换两个实例的二进制
 sudo systemctl stop wenlog-site1-example-com wenlog-site2-example-com
-sudo mv /tmp/wenlog_new /opt/wenlog/site1.example.com/wenlog
-sudo chmod +x /opt/wenlog/site1.example.com/wenlog
+sudo install -o wenlog -g wenlog -m 0755 /tmp/wenlog_new /opt/wenlog/site1.example.com/bin/wenlog
+sudo install -o wenlog -g wenlog -m 0755 /tmp/wenlog_new /opt/wenlog/site2.example.com/bin/wenlog
 sudo systemctl start wenlog-site1-example-com wenlog-site2-example-com
 
 # 4. 验证
@@ -571,8 +592,8 @@ sudo journalctl -u wenlog-site1-example-com --since today | grep "已自动创�
 sudo journalctl -u wenlog-site2-example-com --since today | grep "已自动创建管理员"
 
 # 手动重置密码
-sudo -u wenlog /opt/wenlog/site1.example.com/wenlog -reset-password "admin:新密码"
-sudo -u wenlog /opt/wenlog/site2.example.com/wenlog -reset-password "admin:新密码"
+sudo -u wenlog /opt/wenlog/site1.example.com/bin/wenlog -reset-password "admin:新密码"
+sudo -u wenlog /opt/wenlog/site2.example.com/bin/wenlog -reset-password "admin:新密码"
 ```
 
 ### 10.4 监控资源
@@ -615,8 +636,8 @@ sudo journalctl -u wenlog-site1-example-com -n 50 --no-pager
 sudo journalctl -u wenlog-site2-example-com -n 50 --no-pager
 
 # 手动前台运行看报错
-sudo -u wenlog bash -c 'cd /opt/wenlog/site1.example.com && source /opt/wenlog/site1.example.com/wenlog.env && /opt/wenlog/site1.example.com/wenlog'
-sudo -u wenlog bash -c 'cd /opt/wenlog/site2.example.com && source /opt/wenlog/site2.example.com/wenlog.env && /opt/wenlog/site2.example.com/wenlog'
+sudo -u wenlog bash -c 'cd /opt/wenlog/site1.example.com && source /opt/wenlog/site1.example.com/wenlog.env && /opt/wenlog/site1.example.com/bin/wenlog'
+sudo -u wenlog bash -c 'cd /opt/wenlog/site2.example.com && source /opt/wenlog/site2.example.com/wenlog.env && /opt/wenlog/site2.example.com/bin/wenlog'
 ```
 
 ### 11.2 数据库损坏
@@ -721,8 +742,8 @@ systemctl stop caddy
 systemctl disable caddy
 
 echo "=== 4. 创建目录结构 ==="
-mkdir -p "$WENLOG_HOME/$SITE1"/{data,public/wp-content/uploads,themes}
-mkdir -p "$WENLOG_HOME/$SITE2"/{data,public/wp-content/uploads,themes}
+mkdir -p "$WENLOG_HOME/$SITE1"/{bin,data,public/wp-content/uploads,themes}
+mkdir -p "$WENLOG_HOME/$SITE2"/{bin,data,public/wp-content/uploads,themes}
 chown -R "$WENLOG_USER:$WENLOG_USER" "$WENLOG_HOME"
 
 echo "=== 5. 环境变量 ==="
@@ -754,7 +775,7 @@ User=$WENLOG_USER
 Group=$WENLOG_USER
 WorkingDirectory=$WENLOG_HOME/$SITE1
 EnvironmentFile=$WENLOG_HOME/$SITE1/wenlog.env
-ExecStart=$WENLOG_HOME/$SITE1/wenlog
+ExecStart=$WENLOG_HOME/$SITE1/bin/wenlog
 ExecStop=/bin/kill -SIGTERM \$MAINPID
 Restart=on-failure
 RestartSec=5s
@@ -762,8 +783,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=$WENLOG_HOME/$SITE1/data $WENLOG_HOME/$SITE1/public $WENLOG_HOME/$SITE1/themes
-ReadOnlyPaths=$WENLOG_HOME/$SITE1/wenlog
+ReadWritePaths=$WENLOG_HOME/$SITE1/bin $WENLOG_HOME/$SITE1/data $WENLOG_HOME/$SITE1/public $WENLOG_HOME/$SITE1/themes
 MemoryMax=200M
 CPUQuota=80%
 
@@ -782,7 +802,7 @@ User=$WENLOG_USER
 Group=$WENLOG_USER
 WorkingDirectory=$WENLOG_HOME/$SITE2
 EnvironmentFile=$WENLOG_HOME/$SITE2/wenlog.env
-ExecStart=$WENLOG_HOME/$SITE2/wenlog
+ExecStart=$WENLOG_HOME/$SITE2/bin/wenlog
 ExecStop=/bin/kill -SIGTERM \$MAINPID
 Restart=on-failure
 RestartSec=5s
@@ -790,8 +810,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=$WENLOG_HOME/$SITE2/data $WENLOG_HOME/$SITE2/public $WENLOG_HOME/$SITE2/themes
-ReadOnlyPaths=$WENLOG_HOME/$SITE2/wenlog
+ReadWritePaths=$WENLOG_HOME/$SITE2/bin $WENLOG_HOME/$SITE2/data $WENLOG_HOME/$SITE2/public $WENLOG_HOME/$SITE2/themes
 MemoryMax=200M
 CPUQuota=80%
 

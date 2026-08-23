@@ -147,6 +147,7 @@ func registerAdminRoutes(r *gin.Engine, adm *handler.Admin) {
 	adminGroup.POST("/settings/update", adm.SaveUpdateSettings)
 	adminGroup.GET("/settings/update/check", adm.CheckAppUpdate)
 	adminGroup.POST("/settings/update/apply", adm.ApplyAppUpdate)
+	adminGroup.POST("/settings/update/log/clear", adm.ClearAppUpdateLog)
 	adminGroup.POST("/settings/assets/release", adm.ReleaseAssets)
 	adminGroup.POST("/settings/assets/embed", adm.UseEmbeddedAssets)
 	adminGroup.POST("/settings/i18n/release", adm.ReleaseI18n)

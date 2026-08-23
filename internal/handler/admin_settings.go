@@ -228,6 +228,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	if c != nil && c.Query("message") == "update-settings-saved" {
 		data["Notice"] = tr.T("更新设置已保存。")
 	}
+	if c != nil && c.Query("message") == "update-log-cleared" {
+		data["Notice"] = tr.T("更新日志已清空。")
+	}
 	if c != nil && c.Query("message") == "theme-reloaded" {
 		data["Notice"] = tr.T("主题已重载。")
 	}
@@ -239,6 +242,9 @@ func (h *Admin) settingsDataForSection(c *gin.Context, section string) gin.H {
 	}
 	if c != nil && c.Query("message") == "app-update-running" {
 		data["Notice"] = tr.T("后台更新正在进行中，请稍后刷新页面确认版本。")
+	}
+	if c != nil && c.Query("message") == "update-log-clear-running" {
+		data["Error"] = tr.T("后台更新正在进行中，暂时不能清空更新日志。")
 	}
 	if c != nil && c.Query("message") == "registration-open-requires-smtp" {
 		data["Error"] = tr.T("开放注册需要先配置 SMTP 邮件设置。")
@@ -394,6 +400,31 @@ func (h *Admin) ApplyAppUpdate(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "app-update-started"))
 }
 
+// ClearAppUpdateLog 清空已完成任务的更新日志。
+func (h *Admin) ClearAppUpdateLog(c *gin.Context) {
+	logPath := h.updateLogPath()
+	h.appUpdateMu.Lock()
+	defer h.appUpdateMu.Unlock()
+	if h.appUpdateRunning {
+		c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "update-log-clear-running"))
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(logPath), 0o755); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	logf, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		h.serverError(c, err)
+		return
+	}
+	if err := logf.Close(); err != nil {
+		h.serverError(c, err)
+		return
+	}
+	c.Redirect(http.StatusSeeOther, settingsRedirectURL("developer", "update-log-cleared"))
+}
+
 func (h *Admin) beginAppUpdate() bool {
 	if h == nil {
 		return false
@@ -510,6 +541,9 @@ func (h *Admin) applyNativeUpdate(ctx context.Context, logw io.Writer) (string, 
 	if err != nil {
 		return "", err
 	}
+	if err := ensureExecutableDirectoryWritable(exe); err != nil {
+		return "", err
+	}
 	tmp, err := os.MkdirTemp("", "wenlog-update-*")
 	if err != nil {
 		return "", err
@@ -518,7 +552,9 @@ func (h *Admin) applyNativeUpdate(ctx context.Context, logw io.Writer) (string, 
 	archivePath := filepath.Join(tmp, asset)
 	checksumPath := archivePath + ".sha256"
 	fprintfUpdateLog(logw, "准备更新到 %s (%s/%s)\n", latest.TagName, runtime.GOOS, runtime.GOARCH)
-	if mirror != "" {
+	if isDirectGitHubDownloadSetting(mirror) {
+		fprintfUpdateLog(logw, "使用 GitHub 直连下载\n")
+	} else if mirror != "" {
 		fprintfUpdateLog(logw, "使用下载镜像：%s\n", mirror)
 	}
 	if err := downloadAndVerifyUpdateAsset(ctx, downloadSources, archivePath, checksumPath, logw); err != nil {
@@ -579,7 +615,15 @@ type updateDownloadSource struct {
 
 func updateDownloadSources(tag, asset, mirror string) []updateDownloadSource {
 	githubArchiveURL := releaseDownloadURL(githubReleaseBaseURL, tag, asset)
-	if strings.TrimSpace(mirror) != "" {
+	mirror = strings.TrimSpace(mirror)
+	if isDirectGitHubDownloadSetting(mirror) {
+		return []updateDownloadSource{{
+			Name:        "GitHub",
+			ArchiveURL:  githubArchiveURL,
+			ChecksumURL: githubArchiveURL + ".sha256",
+		}}
+	}
+	if mirror != "" {
 		return []updateDownloadSource{{
 			Name:        "下载镜像",
 			ArchiveURL:  mirroredDownloadURL(githubArchiveURL, mirror),
@@ -591,6 +635,12 @@ func updateDownloadSources(tag, asset, mirror string) []updateDownloadSource {
 		{Name: "Gitee", ArchiveURL: giteeArchiveURL, ChecksumURL: giteeArchiveURL + ".sha256"},
 		{Name: "GitHub", ArchiveURL: githubArchiveURL, ChecksumURL: githubArchiveURL + ".sha256"},
 	}
+}
+
+func isDirectGitHubDownloadSetting(value string) bool {
+	value = strings.TrimRight(strings.TrimSpace(value), "/")
+	return strings.EqualFold(value, "https://github.com") ||
+		strings.EqualFold(value, githubReleaseBaseURL)
 }
 
 func releaseDownloadURL(baseURL, tag, asset string) string {
@@ -758,6 +808,23 @@ func currentUpdatableExecutablePath() (string, error) {
 		return "", fmt.Errorf("当前可执行路径是目录，无法原地更新: %s", exe)
 	}
 	return exe, nil
+}
+
+func ensureExecutableDirectoryWritable(exe string) error {
+	dir := filepath.Dir(exe)
+	testFile, err := os.CreateTemp(dir, ".wenlog-update-write-test-*")
+	if err != nil {
+		return fmt.Errorf("当前二进制目录不可写，无法执行后台更新: %s: %w；若使用 systemd 且配置了 ProtectSystem=strict，请将 %s 加入 ReadWritePaths，并确保运行用户有写权限", dir, err, dir)
+	}
+	name := testFile.Name()
+	if closeErr := testFile.Close(); closeErr != nil {
+		_ = os.Remove(name)
+		return fmt.Errorf("检查当前二进制目录写权限失败: %w", closeErr)
+	}
+	if err := os.Remove(name); err != nil {
+		return fmt.Errorf("检查当前二进制目录写权限失败: %w", err)
+	}
+	return nil
 }
 
 func looksLikeGoRunTempExecutable(path string) bool {
