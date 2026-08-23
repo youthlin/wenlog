@@ -65,6 +65,7 @@ api.AddAction(hook.Consts.ActionHeadEnd, func(api *hook.API, args ...any) {
 |---|---|---|---|---|---|---|
 | `post.title` | `FilterPostTitle` | `post_title` / `post_title_text` | 标题纯文本 `string` | `hook.PostView` | 纯文本，宿主或模板上下文负责 HTML 转义 | `func(*API, string, PostView) string` |
 | `post.excerpt_html` | `FilterPostExcerptHTML` | `post_excerpt` | 摘要 HTML `string` | `hook.PostView` | 可信 HTML | `func(*API, string, PostView) string` |
+| `post.content_source` | `FilterPostContentSource` | `post_content` / Feed / 后台预览，在正文格式转换与 HTML 消毒前执行 | 正文源内容 `string` | `hook.PostView` | Markdown 文章为 `ContentMD`，HTML 文章为 `Content`；返回值后续仍会格式化并消毒 | `func(*API, string, PostView) string` |
 | `post.content_html` | `FilterPostContentHTML` | `post_content`；Feed 路径调用 `Renderer.FilterPostContent` | 正文 HTML `string` | `hook.PostView` | 可信 HTML | `func(*API, string, PostView) string` |
 | `post.footer_html` | `FilterPostFooterHTML` | `post_content` 的 `post.content_html` 之后；Feed 路径同样应用 | 正文 HTML `string` | `hook.PostView` | 可信 HTML | `func(*API, string, PostView) string` |
 | `comment.content_html` | `FilterCommentContentHTML` | `comment_content` / `list_comments` | 已转义评论 HTML `string` | `hook.CommentView` | 可信 HTML | `func(*API, string, CommentView) string` |

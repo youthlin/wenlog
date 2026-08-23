@@ -1,10 +1,14 @@
 package plugin
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"html"
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 
 	"hook"
 )
@@ -35,6 +39,59 @@ var smileyNames = []string{
 	"抠鼻",
 }
 
+type shortcodeRule struct {
+	Name  string              `json:"name"`
+	Tag   string              `json:"tag"`
+	Attrs []shortcodeAttrRule `json:"attrs"`
+}
+
+type shortcodeAttrRule struct {
+	Name    string `json:"name"`
+	Pattern string `json:"pattern"`
+}
+
+type compiledShortcodeRule struct {
+	Name  string
+	Tag   string
+	Attrs map[string]*regexp.Regexp
+}
+
+type shortcodePlaceholder struct {
+	Name    string            `json:"name"`
+	Attrs   map[string]string `json:"attrs,omitempty"`
+	Body    string            `json:"body"`
+	Literal bool              `json:"literal,omitempty"`
+}
+
+var allowedShortcodeTags = map[string]bool{
+	"a":      true,
+	"div":    true,
+	"iframe": true,
+	"span":   true,
+}
+
+var allowedShortcodeAttrs = map[string]bool{
+	"src":             true,
+	"href":            true,
+	"class":           true,
+	"title":           true,
+	"width":           true,
+	"height":          true,
+	"loading":         true,
+	"referrerpolicy":  true,
+	"sandbox":         true,
+	"allow":           true,
+	"allowfullscreen": true,
+	"target":          true,
+	"rel":             true,
+}
+
+var shortcodeTokenPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]{0,31}$`)
+var shortcodePlaceholderPattern = regexp.MustCompile(`(?s)(<p>\s*)?<span data-wenlog-shortcode="([A-Za-z0-9_.~%+-]+)">(.*?)</span>(\s*</p>)?`)
+var shortcodeRulesCacheMu sync.RWMutex
+var shortcodeRulesCacheRaw string
+var shortcodeRulesCache []compiledShortcodeRule
+
 // Register 注册评论表情插件的 hook。
 func Register(api *hook.API) {
 	// 在 head 中注入 css
@@ -53,12 +110,17 @@ func Register(api *hook.API) {
 	api.AddAction(hook.Consts.ActionAdminPostFormAfterTextarea, func(api *hook.API, args ...any) {
 		renderSmileyPanel(api, "admin")
 	})
+	// 文章正文短代码源预处理。返回值后续仍会经过格式转换和 HTML 消毒。
+	api.AddFilter(hook.Consts.FilterPostContentSource, func(api *hook.API, value string, post hook.PostView) string {
+		return renderShortcodePlaceholders(api, value, post.ContentFormat)
+	})
 	// 文章正文的表情渲染
 	api.AddFilter(hook.Consts.FilterPostContentHTML, func(api *hook.API, value string, post hook.PostView) string {
 		content := value
 		if postSmiliesEnabled(api) {
 			content = renderSmilies(api, content)
 		}
+		content = renderShortcodeHTML(api, content)
 		return content
 	})
 	// 文章尾部 HTML（版权声明等）
@@ -193,6 +255,635 @@ func postSmiliesEnabled(api *hook.API) bool {
 
 func smileySrc(name string) string {
 	return "/plugin-assets/post-comment-enhance/smilies/" + url.PathEscape(name) + ".gif"
+}
+
+func renderShortcodePlaceholders(api *hook.API, content, format string) string {
+	if content == "" {
+		return content
+	}
+	rules := loadShortcodeRules(api)
+	if len(rules) == 0 {
+		return content
+	}
+	ruleMap := map[string]compiledShortcodeRule{}
+	for _, rule := range rules {
+		ruleMap[rule.Name] = rule
+	}
+	var out strings.Builder
+	for pos := 0; pos < len(content); {
+		if end := protectedShortcodeSourceEnd(content, pos, format); end > pos {
+			out.WriteString(content[pos:end])
+			pos = end
+			continue
+		}
+		start := pos
+		escaped := strings.HasPrefix(content[pos:], "[[")
+		if escaped {
+			start++
+		}
+		name, rawAttrs, body, end, ok := parseShortcodeAt(content, start)
+		rule, configured := ruleMap[name]
+		if !ok || !configured {
+			out.WriteByte(content[pos])
+			pos++
+			continue
+		}
+		if escaped {
+			if end >= len(content) || content[end] != ']' {
+				out.WriteByte(content[pos])
+				pos++
+				continue
+			}
+			literal := content[start:end]
+			payload := shortcodePlaceholder{Name: name, Body: literal, Literal: true}
+			encoded, valid := encodeShortcodePlaceholder(payload)
+			if !valid {
+				out.WriteString(literal)
+				pos = end + 1
+				continue
+			}
+			out.WriteString(`<span data-wenlog-shortcode="` + encoded + `">` + api.EscapeHTML(literal) + `</span>`)
+			pos = end + 1
+			continue
+		}
+		if strings.Contains(body, "["+name) {
+			out.WriteString(content[pos:end])
+			pos = end
+			continue
+		}
+		attrs, valid := renderShortcodeAttrs(api, rule, rawAttrs)
+		if !valid {
+			out.WriteString(content[pos:end])
+			pos = end
+			continue
+		}
+		payload := shortcodePlaceholder{Name: name, Attrs: attrs, Body: body}
+		encoded, valid := encodeShortcodePlaceholder(payload)
+		if !valid {
+			out.WriteString(content[pos:end])
+			pos = end
+			continue
+		}
+		block := format == "markdown" && rule.Tag != "a" && rule.Tag != "span"
+		if block {
+			out.WriteString("\n\n")
+		}
+		out.WriteString(`<span data-wenlog-shortcode="` + encoded + `">` + api.EscapeHTML(body) + `</span>`)
+		if block {
+			out.WriteString("\n\n")
+		}
+		pos = end
+	}
+	return out.String()
+}
+
+func parseShortcodeAt(content string, start int) (name, rawAttrs, body string, end int, ok bool) {
+	if start >= len(content) || content[start] != '[' {
+		return "", "", "", start, false
+	}
+	openEnd, ok := shortcodeBracketEnd(content, start+1)
+	if !ok {
+		return "", "", "", start, false
+	}
+	header := content[start+1 : openEnd]
+	i := 0
+	for i < len(header) && isShortcodeNameByte(header[i], i == 0) {
+		i++
+	}
+	if i == 0 || !shortcodeTokenPattern.MatchString(header[:i]) || (i < len(header) && !isShortcodeSpace(header[i])) {
+		return "", "", "", start, false
+	}
+	name = header[:i]
+	rawAttrs = header[i:]
+	closeTag := "[/" + name + "]"
+	closeOffset := strings.Index(content[openEnd+1:], closeTag)
+	if closeOffset < 0 {
+		return "", "", "", start, false
+	}
+	closeStart := openEnd + 1 + closeOffset
+	body = content[openEnd+1 : closeStart]
+	return name, rawAttrs, body, closeStart + len(closeTag), true
+}
+
+func shortcodeBracketEnd(content string, start int) (int, bool) {
+	var quote byte
+	for i := start; i < len(content); i++ {
+		c := content[i]
+		if quote != 0 {
+			if c == quote {
+				quote = 0
+			}
+			continue
+		}
+		if c == '\'' || c == '"' {
+			quote = c
+			continue
+		}
+		if c == ']' {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+func protectedShortcodeSourceEnd(content string, start int, format string) int {
+	if end := htmlCodeElementEnd(content, start); end > start {
+		return end
+	}
+	if end := htmlMarkupEnd(content, start); end > start {
+		return end
+	}
+	if format != "markdown" || start >= len(content) {
+		return start
+	}
+	if end := markdownIndentedCodeLineEnd(content, start); end > start {
+		return end
+	}
+	if end := markdownFencedCodeEnd(content, start); end > start {
+		return end
+	}
+	if content[start] == '`' {
+		run := repeatedByteCount(content, start, '`')
+		marker := strings.Repeat("`", run)
+		if offset := strings.Index(content[start+run:], marker); offset >= 0 {
+			return start + run + offset + run
+		}
+	}
+	return start
+}
+
+func markdownFencedCodeEnd(content string, start int) int {
+	if start >= len(content) || content[start] != '`' && content[start] != '~' {
+		return start
+	}
+	marker := content[start]
+	run := repeatedByteCount(content, start, marker)
+	if run < 3 || !markdownFencePrefixAllowed(content, start) {
+		return start
+	}
+	lineEnd := markdownLineEnd(content, start+run)
+	if marker == '`' && strings.Contains(content[start+run:lineEnd], "`") {
+		return start
+	}
+	for pos := nextMarkdownLine(content, lineEnd); pos < len(content); pos = nextMarkdownLine(content, lineEnd) {
+		lineEnd = markdownLineEnd(content, pos)
+		i := markdownContainerContentStart(content, pos, lineEnd)
+		if repeatedByteCount(content, i, marker) < run {
+			continue
+		}
+		i += repeatedByteCount(content, i, marker)
+		for i < lineEnd && (content[i] == ' ' || content[i] == '\t' || content[i] == '\r') {
+			i++
+		}
+		if i == lineEnd {
+			return nextMarkdownLine(content, lineEnd)
+		}
+	}
+	return len(content)
+}
+
+func markdownFencePrefixAllowed(content string, start int) bool {
+	lineStart := strings.LastIndexByte(content[:start], '\n') + 1
+	return markdownContainerContentStart(content, lineStart, start) == start
+}
+
+func markdownContainerContentStart(content string, lineStart, lineEnd int) int {
+	pos := lineStart
+	for {
+		spaces := 0
+		for pos < lineEnd && spaces < 3 && content[pos] == ' ' {
+			spaces++
+			pos++
+		}
+		if pos >= lineEnd || content[pos] != '>' {
+			break
+		}
+		pos++
+		if pos < lineEnd && (content[pos] == ' ' || content[pos] == '\t') {
+			pos++
+		}
+	}
+	spaces := 0
+	for pos < lineEnd && spaces < 3 && content[pos] == ' ' {
+		spaces++
+		pos++
+	}
+	if pos+1 < lineEnd && (content[pos] == '-' || content[pos] == '+' || content[pos] == '*') && isShortcodeSpace(content[pos+1]) {
+		pos += 2
+		return skipMarkdownSpaces(content, pos, lineEnd, 3)
+	}
+	digitStart := pos
+	for pos < lineEnd && content[pos] >= '0' && content[pos] <= '9' {
+		pos++
+	}
+	if pos > digitStart && pos+1 < lineEnd && (content[pos] == '.' || content[pos] == ')') && isShortcodeSpace(content[pos+1]) {
+		pos += 2
+		return skipMarkdownSpaces(content, pos, lineEnd, 3)
+	}
+	return pos
+}
+
+func skipMarkdownSpaces(content string, pos, lineEnd, max int) int {
+	for count := 0; pos < lineEnd && count < max && content[pos] == ' '; count++ {
+		pos++
+	}
+	return pos
+}
+
+func markdownLineEnd(content string, start int) int {
+	if offset := strings.IndexByte(content[start:], '\n'); offset >= 0 {
+		return start + offset
+	}
+	return len(content)
+}
+
+func nextMarkdownLine(content string, lineEnd int) int {
+	if lineEnd < len(content) {
+		return lineEnd + 1
+	}
+	return len(content)
+}
+
+func markdownIndentedCodeLineEnd(content string, start int) int {
+	if !atSourceLineStart(content, start) {
+		return start
+	}
+	pos := start
+	for {
+		prefixStart := pos
+		spaces := 0
+		for pos < len(content) && spaces < 3 && content[pos] == ' ' {
+			spaces++
+			pos++
+		}
+		if pos >= len(content) || content[pos] != '>' {
+			pos = prefixStart
+			break
+		}
+		pos++
+		if pos < len(content) && (content[pos] == ' ' || content[pos] == '\t') {
+			pos++
+		}
+	}
+	column := 0
+	for pos < len(content) {
+		switch content[pos] {
+		case ' ':
+			column++
+			pos++
+		case '\t':
+			column += 4 - column%4
+			pos++
+		default:
+			if column < 4 {
+				return start
+			}
+			if offset := strings.IndexByte(content[pos:], '\n'); offset >= 0 {
+				return pos + offset + 1
+			}
+			return len(content)
+		}
+	}
+	if column >= 4 {
+		return len(content)
+	}
+	return start
+}
+
+func htmlMarkupEnd(content string, start int) int {
+	if start >= len(content) || content[start] != '<' {
+		return start
+	}
+	if strings.HasPrefix(content[start:], "<!--") {
+		if offset := strings.Index(content[start+4:], "-->"); offset >= 0 {
+			return start + 4 + offset + 3
+		}
+		return len(content)
+	}
+	var quote byte
+	for i := start + 1; i < len(content); i++ {
+		c := content[i]
+		if quote != 0 {
+			if c == quote {
+				quote = 0
+			}
+			continue
+		}
+		if c == '\'' || c == '"' {
+			quote = c
+			continue
+		}
+		if c == '>' {
+			return i + 1
+		}
+	}
+	return len(content)
+}
+
+func htmlCodeElementEnd(content string, start int) int {
+	lower := strings.ToLower(content[start:])
+	for _, tag := range []string{"code", "pre"} {
+		open := "<" + tag
+		if !strings.HasPrefix(lower, open) || (len(lower) > len(open) && lower[len(open)] != '>' && !isShortcodeSpace(lower[len(open)])) {
+			continue
+		}
+		closeTag := "</" + tag + ">"
+		if offset := strings.Index(lower, closeTag); offset >= 0 {
+			return start + offset + len(closeTag)
+		}
+		return len(content)
+	}
+	return start
+}
+
+func repeatedByteCount(s string, start int, target byte) int {
+	i := start
+	for i < len(s) && s[i] == target {
+		i++
+	}
+	return i - start
+}
+
+func atSourceLineStart(s string, pos int) bool {
+	lineStart := pos == 0 || s[pos-1] == '\n'
+	return lineStart
+}
+
+func isShortcodeNameByte(c byte, first bool) bool {
+	if c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' {
+		return true
+	}
+	return !first && (c >= '0' && c <= '9' || c == '_' || c == '-')
+}
+
+func isShortcodeSpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
+}
+
+func renderShortcodeHTML(api *hook.API, content string) string {
+	if content == "" {
+		return content
+	}
+	rules := loadShortcodeRules(api)
+	if len(rules) == 0 {
+		return content
+	}
+	ruleMap := map[string]compiledShortcodeRule{}
+	for _, rule := range rules {
+		ruleMap[rule.Name] = rule
+	}
+	return shortcodePlaceholderPattern.ReplaceAllStringFunc(content, func(match string) string {
+		parts := shortcodePlaceholderPattern.FindStringSubmatch(match)
+		if len(parts) != 5 {
+			return match
+		}
+		payload, ok := decodeShortcodePlaceholder(parts[2])
+		if !ok {
+			return match
+		}
+		rule, ok := ruleMap[payload.Name]
+		if !ok {
+			return match
+		}
+		if payload.Literal {
+			return parts[1] + api.EscapeHTML(payload.Body) + parts[4]
+		}
+		attrs := renderPreparedShortcodeAttrs(api, rule, payload.Attrs)
+		rendered := "<" + rule.Tag + attrs + ">" + api.EscapeHTML(payload.Body) + "</" + rule.Tag + ">"
+		if rule.Tag == "a" || rule.Tag == "span" {
+			return parts[1] + rendered + parts[4]
+		}
+		return rendered
+	})
+}
+
+func loadShortcodeRules(api *hook.API) []compiledShortcodeRule {
+	raw := strings.TrimSpace(api.PluginOption("shortcode_rules", ""))
+	if raw == "" {
+		return nil
+	}
+	shortcodeRulesCacheMu.RLock()
+	if raw == shortcodeRulesCacheRaw {
+		cached := shortcodeRulesCache
+		shortcodeRulesCacheMu.RUnlock()
+		return cached
+	}
+	shortcodeRulesCacheMu.RUnlock()
+	var configured []shortcodeRule
+	if err := json.Unmarshal([]byte(raw), &configured); err != nil {
+		api.Warn("短代码配置解析失败", "error", err)
+		return nil
+	}
+	out := make([]compiledShortcodeRule, 0, len(configured))
+	for _, item := range configured {
+		name := strings.TrimSpace(item.Name)
+		tag := strings.ToLower(strings.TrimSpace(item.Tag))
+		if !shortcodeTokenPattern.MatchString(name) || !shortcodeTokenPattern.MatchString(tag) || !allowedShortcodeTags[tag] {
+			continue
+		}
+		rule := compiledShortcodeRule{Name: name, Tag: tag, Attrs: map[string]*regexp.Regexp{}}
+		for _, attr := range item.Attrs {
+			attrName := strings.ToLower(strings.TrimSpace(attr.Name))
+			if !shortcodeAttrAllowed(attrName) {
+				continue
+			}
+			re, err := regexp.Compile(strings.TrimSpace(attr.Pattern))
+			if err != nil {
+				api.Warn("短代码属性正则编译失败", "shortcode", name, "attr", attrName, "error", err)
+				continue
+			}
+			rule.Attrs[attrName] = re
+		}
+		out = append(out, rule)
+	}
+	shortcodeRulesCacheMu.Lock()
+	shortcodeRulesCacheRaw = raw
+	shortcodeRulesCache = out
+	shortcodeRulesCacheMu.Unlock()
+	return out
+}
+
+func shortcodeAttrAllowed(name string) bool {
+	if strings.HasPrefix(name, "on") {
+		return false
+	}
+	if name == "style" || name == "srcdoc" {
+		return false
+	}
+	return allowedShortcodeAttrs[name]
+}
+
+func renderShortcodeAttrs(api *hook.API, rule compiledShortcodeRule, raw string) (map[string]string, bool) {
+	raw = html.UnescapeString(raw)
+	out := map[string]string{}
+	seen := map[string]bool{}
+	pos := 0
+	for {
+		spaceStart := pos
+		for pos < len(raw) && isShortcodeSpace(raw[pos]) {
+			pos++
+		}
+		if pos == len(raw) {
+			return out, true
+		}
+		if pos == spaceStart {
+			return nil, false
+		}
+		start := pos
+		for pos < len(raw) && isShortcodeNameByte(raw[pos], pos == start) {
+			pos++
+		}
+		if pos == start {
+			return nil, false
+		}
+		name := strings.ToLower(raw[start:pos])
+		for pos < len(raw) && isShortcodeSpace(raw[pos]) {
+			pos++
+		}
+		value := ""
+		if pos < len(raw) && raw[pos] == '=' {
+			pos++
+			for pos < len(raw) && isShortcodeSpace(raw[pos]) {
+				pos++
+			}
+			parsedValue, next, valueOK := parseShortcodeAttrValue(raw, pos)
+			if !valueOK {
+				return nil, false
+			}
+			value = parsedValue
+			pos = next
+		}
+		re := rule.Attrs[name]
+		if re == nil || !shortcodeAttrAllowed(name) {
+			continue
+		}
+		if seen[name] {
+			return nil, false
+		}
+		seen[name] = true
+		if !re.MatchString(value) || ((name == "src" || name == "href") && !safeShortcodeURL(value)) {
+			return nil, false
+		}
+		out[name] = value
+	}
+}
+
+func parseShortcodeAttrValue(raw string, pos int) (string, int, bool) {
+	if pos >= len(raw) {
+		return "", pos, false
+	}
+	if raw[pos] == '\'' || raw[pos] == '"' {
+		quote := raw[pos]
+		start := pos + 1
+		if offset := strings.IndexByte(raw[start:], quote); offset >= 0 {
+			end := start + offset
+			return raw[start:end], end + 1, true
+		}
+		return "", pos, false
+	}
+	start := pos
+	for pos < len(raw) && !isShortcodeSpace(raw[pos]) {
+		if raw[pos] == '\'' || raw[pos] == '"' || raw[pos] == '=' {
+			return "", pos, false
+		}
+		pos++
+	}
+	if pos == start {
+		return "", pos, false
+	}
+	return raw[start:pos], pos, true
+}
+
+func renderPreparedShortcodeAttrs(api *hook.API, rule compiledShortcodeRule, attrs map[string]string) string {
+	forceSafeRel := rule.Tag == "a" && strings.EqualFold(attrs["target"], "_blank")
+	out := ""
+	for _, name := range shortcodeAttrOrder {
+		if name == "rel" && forceSafeRel {
+			out += ` rel="` + api.EscapeHTML(shortcodeSafeRel(attrs[name])) + `"`
+			continue
+		}
+		value, ok := attrs[name]
+		if !ok || !shortcodeAttrAllowed(name) {
+			continue
+		}
+		re := rule.Attrs[name]
+		if re == nil || !re.MatchString(value) {
+			continue
+		}
+		if (name == "src" || name == "href") && !safeShortcodeURL(value) {
+			continue
+		}
+		if value == "" {
+			out += " " + name
+			continue
+		}
+		out += ` ` + name + `="` + api.EscapeHTML(value) + `"`
+	}
+	return out
+}
+
+func shortcodeSafeRel(value string) string {
+	tokens := strings.Fields(value)
+	seenNoopener := false
+	seenNoreferrer := false
+	for _, token := range tokens {
+		seenNoopener = seenNoopener || strings.EqualFold(token, "noopener")
+		seenNoreferrer = seenNoreferrer || strings.EqualFold(token, "noreferrer")
+	}
+	if !seenNoopener {
+		tokens = append(tokens, "noopener")
+	}
+	if !seenNoreferrer {
+		tokens = append(tokens, "noreferrer")
+	}
+	return strings.Join(tokens, " ")
+}
+
+var shortcodeAttrOrder = []string{
+	"src",
+	"href",
+	"class",
+	"title",
+	"width",
+	"height",
+	"loading",
+	"referrerpolicy",
+	"sandbox",
+	"allow",
+	"allowfullscreen",
+	"target",
+	"rel",
+}
+
+func encodeShortcodePlaceholder(payload shortcodePlaceholder) (string, bool) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", false
+	}
+	return base64.RawURLEncoding.EncodeToString(data), true
+}
+
+func decodeShortcodePlaceholder(raw string) (shortcodePlaceholder, bool) {
+	var payload shortcodePlaceholder
+	data, err := base64.RawURLEncoding.DecodeString(raw)
+	if err != nil {
+		return payload, false
+	}
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return payload, false
+	}
+	return payload, true
+}
+
+func safeShortcodeURL(value string) bool {
+	u, err := url.Parse(strings.TrimSpace(value))
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	return u.Host != ""
 }
 
 // rejectCommentByPattern 按插件配置的正则表达式拦截评论。

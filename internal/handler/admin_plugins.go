@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +48,45 @@ type pluginView struct {
 type pluginOptionData struct {
 	plugin.OptionDecl
 	Value string
+}
+
+type shortcodeRuleOption struct {
+	Name  string                    `json:"name"`
+	Tag   string                    `json:"tag"`
+	Attrs []shortcodeAttrRuleOption `json:"attrs,omitempty"`
+}
+
+type shortcodeAttrRuleOption struct {
+	Name    string `json:"name"`
+	Pattern string `json:"pattern"`
+}
+
+var (
+	shortcodeNamePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]{0,31}$`)
+	shortcodeTagPattern  = regexp.MustCompile(`^[a-z][a-z0-9]{0,31}$`)
+)
+
+var allowedShortcodeRenderTags = map[string]bool{
+	"a":      true,
+	"div":    true,
+	"iframe": true,
+	"span":   true,
+}
+
+var defaultShortcodeAllowedAttrs = []string{
+	"src",
+	"href",
+	"class",
+	"title",
+	"width",
+	"height",
+	"loading",
+	"referrerpolicy",
+	"sandbox",
+	"allow",
+	"allowfullscreen",
+	"target",
+	"rel",
 }
 
 // PluginsPage 渲染插件管理页面。
@@ -178,6 +219,9 @@ func (h *Admin) PluginSettingsPage(c *gin.Context) {
 	data["PluginID"] = p.ID
 	data["PluginName"] = tr.D(p.PluginDomain()).T(p.Name)
 	data["tp"] = tr.D(p.PluginDomain())
+	if msg := c.Query("error"); msg != "" {
+		data["Error"] = msg
+	}
 	if len(p.Options) == 0 {
 		data["NoOptions"] = true
 		c.HTML(http.StatusOK, "admin_plugin_settings.gohtml", data)
@@ -205,20 +249,35 @@ func (h *Admin) SavePluginSettings(c *gin.Context) {
 	if !ok {
 		return
 	}
+	values := make(map[string]string, len(p.Options))
+	deleteKeys := make([]string, 0, len(p.Options))
 	for _, opt := range p.Options {
 		val := c.PostForm("option_" + opt.ID)
 		if opt.Type == "bool" && val == "" {
 			val = "false"
 		}
+		defaultValue := opt.Default
+		if opt.Type == "shortcode_rules" {
+			normalized, err := normalizeShortcodeRulesOption(opt, val)
+			if err != nil {
+				h.redirectPluginSettings(c, p.ID, "", tr.T("插件设置保存失败: %s", err.Error()))
+				return
+			}
+			val = normalized
+			if normalizedDefault, err := normalizeShortcodeRulesOption(opt, opt.Default); err == nil {
+				defaultValue = normalizedDefault
+			}
+		}
 		key := plugin.OptionKey(p.ID, opt.ID)
-		if val == "" || val == opt.Default {
-			_ = h.st.DeleteSetting(c, key)
+		if val == "" || val == defaultValue {
+			deleteKeys = append(deleteKeys, key)
 			continue
 		}
-		if err := h.st.SaveSetting(c, key, val); err != nil {
-			h.serverError(c, err)
-			return
-		}
+		values[key] = val
+	}
+	if err := h.st.UpdateSettings(c, values, deleteKeys); err != nil {
+		h.serverError(c, err)
+		return
 	}
 	if h.enabledPluginSet(c)[p.ID] {
 		if err := h.reloadPluginRuntime(c); err != nil {
@@ -227,6 +286,110 @@ func (h *Admin) SavePluginSettings(c *gin.Context) {
 		}
 	}
 	c.Redirect(http.StatusSeeOther, "/admin/plugin/"+url.PathEscape(p.ID)+"/settings?notice="+url.QueryEscape(tr.T("插件设置已保存")))
+}
+
+func normalizeShortcodeRulesOption(opt plugin.OptionDecl, raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", nil
+	}
+	if len(raw) > 20_000 {
+		return "", fmt.Errorf("短代码配置过长")
+	}
+	var rules []shortcodeRuleOption
+	if err := json.Unmarshal([]byte(raw), &rules); err != nil {
+		return "", fmt.Errorf("短代码配置不是有效 JSON")
+	}
+	if len(rules) > 50 {
+		return "", fmt.Errorf("短代码规则不能超过 50 条")
+	}
+	if len(rules) == 0 {
+		return "", nil
+	}
+	allowedAttrs := shortcodeAllowedAttrs(opt)
+	seenRules := map[string]bool{}
+	for i := range rules {
+		rules[i].Name = strings.TrimSpace(rules[i].Name)
+		rules[i].Tag = strings.ToLower(strings.TrimSpace(rules[i].Tag))
+		if !shortcodeNamePattern.MatchString(rules[i].Name) {
+			return "", fmt.Errorf("短代码名称 %q 无效", rules[i].Name)
+		}
+		if seenRules[rules[i].Name] {
+			return "", fmt.Errorf("短代码名称 %q 重复", rules[i].Name)
+		}
+		seenRules[rules[i].Name] = true
+		if !shortcodeTagPattern.MatchString(rules[i].Tag) || !allowedShortcodeRenderTags[rules[i].Tag] {
+			return "", fmt.Errorf("短代码 %q 的渲染标签 %q 不受支持", rules[i].Name, rules[i].Tag)
+		}
+		if len(rules[i].Attrs) > 20 {
+			return "", fmt.Errorf("短代码 %q 的允许属性不能超过 20 个", rules[i].Name)
+		}
+		seenAttrs := map[string]bool{}
+		for j := range rules[i].Attrs {
+			attr := &rules[i].Attrs[j]
+			attr.Name = strings.ToLower(strings.TrimSpace(attr.Name))
+			attr.Pattern = strings.TrimSpace(attr.Pattern)
+			if !allowedAttrs[attr.Name] {
+				return "", fmt.Errorf("短代码 %q 的属性 %q 不在允许名单中", rules[i].Name, attr.Name)
+			}
+			if seenAttrs[attr.Name] {
+				return "", fmt.Errorf("短代码 %q 的属性 %q 重复", rules[i].Name, attr.Name)
+			}
+			seenAttrs[attr.Name] = true
+			if attr.Pattern == "" {
+				return "", fmt.Errorf("短代码 %q 的属性 %q 必须配置取值正则", rules[i].Name, attr.Name)
+			}
+			if len(attr.Pattern) > 500 {
+				return "", fmt.Errorf("短代码 %q 的属性 %q 正则过长", rules[i].Name, attr.Name)
+			}
+			if _, err := regexp.Compile(attr.Pattern); err != nil {
+				return "", fmt.Errorf("短代码 %q 的属性 %q 正则无效", rules[i].Name, attr.Name)
+			}
+		}
+	}
+	normalized, err := json.Marshal(rules)
+	if err != nil {
+		return "", err
+	}
+	return string(normalized), nil
+}
+
+func shortcodeAllowedAttrs(opt plugin.OptionDecl) map[string]bool {
+	allowed := map[string]bool{}
+	if len(opt.Options) == 0 {
+		for _, name := range defaultShortcodeAllowedAttrs {
+			allowed[name] = true
+		}
+		return allowed
+	}
+	for _, item := range opt.Options {
+		name := strings.ToLower(strings.TrimSpace(item.Value))
+		if name != "" && shortcodeAttrNameAllowed(name) && isDefaultShortcodeAttr(name) {
+			allowed[name] = true
+		}
+	}
+	return allowed
+}
+
+func isDefaultShortcodeAttr(name string) bool {
+	for _, allowed := range defaultShortcodeAllowedAttrs {
+		if name == allowed {
+			return true
+		}
+	}
+	return false
+}
+
+func shortcodeAttrNameAllowed(name string) bool {
+	if strings.HasPrefix(name, "on") {
+		return false
+	}
+	switch name {
+	case "style", "srcdoc":
+		return false
+	default:
+		return true
+	}
 }
 
 func (h *Admin) reloadPluginRuntime(c *gin.Context) error {
@@ -379,6 +542,21 @@ func (h *Admin) redirectPlugins(c *gin.Context, message, errMsg string) {
 		values.Set("error", errMsg)
 	}
 	path := "/admin/plugins"
+	if encoded := values.Encode(); encoded != "" {
+		path += "?" + encoded
+	}
+	c.Redirect(http.StatusSeeOther, path)
+}
+
+func (h *Admin) redirectPluginSettings(c *gin.Context, pluginID, message, errMsg string) {
+	values := url.Values{}
+	if message != "" {
+		values.Set("notice", message)
+	}
+	if errMsg != "" {
+		values.Set("error", errMsg)
+	}
+	path := "/admin/plugin/" + url.PathEscape(pluginID) + "/settings"
 	if encoded := values.Encode(); encoded != "" {
 		path += "?" + encoded
 	}

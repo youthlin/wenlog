@@ -94,7 +94,7 @@
 | `post_title` | `func(any) template.HTML` | 输出文章标题并应用 `post.title` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按纯文本转义 |
 | `post_title_text` | `func(any) string` | 输出文章标题文本并应用 `post.title` filter；适合列表链接、归档列表、上一篇/下一篇等已有结构内的标题文本；模板会按上下文自动转义 |
 | `post_excerpt` | `func(any) template.HTML` | 输出文章摘要并应用 `post.excerpt_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
-| `post_content` | `func(any) template.HTML` | 输出文章正文并应用 `post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView`；filter 返回值按可信 HTML 输出 |
+| `post_content` | `func(any) template.HTML` | 输出文章正文；宿主根据正文格式选择 `ContentMD` 或 `Content`，并依次应用 `post.content_source`、格式转换/消毒、`post.content_html` 与 `post.footer_html` filter；filter 扩展参数传 `hook.PostView`；HTML filter 返回值按可信 HTML 输出 |
 | `post_tags` | `func(any) template.HTML` | 输出文章标签链接 |
 | `post_navigation` | `func(any, ...string) template.HTML` | 输出上一篇/下一篇文章导航 |
 | `body_class` | `func(any) string` | 生成 `<body>` CSS class |

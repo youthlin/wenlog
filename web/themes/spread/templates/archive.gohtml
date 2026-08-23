@@ -5,7 +5,7 @@
     <div class="issue-mark" aria-hidden="true">Archive</div>
     <div class="post-hero-copy">
       <h1 class="post-title">{{post_title_text .Post}}</h1>
-      {{if .Post.Content}}<div class="post-content archive-intro">{{safeHTML .Post.Content}}</div>{{end}}
+      {{$content := post_content .Post}}{{if $content}}<div class="post-content archive-intro">{{$content}}</div>{{end}}
     </div>
   </header>
   <div class="archive-groups wide-shell">

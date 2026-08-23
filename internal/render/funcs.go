@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"fmt"
 	"html"
 	"html/template"
@@ -133,36 +134,63 @@ func postExcerptHTMLAny(post any) template.HTML {
 	}
 }
 
-// postContent 输出文章正文，并应用 post.content_html 和 post.footer_html filter。
+// postContent 输出文章正文，并应用统一的正文渲染与过滤管线。
 func postContent(r *RequestContext, post any) template.HTML {
-	html := postContentHTML(post)
-	if h := hooks(r.Runtime); h != nil {
-		ctx := requestContext(r)
-		payload := postViewPayload(r, post)
-		v := h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload)
-		html = trustedHTMLFromFilterValue(v)
-		v = h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload)
-		html = trustedHTMLFromFilterValue(v)
-	}
-	return html
+	return renderPostContent(requestContext(r), hooks(r.Runtime), postViewPayload(r, post), post)
 }
 
-func postContentHTML(post any) template.HTML {
-	switch p := post.(type) {
-	case *model.Post:
-		if p == nil {
-			return ""
+func renderPostContent(ctx context.Context, h hook.Executor, payload any, post any) template.HTML {
+	source, format, id := postContentSource(post)
+	payload = postPayloadWithContentFormat(payload, format)
+	if h != nil {
+		source = textFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentSource, source, payload), source)
+	}
+	source = wxr.RenderDetail(source, id)
+	var out template.HTML
+	if format == model.FormatMarkdown {
+		out = template.HTML(RenderMarkdown(source))
+	} else {
+		out = renderContentHTML(source)
+	}
+	if h != nil {
+		out = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(out), payload))
+		out = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(out), payload))
+	}
+	return out
+}
+
+func postContentSource(post any) (source, format string, id uint) {
+	if isNilAny(post) {
+		return "", model.FormatHTML, 0
+	}
+	format = reflectStringField(post, "ContentFormat")
+	if format == model.FormatMarkdown {
+		source = reflectStringField(post, "ContentMD")
+		if source != "" {
+			return source, format, reflectUintField(post, "ID")
 		}
-		return detailHTML(p)
-	case model.Post:
-		return detailHTML(&p)
+		format = model.FormatHTML
+	}
+	if format == "" {
+		format = model.FormatHTML
+	}
+	return reflectStringField(post, "Content"), format, reflectUintField(post, "ID")
+}
+
+func postPayloadWithContentFormat(payload any, format string) any {
+	switch post := payload.(type) {
+	case hook.PostView:
+		post.ContentFormat = format
+		return post
+	case *hook.PostView:
+		if post == nil {
+			return payload
+		}
+		copy := *post
+		copy.ContentFormat = format
+		return &copy
 	default:
-		content := reflectStringField(post, "Content")
-		id := reflectUintField(post, "ID")
-		if content == "" {
-			return ""
-		}
-		return renderContentHTML(wxr.RenderDetail(content, id))
+		return payload
 	}
 }
 

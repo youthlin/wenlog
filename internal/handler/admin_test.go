@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -17,9 +18,12 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
+	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/middleware"
 	"github.com/youthlin/wenlog/internal/model"
 	"github.com/youthlin/wenlog/internal/plugin"
+	renderx "github.com/youthlin/wenlog/internal/render"
 	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/internal/util"
 )
@@ -59,6 +63,246 @@ func TestValidatePageSlug(t *testing.T) {
 		if (err == nil) != tt.ok {
 			t.Fatalf("%s: validatePageSlug(%q) err=%v, want ok=%v", tt.name, tt.slug, err, tt.ok)
 		}
+	}
+}
+
+func TestNormalizeShortcodeRulesOptionRejectsUnsafeAttrNames(t *testing.T) {
+	opt := plugin.OptionDecl{
+		ID:   "shortcode_rules",
+		Type: "shortcode_rules",
+		Options: []plugin.SelectOpt{
+			{Value: "src", Label: "src"},
+			{Value: "class", Label: "class"},
+			{Value: "title", Label: "title"},
+		},
+	}
+	_, err := normalizeShortcodeRulesOption(opt, `[{"name":"cube","tag":"iframe","attrs":[{"name":"onload","pattern":".*"}]}]`)
+	if err == nil || !strings.Contains(err.Error(), "不在允许名单中") {
+		t.Fatalf("normalizeShortcodeRulesOption unsafe attr err = %v, want whitelist error", err)
+	}
+}
+
+func TestNormalizeShortcodeRulesOptionRejectsAttrsOutsideFixedWhitelist(t *testing.T) {
+	opt := plugin.OptionDecl{
+		ID:   "shortcode_rules",
+		Type: "shortcode_rules",
+		Options: []plugin.SelectOpt{
+			{Value: "data-custom", Label: "data-custom"},
+		},
+	}
+	_, err := normalizeShortcodeRulesOption(opt, `[{"name":"demo","tag":"div","attrs":[{"name":"data-custom","pattern":".*"}]}]`)
+	if err == nil || !strings.Contains(err.Error(), "不在允许名单中") {
+		t.Fatalf("normalizeShortcodeRulesOption non-standard attr err = %v, want whitelist error", err)
+	}
+}
+
+func TestNormalizeShortcodeRulesOptionNormalizesValidConfig(t *testing.T) {
+	opt := plugin.OptionDecl{
+		ID:   "shortcode_rules",
+		Type: "shortcode_rules",
+		Options: []plugin.SelectOpt{
+			{Value: "src", Label: "src"},
+			{Value: "class", Label: "class"},
+			{Value: "height", Label: "height"},
+		},
+	}
+	got, err := normalizeShortcodeRulesOption(opt, `[
+		{"name":"cube","tag":"IFRAME","attrs":[
+			{"name":"SRC","pattern":"^https://youthlin\\.com/demo/cube/index\\.html(?:\\?.*)?$"},
+			{"name":"class","pattern":"^[A-Za-z0-9 _-]{0,100}$"},
+			{"name":"height","pattern":"^[1-9][0-9]{1,3}$"}
+		]}
+	]`)
+	if err != nil {
+		t.Fatalf("normalizeShortcodeRulesOption: %v", err)
+	}
+	var rules []shortcodeRuleOption
+	if err := json.Unmarshal([]byte(got), &rules); err != nil {
+		t.Fatalf("normalized JSON invalid: %v", err)
+	}
+	if len(rules) != 1 || rules[0].Name != "cube" || rules[0].Tag != "iframe" {
+		t.Fatalf("normalized rules = %+v", rules)
+	}
+	if rules[0].Attrs[0].Name != "src" {
+		t.Fatalf("attr name should be normalized to lowercase, got %+v", rules[0].Attrs[0])
+	}
+}
+
+func TestNormalizeShortcodeRulesOptionNormalizesEmptyListToDefault(t *testing.T) {
+	opt := plugin.OptionDecl{ID: "shortcode_rules", Type: "shortcode_rules"}
+	for _, raw := range []string{"[]", "null"} {
+		got, err := normalizeShortcodeRulesOption(opt, raw)
+		if err != nil {
+			t.Fatalf("normalize %s: %v", raw, err)
+		}
+		if got != "" {
+			t.Fatalf("normalize %s = %q, want empty default", raw, got)
+		}
+	}
+}
+
+func TestPostCommentEnhanceShortcodeDefaultConfigIsValid(t *testing.T) {
+	p, err := plugin.LoadPlugin(filepath.Join("..", "..", "web", "plugins", "post-comment-enhance"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var opt plugin.OptionDecl
+	for _, candidate := range p.Options {
+		if candidate.ID == "shortcode_rules" {
+			opt = candidate
+			break
+		}
+	}
+	if opt.ID == "" {
+		t.Fatal("shortcode_rules option not found")
+	}
+	got, err := normalizeShortcodeRulesOption(opt, opt.Default)
+	if err != nil {
+		t.Fatalf("normalize default shortcode rules: %v", err)
+	}
+	if got != "" {
+		t.Fatalf("default shortcode rules should be empty, got %s", got)
+	}
+}
+
+func TestSavePluginSettingsValidationFailureDoesNotPartiallyPersist(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	st, err := store.Open(t.TempDir() + "/test.db")
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	pm, err := plugin.NewManager(filepath.Join("..", "..", "web", "plugins"), st)
+	if err != nil {
+		t.Fatalf("new plugin manager: %v", err)
+	}
+	const pluginID = "post-comment-enhance"
+	initial := map[string]string{
+		plugin.OptionKey(pluginID, "enable_post_smilies"): "false",
+		plugin.OptionKey(pluginID, "post_footer_html"):    "<p>old footer</p>",
+	}
+	if err := st.UpdateSettings(context.Background(), initial, nil); err != nil {
+		t.Fatalf("seed plugin settings: %v", err)
+	}
+
+	h := &Admin{st: st, pluginManager: pm}
+	r := gin.New()
+	r.POST("/admin/plugin/:id/settings", h.SavePluginSettings)
+	form := url.Values{}
+	form.Set("option_enabled", "true")
+	form.Set("option_enable_post_smilies", "true")
+	form.Set("option_enable_admin_smiley_panel", "true")
+	form.Set("option_post_footer_html", "<p>new footer</p>")
+	form.Set("option_shortcode_rules", `{"invalid":true}`)
+	req := httptest.NewRequest(http.MethodPost, "/admin/plugin/"+pluginID+"/settings", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusSeeOther || !strings.Contains(w.Header().Get("Location"), "error=") {
+		t.Fatalf("SavePluginSettings status=%d location=%q", w.Code, w.Header().Get("Location"))
+	}
+	for key, want := range initial {
+		got, err := st.GetSetting(context.Background(), key)
+		if err != nil {
+			t.Fatalf("get setting %q: %v", key, err)
+		}
+		if got != want {
+			t.Fatalf("setting %q=%q after validation failure, want %q", key, got, want)
+		}
+	}
+}
+
+func TestPreviewUsesUnsavedFieldsAndExistingPostContext(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	st, err := store.Open(t.TempDir() + "/test.db")
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	author := model.User{Username: "writer", DisplayName: "Writer", Role: model.RoleAuthor}
+	if err := st.DB(context.Background()).Create(&author).Error; err != nil {
+		t.Fatalf("create author: %v", err)
+	}
+	otherAuthor := model.User{Username: "other", DisplayName: "Other", Role: model.RoleAuthor}
+	if err := st.DB(context.Background()).Create(&otherAuthor).Error; err != nil {
+		t.Fatalf("create other author: %v", err)
+	}
+	originalPublishedAt := time.Date(2025, 1, 2, 3, 4, 0, 0, time.Local)
+	post := model.Post{
+		ID: 42, Title: "Stored title", Slug: "stored-title", ContentMD: "stored body",
+		Content: "<p>stored body</p>", ContentFormat: model.FormatMarkdown, AuthorID: author.ID,
+		Status: model.StatusPublished, PostType: model.PostTypePost, PublishedAt: originalPublishedAt,
+	}
+	if err := st.DB(context.Background()).Create(&post).Error; err != nil {
+		t.Fatalf("create post: %v", err)
+	}
+
+	hooks := hook.NewRegistry()
+	var got hook.PostView
+	hooks.AddFilter(hook.FilterPostFooterHTML, func(value any, args ...any) any {
+		got, _ = args[0].(hook.PostView)
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	renderer, err := renderx.New(fstest.MapFS{
+		"empty.gohtml": {Data: []byte(`{{define "empty"}}{{end}}`)},
+	})
+	if err != nil {
+		t.Fatalf("new renderer: %v", err)
+	}
+	renderer.ConfigureTemplateRuntime(renderx.TemplateProviders{Hooks: hooks})
+	h := &Admin{st: st, renderer: renderer}
+
+	r := gin.New()
+	r.Use(sessions.Sessions("preview_test", cookie.NewStore([]byte("preview-test-secret"))))
+	r.POST("/admin/preview", func(c *gin.Context) {
+		current := &author
+		if c.GetHeader("X-Test-User") == "other" {
+			current = &otherAuthor
+		}
+		s := sessions.Default(c)
+		s.Set(middleware.SessionUserKey, current.ID)
+		s.Set(middleware.SessionRoleKey, current.Role)
+		c.Set(ctxKeyCurrentUser, current)
+	}, h.Preview)
+
+	form := url.Values{}
+	form.Set("id", "42")
+	form.Set("title", " Preview title ")
+	form.Set("slug", "Preview Slug")
+	form.Set("content_md", "preview **body**")
+	form.Set("excerpt", "Preview excerpt")
+	form.Set("post_type", model.PostTypePost)
+	form.Set("status", model.StatusDraft)
+	form.Set("comment_status", "closed")
+	form.Set("published_at", "2026-08-23T10:30")
+	req := httptest.NewRequest(http.MethodPost, "/admin/preview", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Preview status=%d body=%q", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), "preview <strong>body</strong>") {
+		t.Fatalf("Preview body=%q, want rendered unsaved Markdown", w.Body.String())
+	}
+	wantPublishedAt := time.Date(2026, 8, 23, 10, 30, 0, 0, time.Local)
+	if got.ID != post.ID || got.Title != "Preview title" || got.Slug != "preview-slug" || got.Excerpt != "Preview excerpt" || got.Status != model.StatusDraft || got.PostType != model.PostTypePost {
+		t.Fatalf("post.footer_html preview payload = %+v", got)
+	}
+	if got.AuthorID != author.ID || got.Author.ID != author.ID || got.Author.Username != author.Username || got.Author.DisplayName != author.DisplayName {
+		t.Fatalf("post.footer_html preview author = %+v, author_id=%d", got.Author, got.AuthorID)
+	}
+	if !got.PublishedAt.Equal(wantPublishedAt) {
+		t.Fatalf("post.footer_html preview published_at=%s, want %s", got.PublishedAt, wantPublishedAt)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/admin/preview", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-Test-User", "other")
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("Preview another author's post status=%d, want %d", w.Code, http.StatusForbidden)
 	}
 }
 

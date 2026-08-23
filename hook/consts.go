@@ -29,6 +29,9 @@ const (
 	// FilterPostExcerptHTML 过滤列表摘要可信 HTML，运行于 post_excerpt 模板函数内部。
 	// 执行 post_excerpt 模板函数时, 会应用这个 filter
 	FilterPostExcerptHTML = "post.excerpt_html"
+	// FilterPostContentSource 过滤文章/页面的正文源内容，运行于格式转换与 HTML 消毒之前。
+	// Markdown 文章传入 ContentMD，HTML 文章传入 Content；插件无需自行选择来源字段。
+	FilterPostContentSource = "post.content_source"
 	// FilterPostContentHTML 过滤详情正文可信 HTML，运行于 post_content 模板函数内部。
 	// 执行 post_content 模板函数时, 会应用这个 filter
 	FilterPostContentHTML = "post.content_html"
@@ -59,6 +62,7 @@ var Consts = struct {
 	ActionAdminPostFormAfterTextarea,
 	FilterPostTitle,
 	FilterPostExcerptHTML,
+	FilterPostContentSource,
 	FilterPostContentHTML,
 	FilterPostFooterHTML,
 	FilterCommentContentHTML,
@@ -75,6 +79,7 @@ var Consts = struct {
 	ActionAdminPostFormAfterTextarea: ActionAdminPostFormAfterTextarea,
 	FilterPostTitle:                  FilterPostTitle,
 	FilterPostExcerptHTML:            FilterPostExcerptHTML,
+	FilterPostContentSource:          FilterPostContentSource,
 	FilterPostContentHTML:            FilterPostContentHTML,
 	FilterPostFooterHTML:             FilterPostFooterHTML,
 	FilterCommentContentHTML:         FilterCommentContentHTML,

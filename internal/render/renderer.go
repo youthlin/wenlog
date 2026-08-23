@@ -219,13 +219,9 @@ func (r *Renderer) FilterPostTitle(ctx context.Context, post *model.Post) string
 // FilterPostContent 对文章正文 HTML 应用 post.content_html 和 post.footer_html filter 链。
 // 供 Feed 等非模板渲染路径使用，确保表情转换、尾部 HTML 等在 RSS 阅读器中生效。
 func (r *Renderer) FilterPostContent(ctx context.Context, post *model.Post) template.HTML {
-	html := detailHTML(post)
-	if h := r.Hooks(); h != nil {
-		payload := postViewPayloadFromContext(ctx, post)
-		html = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostContentHTML, string(html), payload))
-		html = trustedHTMLFromFilterValue(h.ApplyFilters(ctx, hook.FilterPostFooterHTML, string(html), payload))
-	}
-	return html
+	h := r.Hooks()
+	payload := postViewPayloadFromContext(ctx, post)
+	return renderPostContent(ctx, h, payload, post)
 }
 
 func postViewPayloadFromContext(ctx context.Context, post any) any {

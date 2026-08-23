@@ -4528,3 +4528,36 @@ msgstr "HTML content"
 #: internal/theme/widgets.go:58
 msgid "任意 HTML 代码，会原样输出到页面中"
 msgstr "Any HTML code will be output to the page as-is"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:54
+msgid "添加短代码"
+msgstr "Add shortcode"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:59
+msgid "短代码名称"
+msgstr "Shortcode name"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:63
+msgid "渲染为"
+msgstr "Render as"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:75
+msgid "添加允许属性"
+msgstr "Add allowed attribute"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:82
+msgid "属性名"
+msgstr "Attribute name"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:90
+msgid "属性值正则"
+msgstr "Attribute value regex"
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:96
+msgid ""
+"建议使用 ^ 和 $ 或明确的路径边界。例如 ^https://host\\.com(?:/|$)；仅配置 "
+"^https://host\\.com 也会匹配 https://host.com.evil.com。"
+msgstr ""
+"Use ^ and $ or an explicit path boundary. For example, ^https://host\\.com"
+"(?:/|$). A pattern containing only ^https://host\\.com also matches "
+"https://host.com.evil.com."

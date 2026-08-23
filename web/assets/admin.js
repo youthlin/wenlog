@@ -328,18 +328,101 @@
     updateLabel();
   }
 
+  function parseShortcodeRules(value) {
+    if (!value) return [];
+    try {
+      var parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function initShortcodeRules() {
+    document.querySelectorAll("[data-shortcode-rules]").forEach(function (box) {
+      var textarea = box.querySelector("textarea");
+      var list = box.querySelector("[data-shortcode-rules-list]");
+      var ruleTemplate = box.querySelector("[data-shortcode-rule-template]");
+      var attrTemplate = box.querySelector("[data-shortcode-attr-template]");
+      var addRuleBtn = box.querySelector("[data-shortcode-add]");
+      if (!textarea || !list || !ruleTemplate || !attrTemplate || !addRuleBtn) return;
+
+      function serialize() {
+        var rules = [];
+        list.querySelectorAll("[data-shortcode-rule]").forEach(function (row) {
+          var name = (row.querySelector("[data-shortcode-name]") || {}).value || "";
+          var tag = (row.querySelector("[data-shortcode-tag]") || {}).value || "";
+          var attrs = [];
+          row.querySelectorAll("[data-shortcode-attr]").forEach(function (attrRow) {
+            var attrName = (attrRow.querySelector("[data-shortcode-attr-name]") || {}).value || "";
+            var pattern = (attrRow.querySelector("[data-shortcode-attr-pattern]") || {}).value || "";
+            if (attrName || pattern) attrs.push({ name: attrName, pattern: pattern });
+          });
+          if (name || tag || attrs.length) rules.push({ name: name, tag: tag, attrs: attrs });
+        });
+        textarea.value = JSON.stringify(rules);
+      }
+
+      function addAttr(ruleRow, attr) {
+        var attrs = ruleRow.querySelector("[data-shortcode-attrs]");
+        var node = attrTemplate.content.firstElementChild.cloneNode(true);
+        var select = node.querySelector("[data-shortcode-attr-name]");
+        var pattern = node.querySelector("[data-shortcode-attr-pattern]");
+        if (attr && attr.name) select.value = attr.name;
+        if (attr && attr.pattern) pattern.value = attr.pattern;
+        node.querySelector("[data-shortcode-attr-remove]").addEventListener("click", function () {
+          node.remove();
+          serialize();
+        });
+        select.addEventListener("change", serialize);
+        pattern.addEventListener("input", serialize);
+        attrs.appendChild(node);
+      }
+
+      function addRule(rule) {
+        var node = ruleTemplate.content.firstElementChild.cloneNode(true);
+        var name = node.querySelector("[data-shortcode-name]");
+        var tag = node.querySelector("[data-shortcode-tag]");
+        if (rule && rule.name) name.value = rule.name;
+        if (rule && rule.tag) tag.value = rule.tag;
+        (rule && Array.isArray(rule.attrs) ? rule.attrs : []).forEach(function (attr) { addAttr(node, attr); });
+        node.querySelector("[data-shortcode-remove]").addEventListener("click", function () {
+          node.remove();
+          serialize();
+        });
+        node.querySelector("[data-shortcode-attr-add]").addEventListener("click", function () {
+          var select = node.querySelector("[data-shortcode-attr-select]");
+          addAttr(node, { name: select ? select.value : "", pattern: "" });
+          serialize();
+        });
+        name.addEventListener("input", serialize);
+        tag.addEventListener("input", serialize);
+        list.appendChild(node);
+      }
+
+      parseShortcodeRules(textarea.value).forEach(addRule);
+      addRuleBtn.addEventListener("click", function () {
+        addRule({ name: "", tag: "", attrs: [] });
+        serialize();
+      });
+      var form = box.closest("form");
+      if (form) form.addEventListener("submit", serialize);
+    });
+  }
+
   var ta = document.getElementById("content_md");
   var editor = document.querySelector("[data-md-editor]");
   var pv = document.getElementById("md_preview");
   var fileInput = document.getElementById("upload_file");
   var pickBtn = document.getElementById("pick_upload_btn");
   var closePickerBtn = document.getElementById("close_upload_picker");
+  var postForm = ta ? ta.closest('form.edit-form[action="/admin/post"]') : null;
   var currentView = "edit";
 
   function renderMarkdownPreview() {
     if (!ta || !pv) return;
-    var body = new URLSearchParams();
-    body.set("content_md", ta.value);
+    var body = postForm ? new URLSearchParams(new FormData(postForm)) : new URLSearchParams();
+    if (!postForm) body.set("content_md", ta.value);
     fetch("/admin/preview", { method: "POST", body: body, headers: { "X-CSRF-Token": csrfToken() } })
       .then(function (r) { return r.text(); })
       .then(function (html) { pv.innerHTML = html; });
@@ -348,6 +431,12 @@
   var debouncedPreview = debounce(function () {
     if (currentView !== "edit") renderMarkdownPreview();
   }, 450);
+  if (postForm) {
+    postForm.addEventListener("input", debouncedPreview);
+    postForm.addEventListener("change", debouncedPreview);
+  } else if (ta) {
+    ta.addEventListener("input", debouncedPreview);
+  }
 
   function setMarkdownView(view) {
     if (!editor) return;
@@ -450,7 +539,6 @@
     document.querySelectorAll("[data-md-view]").forEach(function (btn) {
       btn.addEventListener("click", function () { setMarkdownView(btn.getAttribute("data-md-view")); });
     });
-    ta.addEventListener("input", debouncedPreview);
     ta.addEventListener("keydown", function (e) {
       var mod = e.ctrlKey || e.metaKey;
       if (!mod) return;
@@ -476,6 +564,7 @@
   initSlugSync();
   initCategoryRequired();
   initCategoryDropdown();
+  initShortcodeRules();
 
   if (ta && fileInput) {
     fileInput.addEventListener("change", function () {

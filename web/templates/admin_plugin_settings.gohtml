@@ -7,6 +7,9 @@
 {{- if .Notice}}
 <p class="notice-banner">{{.Notice}}</p>
 {{- end}}
+{{- if .Error}}
+<p class="err-banner">{{.Error}}</p>
+{{- end}}
 
 {{- if .Plugin}}
 <p class="tip"><a href="/admin/plugins">← {{.t.T "返回插件列表"}}</a></p>
@@ -44,11 +47,65 @@
       <span>{{$.t.T "启用"}}</span>
     </label>
 
+    {{else if eq $opt.Type "shortcode_rules"}}
+    <div class="shortcode-rules" data-shortcode-rules>
+      <textarea id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" hidden>{{$opt.Value}}</textarea>
+      <div class="shortcode-rules-list" data-shortcode-rules-list></div>
+      <button type="button" class="btn-secondary btn-sm" data-shortcode-add>{{$.t.T "添加短代码"}}</button>
+      <template data-shortcode-rule-template>
+        <div class="shortcode-rule" data-shortcode-rule>
+          <div class="shortcode-rule-grid">
+            <label>
+              <span>{{$.t.T "短代码名称"}}</span>
+              <input type="text" data-shortcode-name maxlength="32" placeholder="cube">
+            </label>
+            <label>
+              <span>{{$.t.T "渲染为"}}</span>
+              <select data-shortcode-tag>
+                <option value="iframe">iframe</option>
+                <option value="a">a</option>
+                <option value="div">div</option>
+                <option value="span">span</option>
+              </select>
+            </label>
+            <button type="button" class="btn-secondary btn-sm link-danger shortcode-remove-rule" data-shortcode-remove>{{$.t.T "删除"}}</button>
+          </div>
+          <div class="shortcode-attrs" data-shortcode-attrs></div>
+          <div class="shortcode-add-attr">
+            <select data-shortcode-attr-select>
+              {{range $opt.Options}}
+              <option value="{{.Value}}">{{$.tp.T .Label}}</option>
+              {{end}}
+            </select>
+            <button type="button" class="btn-secondary btn-sm" data-shortcode-attr-add>{{$.t.T "添加允许属性"}}</button>
+          </div>
+        </div>
+      </template>
+      <template data-shortcode-attr-template>
+        <div class="shortcode-attr" data-shortcode-attr>
+          <label>
+            <span>{{$.t.T "属性名"}}</span>
+            <select data-shortcode-attr-name>
+              {{range $opt.Options}}
+              <option value="{{.Value}}">{{$.tp.T .Label}}</option>
+              {{end}}
+            </select>
+          </label>
+          <label>
+            <span>{{$.t.T "属性值正则"}}</span>
+            <input type="text" data-shortcode-attr-pattern placeholder="^https://host\.com(?:/|$)">
+          </label>
+          <button type="button" class="btn-secondary btn-sm link-danger shortcode-remove-attr" data-shortcode-attr-remove>{{$.t.T "删除"}}</button>
+        </div>
+      </template>
+      <p class="form-hint">{{$.t.T "建议使用 ^ 和 $ 或明确的路径边界。例如 ^https://host\\.com(?:/|$)；仅配置 ^https://host\\.com 也会匹配 https://host.com.evil.com。"}}</p>
+    </div>
+
     {{else}}
     <input type="text" id="option_{{$opt.ID}}" name="option_{{$opt.ID}}" value="{{$opt.Value}}">
     {{end}}
 
-    {{if $opt.Default}}<p class="option-default-hint">{{$.t.T "默认值：%s" $opt.Default}}</p>{{end}}
+    {{if and $opt.Default (ne $opt.Type "shortcode_rules")}}<p class="option-default-hint">{{$.t.T "默认值：%s" $opt.Default}}</p>{{end}}
   </section>
   {{end}}
 

@@ -18,22 +18,23 @@ import (
 
 // PostView 是扩展 API 暴露的文章/页面只读视图。
 type PostView struct {
-	ID           uint
-	Title        string
-	Slug         string
-	Excerpt      string
-	Content      string
-	AuthorID     uint
-	Status       string
-	PostType     string
-	Views        int64
-	MenuOrder    int
-	PublishedAt  time.Time
-	ModifiedAt   time.Time
-	CommentCount int64
-	Author       UserView
-	Categories   []CategoryView
-	Tags         []TagView
+	ID            uint
+	Title         string
+	Slug          string
+	Excerpt       string
+	Content       string
+	ContentFormat string
+	AuthorID      uint
+	Status        string
+	PostType      string
+	Views         int64
+	MenuOrder     int
+	PublishedAt   time.Time
+	ModifiedAt    time.Time
+	CommentCount  int64
+	Author        UserView
+	Categories    []CategoryView
+	Tags          []TagView
 }
 
 // PostURLFields 返回生成文章/页面永久链接所需的最小字段集。
@@ -455,19 +456,20 @@ func toPostView(p *model.Post, loader *store.DataLoader) *PostView {
 		return nil
 	}
 	v := &PostView{
-		ID:           p.ID,
-		Title:        p.Title,
-		Slug:         p.Slug,
-		Excerpt:      p.Excerpt,
-		Content:      p.Content,
-		AuthorID:     p.AuthorID,
-		Status:       p.Status,
-		PostType:     p.PostType,
-		Views:        p.Views,
-		MenuOrder:    p.MenuOrder,
-		PublishedAt:  p.PublishedAt,
-		ModifiedAt:   p.ModifiedAt,
-		CommentCount: p.CommentCount,
+		ID:            p.ID,
+		Title:         p.Title,
+		Slug:          p.Slug,
+		Excerpt:       p.Excerpt,
+		Content:       p.Content,
+		ContentFormat: p.ContentFormat,
+		AuthorID:      p.AuthorID,
+		Status:        p.Status,
+		PostType:      p.PostType,
+		Views:         p.Views,
+		MenuOrder:     p.MenuOrder,
+		PublishedAt:   p.PublishedAt,
+		ModifiedAt:    p.ModifiedAt,
+		CommentCount:  p.CommentCount,
 	}
 	if loader != nil {
 		if u, ok := loader.Users[p.AuthorID]; ok {

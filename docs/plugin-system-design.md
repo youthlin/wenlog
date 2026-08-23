@@ -597,7 +597,7 @@ plugins/post-comment-enhance/
 
 | Hook / 函数 | 类型 | 建议调用方 | 说明 |
 |---|---|---|---|
-| `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。filter 扩展参数传 `hook.PostView`。 |
+| `post.content_source` / `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；先对 Markdown/HTML 正文源应用 `post.content_source`，再格式转换和消毒，最后应用 `post.content_html`。主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。filter 扩展参数传 `hook.PostView`。 |
 | `post.excerpt_html` / `post_excerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。filter 扩展参数传 `hook.PostView`。 |
 | `page.content_html` | filter | 宿主模板函数 | 页面正文渲染。可与 `post.content_html` 共用实现，但 hook 名称可保留语义。 |
 | `comment.content_html` / `comment_content` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。filter 扩展参数传 `hook.CommentView`。 |
@@ -652,7 +652,7 @@ plugins/post-comment-enhance/
 1. 插件 manifest `widgets` + `WidgetRegistry`：支撑“博主动态”插件组件。
 2. `comment.content_html` + `comment.form.after_textarea` action：支撑评论表情。
 3. `head.end` / `body.end`：支撑插件 CSS/JS 注入。
-4. `post.content_html` / `post_content`：建立类似 `the_content()` 的标准内容出口，后续短代码、目录、版权提示都能复用。
+4. `post.content_source` + `post.content_html` / `post_content`：建立类似 `the_content()` 的标准内容出口，短代码可在格式转换前保护源文本，再于消毒后展开受控 HTML；目录、版权提示等也能复用。
 
 新增 hook 的原则：
 
@@ -1044,7 +1044,7 @@ func (api *API) CommentURL(post any, comment any) string
 
 | 模板函数 | 作用 | 类比 WordPress |
 |---|---|---|
-| `post_content .Post` | 输出文章正文并应用 `post.content_html` filter | `the_content()` |
+| `post_content .Post` | 输出文章正文并依次应用 `post.content_source`、格式转换/消毒、`post.content_html` 和 `post.footer_html` filter | `the_content()` |
 | `comment_content .` | 输出评论正文并应用 `comment.content_html` filter | 评论内容 filter |
 | `do_action "action.name" .` | 在模板中触发一个 action，收集 HTML 输出 | `do_action('action_name', ...)` |
 | `render_widgets "area" .` | 渲染某个组件区域 | `dynamic_sidebar('area')` |
@@ -1189,7 +1189,7 @@ widgets:
 | done | 2 | **Manifest + Manager**：实现插件扫描、启用列表读取、manifest 校验。 | 已实现 `plugin.yaml` 解析、插件 ID/目录校验、启用列表读取、启停保存、启用插件运行时加载。 |
 | done | 3 | **hook.API**：实现 `AddAction/AddFilter` 注入，先不做复杂 i18n。 | 已统一到 `hook.API`，支持 `AddAction/AddFilter`、`T/N/X/XN`、`EscapeHTML`。 |
 | done | 4 | **接入主题 functions**：让主题 `api.AddAction` / `api.AddFilter` 也注册到同一 registry，并记录来源 `theme:<name>`。 | 已接入主题和插件共用的 `hook.API`，启动时按“插件先、主题后”的顺序注册 hook。 |
-| done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 应用 `post.content_html`，`comment_content` 应用 `comment.content_html`；内容类标准 filter 的扩展参数使用 `hook.PostView` / `hook.CommentView`。 |
+| done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 依次应用 `post.content_source`、格式转换/消毒、`post.content_html` 和 `post.footer_html`，`comment_content` 应用 `comment.content_html`；内容类标准 filter 的扩展参数使用 `hook.PostView` / `hook.CommentView`。 |
 | done | 6 | **插件资源路由**：实现 `/plugin-assets/*` 路径校验和静态输出。 | 已实现 `/plugin-assets/{plugin_id}/{path}`，只暴露已启用插件的资源，并做路径穿越校验。 |
 | done | 7 | **组件声明合并**：后台组件页和前台解析都接入插件 manifest 的 `widgets` 声明。 | 已完成：后台组件列表和前台解析都会合并启用插件的 manifest widget 声明；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
 | done | 8 | **插件组件渲染**：支持 plugin widget 的显式 renderer 和模板执行。 | 已完成：`render_widgets` 通过 `WidgetRegistry` 找到来源为 plugin 的组件 renderer；插件组件直接执行 `plugins/<id>/widgets/<widget_id>.gohtml` 模板，不再经过全局 widget render action；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |

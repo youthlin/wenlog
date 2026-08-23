@@ -33,6 +33,10 @@ var htmlSanitizer = func() *bluemonday.Policy {
 	p.AllowAttrs("class").
 		Matching(regexp.MustCompile(`^language-[A-Za-z0-9_+.-]+$`)).
 		OnElements("code")
+	p.AllowAttrs("data-wenlog-shortcode").
+		Matching(regexp.MustCompile(`^[A-Za-z0-9_.~%+-]+$`)).
+		OnElements("span")
+	p.AllowElements("span")
 	return p
 }()
 

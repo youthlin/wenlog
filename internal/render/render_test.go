@@ -47,6 +47,27 @@ func TestPostNavigationSkipsTypedNilPosts(t *testing.T) {
 	}
 }
 
+func TestRenderMarkdownKeepsShortcodePlaceholder(t *testing.T) {
+	got := RenderMarkdown(`<span data-wenlog-shortcode="abc-XYZ_123.%7E">fallback</span>`)
+	if !strings.Contains(got, `data-wenlog-shortcode="abc-XYZ_123.%7E"`) {
+		t.Fatalf("shortcode placeholder should survive sanitizer, got: %s", got)
+	}
+}
+
+func TestRenderMarkdownStillRemovesRawIframe(t *testing.T) {
+	got := RenderMarkdown(`<iframe src="https://youthlin.com/demo/cube/index.html"></iframe>`)
+	if strings.Contains(got, `<iframe`) || strings.Contains(got, `src=`) {
+		t.Fatalf("raw iframe should be removed by sanitizer, got: %s", got)
+	}
+}
+
+func TestRenderMarkdownRemovesHTMLComments(t *testing.T) {
+	got := RenderMarkdown("before\n\n<!--more-->\n\nafter")
+	if strings.Contains(got, `<!--more-->`) {
+		t.Fatalf("markdown sanitizer should remove HTML comments, got: %s", got)
+	}
+}
+
 func TestStandardContentFiltersReceiveStableViews(t *testing.T) {
 	hooks := hook.NewRegistry()
 	var titlePost hook.PostView
@@ -154,6 +175,150 @@ func TestHTMLFiltersRemainTrustedHTML(t *testing.T) {
 	got := string(postContent(ctx, &model.Post{ID: 1, Title: "Hello", Content: "Body"}))
 	if !strings.Contains(got, `<aside class="plugin-note">safe</aside>`) {
 		t.Fatalf("post.content_html filter should preserve trusted HTML, got: %s", got)
+	}
+}
+
+func TestPostContentRendersMarkdownSourceWithFilter(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostContentSource, func(value any, args ...any) any {
+		return strings.ReplaceAll(value.(string), "[demo]", `<span data-wenlog-shortcode="abc">fallback</span>`)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		return strings.ReplaceAll(value.(string), `<span data-wenlog-shortcode="abc">fallback</span>`, `<iframe src="https://example.test/demo">fallback</iframe>`)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	post := &model.Post{
+		ID:            1,
+		Title:         "Hello",
+		Content:       "<p>[demo]</p>",
+		ContentMD:     "before\n\n<!--more-->\n\n[demo]",
+		ContentFormat: model.FormatMarkdown,
+	}
+	got := string(postContent(ctx, post))
+	if !strings.Contains(got, `<span id="more-1"></span>`) {
+		t.Fatalf("markdown content should preserve more anchor at render time, got: %s", got)
+	}
+	if !strings.Contains(got, `<iframe src="https://example.test/demo">fallback</iframe>`) {
+		t.Fatalf("markdown content should run source filter before HTML filter, got: %s", got)
+	}
+	if strings.Contains(got, `[demo]`) || strings.Contains(got, `data-wenlog-shortcode`) {
+		t.Fatalf("shortcode source or placeholder should not remain, got: %s", got)
+	}
+}
+
+func TestPostContentDoesNotRenderMarkdownCodeBlocksTwice(t *testing.T) {
+	post := &model.Post{
+		ID:            1,
+		ContentMD:     "```go\nfmt.Println(\"hello\")\n```",
+		ContentFormat: model.FormatMarkdown,
+	}
+	want := RenderMarkdown(post.ContentMD)
+	got := string(postContent(&RequestContext{Runtime: &TemplateRuntime{}}, post))
+	if got != want {
+		t.Fatalf("post content rendered Markdown more than once\ngot:  %s\nwant: %s", got, want)
+	}
+}
+
+func TestFilterPostContentRendersMarkdownSourceWithFilter(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostContentSource, func(value any, args ...any) any {
+		return strings.ReplaceAll(value.(string), "[demo]", `<span data-wenlog-shortcode="abc">fallback</span>`)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		return strings.ReplaceAll(value.(string), `<span data-wenlog-shortcode="abc">fallback</span>`, `<iframe src="https://example.test/demo">fallback</iframe>`)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	r := &Renderer{}
+	r.themeRuntime.providers.Hooks = hooks
+
+	post := &model.Post{
+		ID:            1,
+		Title:         "Hello",
+		Content:       "<p>[demo]</p>",
+		ContentMD:     "[demo]",
+		ContentFormat: model.FormatMarkdown,
+	}
+	got := string(r.FilterPostContent(context.Background(), post))
+	if !strings.Contains(got, `<iframe src="https://example.test/demo">fallback</iframe>`) {
+		t.Fatalf("feed content should run source filter before HTML filter, got: %s", got)
+	}
+	if strings.Contains(got, `[demo]`) || strings.Contains(got, `data-wenlog-shortcode`) {
+		t.Fatalf("shortcode source or placeholder should not remain in feed content, got: %s", got)
+	}
+}
+
+func TestPostContentRendersHTMLSourceWithFilterAndSanitizer(t *testing.T) {
+	hooks := hook.NewRegistry()
+	hooks.AddFilter(hook.FilterPostContentSource, func(value any, args ...any) any {
+		return strings.ReplaceAll(value.(string), "[demo]", `<span data-wenlog-shortcode="abc">fallback</span><script>alert(1)</script>`)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	hooks.AddFilter(hook.FilterPostContentHTML, func(value any, args ...any) any {
+		return strings.ReplaceAll(value.(string), `<span data-wenlog-shortcode="abc">fallback</span>`, `<iframe src="https://example.test/demo">fallback</iframe>`)
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	post := &model.Post{ID: 1, Content: `<p>before</p>[demo]`, ContentFormat: model.FormatHTML}
+	got := string(postContent(ctx, post))
+	if !strings.Contains(got, `<iframe src="https://example.test/demo">fallback</iframe>`) {
+		t.Fatalf("html content should run source and HTML filters, got: %s", got)
+	}
+	if strings.Contains(got, "<script") || strings.Contains(got, "alert(1)") {
+		t.Fatalf("source filter output should be sanitized before HTML filters, got: %s", got)
+	}
+}
+
+func TestPostContentFallsBackToStoredHTMLWhenMarkdownSourceIsEmpty(t *testing.T) {
+	post := &model.Post{
+		ID:            1,
+		Content:       `<p><strong>cached</strong></p>`,
+		ContentFormat: model.FormatMarkdown,
+	}
+	got := string(postContent(&RequestContext{Runtime: &TemplateRuntime{}}, post))
+	if got != `<p><strong>cached</strong></p>` {
+		t.Fatalf("empty markdown source should use stored HTML, got: %s", got)
+	}
+}
+
+func TestPostContentFallbackReportsEffectiveHTMLFormatToSourceFilter(t *testing.T) {
+	hooks := hook.NewRegistry()
+	var gotFormat string
+	hooks.AddFilter(hook.FilterPostContentSource, func(value any, args ...any) any {
+		post, _ := args[0].(hook.PostView)
+		gotFormat = post.ContentFormat
+		return value
+	}, hook.Source{Type: hook.SourceCore, ID: "test"})
+	ctx := &RequestContext{Runtime: &TemplateRuntime{}}
+	ctx.Runtime.providers.Hooks = hooks
+
+	post := &model.Post{
+		ID:            1,
+		Content:       `<p>cached</p>`,
+		ContentFormat: model.FormatMarkdown,
+	}
+	_ = postContent(ctx, post)
+	if gotFormat != model.FormatHTML {
+		t.Fatalf("fallback source filter format = %q, want %q", gotFormat, model.FormatHTML)
+	}
+}
+
+func TestBuiltinArchiveTemplatesUsePostContentHelper(t *testing.T) {
+	files := []string{
+		"themes/default/templates/archive.gohtml",
+		"themes/twentytwenty/templates/archive.gohtml",
+		"themes/spread/templates/archive.gohtml",
+		"themes/single/templates/index.gohtml",
+	}
+	for _, file := range files {
+		content, err := fs.ReadFile(web.Themes, file)
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		got := string(content)
+		if strings.Contains(got, `.Post.Content | safeHTML`) || strings.Contains(got, `safeHTML .Post.Content`) {
+			t.Fatalf("%s should render archive intro through post_content helper", file)
+		}
 	}
 }
 

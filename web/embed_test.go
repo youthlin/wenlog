@@ -25,6 +25,32 @@ func TestTemplatesParse(t *testing.T) {
 	}
 }
 
+func TestShortcodePatternHintWarnsAboutPrefixMatching(t *testing.T) {
+	tplFS, err := fs.Sub(web.Templates, "templates")
+	if err != nil {
+		t.Fatalf("sub templates fs: %v", err)
+	}
+	data, err := fs.ReadFile(tplFS, "admin_plugin_settings.gohtml")
+	if err != nil {
+		t.Fatalf("read plugin settings template: %v", err)
+	}
+	templateText := string(data)
+	if !strings.Contains(templateText, `^https://host\.com(?:/|$)`) || !strings.Contains(templateText, `https://host.com.evil.com`) {
+		t.Fatal("shortcode regex field must show an anchored host-boundary example and prefix-match warning")
+	}
+}
+
+func TestMarkdownPreviewSubmitsFullPostForm(t *testing.T) {
+	data, err := fs.ReadFile(web.Assets, "assets/admin.js")
+	if err != nil {
+		t.Fatalf("read admin script: %v", err)
+	}
+	script := string(data)
+	if !strings.Contains(script, `new URLSearchParams(new FormData(postForm))`) {
+		t.Fatal("Markdown preview must submit the full post form so hooks receive unsaved post fields")
+	}
+}
+
 func TestAdminDashboardCommentCardLinksPendingWhenNeeded(t *testing.T) {
 	tplFS, err := fs.Sub(web.Templates, "templates")
 	if err != nil {

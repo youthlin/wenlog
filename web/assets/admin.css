@@ -2562,6 +2562,55 @@ body.admin.nav-open { overflow: hidden; }
   color: var(--muted);
   font-style: italic;
 }
+.shortcode-rules {
+  max-width: 780px;
+}
+.shortcode-rules-list {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.shortcode-rule {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-alt);
+}
+.shortcode-rule-grid,
+.shortcode-attr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+.shortcode-rule label,
+.shortcode-attr label {
+  display: grid;
+  gap: 6px;
+}
+.shortcode-rule label span,
+.shortcode-attr label span {
+  font-size: .82rem;
+  color: var(--muted);
+}
+.shortcode-attrs {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.shortcode-add-attr {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+.shortcode-add-attr select {
+  max-width: 180px;
+}
+.theme-options-form .shortcode-rule input[type="text"],
+.theme-options-form .shortcode-rule select {
+  max-width: none;
+}
 
 @media (max-width: 640px) {
   .theme-options-form .settings-card {
@@ -2572,6 +2621,17 @@ body.admin.nav-open { overflow: hidden; }
   .theme-options-form input[type="url"],
   .theme-options-form select,
   .theme-options-form textarea {
+    max-width: 100%;
+  }
+  .shortcode-rule-grid,
+  .shortcode-attr {
+    grid-template-columns: 1fr;
+  }
+  .shortcode-add-attr {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .shortcode-add-attr select {
     max-width: 100%;
   }
 }

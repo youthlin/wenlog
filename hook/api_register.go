@@ -85,7 +85,7 @@ func (api *API) wrapFilter(name string, fn any) (func(context.Context, any, ...a
 	}
 	// 核心 hook 按名称匹配具体签名
 	switch name {
-	case FilterPostTitle, FilterPostExcerptHTML, FilterPostContentHTML, FilterPostFooterHTML:
+	case FilterPostTitle, FilterPostExcerptHTML, FilterPostContentSource, FilterPostContentHTML, FilterPostFooterHTML:
 		if f, ok := fn.(func(*API, string, PostView) string); ok {
 			return api.wrapFilterStringPostView(f, name), nil
 		}

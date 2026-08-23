@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	gettext "github.com/youthlin/t"
 
+	"github.com/youthlin/wenlog/hook"
 	"github.com/youthlin/wenlog/internal/i18n"
 	"github.com/youthlin/wenlog/internal/model"
 	"github.com/youthlin/wenlog/internal/permalink"
@@ -237,7 +239,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 		}
 	}
 
-	// 正文:Markdown 原文 + 渲染后的 HTML 一并保存。
+	// 正文:Markdown 原文 + 基础渲染 HTML 一并保存；插件短代码等动态内容在前台渲染时按最新配置处理。
 	p.ContentMD = f.ContentMD
 	p.Content = renderx.RenderMarkdown(f.ContentMD)
 	p.ContentFormat = model.FormatMarkdown
@@ -443,11 +445,69 @@ func hasSelectedCategory(selected []uint, categories []model.Category) bool {
 	return false
 }
 
-// Preview 渲染 Markdown 为 HTML 片段(后台编辑预览,Ajax)。
+// Preview 渲染文章编辑表单为 HTML 片段(后台编辑预览,Ajax)。
 func (h *Admin) Preview(c *gin.Context) {
-	md := c.PostForm("content_md")
+	var f postForm
+	if err := c.ShouldBind(&f); err != nil {
+		c.String(http.StatusBadRequest, "invalid post form")
+		return
+	}
+	if f.PostType != model.PostTypePage {
+		f.PostType = model.PostTypePost
+	}
+	p, err := h.resolvePostForPreview(c, f, time.Now())
+	if err != nil {
+		switch err {
+		case errPostNotFound:
+			h.notFound(c)
+		case errPostForbidden:
+			c.String(http.StatusForbidden, "Forbidden")
+		default:
+			h.serverError(c, err)
+		}
+		return
+	}
+
+	html := template.HTML(renderx.RenderMarkdown(p.ContentMD))
+	if h.renderer != nil {
+		ctx := context.Context(c)
+		if h.st != nil {
+			if loader, err := h.st.LoadAllCached(c); err == nil && loader != nil {
+				ctx = hook.WithDataLoader(ctx, loader)
+			}
+		}
+		html = h.renderer.FilterPostContent(ctx, p)
+	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.String(http.StatusOK, renderx.RenderMarkdown(md))
+	c.String(http.StatusOK, string(html))
+}
+
+func (h *Admin) resolvePostForPreview(c *gin.Context, f postForm, now time.Time) (*model.Post, error) {
+	p, err := h.resolvePostForSave(c, f, now)
+	if err != nil {
+		return nil, err
+	}
+	p.Title = strings.TrimSpace(f.Title)
+	p.Slug = strings.TrimSpace(f.Slug)
+	if f.PostType == model.PostTypePost {
+		p.Slug = normalizeTermSlug(p.Slug)
+		if p.Slug == "" {
+			p.Slug = normalizeTermSlug(p.Title)
+		}
+	}
+	p.ContentMD = f.ContentMD
+	p.Content = renderx.RenderMarkdown(f.ContentMD)
+	p.ContentFormat = model.FormatMarkdown
+	p.Excerpt = f.Excerpt
+	p.PostType = f.PostType
+	p.Status = f.Status
+	p.CommentStatus = f.CommentStatus
+	p.MenuOrder = f.MenuOrder
+	p.ModifiedAt = now
+	if publishedAt := parsePublishedAt(f.PublishedAt); !publishedAt.IsZero() {
+		p.PublishedAt = publishedAt
+	}
+	return p, nil
 }
 
 // DeletePost 删除文章/页面。

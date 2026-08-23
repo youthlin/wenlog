@@ -2,7 +2,7 @@
 {{template "header" .}}
 <article class="{{post_class .Post "page-detail"}}">
   <h1 class="post-title">{{post_title_text .Post}}</h1>
-  {{if .Post.Content}}<div class="post-content">{{safeHTML .Post.Content}}</div>{{end}}
+  {{$content := post_content .Post}}{{if $content}}<div class="post-content">{{$content}}</div>{{end}}
   <div class="archive-groups">
     {{range .Groups}}
     <h3 class="archive-year" id="{{.Year}}">{{.Year}}</h3>

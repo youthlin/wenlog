@@ -53,6 +53,28 @@ func (s *Store) DeleteSetting(ctx context.Context, key string) error {
 	defer s.InvalidateCache()
 	return s.DB(ctx).Where("key = ?", key).Delete(&model.Setting{}).Error
 }
+
+// UpdateSettings 在同一事务中保存和删除一组设置。事务成功后才使读取缓存失效。
+func (s *Store) UpdateSettings(ctx context.Context, values map[string]string, deleteKeys []string) error {
+	err := s.DB(ctx).Transaction(func(tx *gorm.DB) error {
+		for key, value := range values {
+			if err := tx.Save(&model.Setting{Key: key, Value: value}).Error; err != nil {
+				return err
+			}
+		}
+		if len(deleteKeys) > 0 {
+			if err := tx.Where("key IN ?", deleteKeys).Delete(&model.Setting{}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return errors.Wrap(err, "update settings")
+	}
+	s.InvalidateCache()
+	return nil
+}
 func (s *Store) DebugQuery(ctx context.Context, sql string) ([]map[string]any, error) {
 	rows, err := s.DB(ctx).Raw(sql).Rows()
 	if err != nil {

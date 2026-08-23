@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/youthlin/wenlog/internal/model"
 )
 
 // ========== Args 测试 ==========
@@ -341,6 +343,21 @@ func TestPostView_PostURLFields(t *testing.T) {
 	}
 }
 
+func TestPostViewOfIncludesContentFormat(t *testing.T) {
+	view := PostViewOf(&model.Post{
+		ID:            123,
+		Title:         "Test",
+		Content:       "<p>cached</p>",
+		ContentFormat: model.FormatMarkdown,
+	}, nil)
+	if view == nil {
+		t.Fatal("PostViewOf returned nil")
+	}
+	if view.ContentFormat != model.FormatMarkdown {
+		t.Fatalf("PostViewOf content format = %q, want %q", view.ContentFormat, model.FormatMarkdown)
+	}
+}
+
 // ========== WidgetRegistry 测试 ==========
 
 type mockWidget struct {
@@ -428,7 +445,7 @@ func TestHookConstants(t *testing.T) {
 	hooks := []string{
 		ActionHeadEnd, ActionBodyEnd, ActionCommentFormAfterTextarea,
 		FilterPostTitle, FilterPostExcerptHTML,
-		FilterPostContentHTML, FilterCommentContentHTML, FilterWidgetRenderHTML,
+		FilterPostContentSource, FilterPostContentHTML, FilterCommentContentHTML, FilterWidgetRenderHTML,
 		FilterHeadMeta,
 	}
 	for _, h := range hooks {
@@ -500,9 +517,9 @@ func TestAPICollectsRegistrationErrors(t *testing.T) {
 	msg := err.Error()
 	for _, want := range []string{
 		"注册模板函数失败: name 不能为空",
-			"注册模板函数[bad_template_func]失败: 签名必须是 func(*hook.API, hook.Args) any",
-			"注册 action[bad_action]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)",
-			"注册 filter[bad_filter]失败: 处理函数签名不匹配",
+		"注册模板函数[bad_template_func]失败: 签名必须是 func(*hook.API, hook.Args) any",
+		"注册 action[bad_action]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)",
+		"注册 filter[bad_filter]失败: 处理函数签名不匹配",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
@@ -526,8 +543,8 @@ func TestAPIRejectsInvalidHookSignatures(t *testing.T) {
 	}
 	msg := err.Error()
 	for _, want := range []string{
-			"注册 action[bad_action]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)",
-			"注册 filter[bad_filter]失败: 处理函数签名不匹配",
+		"注册 action[bad_action]失败: 处理函数签名必须是 func(*hook.API, ...any) 或 func(*hook.API)",
+		"注册 filter[bad_filter]失败: 处理函数签名不匹配",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("RegistrationError() = %q, want to contain %q", msg, want)
