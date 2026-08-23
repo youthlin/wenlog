@@ -51,6 +51,54 @@ func TestMarkdownPreviewSubmitsFullPostForm(t *testing.T) {
 	}
 }
 
+func TestAdminUIRegressionContracts(t *testing.T) {
+	tplFS, err := fs.Sub(web.Templates, "templates")
+	if err != nil {
+		t.Fatalf("sub templates fs: %v", err)
+	}
+
+	checks := []struct {
+		path string
+		want string
+	}{
+		{"admin_plugin_settings.gohtml", `<script src="/assets/admin.js?v={{.AssetVersion}}"></script>`},
+		{"admin_menus.gohtml", `<button type="submit" class="btn">{{.t.T "保存菜单"}}</button>`},
+		{"admin_import.gohtml", `class="cards settings-cards migration-cards"`},
+	}
+	for _, check := range checks {
+		data, err := fs.ReadFile(tplFS, check.path)
+		if err != nil {
+			t.Fatalf("read %s: %v", check.path, err)
+		}
+		if !strings.Contains(string(data), check.want) {
+			t.Errorf("%s must contain %q", check.path, check.want)
+		}
+	}
+
+	css, err := fs.ReadFile(web.Assets, "assets/admin.css")
+	if err != nil {
+		t.Fatalf("read admin stylesheet: %v", err)
+	}
+	for _, want := range []string{
+		".theme-options-form textarea {\n  max-width: 100%;",
+		".shortcode-rules {\n  width: 100%;",
+		".shortcode-rules > .form-hint {\n  margin: 10px 0 0;",
+		".migration-cards {\n  grid-template-columns: minmax(0, 1fr);",
+	} {
+		if !strings.Contains(string(css), want) {
+			t.Errorf("admin stylesheet must contain %q", want)
+		}
+	}
+
+	themeYAML, err := fs.ReadFile(web.Themes, "themes/spread/theme.yaml")
+	if err != nil {
+		t.Fatalf("read spread theme manifest: %v", err)
+	}
+	if !strings.Contains(string(themeYAML), `default: "http://cn.bing.com/ImageResolution.aspx?w=1920&h=1200"`) {
+		t.Error("spread hero image must use the configured Bing resolution endpoint")
+	}
+}
+
 func TestAdminDashboardCommentCardLinksPendingWhenNeeded(t *testing.T) {
 	tplFS, err := fs.Sub(web.Templates, "templates")
 	if err != nil {

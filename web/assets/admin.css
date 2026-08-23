@@ -2515,6 +2515,9 @@ body.admin.nav-open { overflow: hidden; }
   font-family: inherit;
   transition: border-color .15s, box-shadow .15s;
 }
+.theme-options-form textarea {
+  max-width: 100%;
+}
 .theme-options-form input:focus,
 .theme-options-form select:focus,
 .theme-options-form textarea:focus {
@@ -2563,7 +2566,7 @@ body.admin.nav-open { overflow: hidden; }
   font-style: italic;
 }
 .shortcode-rules {
-  max-width: 780px;
+  width: 100%;
 }
 .shortcode-rules-list {
   display: grid;
@@ -2607,9 +2610,16 @@ body.admin.nav-open { overflow: hidden; }
 .shortcode-add-attr select {
   max-width: 180px;
 }
+.shortcode-rules > .form-hint {
+  margin: 10px 0 0;
+}
 .theme-options-form .shortcode-rule input[type="text"],
 .theme-options-form .shortcode-rule select {
   max-width: none;
+}
+
+.migration-cards {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 640px) {
