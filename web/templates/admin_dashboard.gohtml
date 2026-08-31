@@ -9,7 +9,7 @@
 {{- if .User}}
 <section class="card dashboard-welcome-card">
   <a class="dashboard-user-avatar" href="/admin/profile" aria-label="{{.t.T "查看个人资料"}}">
-    <img class="avatar" src="{{avatarURL .User.Email .DefaultAvatar 72}}" alt="" width="72" height="72">
+    <img class="avatar" src="{{avatar_url .User.Email .DefaultAvatar 72}}" alt="" width="72" height="72">
   </a>
   <div class="dashboard-user-main">
     <a class="dashboard-user-name" href="/admin/profile">{{if .User.DisplayName}}{{.User.DisplayName}}{{else}}{{.User.Username}}{{end}}</a>
@@ -127,11 +127,11 @@
     <ul class="dashboard-list">
       {{- range .RecentPosts}}
       <li class="dashboard-recent-post-item">
-        <a class="dashboard-list-link" href="{{postURL .}}">{{.Title}}</a>
+        <a class="dashboard-list-link" href="{{post_url .}}">{{.Title}}</a>
         {{- if or (eq $.CurrentUserRole "admin") (eq $.User.ID .AuthorID)}}
         <a class="dashboard-list-edit" href="/admin/post/{{.ID}}">{{$.t.T "编辑"}}</a>
         {{- end}}
-        <time class="dashboard-list-meta">{{fmtDate .PublishedAt}}</time>
+        <time class="dashboard-list-meta">{{fmt_date .PublishedAt}}</time>
       </li>
       {{- end}}
     </ul>
@@ -151,11 +151,11 @@
         {{- if not $postText}}
         {{- $postText = printf "#%d" .PostID}}
         {{- end}}
-        {{- $author := printf "<span class=\"dashboard-comment-author\">%s</span>" (escapeHTML .Author)}}
-        {{- $postAnchor := printf "<span class=\"dashboard-comment-post-title\">《%s》</span>" (escapeHTML $postText)}}
+        {{- $author := printf "<span class=\"dashboard-comment-author\">%s</span>" (escape_html .Author)}}
+        {{- $postAnchor := printf "<span class=\"dashboard-comment-post-title\">《%s》</span>" (escape_html $postText)}}
         <a class="dashboard-list-comment" href="{{if $postURL}}{{$postURL}}#comment-{{.ID}}{{else}}#{{end}}">{{.Content}}</a>
         <span class="dashboard-list-meta dashboard-comment-meta">
-          {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
+          {{safe_html ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
         </span>
       </li>
       {{- end}}

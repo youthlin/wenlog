@@ -175,7 +175,7 @@ widgets:
   <h3>{{.t.T "近期文章"}}</h3>
   <ul>
     {{range $i, $p := .RecentPosts}}{{if lt $i $n}}
-      <li><a href="{{postURL $p}}">{{$p.Title}}</a></li>
+      <li><a href="{{post_url $p}}">{{$p.Title}}</a></li>
     {{end}}{{end}}
   </ul>
 </section>
@@ -186,7 +186,7 @@ widgets:
 
 ```gohtml
 {{define "widget_saying"}}
-{{$postID := widgetOption "post_id" | default "456" | toInt}}
+{{$postID := widgetOption "post_id" | default "456" | to_int}}
 {{$saying := themeInvoke "saying" "n" 5 "post_id" $postID}}
 {{if $saying}}
 <section class="widget widget-saying">

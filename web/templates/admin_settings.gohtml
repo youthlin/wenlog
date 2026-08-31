@@ -21,7 +21,7 @@
       <h3>{{.t.T "应用更新"}}</h3>
       <p class="tip">{{.t.T "程序版本: %s" .InstanceVersion}}</p>
       <p class="tip">{{.t.T "构建日期: %s" .InstanceBuildDate}}</p>
-      <p class="tip">{{safeHTML (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escapeHTML .RepositoryURL) (escapeHTML .RepositoryURL)))}}</p>
+      <p class="tip">{{safe_html (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escape_html .RepositoryURL) (escape_html .RepositoryURL)))}}</p>
       <p class="tip">{{.t.T "优先通过 Go Module Proxy 检查最新版本；一键更新默认优先从 Gitee Release 下载已同步产物，并回退到 GitHub Release。"}}</p>
       {{- if .AppUpdateRunning}}
       <p class="notice-banner">{{.t.T "后台更新正在进行中，本页会自动刷新。"}}</p>
@@ -225,42 +225,42 @@
           <legend>{{.t.T "默认头像"}}</legend>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="mp" {{if eq .DefaultAvatarValue "mp"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "mp" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "mp" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "神秘人士"}}</strong><small>{{.t.T "通用的人物轮廓"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="blank" {{if eq .DefaultAvatarValue "blank"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "blank" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "blank" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "空白"}}</strong><small>{{.t.T "透明图像"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="cravatar" {{if eq .DefaultAvatarValue "cravatar"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "cravatar" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "cravatar" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "Cravatar 标志"}}</strong><small>{{.t.T "默认服务标志"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="identicon" {{if eq .DefaultAvatarValue "identicon"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "identicon" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "identicon" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "抽象图形"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="wavatar" {{if eq .DefaultAvatarValue "wavatar"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "wavatar" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "wavatar" 48}}" alt="" width="48" height="48">
             <span><strong>Wavatar</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="monsterid" {{if eq .DefaultAvatarValue "monsterid"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "monsterid" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "monsterid" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "小怪物"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="retro" {{if eq .DefaultAvatarValue "retro"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "retro" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "retro" 48}}" alt="" width="48" height="48">
             <span><strong>{{.t.T "复古"}}</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
           <label class="avatar-choice">
             <input type="radio" name="default_avatar" value="robohash" {{if eq .DefaultAvatarValue "robohash"}}checked{{end}}>
-            <img class="avatar" src="{{defaultAvatarURL "robohash" 48}}" alt="" width="48" height="48">
+            <img class="avatar" src="{{default_avatar_url "robohash" 48}}" alt="" width="48" height="48">
             <span><strong>RoboHash</strong><small>{{.t.T "自动生成"}}</small></span>
           </label>
         </fieldset>

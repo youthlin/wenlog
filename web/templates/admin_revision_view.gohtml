@@ -10,7 +10,7 @@
 
 <p class="tip">
   {{.t.T "文章"}}：<strong>{{if .Post.Title}}{{.Post.Title}}{{else}}{{.t.T "（无标题）"}}{{end}}</strong>（ID: {{.Post.ID}}）
-  · {{.t.T "版本时间"}}：<time datetime="{{fmtDateTime .Revision.CreatedAt}}">{{fmtDateTime .Revision.CreatedAt}}</time>
+  · {{.t.T "版本时间"}}：<time datetime="{{fmt_date_time .Revision.CreatedAt}}">{{fmt_date_time .Revision.CreatedAt}}</time>
 </p>
 
 <div class="cards settings-cards">
@@ -37,7 +37,7 @@
   <section class="card settings-card">
     <h3>{{.t.T "渲染预览"}}</h3>
     {{post_custom_css .Revision}}
-    <div class="revision-preview">{{.Revision.Content | safeHTML}}</div>
+    <div class="revision-preview">{{.Revision.Content | safe_html}}</div>
   </section>
 </div>
 

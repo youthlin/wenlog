@@ -4,7 +4,7 @@
 {{- if .Error}}
 <p class="err-banner">{{.Error}}</p>
 {{- end}}
-<form class="edit-form" method="post" action="/admin/post" data-post-updated-at="{{if .Post}}{{fmtDateTimeLocal .Post.ModifiedAt}}{{end}}">
+<form class="edit-form" method="post" action="/admin/post" data-post-updated-at="{{if .Post}}{{fmt_date_time_local .Post.ModifiedAt}}{{end}}">
   {{template "csrf_field" .}}
   {{if .Post}}<input type="hidden" name="id" value="{{.Post.ID}}">{{end}}
   <input type="hidden" name="post_type" value="{{.PostType}}">
@@ -92,7 +92,7 @@
         <option value="scheduled" {{if and .Post (eq .Post.Status "scheduled")}}selected{{end}}>{{.t.T "定时发布"}}</option>
       </select>
     </label>
-    <label>{{.t.T "发布时间"}}<input type="datetime-local" name="published_at" value="{{if .Post}}{{if not .Post.PublishedAt.IsZero}}{{fmtDateTimeLocal .Post.PublishedAt}}{{end}}{{end}}"></label>
+    <label>{{.t.T "发布时间"}}<input type="datetime-local" name="published_at" value="{{if .Post}}{{if not .Post.PublishedAt.IsZero}}{{fmt_date_time_local .Post.PublishedAt}}{{end}}{{end}}"></label>
     <label>{{.t.T "评论"}}
       <select name="comment_status">
         <option value="open" {{if and .Post (ne .Post.CommentStatus "closed")}}selected{{end}}>{{.t.T "开放"}}</option>

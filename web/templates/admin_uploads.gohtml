@@ -24,8 +24,8 @@
           </div>
         </div>
       </td>
-	      <td class="upload-size-cell" data-label="{{$.t.T "大小"}}">{{fmtFileSize .Size}}</td>
-	      <td class="upload-time-cell" data-label="{{$.t.T "时间"}}"><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time></td>
+	      <td class="upload-size-cell" data-label="{{$.t.T "大小"}}">{{fmt_file_size .Size}}</td>
+	      <td class="upload-time-cell" data-label="{{$.t.T "时间"}}"><time datetime="{{fmt_date_time .CreatedAt}}">{{fmt_date_time .CreatedAt}}</time></td>
 	      <td class="actions post-actions-cell" data-label="{{$.t.T "操作"}}">
 	        <form class="inline" method="post" action="/admin/upload/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该文件?"}}')">
 	          {{template "csrf_field" $}}

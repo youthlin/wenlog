@@ -236,7 +236,7 @@ go build -o wenlog ./cmd/server
 **行内动作（不加 `-`）：**
 ```gohtml
 {{if .SiteLogo}}<img src="{{.SiteLogo}}">{{else}}<span>{{.SiteName}}</span>{{end}}
-{{range .Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+{{range .Categories}}<a class="cat" href="{{category_url .Slug}}">{{.Name}}</a>{{end}}
 ```
 
 ### 后台表格规范
@@ -320,7 +320,7 @@ go build -o wenlog ./cmd/server
 - **不要把可翻译句子拆成多个片段再和变量/数字拼接**。像 `T("阅读")` 前面单独放数字、或 `T("文章有") + n + T("篇")` 这类写法都应改成一个完整消息，例如 `N("%d 次阅读", "%d 次阅读", n, n)`。
 - **涉及数量时优先用 `N/N64`（或 `XN/XN64`）**，即使中文单复数看起来一样，也要为英文等语言保留复数分支；`int64` 计数统一用 `N64/XN64`。
 - **同一中文词在不同语义/词性下可能需要上下文时，优先使用 `X/XN`**。典型例子：列表里的“页面/文章”可能要翻成复数，但“编辑页面/文章”里的对象名通常要用单数；按钮“关闭”与状态“关闭”也可能需要不同译法。
-- 带少量 HTML 的翻译文案必须先转义用户输入，再整体做安全输出；不要把未经转义的用户输入直接插进 `safeHTML`。
+- 带少量 HTML 的翻译文案必须先转义用户输入，再整体做安全输出；不要把未经转义的用户输入直接插进 `safe_html`。
 - 修改翻译调用后，记得运行 `./scripts/update_i18n.sh` 同步 `web/i18n/messages.pot` 与现有 `.po` 文件；如果改了复数/格式化占位符，再额外检查 `msgfmt --check-format`。
 
 ### 修改时特别注意

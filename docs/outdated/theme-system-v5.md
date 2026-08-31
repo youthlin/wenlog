@@ -121,11 +121,11 @@ Value: body { font-size: 16px; }
 
 <!-- 自定义 CSS 注入 -->
 {{$css := themeOption "custom_css"}}
-{{if $css}}<style>{{$css | safeHTML}}</style>{{end}}
+{{if $css}}<style>{{$css | safe_html}}</style>{{end}}
 
 <!-- 页脚 HTML -->
 {{$html := themeOption "footer_html"}}
-{{if $html}}{{$html | safeHTML}}{{end}}
+{{if $html}}{{$html | safe_html}}{{end}}
 ```
 
 `themeOption "<id>"` 逻辑：
@@ -158,7 +158,7 @@ Value: body { font-size: 16px; }
   <ul>
     {{range $i, $p := .RecentPosts}}
       {{if lt $i $n}}
-        <li><a href="{{postURL $p}}">{{$p.Title}}</a></li>
+        <li><a href="{{post_url $p}}">{{$p.Title}}</a></li>
       {{end}}
     {{end}}
   </ul>

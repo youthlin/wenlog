@@ -597,7 +597,7 @@ plugins/post-comment-enhance/
 
 | Hook / 函数 | 类型 | 建议调用方 | 说明 |
 |---|---|---|---|
-| `post.content_source` / `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；先对 Markdown/HTML 正文源应用 `post.content_source`，再格式转换和消毒，最后应用 `post.content_html`。主题应调用 `{{post_content .Post}}`，而不是直接 `safeHTML .Post.Content`。filter 扩展参数传 `hook.PostView`。 |
+| `post.content_source` / `post.content_html` / `post_content` | filter / 模板函数 | 宿主模板函数 | 类似 WordPress `the_content()`；先对 Markdown/HTML 正文源应用 `post.content_source`，再格式转换和消毒，最后应用 `post.content_html`。主题应调用 `{{post_content .Post}}`，而不是直接 `safe_html .Post.Content`。filter 扩展参数传 `hook.PostView`。 |
 | `post.excerpt_html` / `post_excerpt` | filter / 模板函数 | 宿主模板函数 | 摘要渲染，给短代码、摘要追加等插件使用。filter 扩展参数传 `hook.PostView`。 |
 | `page.content_html` | filter | 宿主模板函数 | 页面正文渲染。可与 `post.content_html` 共用实现，但 hook 名称可保留语义。 |
 | `comment.content_html` / `comment_content` | filter / 模板函数 | 宿主模板函数 | 评论正文渲染，评论表情就是典型使用方。filter 扩展参数传 `hook.CommentView`。 |
@@ -1029,7 +1029,7 @@ func (api *API) CommentURL(post any, comment any) string
 - `T/N/X/XN` 和输出函数是请求级能力；执行 hook 时 API 要绑定当前请求 translator 和 writer。
 - `Posts/Post/RecentPosts/CommentsByPost/PostURL/CommentURL` 等只读站点数据和 URL helper 归入 `QueryAPI` 职责，脚本仍通过统一的 `*hook.API` 使用。
 - 插件文本域为 `plugin_<plugin_id>`；主题文本域为 `theme_<theme_id>`。
-- 翻译函数只返回普通字符串，不自动 safeHTML。
+- 翻译函数只返回普通字符串，不自动 safe_html。
 
 ### 20.5 主题模板函数设计
 
@@ -1192,7 +1192,7 @@ widgets:
 | done | 5 | **模板函数**：增加 `do_action/post_content/comment_content` 占位和请求级实现。 | 已在模板解析和请求级 clone 中接入；`post_content` 依次应用 `post.content_source`、格式转换/消毒、`post.content_html` 和 `post.footer_html`，`comment_content` 应用 `comment.content_html`；内容类标准 filter 的扩展参数使用 `hook.PostView` / `hook.CommentView`。 |
 | done | 6 | **插件资源路由**：实现 `/plugin-assets/*` 路径校验和静态输出。 | 已实现 `/plugin-assets/{plugin_id}/{path}`，只暴露已启用插件的资源，并做路径穿越校验。 |
 | done | 7 | **组件声明合并**：后台组件页和前台解析都接入插件 manifest 的 `widgets` 声明。 | 已完成：后台组件列表和前台解析都会合并启用插件的 manifest widget 声明；`WidgetDecl/WidgetInfo/WidgetConfigItem` 已携带来源信息，支持保存 `plugin:<id>`。 |
-| done | 8 | **插件组件渲染**：支持 plugin widget 的显式 renderer 和模板执行。 | 已完成：`render_widgets` 通过 `WidgetRegistry` 找到来源为 plugin 的组件 renderer；插件组件直接执行 `plugins/<id>/widgets/<widget_id>.gohtml` 模板，不再经过全局 widget render action；模板可用 `.tp`、`pluginOption`、`default/toInt`。 |
+| done | 8 | **插件组件渲染**：支持 plugin widget 的显式 renderer 和模板执行。 | 已完成：`render_widgets` 通过 `WidgetRegistry` 找到来源为 plugin 的组件 renderer；插件组件直接执行 `plugins/<id>/widgets/<widget_id>.gohtml` 模板，不再经过全局 widget render action；模板可用 `.tp`、`pluginOption`、`default/to_int`。 |
 | done | 9 | **迁移 saying**：把 default 主题里的 saying 能力迁到 `plugins/saying`。 | 已完成：新增 `plugins/saying`，通过 manifest 声明组件和默认启用，组件模板由插件自带；default 主题已移除 saying 声明和模板。 |
 | done | 10 | **评论表情**：实现 `comment.content_html` + `comment.form.after_textarea`，迁移 twentytwenty 表情。 | 已完成：新增 `plugins/post-comment-enhance`，通过 `comment.content_html` 渲染短码图片、通过 `comment.form.after_textarea` 输出表情面板，并将 twentytwenty 的主题私有实现迁出。 |
 | done | 11 | **i18n 完整化**：插件文本域绑定、`.tp.T`、`api.T/N/X/XN`。 | 已完成：`hook.API` 的 `T/N/X/XN`、插件文本域绑定、插件模板 `.tp.T` 都已接入。 |

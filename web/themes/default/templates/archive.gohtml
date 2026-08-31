@@ -8,7 +8,7 @@
     <h3 class="archive-year" id="{{.Year}}">{{.Year}}</h3>
     <ul class="archive-list">
       {{range .Posts}}
-      <li><time>{{fmtDate .PublishedAt}}</time> <a href="{{postURL .}}">{{post_title_text .}}</a></li>
+      <li><time>{{fmt_date .PublishedAt}}</time> <a href="{{post_url .}}">{{post_title_text .}}</a></li>
       {{end}}
     </ul>
     {{end}}

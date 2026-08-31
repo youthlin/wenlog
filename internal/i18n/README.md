@@ -89,10 +89,10 @@ gettext.Mark.N("%d 条评论", "%d 条评论")
 当前示例：`web/templates/post.gohtml`
 
 ```gohtml
-{{safeHTML (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escapeHTML .CurrentUser.DisplayName))}}
+{{safe_html (.t.T "以 <strong>%s</strong> 的身份发表评论，" (escape_html .CurrentUser.DisplayName))}}
 ```
 
-不要把未经转义的用户输入直接插进 `safeHTML(...)`。
+不要把未经转义的用户输入直接插进 `safe_html(...)`。
 
 ## 3. PO 文件维护
 

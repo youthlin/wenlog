@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
 {{$customCSS := theme_option "custom_css" -}}
 {{- if $customCSS}}
-<style>{{$customCSS | safeHTML}}</style>
+<style>{{$customCSS | safe_html}}</style>
 {{- end}}
 {{- if or (eq .PageType "post") (eq .PageType "page")}}{{post_custom_css .Post}}{{end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">

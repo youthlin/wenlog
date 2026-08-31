@@ -29,11 +29,11 @@
 	    {{$postID := .PostID}}
 	    {{$postTitle := index $.CommentPostTitles $postID}}
 	    {{$commentLink := index $.CommentLinks .ID}}
-	    {{$commentTimeText := fmtDateTime .CreatedAt}}
-	    {{$commentTime := printf "<time class=\"comment-date-time\" datetime=\"%s\">%s</time>" (escapeHTML $commentTimeText) (escapeHTML $commentTimeText)}}
-	    {{$postAnchor := printf "《%s》" (escapeHTML $postTitle)}}
+	    {{$commentTimeText := fmt_date_time .CreatedAt}}
+	    {{$commentTime := printf "<time class=\"comment-date-time\" datetime=\"%s\">%s</time>" (escape_html $commentTimeText) (escape_html $commentTimeText)}}
+	    {{$postAnchor := printf "《%s》" (escape_html $postTitle)}}
 	    {{- if $commentLink}}
-	    {{$postAnchor = printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">《%s》</a>" (escapeHTML $commentLink) (escapeHTML $postTitle)}}
+	    {{$postAnchor = printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">《%s》</a>" (escape_html $commentLink) (escape_html $postTitle)}}
 	    {{- end}}
 	    {{$replyTargetID := index $.CommentReplyTargetIDs .ID}}
 	    {{$replyTarget := index $.CommentReplyTargets $replyTargetID}}
@@ -43,7 +43,7 @@
 	        <div class="c-display">
 	          <div class="comment-author-panel">
 	            <div class="comment-author-head">
-	              <img class="avatar comment-author-avatar" src="{{avatarURL .Email $.DefaultAvatar 40}}" alt="" width="40" height="40">
+	              <img class="avatar comment-author-avatar" src="{{avatar_url .Email $.DefaultAvatar 40}}" alt="" width="40" height="40">
 	              <div class="comment-author-main">
 	                <div class="comment-author-line">{{.Author}}</div>
 	              </div>
@@ -71,7 +71,7 @@
 	      <td class="editable-cell comment-cell" data-label="{{$.t.T "内容"}}">
 	        <div class="c-display">
 	          <div class="comment-post-line">
-	            {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $commentTime $postAnchor)}}：
+	            {{safe_html ($.t.T "%[1]s 发表在 %[2]s" $commentTime $postAnchor)}}：
 	          </div>
 	          {{- if $replyTarget}}
 	          <div class="comment-reply-to-line">

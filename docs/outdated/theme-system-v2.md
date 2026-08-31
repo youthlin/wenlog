@@ -214,7 +214,7 @@ func Register(api *API) {
 
 // 示例
 {{range themeInvoke "popular_posts" "n" 10}}
-    <li><a href="{{postURL .}}">{{.Title}}</a> ({{.Views}} 阅读)</li>
+    <li><a href="{{post_url .}}">{{.Title}}</a> ({{.Views}} 阅读)</li>
 {{end}}
 
 {{range themeInvoke "related_posts" "post_id" .Post.ID "n" 5}}
@@ -616,7 +616,7 @@ pages:
   <ol>
     {{range themeInvoke "popular_posts" "n" 10}}
       <li>
-        <a href="{{postURL .}}">{{.Title}}</a>
+        <a href="{{post_url .}}">{{.Title}}</a>
         <span class="views">({{.Views}} 阅读)</span>
       </li>
     {{end}}

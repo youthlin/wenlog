@@ -9,6 +9,7 @@ import (
 
 	"github.com/youthlin/wenlog/internal/render"
 	"github.com/youthlin/wenlog/web"
+	webplugins "github.com/youthlin/wenlog/web/plugins"
 )
 
 func TestTemplatesParse(t *testing.T) {
@@ -23,6 +24,91 @@ func TestTemplatesParse(t *testing.T) {
 	if r.Template() == nil {
 		t.Fatal("template is nil")
 	}
+}
+
+func TestEmbeddedTemplatesUseSnakeCaseFunctionNames(t *testing.T) {
+	oldNames := []string{
+		"postURL",
+		"categoryURL",
+		"tagURL",
+		"safeHTML",
+		"escapeHTML",
+		"detailHTML",
+		"hasMore",
+		"avatarURL",
+		"defaultAvatarURL",
+		"fmtDate",
+		"fmtDateTime",
+		"fmtDateTimeLocal",
+		"fmtFileSize",
+		"toInt",
+		"postExcerptHTML",
+	}
+	for _, root := range []struct {
+		name string
+		fsys fs.FS
+	}{
+		{name: "templates", fsys: web.Templates},
+		{name: "themes", fsys: web.Themes},
+		{name: "widgets", fsys: web.Widgets},
+		{name: "plugins", fsys: webplugins.Plugins},
+	} {
+		err := fs.WalkDir(root.fsys, ".", func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".gohtml") {
+				return nil
+			}
+			data, err := fs.ReadFile(root.fsys, path)
+			if err != nil {
+				return err
+			}
+			for _, action := range templateActions(string(data)) {
+				for _, oldName := range oldNames {
+					if containsTemplateIdent(action, oldName) {
+						t.Errorf("%s/%s uses legacy template function %q in action %q", root.name, path, oldName, action)
+					}
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("walk %s: %v", root.name, err)
+		}
+	}
+}
+
+func templateActions(s string) []string {
+	var actions []string
+	for {
+		start := strings.Index(s, "{{")
+		if start < 0 {
+			return actions
+		}
+		s = s[start+2:]
+		end := strings.Index(s, "}}")
+		if end < 0 {
+			return actions
+		}
+		actions = append(actions, s[:end])
+		s = s[end+2:]
+	}
+}
+
+func containsTemplateIdent(action, ident string) bool {
+	for _, token := range strings.FieldsFunc(action, func(r rune) bool {
+		return !(r == '_' || r == '$' || r == '.' || r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z')
+	}) {
+		if strings.HasPrefix(token, "$") {
+			continue
+		}
+		token = strings.TrimLeft(token, "$.")
+		if token == ident {
+			return true
+		}
+	}
+	return false
 }
 
 func TestShortcodePatternHintWarnsAboutPrefixMatching(t *testing.T) {

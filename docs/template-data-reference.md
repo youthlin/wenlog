@@ -64,25 +64,24 @@
 
 | 函数 | 签名 | 说明 |
 |---|---|---|
-| `postURL` | `func(any) string` | 文章或页面永久链接；支持 `model.Post`、`*model.Post` 和 `theme.PostView` |
-| `categoryURL` | `func(string) string` | 分类归档链接 |
-| `tagURL` | `func(string) string` | 标签归档链接 |
-| `safeHTML` | `func(string) template.HTML` | 输出原始 HTML |
-| `escapeHTML` | `func(string) string` | HTML 转义 |
-| `postExcerptHTML` | `func(*model.Post) template.HTML` | 文章摘要 HTML（截断 more 标记前） |
-| `detailHTML` | `func(*model.Post) template.HTML` | 详情页完整正文 |
-| `hasMore` | `func(string) bool` | 是否有 more 标记 |
-| `avatarURL` | `func(string, string, int) string` | 头像 URL（参数：邮箱、默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
-| `defaultAvatarURL` | `func(string, int) string` | 根据默认头像类型生成兜底头像 URL（参数：默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
-| `fmtDate` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
-| `fmtDateTime` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
-| `fmtDateTimeLocal` | `func(time.Time) string` | 格式化为 HTML datetime-local 可用值 `2006-01-02T15:04` |
-| `fmtFileSize` | `func(int64) string` | 格式化文件大小 |
+| `post_url` | `func(any) string` | 文章或页面永久链接；支持 `model.Post`、`*model.Post` 和 `theme.PostView` |
+| `category_url` | `func(string) string` | 分类归档链接 |
+| `tag_url` | `func(string) string` | 标签归档链接 |
+| `safe_html` | `func(string) template.HTML` | 输出原始 HTML |
+| `escape_html` | `func(string) string` | HTML 转义 |
+| `detail_html` | `func(*model.Post) template.HTML` | 详情页完整正文 |
+| `has_more` | `func(string) bool` | 是否有 more 标记 |
+| `avatar_url` | `func(string, string, int) string` | 头像 URL（参数：邮箱、默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
+| `default_avatar_url` | `func(string, int) string` | 根据默认头像类型生成兜底头像 URL（参数：默认头像类型、尺寸像素；size<=0 时使用默认 48px） |
+| `fmt_date` | `func(time.Time) string` | 格式化日期 `2006-01-02` |
+| `fmt_date_time` | `func(time.Time) string` | 格式化日期时间 `2006-01-02 15:04` |
+| `fmt_date_time_local` | `func(time.Time) string` | 格式化为 HTML datetime-local 可用值 `2006-01-02T15:04` |
+| `fmt_file_size` | `func(int64) string` | 格式化文件大小 |
 | `year` | `func(time.Time) int` | 提取年份 |
 | `add` | `func(int, int) int` | 加法 |
 | `sub` | `func(int, int) int` | 减法 |
 | `seq` | `func(int) []int` | 生成 `[1..n]` 整数切片 |
-| `toInt` | `func(string) int` | 字符串转整数，失败返回 0 |
+| `to_int` | `func(string) int` | 字符串转整数，失败返回 0 |
 | `default` | `func(def, val any) any` | 当 val 为空值时返回 def |
 | `hook_invoke` | `func(string, ...any) any` | 调用当前主题或插件 `functions.goyaegi` 里通过 `api.RegisterFunc(...)` 注册的扩展函数 |
 | `theme_option` | `func(string) string` | 读取主题全局选项 |
@@ -482,12 +481,12 @@ themes/my-theme/
 
 ```gohtml
 {{define "widget_recent_posts"}}
-{{$n := widget_option "count" | toInt | default 5}}
+{{$n := widget_option "count" | to_int | default 5}}
 <section class="widget widget-recent-posts">
   <h3>{{.t.T "最新文章"}}</h3>
   <ul>
     {{range $i, $p := .RecentPosts}}{{if lt $i $n}}
-      <li><a href="{{postURL $p}}">{{post_title_text $p}}</a></li>
+      <li><a href="{{post_url $p}}">{{post_title_text $p}}</a></li>
     {{end}}{{end}}
   </ul>
 </section>
@@ -533,6 +532,6 @@ func Register(api *hook.API) error {
 
 ```gohtml
 {{range hook_invoke "PopularPosts" "n" 5}}
-  <a href="{{postURL .}}">{{post_title_text .}}</a>
+  <a href="{{post_url .}}">{{post_title_text .}}</a>
 {{end}}
 ```

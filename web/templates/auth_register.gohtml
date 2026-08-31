@@ -50,7 +50,7 @@
   <p><button type="submit" {{if not .SMTPConfigured}}disabled{{end}}>{{.t.T "发送验证邮件"}}</button></p>
   {{- end}}
   <p class="login-links">
-  {{safeHTML (.t.T "← 返回 <a href=\"/\">%s</a>" (escapeHTML .SiteName))}} | <a href="/auth/login">{{.t.T "登录"}}</a>
+  {{safe_html (.t.T "← 返回 <a href=\"/\">%s</a>" (escape_html .SiteName))}} | <a href="/auth/login">{{.t.T "登录"}}</a>
   </p>
 </form>
 <script src="/assets/theme.js?v={{.AssetVersion}}"></script>

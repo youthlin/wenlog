@@ -1,25 +1,25 @@
 {{- define "widget_recent_comments" -}}
 {{$title := widget_option "title" | default (.t.T "近期评论")}}
-{{$n := widget_option "count" | toInt | default 5}}
+{{$n := widget_option "count" | to_int | default 5}}
 <section class="widget widget-recent-comments">
   <h3>{{$title}}</h3>
   <ul>
     {{range $i, $item := .RecentCommentItems}}{{if lt $i $n}}
     <li>
-      <img class="avatar" src="{{avatarURL $item.Comment.Email $.DefaultAvatar 24}}" loading="lazy" alt="" width="24" height="24">
+      <img class="avatar" src="{{avatar_url $item.Comment.Email $.DefaultAvatar 24}}" loading="lazy" alt="" width="24" height="24">
       <div class="widget-comment-content">
         <div class="widget-comment-line">
           <a href="{{$item.CommentURL}}">{{$item.Snippet}}</a>
         </div>
         <div class="widget-comment-meta">
           {{if $item.AuthorURL}}
-          {{$author := printf "<a href=\"%s\" target=\"_blank\" rel=\"nofollow noopener\">%s</a>" (escapeHTML $item.AuthorURL) (escapeHTML $item.Comment.Author)}}
-          {{$postAnchor := printf "<a href=\"%s\">%s</a>" (escapeHTML $item.CommentURL) (escapeHTML $item.Post.Title)}}
-          {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
+          {{$author := printf "<a href=\"%s\" target=\"_blank\" rel=\"nofollow noopener\">%s</a>" (escape_html $item.AuthorURL) (escape_html $item.Comment.Author)}}
+          {{$postAnchor := printf "<a href=\"%s\">%s</a>" (escape_html $item.CommentURL) (escape_html $item.Post.Title)}}
+          {{safe_html ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
           {{else}}
-          {{$author := escapeHTML $item.Comment.Author}}
-          {{$postAnchor := printf "<a href=\"%s\">%s</a>" (escapeHTML $item.CommentURL) (escapeHTML $item.Post.Title)}}
-          {{safeHTML ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
+          {{$author := escape_html $item.Comment.Author}}
+          {{$postAnchor := printf "<a href=\"%s\">%s</a>" (escape_html $item.CommentURL) (escape_html $item.Post.Title)}}
+          {{safe_html ($.t.T "%[1]s 发表在 %[2]s" $author $postAnchor)}}
           {{end}}
         </div>
       </div>

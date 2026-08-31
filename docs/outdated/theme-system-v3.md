@@ -167,7 +167,7 @@ author: "youthlin"
 <body>
 <header>
   <h1><a href="/">{{.SiteName}}</a></h1>
-  <nav>{{range .Menu}}<a href="{{postURL .}}">{{.Title}}</a>{{end}}</nav>
+  <nav>{{range .Menu}}<a href="{{post_url .}}">{{.Title}}</a>{{end}}</nav>
 </header>
 <main>
 {{end}}
@@ -186,15 +186,15 @@ author: "youthlin"
   </section>
   <section>
     <h3>近期文章</h3>
-    <ul>{{range .RecentPosts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}</ul>
+    <ul>{{range .RecentPosts}}<li><a href="{{post_url .}}">{{.Title}}</a></li>{{end}}</ul>
   </section>
   <section>
     <h3>最热文章</h3>
-    <ul>{{range themeInvoke "popular_posts" "n" 5}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}</ul>
+    <ul>{{range themeInvoke "popular_posts" "n" 5}}<li><a href="{{post_url .}}">{{.Title}}</a></li>{{end}}</ul>
   </section>
   <section>
     <h3>分类</h3>
-    <ul>{{range .Categories}}<li><a href="{{categoryURL .Slug}}">{{.Name}}</a></li>{{end}}</ul>
+    <ul>{{range .Categories}}<li><a href="{{category_url .Slug}}">{{.Name}}</a></li>{{end}}</ul>
   </section>
 </aside>
 {{end}}
@@ -254,7 +254,7 @@ func getInt(args map[string]any, key string, def int) int {
 
 ```gohtml
 {{$popular := themeInvoke "popular_posts" "n" 5}}
-{{range $popular}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+{{range $popular}}<li><a href="{{post_url .}}">{{.Title}}</a></li>{{end}}
 ```
 
 ## 9. 与 v2 的对比

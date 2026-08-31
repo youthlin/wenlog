@@ -36,28 +36,28 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 }
 
 // CommonFuncMap 返回主题和插件模板共用的基础模板函数。
-// 插件模板解析时复用此函数集，确保插件模板也能使用 postURL、categoryURL 等函数。
+// 插件模板解析时复用此函数集，确保插件模板也能使用 post_url、category_url 等函数。
 func CommonFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"postURL":          postURL,
-		"post_custom_css":  PostCustomCSS,
-		"categoryURL":      permalink.Category,
-		"tagURL":           permalink.Tag,
-		"safeHTML":         func(s string) template.HTML { return template.HTML(s) },
-		"escapeHTML":       html.EscapeString,
-		"detailHTML":       detailHTML,
-		"hasMore":          func(content string) bool { _, m := wxr.SplitMore(content); return m },
-		"avatarURL":        avatarURL,
-		"defaultAvatarURL": defaultAvatarURL,
-		"fmtDate":          func(t time.Time) string { return t.Format("2006-01-02") },
-		"fmtDateTime":      func(t time.Time) string { return t.Format("2006-01-02 15:04") },
-		"fmtDateTimeLocal": func(t time.Time) string { return t.Format("2006-01-02T15:04") },
-		"fmtFileSize":      fmtFileSize,
-		"year":             func(t time.Time) int { return t.Year() },
-		"add":              func(a, b int) int { return a + b },
-		"sub":              func(a, b int) int { return a - b },
-		"seq":              seq,
-		"toInt":            func(s string) int { n, _ := strconv.Atoi(s); return n },
+		"post_url":            postURL,
+		"post_custom_css":     PostCustomCSS,
+		"category_url":        permalink.Category,
+		"tag_url":             permalink.Tag,
+		"safe_html":           func(s string) template.HTML { return template.HTML(s) },
+		"escape_html":         html.EscapeString,
+		"detail_html":         detailHTML,
+		"has_more":            func(content string) bool { _, m := wxr.SplitMore(content); return m },
+		"avatar_url":          avatarURL,
+		"default_avatar_url":  defaultAvatarURL,
+		"fmt_date":            func(t time.Time) string { return t.Format("2006-01-02") },
+		"fmt_date_time":       func(t time.Time) string { return t.Format("2006-01-02 15:04") },
+		"fmt_date_time_local": func(t time.Time) string { return t.Format("2006-01-02T15:04") },
+		"fmt_file_size":       fmtFileSize,
+		"year":                func(t time.Time) int { return t.Year() },
+		"add":                 func(a, b int) int { return a + b },
+		"sub":                 func(a, b int) int { return a - b },
+		"seq":                 seq,
+		"to_int":              func(s string) int { n, _ := strconv.Atoi(s); return n },
 		"default": func(def, val any) any {
 			if ok, _ := template.IsTrue(val); !ok {
 				return def

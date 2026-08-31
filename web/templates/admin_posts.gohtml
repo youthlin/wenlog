@@ -48,7 +48,7 @@
     <tbody>
     {{range .Posts}}
     <tr>
-      {{$viewURL := postURL .}}
+      {{$viewURL := post_url .}}
       <td class="post-title-cell" data-label="{{$.t.T "标题"}}">
         <div class="post-title-panel">
           <div class="post-title-main">
@@ -60,13 +60,13 @@
           </div>
           <div class="post-meta-list">
             <div class="post-inline-meta">
-              <time class="post-inline-meta-item" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
+              <time class="post-inline-meta-item" datetime="{{fmt_date_time .PublishedAt}}">{{fmt_date .PublishedAt}}</time>
             </div>
           </div>
         </div>
       </td>
       <td class="post-published-cell" data-label="{{$.t.T "发布时间"}}">
-        <time class="post-published-time" datetime="{{fmtDateTime .PublishedAt}}">{{fmtDate .PublishedAt}}</time>
+        <time class="post-published-time" datetime="{{fmt_date_time .PublishedAt}}">{{fmt_date .PublishedAt}}</time>
       </td>
       {{if ne $.PostType "page"}}
       <td class="post-category-cell" data-label="{{$.t.T "分类目录"}}">

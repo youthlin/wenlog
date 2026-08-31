@@ -20,7 +20,7 @@
     <tbody>
     {{range .Revisions}}
     <tr>
-      <td data-label="{{$.t.T "版本时间"}}"><time datetime="{{fmtDateTime .CreatedAt}}">{{fmtDateTime .CreatedAt}}</time></td>
+      <td data-label="{{$.t.T "版本时间"}}"><time datetime="{{fmt_date_time .CreatedAt}}">{{fmt_date_time .CreatedAt}}</time></td>
       <td data-label="{{$.t.T "标题"}}">{{if .Title}}{{.Title}}{{else}}{{$.t.T "（无标题）"}}{{end}}</td>
       <td class="actions" data-label="{{$.t.T "操作"}}">
         <a class="btn-secondary btn-sm" href="/admin/post/{{$.Post.ID}}/revision/{{.ID}}">{{$.t.T "查看"}}</a>

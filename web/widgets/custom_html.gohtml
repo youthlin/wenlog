@@ -4,7 +4,7 @@
 {{- if $html}}
 <section class="widget widget-custom-html">
   {{if $title}}<h3>{{$title}}</h3>{{end}}
-  {{safeHTML $html}}
+  {{safe_html $html}}
 </section>
 {{- end}}
 {{- end}}

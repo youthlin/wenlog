@@ -211,12 +211,12 @@ pages:
 
 所有模板函数由 `internal/render` 注册，主题模板可直接使用：
 
-- `postURL`, `categoryURL`, `tagURL` — 永久链接生成（`postURL` 同时支持文章和页面）
-- `safeHTML`, `escapeHTML` — HTML 安全输出
-- `postExcerptHTML`, `detailHTML` — 正文渲染（摘要/完整）
-- `hasMore` — 判断是否有 `<!--more-->`
-- `avatarURL` — 头像
-- `fmtDate`, `fmtDateTime`, `fmtFileSize` — 格式化
+- `post_url`, `category_url`, `tag_url` — 永久链接生成（`post_url` 同时支持文章和页面）
+- `safe_html`, `escape_html` — HTML 安全输出
+- `post_excerpt`, `detail_html` — 正文渲染（摘要/完整）
+- `has_more` — 判断是否有 `<!--more-->`
+- `avatar_url` — 头像
+- `fmt_date`, `fmt_date_time`, `fmt_file_size` — 格式化
 - `year`, `add`, `sub`, `seq` — 辅助函数
 
 ### 4.4 主题翻译
@@ -326,10 +326,10 @@ func Register(name string, w Widget) {
 <section class="widget widget-recent-posts custom-recent-posts">
   <h3>最新文章</h3>
   <ol>
-    {{range .Posts}}<li><a href="{{postURL .}}">{{.Title}}</a></li>{{end}}
+    {{range .Posts}}<li><a href="{{post_url .}}">{{.Title}}</a></li>{{end}}
   </ol>
 </section>
 {{end}}
 ```
 
-这样主题提供方只需要在 `widgets` 中声明需要哪些数据块，并按约定模板名写 HTML；Go 侧继续负责权限、查询和默认数据组装，模板侧通过 `postURL` / `categoryURL` / `.t.T` 等函数处理链接与翻译。
+这样主题提供方只需要在 `widgets` 中声明需要哪些数据块，并按约定模板名写 HTML；Go 侧继续负责权限、查询和默认数据组装，模板侧通过 `post_url` / `category_url` / `.t.T` 等函数处理链接与翻译。

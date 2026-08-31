@@ -5,9 +5,9 @@
     <div class="issue-mark" aria-hidden="true">No. {{.Post.ID}}</div>
     <div class="post-hero-copy">
       <div class="post-meta">
-        <a class="post-date-link" href="{{postURL .Post}}"><time datetime="{{fmtDateTime .Post.PublishedAt}}">{{fmtDate .Post.PublishedAt}}</time></a>
+        <a class="post-date-link" href="{{post_url .Post}}"><time datetime="{{fmt_date_time .Post.PublishedAt}}">{{fmt_date .Post.PublishedAt}}</time></a>
         {{if .Post.Author.DisplayName}}<span class="author">{{.Post.Author.DisplayName}}</span>{{end}}
-        {{range .Post.Categories}}<a class="cat" href="{{categoryURL .Slug}}">{{.Name}}</a>{{end}}
+        {{range .Post.Categories}}<a class="cat" href="{{category_url .Slug}}">{{.Name}}</a>{{end}}
         <span class="views">{{.th.N1_64 "%d 次阅读" .Post.Views .Post.Views}}</span>
         {{if and .CurrentUserID (eq .CurrentUserID .Post.AuthorID)}}<a class="edit-link" href="/admin/post/{{.Post.ID}}">{{.th.T "编辑"}}</a>{{end}}
       </div>

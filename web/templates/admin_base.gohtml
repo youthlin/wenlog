@@ -154,7 +154,7 @@
       <div class="admin-instance-tooltip" role="tooltip">
         <div>{{.t.T "程序版本: %s" .InstanceVersion}}</div>
         <div>{{.t.T "构建日期: %s" .InstanceBuildDate}}</div>
-        <div>{{safeHTML (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escapeHTML .RepositoryURL) (escapeHTML .RepositoryURL)))}}</div>
+        <div>{{safe_html (.t.T "仓库地址：%s" (printf "<a href=\"%s\" target=\"_blank\" rel=\"noreferrer\">%s</a>" (escape_html .RepositoryURL) (escape_html .RepositoryURL)))}}</div>
       </div>
     </details>
   </footer>

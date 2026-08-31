@@ -63,7 +63,7 @@
       {{range .Backups}}
       <tr>
         <td data-label="{{$.t.T "文件名"}}">{{.Name}}</td>
-        <td data-label="{{$.t.T "大小"}}">{{.Size | fmtFileSize}}</td>
+        <td data-label="{{$.t.T "大小"}}">{{.Size | fmt_file_size}}</td>
         <td data-label="{{$.t.T "时间"}}">{{.ModTime.Format "2006-01-02 15:04:05"}}</td>
         <td class="actions backup-actions-cell" data-label="{{$.t.T "操作"}}">
           <form class="inline" method="post" action="/admin/backup/restore" onsubmit="return confirm('{{$.t.T "确定要从该备份恢复吗？当前数据将被覆盖。"}}')">
