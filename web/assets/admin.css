@@ -1251,6 +1251,7 @@ body.admin.nav-open { overflow: hidden; }
 .toolbar-tip { margin: -4px 0 12px; }
 .md-view-tabs .btn-secondary.active { color: color-mix(in srgb, var(--accent) 86%, var(--fg)); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .draft-restore { padding: 10px 12px; border: 1px solid rgba(255,193,7,.3); border-radius: 8px; background: rgba(255,193,7,.12); color: var(--fg); }
+.draft-restore[hidden] { display: none !important; }
 .draft-restore span { color: var(--warning); }
 /* 11.2 编辑区 / 预览区 */
 .md-editor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: stretch; }
@@ -1387,43 +1388,14 @@ body.admin.nav-open { overflow: hidden; }
 }
 .cat-field { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; margin-bottom: 14px; }
 .cat-field legend { font-weight: 600; padding: 0 6px; }
-.category-dropdown-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 40px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--bg);
-  color: var(--fg);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.category-dropdown-trigger span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.category-dropdown-icon { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
-.category-dropdown-panel {
-  display: grid;
-  gap: 6px;
-  max-height: 240px;
-  overflow: auto;
-  margin-top: 8px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-}
-.category-dropdown-panel[hidden] { display: none !important; }
-.cat-check { display: flex; align-items: center; gap: 8px; font-weight: normal; margin: 0; padding: 6px 8px; border-radius: 5px; cursor: pointer; }
-.cat-check:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
-.cat-check input { width: auto; margin: 0; }
+.category-select-label { margin-bottom: 10px; }
+.category-selected-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.category-selected-item { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border)); border-radius: 999px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--fg); font-size: 14px; }
+.category-selected-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-remove-btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font: inherit; line-height: 1; cursor: pointer; }
+.category-remove-btn:hover,
+.category-remove-btn:focus-visible { background: color-mix(in srgb, var(--danger) 13%, transparent); color: var(--danger); outline: none; }
+.category-empty-hint[hidden] { display: none !important; }
 
 /* ============================================================
    8. 登录页 (Login)

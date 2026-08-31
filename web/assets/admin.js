@@ -18,8 +18,6 @@
   var MSG_LINK_URL_PROMPT = t("linkURLPrompt", "Link URL");
   var MSG_DRAFT_DISCARDED = t("draftDiscarded", "Local draft discarded.");
   var MSG_DRAFT_SAVED = t("draftSaved", "Saved locally.");
-  var MSG_CATEGORY_SELECTED = t("categorySelected", "%d selected");
-  var MSG_CATEGORY_PLACEHOLDER = t("categoryPlaceholder", "Select categories");
 
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -267,65 +265,100 @@
     if (!box) return;
     var form = box.closest("form");
     var message = box.getAttribute("data-category-required-message") || t("categoryRequired", "Please select at least one category.");
-    var inputs = Array.prototype.slice.call(box.querySelectorAll('input[name="category_ids"]'));
-    if (!form || inputs.length === 0) return;
-    function setValidity() {
-      var checked = inputs.some(function (input) { return input.checked; });
-      inputs[0].setCustomValidity(checked ? "" : message);
+    var target = box.querySelector("[data-category-select-control]") || box.querySelector('input[name="category_ids"]');
+    if (!form || !target) return;
+    function hasSelectedCategory() {
+      return Array.prototype.slice.call(box.querySelectorAll('input[name="category_ids"]')).some(function (input) {
+        if (input.type === "checkbox") return input.checked;
+        return input.value !== "";
+      });
     }
-    inputs.forEach(function (input) { input.addEventListener("change", setValidity); });
+    function setValidity() {
+      target.setCustomValidity(hasSelectedCategory() ? "" : message);
+    }
+    box.addEventListener("categorychange", setValidity);
+    box.addEventListener("change", setValidity);
     form.addEventListener("submit", function () {
       setValidity();
-      if (!inputs.some(function (input) { return input.checked; })) inputs[0].reportValidity();
+      if (!hasSelectedCategory()) target.reportValidity();
     });
     setValidity();
   }
 
-  function initCategoryDropdown() {
-    var box = document.querySelector("[data-category-dropdown]");
+  function initCategorySelect() {
+    var box = document.querySelector("[data-category-select]");
     if (!box) return;
-    var trigger = box.querySelector("[data-category-trigger]");
-    var label = box.querySelector("[data-category-trigger-label]");
-    var panel = box.querySelector("[data-category-panel]");
-    var inputs = Array.prototype.slice.call(box.querySelectorAll('input[name="category_ids"]'));
-    if (!trigger || !label || !panel || inputs.length === 0) return;
-    function selectedInputs() {
-      return inputs.filter(function (input) { return input.checked; });
+    var select = box.querySelector("[data-category-select-control]");
+    var list = box.querySelector("[data-category-selected-list]");
+    var empty = box.querySelector("[data-category-empty]");
+    if (!select || !list) return;
+    var removeLabel = box.getAttribute("data-category-remove-label") || "Remove category";
+    function selectedValues() {
+      return Array.prototype.slice.call(list.querySelectorAll('input[name="category_ids"]')).map(function (input) {
+        return input.value;
+      });
     }
-    function updateLabel() {
-      var selected = selectedInputs();
-      if (selected.length === 0) {
-        label.textContent = MSG_CATEGORY_PLACEHOLDER;
-        return;
+    function findOption(value) {
+      for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === value) return select.options[i];
       }
-      if (selected.length <= 2) {
-        label.textContent = selected.map(function (input) {
-          return input.closest("label").textContent.trim();
-        }).join(", ");
-        return;
-      }
-      label.textContent = MSG_CATEGORY_SELECTED.replace("%d", selected.length);
+      return null;
     }
-    function closePanel() {
-      panel.hidden = true;
-      trigger.setAttribute("aria-expanded", "false");
+    function setOptionDisabled(value, disabled) {
+      var option = findOption(value);
+      if (option) option.disabled = disabled;
     }
-    function openPanel() {
-      panel.hidden = false;
-      trigger.setAttribute("aria-expanded", "true");
+    function updateEmpty() {
+      if (empty) empty.hidden = selectedValues().length > 0;
     }
-    trigger.addEventListener("click", function () {
-      if (panel.hidden) openPanel();
-      else closePanel();
+    function notifyChanged() {
+      updateEmpty();
+      box.dispatchEvent(new Event("categorychange"));
+      box.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    function addCategory(value, label) {
+      if (!value || selectedValues().indexOf(value) >= 0) return;
+      var item = document.createElement("span");
+      item.className = "category-selected-item";
+      item.setAttribute("data-category-item", "");
+      item.setAttribute("data-category-id", value);
+      var text = document.createElement("span");
+      text.textContent = label;
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "category-remove-btn";
+      remove.setAttribute("data-category-remove", value);
+      remove.setAttribute("aria-label", removeLabel + " " + label);
+      remove.textContent = "×";
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "category_ids";
+      input.value = value;
+      item.appendChild(text);
+      item.appendChild(remove);
+      item.appendChild(input);
+      list.appendChild(item);
+      setOptionDisabled(value, true);
+      notifyChanged();
+    }
+    select.addEventListener("change", function () {
+      var value = select.value;
+      var option = findOption(value);
+      if (option) addCategory(value, option.textContent.trim());
+      select.value = "";
     });
-    document.addEventListener("click", function (event) {
-      if (!box.contains(event.target)) closePanel();
+    list.addEventListener("click", function (event) {
+      var remove = event.target.closest("[data-category-remove]");
+      if (!remove) return;
+      var value = remove.getAttribute("data-category-remove") || "";
+      var item = remove.closest("[data-category-item]");
+      if (item) item.remove();
+      setOptionDisabled(value, false);
+      notifyChanged();
+      select.focus();
     });
-    trigger.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closePanel();
-    });
-    inputs.forEach(function (input) { input.addEventListener("change", updateLabel); });
-    updateLabel();
+    selectedValues().forEach(function (value) { setOptionDisabled(value, true); });
+    updateEmpty();
   }
 
   function parseShortcodeRules(value) {
@@ -581,7 +614,7 @@
 
   initSlugSync();
   initCategoryRequired();
-  initCategoryDropdown();
+  initCategorySelect();
   initShortcodeRules();
 
   if (ta && fileInput) {

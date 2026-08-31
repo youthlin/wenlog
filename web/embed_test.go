@@ -175,6 +175,8 @@ func TestAdminUIRegressionContracts(t *testing.T) {
 		{"admin_menus.gohtml", `<button type="submit" class="btn">{{.t.T "保存菜单"}}</button>`},
 		{"admin_import.gohtml", `class="cards settings-cards migration-cards"`},
 		{"admin_post_edit.gohtml", `name="custom_css"`},
+		{"admin_post_edit.gohtml", `data-category-select-control`},
+		{"admin_post_edit.gohtml", `type="hidden" name="category_ids"`},
 		{"admin_revision_view.gohtml", `post_custom_css .Revision`},
 	}
 	for _, check := range checks {
@@ -196,10 +198,21 @@ func TestAdminUIRegressionContracts(t *testing.T) {
 		".shortcode-rules {\n  width: 100%;",
 		".shortcode-rules > .form-hint {\n  margin: 10px 0 0;",
 		".migration-cards {\n  grid-template-columns: minmax(0, 1fr);",
+		".draft-restore[hidden] { display: none !important; }",
+		".category-selected-list { display: flex;",
+		".category-remove-btn { display: inline-flex;",
 	} {
 		if !strings.Contains(string(css), want) {
 			t.Errorf("admin stylesheet must contain %q", want)
 		}
+	}
+
+	postEdit, err := fs.ReadFile(tplFS, "admin_post_edit.gohtml")
+	if err != nil {
+		t.Fatalf("read admin post edit template: %v", err)
+	}
+	if strings.Contains(string(postEdit), "data-category-dropdown") || strings.Contains(string(postEdit), "category-dropdown-trigger") {
+		t.Fatal("post editor categories should use the native select control instead of the old pseudo-dropdown")
 	}
 
 	themeYAML, err := fs.ReadFile(web.Themes, "themes/spread/theme.yaml")

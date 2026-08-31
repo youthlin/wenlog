@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wenlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-31 00:26+0800\n"
+"POT-Creation-Date: 2026-08-31 22:43+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -207,7 +207,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_base.gohtml:66
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_import.gohtml:78
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_import.gohtml:99
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:96
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:109
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:41
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:95
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:99
@@ -475,7 +475,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:88
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_edit_files.gohtml:73
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugin_settings.gohtml:112
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:103
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:116
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_theme_options.gohtml:65
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_user_form.gohtml:33
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_widgets.gohtml:104
@@ -486,7 +486,7 @@ msgstr ""
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:89
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:104
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_edit_files.gohtml:289
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:103
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:116
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:6
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_terms.gohtml:15
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_terms.gohtml:30
@@ -1075,7 +1075,7 @@ msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:24
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_plugins.gohtml:40
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:88
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:101
 msgid "状态"
 msgstr ""
 
@@ -1293,42 +1293,59 @@ msgstr ""
 msgid "摘要(可选)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:80
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:70
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:86
+msgid "移除分类"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:73
+msgid "添加分类"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:75
+msgid "选择分类目录"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:92
+msgid "尚未选择分类目录"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:94
 msgid "还没有分类目录，可先去 分类/标签管理 新建分类。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:97
 msgid "如:Go, 教程, 随笔"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:84
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:97
 msgid "标签(逗号分隔)"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:90
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:103
 msgid "发布"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:91
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:104
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:58
 msgid "草稿"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:92
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:105
 msgid "定时发布"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:95
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:108
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:36
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_posts.gohtml:68
 msgid "发布时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:98
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:111
 msgid "开放"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:99
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_post_edit.gohtml:112
 msgctxt "admin.comment_status.option"
 msgid "关闭"
 msgstr ""
@@ -3007,60 +3024,60 @@ msgstr ""
 msgid "内容管理"
 msgstr ""
 
-#: internal/handler/admin_post.go:202 internal/i18n/i18n.go:220
+#: internal/handler/admin_post.go:202 internal/i18n/i18n.go:218
 msgid "请至少选择一个分类目录。"
 msgstr ""
 
-#: internal/handler/admin_post.go:377
+#: internal/handler/admin_post.go:389
 #, c-format
 msgid "页面链接 /%s 已存在，请换一个 slug。"
 msgstr ""
 
-#: internal/handler/admin_post.go:398
+#: internal/handler/admin_post.go:410
 msgid "文章 slug %q 已存在，请换一个。"
 msgstr ""
 
-#: internal/handler/admin_post.go:564
+#: internal/handler/admin_post.go:576
 msgid "页面 slug 不能为空"
 msgstr ""
 
-#: internal/handler/admin_post.go:567
+#: internal/handler/admin_post.go:579
 msgid "页面 slug 只能是单段路径，不能包含 /"
 msgstr ""
 
-#: internal/handler/admin_post.go:570
+#: internal/handler/admin_post.go:582
 msgid "页面 slug 不能包含空白、? 或 #"
 msgstr ""
 
-#: internal/handler/admin_post.go:573
+#: internal/handler/admin_post.go:585
 msgid "页面 slug 非法"
 msgstr ""
 
-#: internal/handler/admin_post.go:576
+#: internal/handler/admin_post.go:588
 msgid "页面 slug 仅支持字母、数字、点、下划线和连字符，且需以字母或数字开头"
 msgstr ""
 
-#: internal/handler/admin_post.go:579
+#: internal/handler/admin_post.go:591
 msgid "页面 slug 不能与文章永久链接格式冲突"
 msgstr ""
 
-#: internal/handler/admin_post.go:582
+#: internal/handler/admin_post.go:594
 msgid "页面 slug %q 为保留路由，请换一个"
 msgstr ""
 
-#: internal/handler/admin_post.go:593
+#: internal/handler/admin_post.go:605
 msgid "当前固定链接结构使用了 %postname%，文章 slug 不能为空"
 msgstr ""
 
-#: internal/handler/admin_post.go:596
+#: internal/handler/admin_post.go:608
 msgid "文章 slug 不能包含 /、空白、? 或 #"
 msgstr ""
 
-#: internal/handler/admin_post.go:599
+#: internal/handler/admin_post.go:611
 msgid "文章 slug 非法"
 msgstr ""
 
-#: internal/handler/admin_post.go:602
+#: internal/handler/admin_post.go:614
 msgid "文章 slug %q 为保留路由，请换一个"
 msgstr ""
 
@@ -4127,145 +4144,136 @@ msgid "已自动保存到本地。"
 msgstr ""
 
 #: internal/i18n/i18n.go:209
-msgid "选择分类目录"
-msgstr ""
-
-#: internal/i18n/i18n.go:210
-#, c-format
-msgid "已选择 %d 个分类"
-msgstr ""
-
-#: internal/i18n/i18n.go:211
 msgid "请求失败"
 msgstr ""
 
-#: internal/i18n/i18n.go:212
+#: internal/i18n/i18n.go:210
 msgid "请先输入便于识别的 Passkey 名称。"
 msgstr ""
 
-#: internal/i18n/i18n.go:213
+#: internal/i18n/i18n.go:211
 msgid "正在创建 Passkey…"
 msgstr ""
 
-#: internal/i18n/i18n.go:214
+#: internal/i18n/i18n.go:212
 msgid "Passkey 已添加。"
 msgstr ""
 
-#: internal/i18n/i18n.go:215
+#: internal/i18n/i18n.go:213
 msgid "Passkey 操作失败。"
 msgstr ""
 
-#: internal/i18n/i18n.go:216
+#: internal/i18n/i18n.go:214
 msgid "请使用 Passkey 完成验证…"
 msgstr ""
 
-#: internal/i18n/i18n.go:217
+#: internal/i18n/i18n.go:215
 msgid "Passkey 登录失败。"
 msgstr ""
 
-#: internal/i18n/i18n.go:218
+#: internal/i18n/i18n.go:216
 msgid "输入关键字筛选…"
 msgstr ""
 
-#: internal/i18n/i18n.go:219
+#: internal/i18n/i18n.go:217
 msgid "没有匹配项"
 msgstr ""
 
-#: internal/render/funcs.go:804
+#: internal/render/funcs.go:808
 msgid "评论已关闭"
 msgstr ""
 
-#: internal/render/funcs.go:895
+#: internal/render/funcs.go:899
 msgid "文章作者"
 msgstr ""
 
-#: internal/render/funcs.go:897
+#: internal/render/funcs.go:901
 msgid "管理员"
 msgstr ""
 
-#: internal/render/funcs.go:899
+#: internal/render/funcs.go:903
 msgid "登录用户"
 msgstr ""
 
-#: internal/render/funcs.go:909
+#: internal/render/funcs.go:913
 msgid "回复时邮件通知"
 msgstr ""
 
-#: internal/render/funcs.go:921
+#: internal/render/funcs.go:925
 msgid "评论审核中,当前仅自己可见"
 msgstr ""
 
-#: internal/render/funcs.go:934
+#: internal/render/funcs.go:938
 #, c-format
 msgid "回复 @%s"
 msgstr ""
 
-#: internal/render/funcs.go:948
+#: internal/render/funcs.go:952
 msgid "回复"
 msgstr ""
 
-#: internal/render/funcs.go:1031 internal/render/funcs.go:1123
+#: internal/render/funcs.go:1035 internal/render/funcs.go:1127
 msgid "上一页"
 msgstr ""
 
-#: internal/render/funcs.go:1037 internal/render/funcs.go:1129
+#: internal/render/funcs.go:1041 internal/render/funcs.go:1133
 msgid "下一页"
 msgstr ""
 
-#: internal/render/funcs.go:1171
+#: internal/render/funcs.go:1175
 #, c-format
 msgid "以 <strong>%s</strong> 的身份发表评论，"
 msgstr ""
 
-#: internal/render/funcs.go:1181
+#: internal/render/funcs.go:1185
 msgid "登出"
 msgstr ""
 
-#: internal/render/funcs.go:1212
+#: internal/render/funcs.go:1216
 msgid "昵称"
 msgstr ""
 
-#: internal/render/funcs.go:1216
+#: internal/render/funcs.go:1220
 msgid "昵称 *"
 msgstr ""
 
-#: internal/render/funcs.go:1220
+#: internal/render/funcs.go:1224
 msgid "邮箱"
 msgstr ""
 
-#: internal/render/funcs.go:1224
+#: internal/render/funcs.go:1228
 msgid "邮箱 *(不公开)"
 msgstr ""
 
-#: internal/render/funcs.go:1228
+#: internal/render/funcs.go:1232
 msgid "网站"
 msgstr ""
 
-#: internal/render/funcs.go:1232
+#: internal/render/funcs.go:1236
 msgid "网站(可选)"
 msgstr ""
 
-#: internal/render/funcs.go:1238
+#: internal/render/funcs.go:1242
 msgid "评论内容"
 msgstr ""
 
-#: internal/render/funcs.go:1240
+#: internal/render/funcs.go:1244
 msgid "说点什么吧…… *"
 msgstr ""
 
-#: internal/render/funcs.go:1257
+#: internal/render/funcs.go:1261
 msgid "有回复时邮件通知我"
 msgstr ""
 
-#: internal/render/funcs.go:1262
+#: internal/render/funcs.go:1266
 msgid "提交评论"
 msgstr ""
 
-#: internal/render/funcs.go:1264
+#: internal/render/funcs.go:1268
 msgid "取消回复"
 msgstr ""
 
-#: internal/render/funcs.go:1267
+#: internal/render/funcs.go:1271
 msgid "评论提交后需经审核才会显示。"
 msgstr ""
 

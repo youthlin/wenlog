@@ -67,19 +67,32 @@
   <label>{{.t.T "摘要(可选)"}}<textarea name="excerpt" rows="3">{{if .Post}}{{.Post.Excerpt}}{{end}}</textarea></label>
 
   {{if eq .PostType "post"}}
-  <fieldset class="cat-field" data-category-required data-category-dropdown data-category-required-message="{{.t.T "请至少选择一个分类目录。"}}">
+  <fieldset class="cat-field" data-category-required data-category-select data-category-required-message="{{.t.T "请至少选择一个分类目录。"}}" data-category-remove-label="{{.t.T "移除分类"}}">
     <legend>{{.t.T "分类目录"}}</legend>
-    <button type="button" class="category-dropdown-trigger" data-category-trigger aria-expanded="false">
-      <span data-category-trigger-label>{{.t.T "选择分类目录"}}</span>
-      <span class="category-dropdown-icon" aria-hidden="true">▾</span>
-    </button>
-    <div class="category-dropdown-panel" data-category-panel hidden>
+    {{if .AllCategories}}
+    <label class="category-select-label">{{.t.T "添加分类"}}
+      <select class="category-select" data-category-select-control>
+        <option value="">{{.t.T "选择分类目录"}}</option>
+        {{range .AllCategories}}
+        <option value="{{.ID}}" {{if index $.SelectedCats .ID}}disabled{{end}}>{{.Name}}</option>
+        {{end}}
+      </select>
+    </label>
+    <div class="category-selected-list" data-category-selected-list>
     {{range .AllCategories}}
-    <label class="cat-check"><input type="checkbox" name="category_ids" value="{{.ID}}" {{if index $.SelectedCats .ID}}checked{{end}}> {{.Name}}</label>
+    {{if index $.SelectedCats .ID}}
+      <span class="category-selected-item" data-category-item data-category-id="{{.ID}}">
+        <span>{{.Name}}</span>
+        <button type="button" class="category-remove-btn" data-category-remove="{{.ID}}" aria-label="{{$.t.T "移除分类"}} {{.Name}}">×</button>
+        <input type="hidden" name="category_ids" value="{{.ID}}">
+      </span>
+    {{end}}
+    {{end}}
+    </div>
+    <p class="tip category-empty-hint" data-category-empty {{if .SelectedCats}}hidden{{end}}>{{.t.T "尚未选择分类目录"}}</p>
     {{else}}
     <p class="tip">{{.t.T "还没有分类目录，可先去 分类/标签管理 新建分类。"}}</p>
     {{end}}
-    </div>
   </fieldset>
   <label>{{.t.T "标签(逗号分隔)"}}<input type="text" name="tags" value="{{.TagsCSV}}" placeholder="{{.t.T "如:Go, 教程, 随笔"}}"></label>
   {{end}}
