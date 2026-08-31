@@ -420,7 +420,7 @@ func TestPostCommentEnhanceRendersConfiguredShortcode(t *testing.T) {
 	if !ok {
 		t.Fatalf("filtered content type = %T", filtered)
 	}
-	if !strings.Contains(got, `<iframe src="https://youthlin.com/demo/cube/index.html?embed=1&amp;label=R7:A" class="cube-demo" title="魔方模拟器" height="520">fallback</iframe>`) {
+	if !strings.Contains(got, `<iframe data-shortcode-cube src="https://youthlin.com/demo/cube/index.html?embed=1&amp;label=R7:A" class="cube-demo" title="魔方模拟器" height="520">fallback</iframe>`) {
 		t.Fatalf("shortcode not rendered: %s", got)
 	}
 	if strings.Contains(got, `data-wenlog-shortcode`) || strings.Contains(got, `<p><iframe`) {
@@ -476,7 +476,7 @@ func TestPostCommentEnhanceShortcodeDoesNotDependOnSmileySetting(t *testing.T) {
 	source := `[cube]fallback[/cube]`
 	prepared, _ := hooks.ApplyFilters(ctx, hook.FilterPostContentSource, source, hook.PostView{ContentFormat: model.FormatMarkdown}).(string)
 	rendered, _ := hooks.ApplyFilters(ctx, hook.FilterPostContentHTML, renderx.RenderMarkdown(prepared), hook.PostView{ContentFormat: model.FormatMarkdown}).(string)
-	if !strings.Contains(rendered, `<iframe>fallback</iframe>`) {
+	if !strings.Contains(rendered, `<iframe data-shortcode-cube>fallback</iframe>`) {
 		t.Fatalf("configured shortcode should render when only smilies are disabled: %s", rendered)
 	}
 }
@@ -539,7 +539,7 @@ func TestPostCommentEnhanceShortcodeRejectsUnsafeAttrs(t *testing.T) {
 	if !ok {
 		t.Fatalf("filtered content type = %T", filtered)
 	}
-	if !strings.Contains(got, `<iframe src="https://youthlin.com/demo/cube/index.html?embed=1" class="cube-demo">fallback</iframe>`) {
+	if !strings.Contains(got, `<iframe data-shortcode-cube src="https://youthlin.com/demo/cube/index.html?embed=1" class="cube-demo">fallback</iframe>`) {
 		t.Fatalf("safe attrs should render and unsafe attrs should be ignored, got: %s", got)
 	}
 	if strings.Contains(got, "onload") || strings.Contains(got, "javascript:") {
@@ -584,7 +584,7 @@ func TestPostCommentEnhanceShortcodeSourceBoundaries(t *testing.T) {
 
 	t.Run("unknown attribute is ignored", func(t *testing.T) {
 		got := render(`[cube src="https://youthlin.com/demo/cube/index.html" unknown="ignored"]fallback[/cube]`, model.FormatMarkdown)
-		if !strings.Contains(got, `<iframe src="https://youthlin.com/demo/cube/index.html">fallback</iframe>`) || strings.Contains(got, "unknown") {
+		if !strings.Contains(got, `<iframe data-shortcode-cube src="https://youthlin.com/demo/cube/index.html">fallback</iframe>`) || strings.Contains(got, "unknown") {
 			t.Fatalf("unknown attribute handling = %s", got)
 		}
 	})
@@ -649,7 +649,7 @@ func TestPostCommentEnhanceShortcodeSourceBoundaries(t *testing.T) {
 	t.Run("html source renders configured shortcode but preserves code elements", func(t *testing.T) {
 		source := `<p data-demo="[cube]attribute[/cube]">before</p>[cube src="https://youthlin.com/demo/cube/index.html"]fallback[/cube]<pre>[cube]code[/cube]</pre>`
 		got := render(source, model.FormatHTML)
-		if !strings.Contains(got, `<iframe src="https://youthlin.com/demo/cube/index.html">fallback</iframe>`) {
+		if !strings.Contains(got, `<iframe data-shortcode-cube src="https://youthlin.com/demo/cube/index.html">fallback</iframe>`) {
 			t.Fatalf("html shortcode not rendered: %s", got)
 		}
 		if !strings.Contains(got, `[cube]code[/cube]`) {

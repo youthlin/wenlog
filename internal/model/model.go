@@ -95,6 +95,8 @@ type Post struct {
 	Content string `gorm:"type:text"`
 	// ContentMD 是 Markdown 原文(后台编辑回填用;历史导入文章存清洗后的 HTML 当原文)。
 	ContentMD string `gorm:"type:text"`
+	// CustomCSS 是文章/页面详情页专用 CSS。
+	CustomCSS string `gorm:"type:text"`
 	// Excerpt 是摘要(无 more 标记时列表页兜底使用)。
 	Excerpt string `gorm:"type:text"`
 	// AuthorID 是作者用户 ID(关联 User)。
@@ -181,6 +183,7 @@ type PostRevision struct {
 	Title     string    `gorm:"size:512"`
 	ContentMD string    `gorm:"type:text"` // Markdown 原文快照
 	Content   string    `gorm:"type:text"` // 渲染后 HTML 快照
+	CustomCSS string    `gorm:"type:text"` // 文章/页面详情页专用 CSS 快照
 	Excerpt   string    `gorm:"type:text"`
 	CreatedAt time.Time `gorm:"index"`
 }

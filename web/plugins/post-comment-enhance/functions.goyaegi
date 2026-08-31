@@ -649,6 +649,7 @@ func renderShortcodeHTML(api *hook.API, content string) string {
 			return parts[1] + api.EscapeHTML(payload.Body) + parts[4]
 		}
 		attrs := renderPreparedShortcodeAttrs(api, rule, payload.Attrs)
+		attrs = ` data-shortcode-` + api.EscapeHTML(rule.Name) + attrs
 		rendered := "<" + rule.Tag + attrs + ">" + api.EscapeHTML(payload.Body) + "</" + rule.Tag + ">"
 		if rule.Tag == "a" || rule.Tag == "span" {
 			return parts[1] + rendered + parts[4]

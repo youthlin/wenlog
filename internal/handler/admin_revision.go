@@ -96,6 +96,7 @@ func (h *Admin) RevisionRestore(c *gin.Context) {
 	p.Title = rev.Title
 	p.ContentMD = rev.ContentMD
 	p.Content = rev.Content
+	p.CustomCSS = rev.CustomCSS
 	p.Excerpt = rev.Excerpt
 	if err := h.st.SavePost(c, p); err != nil {
 		h.serverError(c, err)

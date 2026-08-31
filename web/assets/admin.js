@@ -411,6 +411,7 @@
   }
 
   var ta = document.getElementById("content_md");
+  var customCSS = document.getElementById("custom_css");
   var editor = document.querySelector("[data-md-editor]");
   var pv = document.getElementById("md_preview");
   var fileInput = document.getElementById("upload_file");
@@ -492,6 +493,20 @@
     return null;
   }
 
+  function currentDraft() {
+    return {
+      content: ta ? ta.value : "",
+      customCSS: customCSS ? customCSS.value : "",
+      savedAt: Date.now()
+    };
+  }
+
+  function draftChanged(saved) {
+    if (!saved) return false;
+    var savedCSS = typeof saved.customCSS === "string" ? saved.customCSS : "";
+    return saved.content !== ta.value || savedCSS !== (customCSS ? customCSS.value : "");
+  }
+
   function postUpdatedAt(form) {
     if (!form) return 0;
     var value = form.getAttribute("data-post-updated-at") || "";
@@ -510,13 +525,15 @@
     var status = document.getElementById("draft_status");
     var saved = parseDraft(localStorage.getItem(key));
     var updatedAt = postUpdatedAt(form);
-    if (saved && saved.content !== ta.value && (!updatedAt || (saved.savedAt && saved.savedAt > updatedAt)) && box) box.hidden = false;
-    if (saved && saved.content === ta.value && saved.savedAt && saved.savedAt <= updatedAt) localStorage.removeItem(key);
+    if (saved && draftChanged(saved) && (!updatedAt || (saved.savedAt && saved.savedAt > updatedAt)) && box) box.hidden = false;
+    if (saved && !draftChanged(saved) && saved.savedAt && saved.savedAt <= updatedAt) localStorage.removeItem(key);
     if (restoreBtn) restoreBtn.addEventListener("click", function () {
       var saved = parseDraft(localStorage.getItem(key));
       ta.value = saved ? saved.content : ta.value;
+      if (customCSS && saved && typeof saved.customCSS === "string") customCSS.value = saved.customCSS;
       if (box) box.hidden = true;
       triggerInput(ta);
+      if (customCSS) triggerInput(customCSS);
       ta.focus();
     });
     if (discardBtn) discardBtn.addEventListener("click", function () {
@@ -525,10 +542,11 @@
       if (status) status.textContent = MSG_DRAFT_DISCARDED;
     });
     var saveDraft = debounce(function () {
-      localStorage.setItem(key, JSON.stringify({ content: ta.value, savedAt: Date.now() }));
+      localStorage.setItem(key, JSON.stringify(currentDraft()));
       if (status) status.textContent = MSG_DRAFT_SAVED;
     }, 800);
     ta.addEventListener("input", saveDraft);
+    if (customCSS) customCSS.addEventListener("input", saveDraft);
     if (form) form.addEventListener("submit", function () { localStorage.removeItem(key); });
   }
 

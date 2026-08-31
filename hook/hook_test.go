@@ -348,6 +348,7 @@ func TestPostViewOfIncludesContentFormat(t *testing.T) {
 		ID:            123,
 		Title:         "Test",
 		Content:       "<p>cached</p>",
+		CustomCSS:     ".cols { width: 33%; }",
 		ContentFormat: model.FormatMarkdown,
 	}, nil)
 	if view == nil {
@@ -355,6 +356,9 @@ func TestPostViewOfIncludesContentFormat(t *testing.T) {
 	}
 	if view.ContentFormat != model.FormatMarkdown {
 		t.Fatalf("PostViewOf content format = %q, want %q", view.ContentFormat, model.FormatMarkdown)
+	}
+	if view.CustomCSS != ".cols { width: 33%; }" {
+		t.Fatalf("PostViewOf custom css = %q, want custom CSS", view.CustomCSS)
 	}
 }
 

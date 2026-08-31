@@ -54,6 +54,16 @@ func TestRenderMarkdownKeepsShortcodePlaceholder(t *testing.T) {
 	}
 }
 
+func TestRenderMarkdownKeepsClassesAndRemovesInlineStyle(t *testing.T) {
+	got := RenderMarkdown(`<div class="columns columns-3" style="width:33%"><p class="item">A</p></div><style>.x{color:red}</style>`)
+	if !strings.Contains(got, `class="columns columns-3"`) || !strings.Contains(got, `class="item"`) {
+		t.Fatalf("class attributes should survive sanitizer, got: %s", got)
+	}
+	if strings.Contains(got, `style=`) || strings.Contains(got, `<style`) || strings.Contains(got, `width:33%`) {
+		t.Fatalf("inline style and style tags should be removed from article content, got: %s", got)
+	}
+}
+
 func TestRenderMarkdownStillRemovesRawIframe(t *testing.T) {
 	got := RenderMarkdown(`<iframe src="https://youthlin.com/demo/cube/index.html"></iframe>`)
 	if strings.Contains(got, `<iframe`) || strings.Contains(got, `src=`) {
@@ -218,6 +228,50 @@ func TestPostContentDoesNotRenderMarkdownCodeBlocksTwice(t *testing.T) {
 	got := string(postContent(&RequestContext{Runtime: &TemplateRuntime{}}, post))
 	if got != want {
 		t.Fatalf("post content rendered Markdown more than once\ngot:  %s\nwant: %s", got, want)
+	}
+}
+
+func TestPostCustomCSSOutputsStyleAndEscapesEndTag(t *testing.T) {
+	got := string(PostCustomCSS(&model.Post{CustomCSS: `.columns { width: 33%; }</style><script>alert(1)</script>`}))
+	if !strings.HasPrefix(got, `<style data-wenlog-post-css>`) || !strings.HasSuffix(got, `</style>`) {
+		t.Fatalf("custom css should be wrapped in a style tag, got: %s", got)
+	}
+	if strings.Contains(strings.TrimSuffix(got, `</style>`), `</style>`) {
+		t.Fatalf("custom css should not be able to close the style tag early, got: %s", got)
+	}
+	if !strings.Contains(got, `.columns { width: 33%; }`) || !strings.Contains(got, `<\/style><script>`) {
+		t.Fatalf("custom css content not preserved as expected, got: %s", got)
+	}
+}
+
+func TestEscapeStyleEndTag(t *testing.T) {
+	tests := []struct {
+		name string
+		css  string
+		want string
+	}{
+		{
+			name: "lowercase end tag",
+			css:  `.a{color:red}</style><script>alert(1)</script>`,
+			want: `.a{color:red}<\/style><script>alert(1)</script>`,
+		},
+		{
+			name: "mixed case end tag",
+			css:  `.a{color:red}</StYlE media="x">body{display:none}`,
+			want: `.a{color:red}<\/style media="x">body{display:none}`,
+		},
+		{
+			name: "prefix without tag close",
+			css:  `.a:before{content:"</styleguide>"}`,
+			want: `.a:before{content:"<\/styleguide>"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := escapeStyleEndTag(tt.css); got != tt.want {
+				t.Fatalf("escapeStyleEndTag() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

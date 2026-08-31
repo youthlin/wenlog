@@ -31,8 +31,8 @@ func RenderMarkdown(md string) string {
 var htmlSanitizer = func() *bluemonday.Policy {
 	p := bluemonday.UGCPolicy()
 	p.AllowAttrs("class").
-		Matching(regexp.MustCompile(`^language-[A-Za-z0-9_+.-]+$`)).
-		OnElements("code")
+		Matching(bluemonday.SpaceSeparatedTokens).
+		Globally()
 	p.AllowAttrs("data-wenlog-shortcode").
 		Matching(regexp.MustCompile(`^[A-Za-z0-9_.~%+-]+$`)).
 		OnElements("span")

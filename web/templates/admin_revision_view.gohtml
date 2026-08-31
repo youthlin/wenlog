@@ -30,7 +30,13 @@
   </section>
 
   <section class="card settings-card">
+    <h3>{{.t.T "自定义 CSS"}}</h3>
+    <pre class="revision-content">{{if .Revision.CustomCSS}}{{.Revision.CustomCSS}}{{else}}{{.t.T "（无自定义 CSS）"}}{{end}}</pre>
+  </section>
+
+  <section class="card settings-card">
     <h3>{{.t.T "渲染预览"}}</h3>
+    {{post_custom_css .Revision}}
     <div class="revision-preview">{{.Revision.Content | safeHTML}}</div>
   </section>
 </div>

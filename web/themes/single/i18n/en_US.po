@@ -2,76 +2,76 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wenlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 12:14:28+0800\n"
+"POT-Creation-Date: 2026-08-31 00:26:59+0800\n"
 "Language: en_US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:18
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:19
 msgid "跳到主要内容"
 msgstr "Skip to main content"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:28
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:29
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:30
 msgid "语言"
 msgstr "Language"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:36
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:37
 msgid "打开菜单"
 msgstr "Open menu"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:63
 msgid "回顶部"
 msgstr "Back to top"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:63
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:64
 msgid "到底部"
 msgstr "Go to bottom"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:69
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:70
 msgid "SQL 执行详情 (%d 条)"
 msgstr "SQL Details (%d items)"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:102
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:188
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:103
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:189
 msgid "%d 条评论"
 msgid_plural "%d 条评论"
 msgstr[0] "%d comment"
 msgstr[1] "%d comments"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:125
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:126
 msgid "返回首页"
 msgstr "Back to home"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:148
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:149
 msgid "草稿预览"
 msgstr "Draft preview"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:153
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:185
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:154
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:186
 msgid "%d 次阅读"
 msgid_plural "%d 次阅读"
 msgstr[0] "%d view"
 msgstr[1] "%d views"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:154
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:189
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:155
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:190
 msgid "编辑"
 msgstr "Edit"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:186
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:187
 msgid "评论已关闭"
 msgstr "Comments are closed"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:187
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:188
 msgid "暂无评论"
 msgstr "No comments"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:192
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:193
 msgid "阅读全文 →"
 msgstr "Read more →"
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:195
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/themes/single/templates/index.gohtml:196
 msgid "没有找到匹配的文章。"
 msgstr "No matching posts found."
 

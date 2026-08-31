@@ -61,6 +61,9 @@
   {{- do_action "admin.post.form.after_textarea" $ -}}
   <p><span class="tip" id="draft_status">{{.t.T "支持 Markdown(兼容 HTML);<!--more--> 标记列表页截断。"}}</span></p>
 
+  <label>{{.t.T "自定义 CSS（仅本文生效）"}}<textarea name="custom_css" id="custom_css" rows="8" spellcheck="false" placeholder=".columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }">{{if .Post}}{{.Post.CustomCSS}}{{end}}</textarea></label>
+  <p class="form-hint">{{.t.T "可在正文 HTML 中使用 class 属性；内联 style 仍会被过滤。"}}</p>
+
   <label>{{.t.T "摘要(可选)"}}<textarea name="excerpt" rows="3">{{if .Post}}{{.Post.Excerpt}}{{end}}</textarea></label>
 
   {{if eq .PostType "post"}}

@@ -166,6 +166,7 @@ type postForm struct {
 	Title         string `form:"title"`
 	Slug          string `form:"slug"`
 	ContentMD     string `form:"content_md"`
+	CustomCSS     string `form:"custom_css"`
 	Excerpt       string `form:"excerpt"`
 	PostType      string `form:"post_type"`
 	Status        string `form:"status"`
@@ -226,6 +227,7 @@ func (h *Admin) SavePost(c *gin.Context) {
 		}
 	}
 	p.Excerpt = f.Excerpt
+	p.CustomCSS = strings.TrimSpace(f.CustomCSS)
 	p.PostType = f.PostType
 	p.Status = f.Status
 	p.CommentStatus = f.CommentStatus
@@ -356,7 +358,19 @@ func (h *Admin) postEditError(c *gin.Context, errMsg string, f postForm, allCate
 	data["AllCategories"] = allCategories
 	data["SelectedCats"] = selectedCats
 	data["TagsCSV"] = f.Tags
-	data["Post"] = &model.Post{ID: f.ID, Title: strings.TrimSpace(f.Title), Slug: strings.TrimSpace(f.Slug), ContentMD: f.ContentMD, Excerpt: f.Excerpt, PostType: f.PostType, Status: f.Status, CommentStatus: f.CommentStatus, MenuOrder: f.MenuOrder, PublishedAt: parsePublishedAt(f.PublishedAt)}
+	data["Post"] = &model.Post{
+		ID:            f.ID,
+		Title:         strings.TrimSpace(f.Title),
+		Slug:          strings.TrimSpace(f.Slug),
+		ContentMD:     f.ContentMD,
+		CustomCSS:     strings.TrimSpace(f.CustomCSS),
+		Excerpt:       f.Excerpt,
+		PostType:      f.PostType,
+		Status:        f.Status,
+		CommentStatus: f.CommentStatus,
+		MenuOrder:     f.MenuOrder,
+		PublishedAt:   parsePublishedAt(f.PublishedAt),
+	}
 	data["IsEdit"] = f.ID > 0
 	c.HTML(http.StatusBadRequest, "admin_post_edit.gohtml", data)
 }
@@ -478,6 +492,9 @@ func (h *Admin) Preview(c *gin.Context) {
 		}
 		html = h.renderer.FilterPostContent(ctx, p)
 	}
+	if css := renderx.PostCustomCSS(p); css != "" {
+		html = css + html
+	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.String(http.StatusOK, string(html))
 }
@@ -499,6 +516,7 @@ func (h *Admin) resolvePostForPreview(c *gin.Context, f postForm, now time.Time)
 	p.Content = renderx.RenderMarkdown(f.ContentMD)
 	p.ContentFormat = model.FormatMarkdown
 	p.Excerpt = f.Excerpt
+	p.CustomCSS = strings.TrimSpace(f.CustomCSS)
 	p.PostType = f.PostType
 	p.Status = f.Status
 	p.CommentStatus = f.CommentStatus

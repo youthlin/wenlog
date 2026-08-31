@@ -40,6 +40,7 @@ func parseTemplates(fsys fs.FS, pattern string) (*template.Template, error) {
 func CommonFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"postURL":          postURL,
+		"post_custom_css":  PostCustomCSS,
 		"categoryURL":      permalink.Category,
 		"tagURL":           permalink.Tag,
 		"safeHTML":         func(s string) template.HTML { return template.HTML(s) },

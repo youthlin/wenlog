@@ -23,6 +23,7 @@ type PostView struct {
 	Slug          string
 	Excerpt       string
 	Content       string
+	CustomCSS     string
 	ContentFormat string
 	AuthorID      uint
 	Status        string
@@ -461,6 +462,7 @@ func toPostView(p *model.Post, loader *store.DataLoader) *PostView {
 		Slug:          p.Slug,
 		Excerpt:       p.Excerpt,
 		Content:       p.Content,
+		CustomCSS:     p.CustomCSS,
 		ContentFormat: p.ContentFormat,
 		AuthorID:      p.AuthorID,
 		Status:        p.Status,

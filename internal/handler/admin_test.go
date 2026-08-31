@@ -270,6 +270,7 @@ func TestPreviewUsesUnsavedFieldsAndExistingPostContext(t *testing.T) {
 	form.Set("title", " Preview title ")
 	form.Set("slug", "Preview Slug")
 	form.Set("content_md", "preview **body**")
+	form.Set("custom_css", ".preview { color: red; }")
 	form.Set("excerpt", "Preview excerpt")
 	form.Set("post_type", model.PostTypePost)
 	form.Set("status", model.StatusDraft)
@@ -286,8 +287,11 @@ func TestPreviewUsesUnsavedFieldsAndExistingPostContext(t *testing.T) {
 	if !strings.Contains(w.Body.String(), "preview <strong>body</strong>") {
 		t.Fatalf("Preview body=%q, want rendered unsaved Markdown", w.Body.String())
 	}
+	if !strings.Contains(w.Body.String(), `<style data-wenlog-post-css>.preview { color: red; }</style>`) {
+		t.Fatalf("Preview body=%q, want custom CSS style block", w.Body.String())
+	}
 	wantPublishedAt := time.Date(2026, 8, 23, 10, 30, 0, 0, time.Local)
-	if got.ID != post.ID || got.Title != "Preview title" || got.Slug != "preview-slug" || got.Excerpt != "Preview excerpt" || got.Status != model.StatusDraft || got.PostType != model.PostTypePost {
+	if got.ID != post.ID || got.Title != "Preview title" || got.Slug != "preview-slug" || got.Excerpt != "Preview excerpt" || got.CustomCSS != ".preview { color: red; }" || got.Status != model.StatusDraft || got.PostType != model.PostTypePost {
 		t.Fatalf("post.footer_html preview payload = %+v", got)
 	}
 	if got.AuthorID != author.ID || got.Author.ID != author.ID || got.Author.Username != author.Username || got.Author.DisplayName != author.DisplayName {

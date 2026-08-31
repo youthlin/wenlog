@@ -159,6 +159,38 @@ func renderPostContent(ctx context.Context, h hook.Executor, payload any, post a
 	return out
 }
 
+func postCustomCSS(post any) template.HTML {
+	return PostCustomCSS(post)
+}
+
+// PostCustomCSS 输出文章/页面详情页专用 CSS。
+func PostCustomCSS(post any) template.HTML {
+	css := strings.TrimSpace(reflectStringField(post, "CustomCSS"))
+	if css == "" {
+		return ""
+	}
+	return template.HTML(`<style data-wenlog-post-css>` +
+		escapeStyleEndTag(css) +
+		`</style>`)
+}
+
+// escapeStyleEndTag 防止用户 CSS 提前闭合宿主 <style> 标签。
+func escapeStyleEndTag(css string) string {
+	const styleEndPrefix = "</style"
+	var out strings.Builder
+	for i := 0; i < len(css); {
+		if i+len(styleEndPrefix) <= len(css) &&
+			strings.EqualFold(css[i:i+len(styleEndPrefix)], styleEndPrefix) {
+			_, _ = out.WriteString(`<\/style`)
+			i += len(styleEndPrefix)
+			continue
+		}
+		_ = out.WriteByte(css[i])
+		i++
+	}
+	return out.String()
+}
+
 func postContentSource(post any) (source, format string, id uint) {
 	if isNilAny(post) {
 		return "", model.FormatHTML, 0

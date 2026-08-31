@@ -426,6 +426,7 @@ body.nav-open { overflow: hidden; }
 .post-content h3 { font-size: 22px; font-weight: 700; margin: 1.5em 0 0.75em; letter-spacing: -0.015em; }
 .post-content h4 { font-size: 18px; font-weight: 700; margin: 1.25em 0 0.5em; }
 .post-content img { height: auto; border-radius: 4px; }
+.post-content iframe { width: 100%; max-width: 100%; border: none; }
 .post-content blockquote {
   margin: 1.5em 0;
   padding: 0 0 0 20px;

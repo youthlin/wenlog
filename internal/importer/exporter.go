@@ -230,6 +230,8 @@ type exportXMLComment struct {
 	Parent   int    `xml:"wp:comment_parent,omitempty"`
 }
 
+const postMetaCustomCSS = "wenlog_custom_css"
+
 type exportXMLItem struct {
 	Title         string                 `xml:"title"`
 	Link          string                 `xml:"link,omitempty"`
@@ -297,7 +299,18 @@ func buildExportRSS(ctx *exportContext, opts ExportOptions) exportRSS {
 			PostType:      p.PostType,
 			MenuOrder:     p.MenuOrder,
 			CommentStatus: util.FirstNonEmpty(p.CommentStatus, "open"),
-			Metas:         []exportXMLMeta{{Key: "views", Value: strconv.FormatInt(p.Views, 10)}},
+			Metas: []exportXMLMeta{
+				{
+					Key:   "views",
+					Value: strconv.FormatInt(p.Views, 10),
+				},
+			},
+		}
+		if strings.TrimSpace(p.CustomCSS) != "" {
+			item.Metas = append(item.Metas, exportXMLMeta{
+				Key:   postMetaCustomCSS,
+				Value: p.CustomCSS,
+			})
 		}
 		for _, c := range p.Categories {
 			item.Categories = append(item.Categories, exportXMLCategoryRef{Domain: "category", Nicename: c.Slug, Name: c.Name})

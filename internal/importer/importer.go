@@ -187,10 +187,13 @@ func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, wpAuthorIDToTar
 	}
 
 	var views int64
+	var customCSS string
 	for _, m := range it.Metas {
 		switch m.Key {
 		case "views":
 			views, _ = strconv.ParseInt(strings.TrimSpace(m.Value), 10, 64)
+		case postMetaCustomCSS:
+			customCSS = m.Value
 		}
 	}
 
@@ -201,7 +204,7 @@ func importOneItem(db *gorm.DB, it *wxr.Item, targetUserID uint, wpAuthorIDToTar
 
 	post := model.Post{
 		ID: uint(it.PostID), Title: it.Title, Slug: it.PostName,
-		Content: content, ContentMD: content, Excerpt: excerpt, Status: status,
+		Content: content, ContentMD: content, CustomCSS: customCSS, Excerpt: excerpt, Status: status,
 		AuthorID: targetUserID,
 		PostType: it.PostType, ContentFormat: model.FormatHTML,
 		CommentStatus: commentStatus, Views: views, MenuOrder: it.MenuOrder,

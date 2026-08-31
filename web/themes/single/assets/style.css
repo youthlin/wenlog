@@ -215,6 +215,7 @@ img { max-width: 100%; height: auto; }
 }
 .post-content blockquote p:last-child { margin-bottom: 0; }
 .post-content img { border-radius: var(--radius); }
+.post-content iframe { width: 100%; max-width: 100%; border: none; }
 .post-content figure { margin: 24px 0; text-align: center; }
 .post-content figcaption { color: var(--fg-muted); font-size: 13px; margin-top: 8px; }
 .post-content hr {

@@ -1261,6 +1261,7 @@ body.admin.nav-open { overflow: hidden; }
 .md-editor.is-edit .md-preview { display: none; }
 .md-editor.is-preview textarea { display: none; }
 .md-preview img { max-width: 100%; }
+.md-preview iframe { width: 100%; max-width: 100%; border: none; }
 .editor-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 /* 11.3 上传选择器 */
 .upload-btn { display: inline-block; }

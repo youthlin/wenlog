@@ -10,6 +10,7 @@
 {{- end}}
 {{head_meta . -}}
 <link rel="stylesheet" href="/theme-assets/style.css?theme={{.ThemeName}}&v={{.ThemeVersion}}">
+{{- if or (eq .PageType "post") (eq .PageType "page")}}{{post_custom_css .Post}}{{end}}
 <link rel="alternate" type="application/rss+xml" title="{{.SiteName}}" href="/feed">
 <link rel="alternate" type="application/atom+xml" title="{{.SiteName}}" href="/atom">
 {{do_action "head.end" .}}

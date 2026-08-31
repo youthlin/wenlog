@@ -162,6 +162,10 @@ const (
 	// 用法: {{post_content .Post}}
 	tplFuncPostContent = "post_content"
 
+	// tplFuncPostCustomCSS 输出文章/页面详情页专用 CSS。
+	// 用法: {{post_custom_css .Post}}
+	tplFuncPostCustomCSS = "post_custom_css"
+
 	// tplFuncPostTags 输出文章标签链接列表。
 	// 用法: {{post_tags .Post}}
 	tplFuncPostTags = "post_tags"
@@ -259,6 +263,7 @@ func cloneTemplateForRequest(tpl *template.Template, ctx *RequestContext) (*temp
 		tplFuncPostTitleText:      func(post any) string { return postTitleText(ctx, post) },
 		tplFuncPostExcerpt:        func(post any) template.HTML { return postExcerpt(ctx, post) },
 		tplFuncPostContent:        func(post any) template.HTML { return postContent(ctx, post) },
+		tplFuncPostCustomCSS:      func(post any) template.HTML { return postCustomCSS(post) },
 		tplFuncPostTags:           func(post any) template.HTML { return postTags(post) },
 		tplFuncPostNavigation:     func(data any, classes ...string) template.HTML { return postNavigation(ctx, data, classes...) },
 		tplFuncBodyClass:          func(data any) string { return bodyClass(data) },
@@ -290,6 +295,7 @@ func markTplFuncMap() template.FuncMap {
 		tplFuncPostTitleText:      func(data any) string { return "" },
 		tplFuncPostExcerpt:        func(post any) template.HTML { return "" },
 		tplFuncPostContent:        func(post any) template.HTML { return "" },
+		tplFuncPostCustomCSS:      func(post any) template.HTML { return "" },
 		tplFuncPostTags:           func(post any) template.HTML { return "" },
 		tplFuncPostNavigation:     func(data any, classes ...string) template.HTML { return "" },
 		tplFuncBodyClass:          func(data any) string { return "" },

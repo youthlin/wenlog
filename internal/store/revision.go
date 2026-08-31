@@ -19,6 +19,7 @@ func (s *Store) CreateRevision(ctx context.Context, p *model.Post) error {
 		latest.Title == p.Title &&
 		latest.ContentMD == p.ContentMD &&
 		latest.Content == p.Content &&
+		latest.CustomCSS == p.CustomCSS &&
 		latest.Excerpt == p.Excerpt {
 		return nil // 内容无变化，跳过
 	}
@@ -28,6 +29,7 @@ func (s *Store) CreateRevision(ctx context.Context, p *model.Post) error {
 		Title:     p.Title,
 		ContentMD: p.ContentMD,
 		Content:   p.Content,
+		CustomCSS: p.CustomCSS,
 		Excerpt:   p.Excerpt,
 	}
 	if err := s.DB(ctx).Create(rev).Error; err != nil {

@@ -60,6 +60,7 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
       <category domain="category" nicename="go"><![CDATA[Go]]></category>
       <category domain="post_tag" nicename="backend"><![CDATA[Backend]]></category>
       <wp:postmeta><wp:meta_key>views</wp:meta_key><wp:meta_value>42</wp:meta_value></wp:postmeta>
+      <wp:postmeta><wp:meta_key>wenlog_custom_css</wp:meta_key><wp:meta_value><![CDATA[.cols { width: 33%; }]]></wp:meta_value></wp:postmeta>
       <wp:comment>
         <wp:comment_id>900</wp:comment_id>
         <wp:comment_user_id>5</wp:comment_user_id>
@@ -100,6 +101,9 @@ func TestImportReaderAssignsTargetUserAndUpserts(t *testing.T) {
 	}
 	if p.Views != 42 {
 		t.Fatalf("views = %d, want 42", p.Views)
+	}
+	if p.CustomCSS != ".cols { width: 33%; }" {
+		t.Fatalf("custom_css = %q, want custom CSS", p.CustomCSS)
 	}
 	wantPublishedAt := time.Date(2024, 1, 2, 3, 4, 5, 0, time.Local)
 	if !p.PublishedAt.Equal(wantPublishedAt) {
@@ -211,7 +215,7 @@ func TestExportXMLRoundTrip(t *testing.T) {
 	if err := db.Save(&model.Setting{Key: "site_name", Value: "导出测试站"}).Error; err != nil {
 		t.Fatalf("seed setting: %v", err)
 	}
-	post := model.Post{ID: 1001, Title: "文章", Slug: "article", Content: "<p>Hello</p>", Excerpt: "摘要", AuthorID: 9, Status: model.StatusPublished, PostType: model.PostTypePost, ContentFormat: model.FormatHTML, CommentStatus: "open"}
+	post := model.Post{ID: 1001, Title: "文章", Slug: "article", Content: "<p>Hello</p>", CustomCSS: ".cols { width: 33%; }", Excerpt: "摘要", AuthorID: 9, Status: model.StatusPublished, PostType: model.PostTypePost, ContentFormat: model.FormatHTML, CommentStatus: "open"}
 	page := model.Post{ID: 1002, Title: "页面", Slug: "about", Content: "<p>About</p>", AuthorID: 9, Status: model.StatusPublished, PostType: model.PostTypePage, ContentFormat: model.FormatHTML, CommentStatus: "closed"}
 	cat := model.Category{ID: 11, Name: "Go", Slug: "go"}
 	tag := model.Tag{ID: 12, Name: "后端", Slug: "backend"}
@@ -264,6 +268,9 @@ func TestExportXMLRoundTrip(t *testing.T) {
 	}
 	if importedPost.AuthorID != 77 {
 		t.Fatalf("author_id = %d, want 77", importedPost.AuthorID)
+	}
+	if importedPost.CustomCSS != post.CustomCSS {
+		t.Fatalf("custom_css = %q, want %q", importedPost.CustomCSS, post.CustomCSS)
 	}
 	if len(importedPost.Categories) != 1 || importedPost.Categories[0].Slug != "go" {
 		t.Fatalf("categories = %+v, want go", importedPost.Categories)

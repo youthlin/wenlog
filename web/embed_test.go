@@ -49,6 +49,30 @@ func TestMarkdownPreviewSubmitsFullPostForm(t *testing.T) {
 	if !strings.Contains(script, `new URLSearchParams(new FormData(postForm))`) {
 		t.Fatal("Markdown preview must submit the full post form so hooks receive unsaved post fields")
 	}
+	if !strings.Contains(script, `customCSS: customCSS ? customCSS.value : ""`) {
+		t.Fatal("local draft saving must include per-post custom CSS")
+	}
+}
+
+func TestBuiltinThemesRenderPostCustomCSSOnSingularPages(t *testing.T) {
+	for _, file := range []string{
+		"themes/default/templates/header.gohtml",
+		"themes/twentytwenty/templates/header.gohtml",
+		"themes/spread/templates/header.gohtml",
+		"themes/single/templates/index.gohtml",
+	} {
+		data, err := fs.ReadFile(web.Themes, file)
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		templateText := string(data)
+		if !strings.Contains(templateText, `post_custom_css .Post`) {
+			t.Fatalf("%s must render per-post custom CSS", file)
+		}
+		if !strings.Contains(templateText, `eq .PageType "post"`) || !strings.Contains(templateText, `eq .PageType "page"`) {
+			t.Fatalf("%s must limit per-post custom CSS to post/page detail pages", file)
+		}
+	}
 }
 
 func TestAdminUIRegressionContracts(t *testing.T) {
@@ -64,6 +88,8 @@ func TestAdminUIRegressionContracts(t *testing.T) {
 		{"admin_plugin_settings.gohtml", `<script src="/assets/admin.js?v={{.AssetVersion}}"></script>`},
 		{"admin_menus.gohtml", `<button type="submit" class="btn">{{.t.T "保存菜单"}}</button>`},
 		{"admin_import.gohtml", `class="cards settings-cards migration-cards"`},
+		{"admin_post_edit.gohtml", `name="custom_css"`},
+		{"admin_revision_view.gohtml", `post_custom_css .Revision`},
 	}
 	for _, check := range checks {
 		data, err := fs.ReadFile(tplFS, check.path)
