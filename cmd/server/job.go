@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/mail"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/youthlin/wenlog/internal/consts"
+	"github.com/youthlin/wenlog/internal/email"
 	"github.com/youthlin/wenlog/internal/store"
 	"github.com/youthlin/wenlog/internal/util"
 )
@@ -103,6 +108,9 @@ func autoBackupDB(ctx context.Context, st *store.Store) {
 				slog.ErrorContext(ctx, "备份数据库失败", slog.Any("error", err))
 			} else {
 				slog.InfoContext(ctx, "备份数据库成功", slog.String("path", path))
+				if err := sendAutoBackupEmail(ctx, st, path); err != nil {
+					slog.ErrorContext(ctx, "自动备份邮件发送失败，本地备份已保留", slog.String("path", path), slog.Any("error", err))
+				}
 				_ = st.CleanOldBackups(keep)
 			}
 		}
@@ -144,4 +152,45 @@ func parseAutoBackupTime(value string) (hour int, minute int, ok bool) {
 		return 0, 0, false
 	}
 	return hour, minute, true
+}
+
+// sendAutoBackupEmail 在备份完成后读取最新邮件设置；发送不影响本地备份保留。
+func sendAutoBackupEmail(ctx context.Context, st *store.Store, path string) error {
+	settings, err := st.GetSettings(ctx, consts.SettingsAutoBackupEmailEnabled, consts.SettingsAutoBackupEmailTo,
+		consts.SettingsSMTPHost, consts.SettingsSMTPPort, consts.SettingsSMTPUser, consts.SettingsSMTPPassword,
+		consts.SettingsSMTPFrom, consts.SettingsSiteName, consts.SettingsSiteURL)
+	if err != nil {
+		return err
+	}
+	if !strings.EqualFold(settings[consts.SettingsAutoBackupEmailEnabled], "true") {
+		return nil
+	}
+	to := strings.TrimSpace(settings[consts.SettingsAutoBackupEmailTo])
+	address, err := mail.ParseAddress(to)
+	if err != nil || address.Address != to || strings.ContainsAny(to, "\r\n") {
+		return fmt.Errorf("无效的自动备份收件人邮箱")
+	}
+	cfg := email.ConfigFromSettings(settings)
+	if !cfg.Configured() {
+		return fmt.Errorf("SMTP 未配置")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("读取备份文件失败: %w", err)
+	}
+	siteName := strings.TrimSpace(settings[consts.SettingsSiteName])
+	if siteName == "" {
+		siteName = consts.SettingsSiteNameDefault
+	}
+	now := time.Now()
+	subject := fmt.Sprintf("%s - 数据库备份 %s", siteName, now.Format("2006-01-02 15:04"))
+	body := fmt.Sprintf("这是 %s 的数据库备份文件，备份时间：%s。", siteName, now.Format("2006-01-02 15:04:05"))
+	if siteURL := strings.TrimSpace(settings[consts.SettingsSiteURL]); siteURL != "" {
+		body += "\n\n" + siteURL
+	}
+	if err := cfg.SendWithAttachment(to, subject, body, filepath.Base(path), data); err != nil {
+		return err
+	}
+	slog.InfoContext(ctx, "自动备份邮件发送成功", slog.String("path", path))
+	return nil
 }

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wenlog\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-31 22:43+0800\n"
+"POT-Creation-Date: 2026-11-26 20:31+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,51 +52,60 @@ msgid "保留数量"
 msgstr ""
 
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:32
-msgid "保存自动备份设置"
+msgid "通过邮件发送备份"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:37
-msgid "邮件备份"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:38
-msgid "创建备份并通过邮件发送到指定邮箱。"
-msgstr ""
-
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:41
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:33
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:44
 msgid "收件人邮箱"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:44
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:34
+msgid "请先在 设置-常规-SMTP邮件设置 中配置好"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:35
+msgid "保存自动备份设置"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:40
+msgid "邮件备份"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:41
+msgid "创建备份并通过邮件发送到指定邮箱。"
+msgstr ""
+
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:47
 msgid "备份并发送邮件"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:51
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:54
 msgid "备份列表"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:56
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:65
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:59
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:68
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_edit_files.gohtml:284
 msgid "文件名"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:57
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:66
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:60
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:69
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_uploads.gohtml:11
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_uploads.gohtml:27
 msgid "大小"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:58
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:67
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:61
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:70
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_uploads.gohtml:11
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_uploads.gohtml:28
 msgid "时间"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:59
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:68
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:62
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:71
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:26
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:109
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_menus.gohtml:36
@@ -123,19 +132,19 @@ msgstr ""
 msgid "操作"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:69
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:72
 msgid "确定要从该备份恢复吗？当前数据将被覆盖。"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:72
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:75
 msgid "恢复"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:74
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:77
 msgid "确定要删除此备份吗？"
 msgstr ""
 
-#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:77
+#: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_backup.gohtml:80
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:20
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:111
 #: /data00/home/youthlin.chen/go/src/github.com/youthlin/wenlog/web/templates/admin_comments.gohtml:123
@@ -2650,89 +2659,93 @@ msgstr ""
 msgid "用户名仅支持字母、数字、下划线和连字符，长度 2-32 个字符"
 msgstr ""
 
-#: internal/handler/admin_backup.go:22 internal/handler/admin_backup.go:171
-#: internal/handler/admin_backup.go:183
+#: internal/handler/admin_backup.go:23 internal/handler/admin_backup.go:187
+#: internal/handler/admin_backup.go:199
 msgid "数据库备份"
 msgstr ""
 
-#: internal/handler/admin_backup.go:41 internal/handler/admin_backup.go:61
+#: internal/handler/admin_backup.go:42 internal/handler/admin_backup.go:62
 msgid "备份失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:46
+#: internal/handler/admin_backup.go:47
 #, c-format
 msgid "备份成功: %s"
 msgstr ""
 
-#: internal/handler/admin_backup.go:54
+#: internal/handler/admin_backup.go:55
 msgid "请输入收件人邮箱"
 msgstr ""
 
-#: internal/handler/admin_backup.go:73
+#: internal/handler/admin_backup.go:74
 msgid "读取备份文件失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:80
+#: internal/handler/admin_backup.go:81 internal/handler/admin_backup.go:118
 msgid "SMTP 未配置，请先在设置中配置邮件服务"
-msgstr ""
-
-#: internal/handler/admin_backup.go:86
-#, c-format
-msgid "%s - 数据库备份 %s"
 msgstr ""
 
 #: internal/handler/admin_backup.go:87
 #, c-format
+msgid "%s - 数据库备份 %s"
+msgstr ""
+
+#: internal/handler/admin_backup.go:88
+#, c-format
 msgid "这是 %s 的数据库备份文件，备份时间：%s。"
 msgstr ""
 
-#: internal/handler/admin_backup.go:91
+#: internal/handler/admin_backup.go:92
 msgid "邮件发送失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:95
+#: internal/handler/admin_backup.go:96
 #, c-format
 msgid "备份已发送到 %s"
 msgstr ""
 
-#: internal/handler/admin_backup.go:104
+#: internal/handler/admin_backup.go:105
 msgid "自动备份时间不合法"
 msgstr ""
 
-#: internal/handler/admin_backup.go:119
+#: internal/handler/admin_backup.go:114
+msgid "请输入有效的收件人邮箱"
+msgstr ""
+
+#: internal/handler/admin_backup.go:135
 msgid "自动备份设置已保存"
 msgstr ""
 
-#: internal/handler/admin_backup.go:127
+#: internal/handler/admin_backup.go:143
 msgid "请选择要恢复的备份文件"
 msgstr ""
 
-#: internal/handler/admin_backup.go:134
+#: internal/handler/admin_backup.go:150
 msgid "无效的备份文件名"
 msgstr ""
 
-#: internal/handler/admin_backup.go:140
+#: internal/handler/admin_backup.go:156
 msgid "备份文件不存在"
 msgstr ""
 
-#: internal/handler/admin_backup.go:145
+#: internal/handler/admin_backup.go:161
 msgid "恢复失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:149
+#: internal/handler/admin_backup.go:165
 #, c-format
 msgid "数据库已从 %s 恢复成功"
 msgstr ""
 
-#: internal/handler/admin_backup.go:157
+#: internal/handler/admin_backup.go:173
 msgid "请指定要删除的备份文件"
 msgstr ""
 
-#: internal/handler/admin_backup.go:162
+#: internal/handler/admin_backup.go:178
 msgid "删除失败: %v"
 msgstr ""
 
-#: internal/handler/admin_backup.go:166
+#: internal/handler/admin_backup.go:182
 #, c-format
 msgid "备份文件 %s 已删除"
 msgstr ""
@@ -3791,7 +3804,7 @@ msgstr ""
 msgid "组件配置已保存"
 msgstr ""
 
-#: internal/handler/auth.go:196
+#: internal/handler/auth.go:186
 #, c-format
 msgid ""
 "\n"

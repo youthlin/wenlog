@@ -147,17 +147,7 @@ func smtpConfigFromStore(ctx context.Context, st *store.Store) email.Config {
 }
 
 func smtpConfigFromSettings(settings map[string]string) email.Config {
-	port := 0
-	if p := settings[consts.SettingsSMTPPort]; p != "" {
-		port, _ = strconv.Atoi(p)
-	}
-	return email.Config{
-		Host:     settings[consts.SettingsSMTPHost],
-		Port:     port,
-		User:     settings[consts.SettingsSMTPUser],
-		Password: settings[consts.SettingsSMTPPassword],
-		From:     settings[consts.SettingsSMTPFrom],
-	}
+	return email.ConfigFromSettings(settings)
 }
 
 func configuredSiteURL(ctx context.Context, st *store.Store) (string, bool) {

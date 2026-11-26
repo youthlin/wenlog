@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -887,10 +888,20 @@ func writeDefaultCommentItem(out *strings.Builder, ctx *RequestContext,
 	util.WriteString(out, `">#`)
 	util.WriteString(out, strconv.FormatUint(uint64(id), 10))
 	util.WriteString(out, `</a>`)
-	// author
-	util.WriteString(out, `<span class="comment-author">`)
-	util.WriteString(out, author)
-	util.WriteString(out, `</span>`)
+	// 评论者网址来自用户输入或历史导入，只为有效 HTTP/HTTPS 地址生成链接。
+	website, err := url.Parse(strings.TrimSpace(reflectStringField(comment, "URL")))
+	if err == nil && website.Hostname() != "" &&
+		(strings.EqualFold(website.Scheme, "http") || strings.EqualFold(website.Scheme, "https")) {
+		util.WriteString(out, `<a class="comment-author" href="`)
+		util.WriteString(out, html.EscapeString(website.String()))
+		util.WriteString(out, `" target="_blank" rel="ugc nofollow noopener noreferrer">`)
+		util.WriteString(out, author)
+		util.WriteString(out, `</a>`)
+	} else {
+		util.WriteString(out, `<span class="comment-author">`)
+		util.WriteString(out, author)
+		util.WriteString(out, `</span>`)
+	}
 	// badges
 	if commenterRole != "" {
 		var roleTitle string

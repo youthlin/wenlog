@@ -9,8 +9,11 @@ import (
 	"net"
 	"net/smtp"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/youthlin/wenlog/internal/consts"
 )
 
 const smtpTimeout = 10 * time.Second
@@ -22,6 +25,18 @@ type Config struct {
 	User     string // user@example.com
 	Password string
 	From     string // 发件人地址
+}
+
+// ConfigFromSettings 供后台和定时任务共用 SMTP 设置解析。
+func ConfigFromSettings(settings map[string]string) Config {
+	port, _ := strconv.Atoi(settings[consts.SettingsSMTPPort])
+	return Config{
+		Host:     settings[consts.SettingsSMTPHost],
+		Port:     port,
+		User:     settings[consts.SettingsSMTPUser],
+		Password: settings[consts.SettingsSMTPPassword],
+		From:     settings[consts.SettingsSMTPFrom],
+	}
 }
 
 // Configured 返回当前配置是否足以展示/启用邮件能力。
@@ -106,6 +121,8 @@ func (c Config) newClient(addr string) (*smtp.Client, net.Conn, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("连接 SMTP 服务器失败: %w", err)
 	}
+	// SMTP 建连后还会等待服务器欢迎消息，也必须受超时约束。
+	_ = conn.SetDeadline(time.Now().Add(smtpTimeout))
 	client, err := smtp.NewClient(conn, c.Host)
 	if err != nil {
 		_ = conn.Close()
@@ -170,7 +187,14 @@ func buildMultipartMessage(from, to, subject, body, filename string, data []byte
 	sb.WriteString("\"\r\n")
 	sb.WriteString("Content-Transfer-Encoding: base64\r\n")
 	sb.WriteString("\r\n")
-	sb.WriteString(base64.StdEncoding.EncodeToString(data))
+	// MIME base64 每行最多 76 字符，避免数据库附件超出 SMTP 行长限制。
+	encoded := base64.StdEncoding.EncodeToString(data)
+	for len(encoded) > 76 {
+		sb.WriteString(encoded[:76])
+		sb.WriteString("\r\n")
+		encoded = encoded[76:]
+	}
+	sb.WriteString(encoded)
 	sb.WriteString("\r\n")
 
 	sb.WriteString("--")
@@ -188,7 +212,7 @@ func writeHeaders(sb *strings.Builder, from, to, subject string) {
 	sb.WriteString(to)
 	sb.WriteString("\r\n")
 	sb.WriteString("Subject: ")
-	sb.WriteString(subject)
+	sb.WriteString(mime.QEncoding.Encode("UTF-8", subject))
 	sb.WriteString("\r\n")
 	sb.WriteString("MIME-Version: 1.0\r\n")
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/mail"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -105,17 +106,32 @@ func (h *Admin) SaveBackupSettings(c *gin.Context) {
 		return
 	}
 	keep := positiveIntSetting(c.PostForm("auto_backup_keep"), consts.SettingsAutoBackupKeepDefault)
-	settings := map[string]string{
-		consts.SettingsAutoBackupEnabled: strconv.FormatBool(enabled),
-		consts.SettingsAutoBackupTime:    backupTime,
-		consts.SettingsAutoBackupKeep:    strconv.Itoa(keep),
-	}
-	for key, value := range settings {
-		if err := h.st.SetSetting(c, key, value); err != nil {
-			h.serverError(c, err)
+	emailEnabled := c.PostForm("auto_backup_email_enabled") == "on"
+	emailTo := strings.TrimSpace(c.PostForm("auto_backup_email_to"))
+	if emailEnabled {
+		address, err := mail.ParseAddress(emailTo)
+		if err != nil || address.Address != emailTo || strings.ContainsAny(emailTo, "\r\n") {
+			h.backupError(c, tr.T("请输入有效的收件人邮箱"))
+			return
+		}
+		if !smtpConfigFromStore(c, h.st).Configured() {
+			h.backupError(c, tr.T("SMTP 未配置，请先在设置中配置邮件服务"))
 			return
 		}
 	}
+
+	settings := map[string]string{
+		consts.SettingsAutoBackupEnabled:      strconv.FormatBool(enabled),
+		consts.SettingsAutoBackupTime:         backupTime,
+		consts.SettingsAutoBackupKeep:         strconv.Itoa(keep),
+		consts.SettingsAutoBackupEmailEnabled: strconv.FormatBool(emailEnabled),
+		consts.SettingsAutoBackupEmailTo:      emailTo,
+	}
+	if err := h.st.UpdateSettings(c, settings, nil); err != nil {
+		h.serverError(c, err)
+		return
+	}
+
 	h.backupSuccess(c, tr.T("自动备份设置已保存"))
 }
 
@@ -191,7 +207,7 @@ func (h *Admin) backupSuccess(c *gin.Context, msg string) {
 }
 
 func (h *Admin) injectBackupSettings(c *gin.Context, data gin.H) {
-	settings, err := h.st.GetSettings(c, consts.SettingsAutoBackupEnabled, consts.SettingsAutoBackupTime, consts.SettingsAutoBackupKeep)
+	settings, err := h.st.GetSettings(c, consts.SettingsAutoBackupEnabled, consts.SettingsAutoBackupTime, consts.SettingsAutoBackupKeep, consts.SettingsAutoBackupEmailEnabled, consts.SettingsAutoBackupEmailTo)
 	if err != nil && h.log != nil {
 		h.log.ErrorContext(c, "get backup settings", "error", err)
 	}
@@ -207,6 +223,16 @@ func (h *Admin) injectBackupSettings(c *gin.Context, data gin.H) {
 	data["AutoBackupEnabled"] = enabled
 	data["AutoBackupTime"] = backupTime
 	data["AutoBackupKeep"] = keep
+	data["AutoBackupEmailEnabled"] = strings.EqualFold(settings[consts.SettingsAutoBackupEmailEnabled], "true")
+	data["AutoBackupEmailTo"] = settings[consts.SettingsAutoBackupEmailTo]
+	// 校验失败时保留输入，便于修正后重试。
+	if data["Error"] != nil && c.Request.Method == http.MethodPost && c.Request.URL.Path == "/admin/backup/settings" {
+		data["AutoBackupEnabled"] = c.PostForm("auto_backup_enabled") == "on"
+		data["AutoBackupTime"] = c.PostForm("auto_backup_time")
+		data["AutoBackupKeep"] = c.PostForm("auto_backup_keep")
+		data["AutoBackupEmailEnabled"] = c.PostForm("auto_backup_email_enabled") == "on"
+		data["AutoBackupEmailTo"] = strings.TrimSpace(c.PostForm("auto_backup_email_to"))
+	}
 }
 
 func validBackupTime(value string) bool {

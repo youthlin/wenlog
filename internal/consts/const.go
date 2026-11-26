@@ -45,11 +45,13 @@ const (
 	// GitHub Release 资产下载镜像;为空时直接从 GitHub 下载。
 	SettingsUpdateDownloadMirror = "update_download_mirror"
 	// 自动备份设置
-	SettingsAutoBackupEnabled     = "auto_backup_enabled"
-	SettingsAutoBackupTime        = "auto_backup_time"
-	SettingsAutoBackupKeep        = "auto_backup_keep"
-	SettingsAutoBackupTimeDefault = "03:00"
-	SettingsAutoBackupKeepDefault = 10
+	SettingsAutoBackupEnabled      = "auto_backup_enabled"
+	SettingsAutoBackupTime         = "auto_backup_time"
+	SettingsAutoBackupKeep         = "auto_backup_keep"
+	SettingsAutoBackupEmailEnabled = "auto_backup_email_enabled"
+	SettingsAutoBackupEmailTo      = "auto_backup_email_to"
+	SettingsAutoBackupTimeDefault  = "03:00"
+	SettingsAutoBackupKeepDefault  = 10
 	// 日志级别 (debug/info/warn/error)
 	SettingsLogLevel        = "log_level"
 	SettingsLogLevelDefault = "info"

@@ -29,6 +29,9 @@
         <label>{{.t.T "执行时间"}}<input type="time" name="auto_backup_time" value="{{.AutoBackupTime}}" required></label>
         <label>{{.t.T "保留数量"}}<input type="number" min="1" name="auto_backup_keep" value="{{.AutoBackupKeep}}" required></label>
       </div>
+      <label class="inline-checkbox backup-enable-checkbox"><input type="checkbox" name="auto_backup_email_enabled" {{if .AutoBackupEmailEnabled}}checked{{end}}> {{.t.T "通过邮件发送备份"}}</label>
+      <label>{{.t.T "收件人邮箱"}}<input type="email" name="auto_backup_email_to" value="{{.AutoBackupEmailTo}}" placeholder="user@example.com"></label>
+      <p class="tip">* {{.t.T "请先在 设置-常规-SMTP邮件设置 中配置好"}}</p>
       <p><button type="submit" class="btn">{{.t.T "保存自动备份设置"}}</button></p>
     </form>
   </section>
