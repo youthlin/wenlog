@@ -21,7 +21,7 @@
             <h3>{{.t.T "文件列表"}}</h3>
             <button type="button" class="theme-editor-toggle" id="file-tree-toggle" onclick="toggleFileTree()" aria-label="{{.t.T "切换文件列表"}}">☰</button>
           </div>
-          <select id="resource-kind-selector" onchange="switchKind(this.value)" style="width:100%;margin-bottom:0.5rem;">
+          <select id="resource-kind-selector" onchange="switchKind(this.value)" class="widget-add-select theme-editor-select">
             <option value="theme" {{if eq .EditKind "theme"}}selected{{end}}>{{.t.T "主题"}}</option>
             <option value="plugin" {{if eq .EditKind "plugin"}}selected{{end}}>{{.t.T "插件"}}</option>
             <option value="template" {{if eq .EditKind "template"}}selected{{end}}>{{.t.T "项目模板"}}</option>
@@ -29,7 +29,7 @@
             <option value="i18n" {{if eq .EditKind "i18n"}}selected{{end}}>{{.t.T "项目翻译"}}</option>
           </select>
           {{if eq .EditKind "plugin"}}
-          <select id="plugin-selector" onchange="switchPlugin(this.value)" style="width:100%;margin-bottom:0.5rem;">
+          <select id="plugin-selector" onchange="switchPlugin(this.value)" class="widget-add-select theme-editor-select">
             {{range .Plugins}}
             <option value="{{.ID}}" {{if eq .ID $.EditPlugin}}selected{{end}}>{{.Name}} ({{.ID}})</option>
             {{else}}
@@ -37,7 +37,7 @@
             {{end}}
           </select>
           {{else if eq .EditKind "theme"}}
-          <select id="theme-selector" onchange="switchTheme(this.value)" style="width:100%;margin-bottom:0.5rem;">
+          <select id="theme-selector" onchange="switchTheme(this.value)" class="widget-add-select theme-editor-select">
             {{range .Themes}}
             <option value="{{.Name}}" {{if eq .Name $.EditTheme}}selected{{end}}>{{.Name}}</option>
             {{end}}

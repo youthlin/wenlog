@@ -34,6 +34,7 @@
       <td class="actions user-actions-cell" data-label="{{$.t.T "操作"}}">
         <a href="/admin/user/{{.ID}}/edit" class="user-action-link">{{$.t.T "编辑"}}</a>
         {{if eq .ID $.CurrentUserID}}
+        <br>
         <span class="form-hint">{{$.t.T "不能在用户管理中删除自己"}}</span>
         {{else}}
         <form class="inline" method="post" action="/admin/user/{{.ID}}/delete" onsubmit="return confirm('{{$.t.T "确认删除该用户?"}}')">

@@ -29,6 +29,7 @@ wordpress/
 
 # 本地 agent 配置
 .coco/
+.trae/
 
 # skills 本地锁文件（可能包含本机路径）
 skills-lock.json

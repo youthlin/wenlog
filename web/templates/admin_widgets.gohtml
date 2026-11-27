@@ -325,22 +325,30 @@
   // ---- 拖拽排序（支持跨区域） ----
   function initDragSort() {
     var dragEl = null, placeholder = null, sourceList = null;
+    var grabX = 0, grabY = 0;
 
     function onStart(e, item) {
       if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+      if (dragEl || (e.type === 'mousedown' && e.button !== 0)) return;
+      e.preventDefault();
+      var rect = item.getBoundingClientRect();
       dragEl = item;
       sourceList = item.parentNode;
       var pos = getPos(e);
+      grabX = pos.x - rect.left;
+      grabY = pos.y - rect.top;
       dragEl.classList.add('is-dragging');
       placeholder = document.createElement('div');
       placeholder.className = 'widget-config-placeholder';
-      placeholder.style.height = dragEl.offsetHeight + 'px';
+      placeholder.style.height = rect.height + 'px';
       sourceList.insertBefore(placeholder, dragEl.nextSibling);
+      // 父区域的 hover transform 会改变 fixed 定位基准，拖曳期间移到 body。
+      document.body.appendChild(dragEl);
       dragEl.style.position = 'fixed';
       dragEl.style.zIndex = '1000';
-      dragEl.style.width = sourceList.offsetWidth + 'px';
-      dragEl.style.left = sourceList.getBoundingClientRect().left + 'px';
-      dragEl.style.top = (pos.y - 10) + 'px';
+      dragEl.style.width = rect.width + 'px';
+      dragEl.style.left = rect.left + 'px';
+      dragEl.style.top = (pos.y - grabY) + 'px';
       dragEl.style.pointerEvents = 'none';
     }
 
@@ -348,14 +356,15 @@
       if (!dragEl) return;
       e.preventDefault();
       var pos = getPos(e);
-      dragEl.style.top = (pos.y - 10) + 'px';
+      dragEl.style.left = (pos.x - grabX) + 'px';
+      dragEl.style.top = (pos.y - grabY) + 'px';
 
       // 找到鼠标下方的区域列表
       var targetList = getTargetList(pos.x, pos.y);
       if (targetList) {
         var after = getDropTarget(targetList, pos.y);
         if (after && after !== placeholder) targetList.insertBefore(placeholder, after);
-        else if (!after && placeholder.nextSibling) targetList.appendChild(placeholder);
+        else if (!after && (placeholder.parentNode !== targetList || placeholder.nextSibling)) targetList.appendChild(placeholder);
       }
     }
 
@@ -439,6 +448,8 @@
     document.addEventListener('touchmove', onMove, { passive: false });
     document.addEventListener('mouseup', onEnd);
     document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
+    window.addEventListener('blur', onEnd);
   }
 
   function ensureAreaEmptyState(list) {
